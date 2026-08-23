@@ -48,9 +48,9 @@ Ganker/
 | Mappers de orm                | `nombre_entidad_mapper.py`                          |
 | Dto de solicitud              | `request_nombre_recurso.py`                         |
 | Dto de respuesta              | `response_nombre_recurso.py`                        |
-| archivos de JS generales      | `completar`                                         |
-| páginas                       | `completar`                                         |
-| recursos                      | `completar`                                         |
+| Archivos de JS generales      | `completar`                                         |
+| Páginas                       | `completar`                                         |
+| Recursos                      | `completar`                                         |
 
 
 ---
