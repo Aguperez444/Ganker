@@ -1,3 +1,50 @@
+# ----------–----------------------------------------------------------------------------- PARA js ----------–-----------------------------------------------------------------------------
+
+# Dependencias
+node_modules/
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Variables de entorno
+.env
+.env.*
+!.env.example
+
+# Builds
+dist/
+build/
+coverage/
+
+# Cachés
+.cache/
+.vite/
+.parcel-cache/
+.eslintcache
+
+# Archivos del sistema / editores
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# Archivos temporales
+*.tmp
+*.temp
+
+# Lockfiles — NO SUBIR
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+
+
+# ----------–----------------------------------------------------------------------------- PARA PYTHON ----------–-----------------------------------------------------------------------------
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[codz]
