@@ -10,6 +10,12 @@ class PlayerORM(Base):
 
     username: Mapped[str] = mapped_column(String, nullable=False)
 
+    name: Mapped[str] = mapped_column(String, nullable=False)
+
     mail: Mapped[str] = mapped_column(String, nullable=False, unique=True)
 
     password_hash: Mapped[str] = mapped_column(String, nullable=False)
+
+    profiles: Mapped[list["GameProfileORM"]] = mapped_column(
+        relationship("GameProfileORM", back_populates="player", cascade="all, delete-orphan")
+    )
