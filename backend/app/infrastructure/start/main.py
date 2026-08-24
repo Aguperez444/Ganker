@@ -2,10 +2,11 @@ from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 import uvicorn
 
-
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.domain.exceptions.domain_exception import DomainException
+
+from app.infrastructure.api.controllers.PlayerController import router as player_router
 
 app = FastAPI(title="Ganker", version="1.0.0")
 
@@ -19,7 +20,7 @@ app.add_middleware(
 )
 
 # ROUTERS
-#app.include_router(<nombre del router>)
+app.include_router(player_router)
 
 
 # EXCEPTION HANDLERS
