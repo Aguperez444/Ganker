@@ -2,22 +2,25 @@
 from typing import TYPE_CHECKING, Optional
 
 if TYPE_CHECKING:
-    from app.domain.models.character import Character
-    from app.domain.models.rank import Rank
-    from app.domain.models.videogame import Videogame
+    from app.domain.models.game_profile import GameProfile
 
 class Player:
 
-    def __init__(self, player_id: Optional[int], username: str, mail: str, passwordhash: str,
-                 played_videogames: list['Videogame'], main_characters: list['Character'],
-                 ranks: list['Rank']):
+
+    def __init__(self,
+                 player_id: Optional[int],
+                 username: str,
+                 name: str,
+                 mail: str,
+                 passwordhash: str,
+                 profiles: list['GameProfile']
+                 ):
         self._player_id: Optional[int] = player_id
         self._username: str = username
+        self._name: str = name
         self._mail: str = mail
         self._passwordhash: str = passwordhash
-        self._played_videogames: list['Videogame'] = played_videogames
-        self._main_characters: list['Character'] = main_characters
-        self._ranks: list['Rank'] = ranks
+        self._profiles: list['GameProfile'] = profiles
 
     @property
     def player_id(self) -> Optional[int]:
@@ -34,6 +37,13 @@ class Player:
         self._username = value
 
     @property
+    def name(self) -> str:
+        return self._name
+    @name.setter
+    def name(self, value: str) -> None:
+        self._name = value
+
+    @property
     def mail(self) -> str:
         return self._mail
     @mail.setter
@@ -48,23 +58,9 @@ class Player:
         self._passwordhash = value
 
     @property
-    def played_videogames(self) -> list['Videogame']:
-        return self._played_videogames
-    @played_videogames.setter
-    def played_videogames(self, value: list['Videogame']) -> None:
-        self._played_videogames = value
-
-    @property
-    def main_characters(self) -> list['Character']:
-        return self._main_characters
-    @main_characters.setter
-    def main_characters(self, value: list['Character']) -> None:
-        self._main_characters = value
-
-    @property
-    def ranks(self) -> list['Rank']:
-        return self._ranks
-    @ranks.setter
-    def ranks(self, value: list['Rank']) -> None:
-        self._ranks = value
+    def profiles(self) -> list['GameProfile']:
+        return self._profiles
+    @profiles.setter
+    def profiles(self, value: list['GameProfile']) -> None:
+        self._profiles = value
 

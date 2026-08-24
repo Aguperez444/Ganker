@@ -1,14 +1,22 @@
-
 from typing import TYPE_CHECKING
+
 if TYPE_CHECKING:
     from app.domain.models.videogame import Videogame
 
 
 class Rank:
-    def __init__(self, name: str, value: int, videogame: 'Videogame'):
-        self._name = name
-        self._value = value
-        self._videogame = videogame
+    def __init__(self, rank_id: int,name: str, value: int, videogame: 'Videogame'):
+        self._id: int = rank_id
+        self._name: str = name
+        self._value: int = value
+        self._videogame: 'Videogame' = videogame
+
+    @property
+    def id(self) -> int:
+        return self._id
+    @id.setter
+    def id(self, value: int) -> None:
+        self._id = value
 
     @property
     def name(self) -> str:
