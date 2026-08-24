@@ -9,7 +9,7 @@ router = APIRouter()
 @router.post("/api/v1/players")
 def register_player(request: RegisterPlayerRequest):
     from app.application.useCases.register_player import RegisterPlayer
-    from app.infrastructure.api.auth.jwt_token_service import JwtTokenService
+    from app.infrastructure.api.jwt.jwt_token_service import JwtTokenService
     from app.infrastructure.database.repositories.player_repository_impl import PlayerRepositoryImpl
 
     player_repository = PlayerRepositoryImpl()
