@@ -1,4 +1,4 @@
-class Players:
+class players:
 
     def __init__(self, player_id: int, username: str, mail: str, passwordhash: str):
         self._player_id: int = player_id

@@ -1,9 +1,10 @@
 from sqlalchemy import Integer, String
 from sqlalchemy.orm import Mapped, mapped_column
+from app.infrastructure.database.base import Base
 
-class PlayerORM(Base):
+class playerORM(Base):
     
-    __tablename__ = "Players"
+    __tablename__ = "players"
 
     player_id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
 

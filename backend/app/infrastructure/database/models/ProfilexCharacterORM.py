@@ -1,8 +1,11 @@
 from sqlalchemy.orm import Mapped
 from sqlalchemy.testing.schema import mapped_column
 from sqlalchemy import Integer, String
+from app.infrastructure.database.base import Base
 
-class ProfilexCharacterORM(Base):
+class profilexcharacterORM(Base):
+
+    __tablename__ = "profilexcharacter"
 
     profilexcharacter_id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
 
