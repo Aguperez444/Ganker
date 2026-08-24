@@ -1,22 +1,22 @@
 from app.domain.models.rank import Rank
 from app.infrastructure.database.mappers.videogame_mapper import VideogameMapper
-from app.infrastructure.database.models.rankORM import RankORM
+from app.infrastructure.database.models.rank_orm import RankORM
 
 class RankMapper:
     @staticmethod
-    def ORM_to_Domain(rankORM):
+    def orm_to_domain(rank_orm: RankORM) -> Rank:
         return Rank(
-            rank_id = rankORM.rank_id,
-            name = rankORM.name,
-            value = rankORM.value,
-            videogame = VideogameMapper.ORM_to_Domain(rankORM.videogame)
+            rank_id = rank_orm.rank_id,
+            name = rank_orm.name,
+            value = rank_orm.value,
+            videogame = VideogameMapper.orm_to_domain(rank_orm.videogame)
         )
 
     @staticmethod
-    def Domain_to_ORM(rank):
+    def domain_to_orm(rank: Rank) -> RankORM:
         return RankORM(
-            rank_id = rank.id,
+            rank_id = rank.rank_id,
             name = rank.name,
             value = rank.value,
-            videogame_id = rank.videogame_id
+            videogame_id = rank.videogame.videogame_id
         )

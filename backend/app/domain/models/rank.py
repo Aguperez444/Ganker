@@ -6,17 +6,17 @@ if TYPE_CHECKING:
 
 class Rank:
     def __init__(self, rank_id: int,name: str, value: int, videogame: 'Videogame'):
-        self._id: int = rank_id
+        self._rank_id: int = rank_id
         self._name: str = name
         self._value: int = value
         self._videogame: 'Videogame' = videogame
 
     @property
-    def id(self) -> int:
-        return self._id
-    @id.setter
-    def id(self, value: int) -> None:
-        self._id = value
+    def rank_id(self) -> int:
+        return self._rank_id
+    @rank_id.setter
+    def rank_id(self, value: int) -> None:
+        self._rank_id = value
 
     @property
     def name(self) -> str:

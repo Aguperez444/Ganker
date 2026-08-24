@@ -40,7 +40,7 @@ class RegisterPlayer:
         new_player = Player(None, player_data.username, player_data.mail, player_data.password, [], [], [])
 
         #hashear la password del usuario antes de persistirlo en la base de datos
-        new_player.passwordhash = self.hash_password(player_data.password)
+        new_player.password_hash = self.hash_password(player_data.password)
 
         # persistir el usuario en la base de datos y obtener el usuario registrado con su id
         registered_player = self.player_repository.create_player(new_player)

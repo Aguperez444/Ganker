@@ -1,19 +1,19 @@
 from app.domain.models.character import Character
 from app.infrastructure.database.mappers.videogame_mapper import VideogameMapper
-from app.infrastructure.database.models.characterORM import CharacterORM
+from app.infrastructure.database.models.character_orm import CharacterORM
 
 
 class CharacterMapper:
     @staticmethod
-    def ORM_to_Domain(characterORM):
+    def orm_to_domain(character_orm: CharacterORM) -> Character:
         return Character(
-            character_id = characterORM.character_id,
-            name = characterORM.name,
-            videogame = VideogameMapper.ORM_to_Domain(characterORM.videogame)
+            character_id = character_orm.character_id,
+            name = character_orm.name,
+            videogame = VideogameMapper.orm_to_domain(character_orm.videogame),
         )
 
     @staticmethod
-    def Domain_to_ORM(character):
+    def domain_to_orm(character: Character) -> CharacterORM:
         return CharacterORM(
             character_id = character.character_id,
             name = character.name,

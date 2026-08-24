@@ -1,20 +1,20 @@
 from app.domain.models.role import Role
 from app.infrastructure.database.mappers.videogame_mapper import VideogameMapper
-from app.infrastructure.database.models.roleORM import RoleORM
+from app.infrastructure.database.models.role_orm import RoleORM
 class RoleMapper:
 
     @staticmethod
-    def ORM_to_Domain(roleORM):
+    def orm_to_domain(role_orm: RoleORM) -> Role:
         return Role(
-            role_id = roleORM.role_id,
-            name = roleORM.name,
-            videogame = VideogameMapper.ORM_to_Domain(roleORM.videogame)
+            role_id = role_orm.role_id,
+            name = role_orm.name,
+            videogame = VideogameMapper.orm_to_domain(role_orm.videogame),
         )
 
     @staticmethod
-    def Domain_to_ORM(role):
+    def domain_to_orm(role: Role) -> RoleORM:
         return RoleORM(
             role_id = role.role_id,
             name = role.name,
-            videogame_id = role.videogame_id
+            videogame_id = role.videogame.videogame_id
         )
