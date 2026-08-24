@@ -46,6 +46,7 @@ Ganker/
 | Interfaces                    | `Inombre_de_la_interfaz.py`                         |
 | Implementaciones de interfaz  | `nombre_de_la_interfaz_impl.py`                     |
 | Mappers de orm                | `nombre_entidad_mapper.py`                          |
+| models del orm                | `nombre_entidad_orm.py`                             |
 | Dto de solicitud              | `request_nombre_recurso.py`                         |
 | Dto de respuesta              | `response_nombre_recurso.py`                        |
 | Archivos de JS generales      | `completar`                                         |
