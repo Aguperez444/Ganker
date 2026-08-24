@@ -2,16 +2,13 @@ from sqlalchemy.orm import Mapped, mapped_column
 from sqlalchemy import Integer, String, ForeignKey
 from app.infrastructure.database.base import Base
 
-class ProfileXCharacterORM(Base):
+class ProfileXRoleXRank(Base):
+    __tablename__ = 'profilexrolexrank'
 
-    __tablename__ = "profilexcharacter"
-
-    profilexcharacter_id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    profilexrolexrank_id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
 
     player_id: Mapped[int] = mapped_column(Integer, ForeignKey("player.player_id"), nullable=False)
 
     videogame_id: Mapped[int] = mapped_column(Integer, ForeignKey("videogames.videogame_id"), nullable=False)
 
-    character_id: Mapped[int] = mapped_column(Integer, nullable=False)
-
-    name: Mapped[str] = mapped_column(String, nullable=False)
+    rank_id: Mapped[int] = mapped_column(Integer, ForeignKey("rank.rank_id"), nullable=False)
