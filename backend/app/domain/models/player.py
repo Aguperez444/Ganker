@@ -1,5 +1,5 @@
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Optional
 
 if TYPE_CHECKING:
     from app.domain.models.character import Character
@@ -8,10 +8,10 @@ if TYPE_CHECKING:
 
 class Player:
 
-    def __init__(self, player_id: int, username: str, mail: str, passwordhash: str,
+    def __init__(self, player_id: Optional[int], username: str, mail: str, passwordhash: str,
                  played_videogames: list['Videogame'], main_characters: list['Character'],
                  ranks: list['Rank']):
-        self._player_id: int = player_id
+        self._player_id: Optional[int] = player_id
         self._username: str = username
         self._mail: str = mail
         self._passwordhash: str = passwordhash
@@ -20,7 +20,7 @@ class Player:
         self._ranks: list['Rank'] = ranks
 
     @property
-    def player_id(self) -> int:
+    def player_id(self) -> Optional[int]:
         return self._player_id
     @player_id.setter
     def player_id(self, value: int) -> None:

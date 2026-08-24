@@ -7,3 +7,7 @@ freezegun>=1.5.5
 SQLAlchemy>=2.0
 aiosqlite>=0.18.0
 alembic>=1.11.0
+pydantic>=2.13.4
+email-validator>=2.0.0
+argon2-cffi>=25.1.0
+pyjwt>=2.13.0
