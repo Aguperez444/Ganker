@@ -1,5 +1,5 @@
 # Repositorio Ganker
-
+---
 ## Estructura del repositorio
 
 ```
