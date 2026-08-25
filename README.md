@@ -24,13 +24,25 @@ Ganker/
 │           └── start/                     # starters para arrancar el backend de distintas formas        
 │         
 ├── Frontend/                              # Frontend del proyecto
-│   ├── Completar carpetas/                # Comentario descriptivo del contenido de la carpeta
-│   │   ├── Completar carpetas/            # Comentario descriptivo del contenido de la carpeta
-│   │   └── Completar carpetas/            # Comentario descriptivo del contenido de la carpeta
-│   └── Completar carpetas/                # Comentario descriptivo del contenido de la carpeta
-│       ├── Completar carpetas/            # Comentario descriptivo del contenido de la carpeta
-│       └── Completar carpetas/            # Comentario descriptivo del contenido de la carpeta
-└── Completar carpetas/                    # Comentario descriptivo del contenido de la carpeta
+    ├── Puiblic/                           # Archivos estaticos,fuentes,logo,etc
+    │   ├── images/                        # Imagenes del proyecto
+    │
+    └── src/                               # Codigo fuente
+        ├── api/                           # Axios y conexión con el backend
+        ├── hooks/                         # Lógica de aplicación (estado + orquestación de datos)
+        ├── context/                       # Estado global (sesión, chat)
+        ├── components/                    # Componentes genericos reutilizables
+        │   ├── common/                    # botones, inputs, modales, spinners,etc
+        │   ├── jugadores/                 # JugadorCard, JugadorForm, JugadorList
+        │   ├── equipos/
+        │   └── chat/                      # ChatWindow, MessageBubble, MessageInput
+        ├── pages/                         # Vistas completas (arman hooks + components)
+        ├── routes/                        # Definición y protección de rutas
+        ├── utils/                         # Funciones puras (validaciones, formateo, constantes)
+        ├── App.jsx
+        └── main.jsx
+
+
 ```
 
 
@@ -49,9 +61,10 @@ Ganker/
 | models del orm                | `nombre_entidad_orm.py`                             |
 | Dto de solicitud              | `request_nombre_recurso.py`                         |
 | Dto de respuesta              | `response_nombre_recurso.py`                        |
-| Archivos de JS generales      | `completar`                                         |
-| Páginas                       | `completar`                                         |
-| Recursos                      | `completar`                                         |
+| Archivos de JS generales      | `nombreDelArchivo.js`                               |
+| Páginas                       | `nombreDePaginaPage.js`                             |
+| Components                    | `nombreDeComponenteComponent.js`                    |
+
 
 
 ---
