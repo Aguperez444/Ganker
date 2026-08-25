@@ -15,7 +15,7 @@ def register_player(request: RegisterPlayerRequest):
     uow = uow_factory()
 
     token_service = JwtTokenService(settings.jwt_secret_key)
-    register_player_use_case = RegisterPlayer(token_service)
+    register_player_use_case = RegisterPlayer(uow, token_service)
 
     token = register_player_use_case.execute(request)
     return {"token": token}
