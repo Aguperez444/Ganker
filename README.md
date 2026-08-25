@@ -24,7 +24,7 @@ Ganker/
 │           └── start/                     # starters para arrancar el backend de distintas formas        
 │         
 ├── Frontend/                              # Frontend del proyecto
-    ├── Puiblic/                           # Archivos estaticos,fuentes,logo,etc
+    ├── Public/                           # Archivos estaticos,fuentes,logo,etc
     │   ├── images/                        # Imagenes del proyecto
     │
     └── src/                               # Codigo fuente
