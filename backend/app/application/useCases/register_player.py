@@ -6,6 +6,7 @@ from argon2 import PasswordHasher
 from typing import TYPE_CHECKING, cast
 
 from app.application.ports.i_token_service import ITokenService
+from app.application.ports.i_unit_of_work import IUnitOfWork
 from app.domain.exceptions.email_already_exists_exception import EmailAlreadyExistsException
 from app.domain.exceptions.invalid_username_exception import InvalidUsernameException
 from app.domain.exceptions.password_is_not_secure_exception import PasswordIsNotSecureException
@@ -18,8 +19,8 @@ if TYPE_CHECKING:
 
 
 class RegisterPlayer:
-    def __init__(self, player_repository: IPlayerRepository, token_service: ITokenService):
-        self.player_repository: IPlayerRepository = player_repository
+    def __init__(self, unit_of_work: IUnitOfWork, token_service: ITokenService):
+        self.uow: IUnitOfWork = unit_of_work
         self.token_service: ITokenService = token_service
 
     def execute(self, player_data: RegisterPlayerRequest) -> str:
@@ -37,13 +38,14 @@ class RegisterPlayer:
         self.validate_password_security(player_data.password)
 
         # crear el usuario en el dominio
-        new_player = Player(None, player_data.username, player_data.mail, player_data.password, [], [], [])
+        new_player = Player(None, player_data.username, player_data.name, player_data.mail, player_data.password, [])
 
         #hashear la password del usuario antes de persistirlo en la base de datos
         new_player.password_hash = self.hash_password(player_data.password)
 
         # persistir el usuario en la base de datos y obtener el usuario registrado con su id
-        registered_player = self.player_repository.create_player(new_player)
+        with self.uow as uow:
+            registered_player = uow.player_repo.create_player(new_player)
 
         registered_player_token = self.token_service.generate_access_token(cast(int, registered_player.player_id))
 
@@ -55,12 +57,14 @@ class RegisterPlayer:
     def validate_username(self, username: str) -> bool:
         if username is None or username.strip() == "":
             raise InvalidUsernameException(username)
-        usuario_con_ese_username = self.player_repository.get_player_by_username(username)
+        with self.uow as uow:
+            usuario_con_ese_username = uow.player_repo.get_player_by_username(username)
         return usuario_con_ese_username is None
 
 
     def validate_mail(self, mail: str) -> bool:
-        usuario_con_ese_mail = self.player_repository.get_player_by_mail(mail)
+        with self.uow as uow:
+            usuario_con_ese_mail = uow.player_repo.get_player_by_mail(mail)
         return usuario_con_ese_mail is None
 
 
