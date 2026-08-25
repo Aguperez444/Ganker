@@ -1,4 +1,4 @@
-# Repositorio Ganker
+# Repositorio de Ganker
 ---
 ## Estructura del repositorio
 
@@ -24,9 +24,8 @@ Ganker/
 │           └── start/                     # starters para arrancar el backend de distintas formas        
 │         
 ├── Frontend/                              # Frontend del proyecto
-    ├── Public/                           # Archivos estaticos,fuentes,logo,etc
-    │   ├── images/                        # Imagenes del proyecto
-    │
+    ├── Public/                            # Archivos estaticos,fuentes,logo,etc
+    │   └── images/                        # Imagenes del proyecto
     └── src/                               # Codigo fuente
         ├── api/                           # Axios y conexión con el backend
         ├── hooks/                         # Lógica de aplicación (estado + orquestación de datos)
