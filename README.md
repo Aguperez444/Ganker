@@ -40,7 +40,6 @@ Ganker/
         ├── pages/                         # Vistas completas (arman hooks + components)
         ├── routes/                        # Definición y protección de rutas
         ├── utils/                         # Funciones puras (validaciones, formateo, constantes)
-        prueba
         ├── App.jsx
         └── main.jsx
 
