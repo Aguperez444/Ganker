@@ -6,7 +6,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.domain.exceptions.domain_exception import DomainException
 
-from app.infrastructure.api.controllers.PlayerController import router as player_router
+from app.infrastructure.api.controllers.player_controller import router as player_router
 
 app = FastAPI(title="Ganker", version="1.0.0")
 

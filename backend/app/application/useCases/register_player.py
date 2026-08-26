@@ -1,10 +1,9 @@
-from app.application.ports.i_player_repository import IPlayerRepository
-
 import re
 
-from argon2 import PasswordHasher
+
 from typing import TYPE_CHECKING, cast
 
+from app.application.ports.i_password_hasher import IPasswordHasher
 from app.application.ports.i_token_service import ITokenService
 from app.application.ports.i_unit_of_work import IUnitOfWork
 from app.domain.exceptions.email_already_exists_exception import EmailAlreadyExistsException
@@ -19,9 +18,10 @@ if TYPE_CHECKING:
 
 
 class RegisterPlayer:
-    def __init__(self, unit_of_work: IUnitOfWork, token_service: ITokenService):
+    def __init__(self, unit_of_work: IUnitOfWork, token_service: ITokenService, password_hasher: IPasswordHasher):
         self.uow: IUnitOfWork = unit_of_work
         self.token_service: ITokenService = token_service
+        self.pass_hasher: IPasswordHasher = password_hasher
 
     def execute(self, player_data: RegisterPlayerRequest) -> str:
         # Se asume que lo que me llega es un mail por la validación de pydantic en el dto.
@@ -41,7 +41,7 @@ class RegisterPlayer:
         new_player = Player(None, player_data.username, player_data.name, player_data.mail, player_data.password, [])
 
         #hashear la password del usuario antes de persistirlo en la base de datos
-        new_player.password_hash = self.hash_password(player_data.password)
+        new_player.password_hash = self.pass_hasher.hash_password(player_data.password)
 
         # persistir el usuario en la base de datos y obtener el usuario registrado con su id
         with self.uow as uow:
@@ -83,9 +83,3 @@ class RegisterPlayer:
             raise PasswordIsNotSecureException("Debe contener al menos un número")
 
         return True
-
-
-    @staticmethod
-    def hash_password(password: str) -> str:
-        ph = PasswordHasher()
-        return ph.hash(password)

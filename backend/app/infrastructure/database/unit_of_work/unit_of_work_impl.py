@@ -9,12 +9,12 @@ SessionFactory = Callable[[], Session]
 
 class SqlAlchemyUnitOfWork(IUnitOfWork):
     """
-        UoW mínimo: crea una Session al entrar, hace commit/rollback al salir.
-        Acepta un session_factory (por ej. `SessionLocal = session_maker(...)`).
-        """
+    UoW mínimo: crea una Session al entrar, hace commit/rollback al salir.
+    Acepta un session_factory (por ej. `SessionLocal = session_maker(...)`).
+    """
 
     def __init__(self, session_factory: SessionFactory) -> None:
-        self._sf = session_factory
+        self._sf: SessionFactory = session_factory
         # propiedades inicializadas en __enter__
         self.session: Session
         self.player_repo: IPlayerRepository
