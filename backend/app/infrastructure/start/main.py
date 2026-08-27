@@ -8,7 +8,7 @@ from app.domain.exceptions.domain_exception import DomainException
 
 from app.infrastructure.api.controllers.player_controller import router as player_router
 from app.infrastructure.api.controllers.auth_controller import router as auth_router
-from app.infrastructure.api.controllers.GameProfileController import router as game_profile_router
+from app.infrastructure.api.controllers.game_profile_controller import router as game_profile_router
 
 app = FastAPI(title="Ganker", version="1.0.0")
 
@@ -20,12 +20,6 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
-# ROUTERS
-app.include_router(player_router)
-app.include_router(game_profile_router)
-app.include_router(auth_router)
-
 
 # EXCEPTION HANDLERS
 @app.exception_handler(DomainException)
@@ -39,6 +33,11 @@ async def domain_exception_handler(
             "error": exc.message
         }
     )
+
+# ROUTERS
+app.include_router(player_router)
+app.include_router(game_profile_router)
+app.include_router(auth_router)
 
 
 host = "127.0.0.1"

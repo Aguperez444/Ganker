@@ -1,4 +1,4 @@
-from exceptions.domain_exception import DomainException
+from app.domain.exceptions.domain_exception import DomainException
 
 
 class RoleNotFoundException(DomainException):

@@ -8,10 +8,10 @@ from exceptions.rank_not_found_exception import RankNotFoundException
 from exceptions.role_not_found_exception import RoleNotFoundException
 from exceptions.videogame_not_found_exception import VideogameNotFoundException
 from models.videogame import Videogame
+from models.role_profile import RoleProfile
+from models.game_profile import GameProfile
 
 if TYPE_CHECKING:
-    from models.game_profile import GameProfile
-    from models.role_profile import RoleProfile
     from models.role import Role
     from models.rank import Rank
 
@@ -54,6 +54,7 @@ class CreateVideogameProfile:
         # Creo el game_profile
         new_game_profile: GameProfile = GameProfile(
             game_profile_id = None,
+            player_id = player_id,
             videogame = videogame,
             characters = characters,
             role_profiles = new_role_profiles
