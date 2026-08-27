@@ -11,19 +11,17 @@ class RegisterVideogame:
     def execute(self, register_videogame_request: RegisterVideogameRequest) -> Videogame:
 
         cleaned_name = self.validate_videogame_name(register_videogame_request)
-
-        with self.uow:
-            self.validate_not_exist_videogame(cleaned_name)
+        self.validate_not_exist_videogame(cleaned_name)
 
         # Crear el nuevo videojuego
-            new_videogame: Videogame = Videogame(
-            videogame_id=None,
-            name=cleaned_name
-            )
+        new_videogame: Videogame = Videogame(
+        videogame_id=None,
+        name=cleaned_name
+        )
 
         # Persistir el nuevo videojuego en la base de datos
-            saved_videogame = self.uow.videogame_repo.register_videogame(new_videogame)
-            self.uow.commit()
+        with self.uow as uow:
+            saved_videogame = uow.videogame_repo.register_videogame(new_videogame)
 
         return saved_videogame
 
@@ -35,7 +33,8 @@ class RegisterVideogame:
 
     # Validar que el videojuego no exista en la base de datos
     def validate_not_exist_videogame(self, cleaned_name: str) -> bool:
-        existing_videogame = self.uow.videogame_repo.get_videogame_by_name(cleaned_name)
-        if existing_videogame:
-            raise VideogameAlreadyExistsException(cleaned_name)
-        return True
+        with self.uow as uow:
+            existing_videogame = uow.videogame_repo.get_videogame_by_name(cleaned_name)
+            if existing_videogame:
+                raise VideogameAlreadyExistsException(cleaned_name)
+            return True
