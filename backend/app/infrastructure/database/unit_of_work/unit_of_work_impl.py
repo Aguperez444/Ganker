@@ -13,6 +13,7 @@ from app.infrastructure.database.repositories.game_profile_repository_impl impor
 from app.infrastructure.database.repositories.player_repository_impl import PlayerRepositoryImpl
 from app.infrastructure.database.repositories.rank_repository_impl import RankRepositoryImpl
 from app.infrastructure.database.repositories.role_repository_impl import RoleRepositoryImpl
+from app.infrastructure.database.repositories.videogame_repository_impl import VideogameRepositoryImpl
 
 SessionFactory = Callable[[], Session]
 

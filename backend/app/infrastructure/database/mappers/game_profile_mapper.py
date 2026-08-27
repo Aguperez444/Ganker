@@ -10,6 +10,7 @@ class GameProfileMapper:
     def orm_to_domain(game_profile_orm: GameProfileORM) -> GameProfile:
         return GameProfile(
             game_profile_id=game_profile_orm.game_profile_id,
+            player_id=game_profile_orm.player_id,
             videogame=VideogameMapper.orm_to_domain(game_profile_orm.videogame),
             characters=[CharacterMapper.orm_to_domain(char) for char in game_profile_orm.characters],
             role_profiles=[RoleProfileMapper.orm_to_domain(role_profile) for role_profile in game_profile_orm.role_profiles]
@@ -19,6 +20,7 @@ class GameProfileMapper:
     def domain_to_orm(game_profile: GameProfile) -> GameProfileORM:
         return GameProfileORM(
             game_profile_id=game_profile.game_profile_id,
+            player_id=game_profile.player_id,
             videogame_id=game_profile.videogame.videogame_id,
             characters=[CharacterMapper.domain_to_orm(char) for char in game_profile.characters],
             role_profiles=[RoleProfileMapper.domain_to_orm(role_profile, game_profile.game_profile_id) for role_profile in game_profile.role_profiles]
