@@ -7,6 +7,7 @@ from app.domain.exceptions.mail_not_found_exception import EmailNotFoundExceptio
 from typing import TYPE_CHECKING, cast
 
 from app.domain.exceptions.wrong_password_exception import WrongPasswordException
+from app.infrastructure.api.dto.auth_tokens_response import AuthTokensResponse
 
 if TYPE_CHECKING:
     from app.infrastructure.api.dto.login_request import LoginRequest
@@ -18,7 +19,8 @@ class UserLogin:
         self.pass_hasher: IPasswordHasher = password_hasher
 
 
-    def execute(self, player_data: 'LoginRequest') -> str:
+
+    def execute(self, player_data: 'LoginRequest') -> AuthTokensResponse:
         pass
 
         # revisar si el mail pertenece a un usuario registrado
@@ -33,5 +35,5 @@ class UserLogin:
             raise WrongPasswordException(player_data.mail)
 
         # si la contraseña es correcta, generar un token de acceso
-        access_token = self.token_service.generate_access_token(cast(int, user.player_id))
-        return access_token
+        access_token, refresh_token = self.token_service.generate_tokens(cast(int, user.player_id))
+        return AuthTokensResponse(access_token, refresh_token)
