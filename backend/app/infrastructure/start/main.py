@@ -7,6 +7,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.domain.exceptions.domain_exception import DomainException
 
 from app.infrastructure.api.controllers.PlayerController import router as player_router
+from app.infrastructure.api.controllers.GameProfileController import router as game_profile_router
 
 app = FastAPI(title="Ganker", version="1.0.0")
 
@@ -21,6 +22,7 @@ app.add_middleware(
 
 # ROUTERS
 app.include_router(player_router)
+app.include_router(game_profile_router)
 
 
 # EXCEPTION HANDLERS

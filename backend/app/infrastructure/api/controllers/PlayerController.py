@@ -10,7 +10,7 @@ from app.infrastructure.database.unit_of_work.uow_factory import uow_factory
 
 router = APIRouter()
 
-@router.post("/api/v1/players")
+@router.post("/api/v1/players", status_code=201)
 def register_player(request: RegisterPlayerRequest):
     uow = uow_factory()
 
