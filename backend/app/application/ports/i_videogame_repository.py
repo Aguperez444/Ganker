@@ -7,5 +7,13 @@ if TYPE_CHECKING:
 class IVideogameRepository(ABC):
 
     @abstractmethod
+    def register_videogame(self, videogame: 'Videogame') -> 'Videogame':
+        raise NotImplementedError
+
+    @abstractmethod
     def get_videogame_by_id(self, videogame_id: int) -> Optional['Videogame']:
+        raise NotImplementedError
+
+    @abstractmethod
+    def get_videogame_by_name(self, videogame_name: str) -> Optional['Videogame']:
         raise NotImplementedError
