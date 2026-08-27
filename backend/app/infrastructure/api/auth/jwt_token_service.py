@@ -19,14 +19,14 @@ class JwtTokenService(ITokenService):
         expiration = now + timedelta(minutes=self.expiration_minutes)
 
         access_payload = {
-            "sub": user_id,
+            "sub": str(user_id),
             "type": "access",
             "iat": now,
             "exp": expiration,
         }
 
         refresh_payload = {
-            "sub": user_id,
+            "sub": str(user_id),
             "type": "refresh",
             "iat": now,
             "exp": now + timedelta(days=self.refresh_expiration_days),
@@ -51,10 +51,10 @@ class JwtTokenService(ITokenService):
 
         if payload.get("type") != "access":
             raise InvalidTokenException("Token inválido: no es un access token")
-        return payload["sub"]
+        return int(payload["sub"])
 
     def verify_refresh_token(self, refresh_token: str) -> int:
         payload = jwt.decode(refresh_token, self.secret_key, algorithms=["HS256"])
         if payload.get("type") != "refresh":
             raise InvalidTokenException("Token inválido: no es un refresh token")
-        return payload["sub"]
+        return int(payload["sub"])

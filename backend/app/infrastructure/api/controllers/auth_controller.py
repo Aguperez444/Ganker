@@ -1,5 +1,5 @@
-from fastapi import APIRouter
-
+from fastapi import APIRouter, Depends
+from fastapi.security import OAuth2PasswordRequestForm
 from app.infrastructure.api.dto.login_request import LoginRequest
 from app.infrastructure.config.settings import settings
 from app.infrastructure.api.auth.jwt_token_service import JwtTokenService
@@ -13,10 +13,12 @@ from app.infrastructure.api.dto.auth_tokens_response import AuthTokensResponse
 router = APIRouter(prefix="/auth/v1")
 
 @router.post("/login")
-def login(login_data: LoginRequest) -> AuthTokensResponse:
+def login(form_data: OAuth2PasswordRequestForm = Depends()) -> AuthTokensResponse:
     uow = uow_factory()
     token_service = JwtTokenService(settings.jwt_secret_key)
     password_hasher = PasswordHashService()
+
+    login_data = LoginRequest(mail=form_data.username, password=form_data.password)
 
     user_login_use_case = UserLogin(uow, token_service, password_hasher)
     access_tokens = user_login_use_case.execute(login_data)
