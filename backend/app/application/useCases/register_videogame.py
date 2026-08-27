@@ -34,7 +34,7 @@ class RegisterVideogame:
     # Validar que el videojuego no exista en la base de datos
     def validate_not_exist_videogame(self, cleaned_name: str) -> bool:
         with self.uow as uow:
-            existing_videogame = uow.videogame_repo.get_videogame_by_name(cleaned_name)
+            existing_videogame = uow.videogame_repo.get_videogame_by_name(cleaned_name.lower())
             if existing_videogame:
                 raise VideogameAlreadyExistsException(cleaned_name)
             return True
