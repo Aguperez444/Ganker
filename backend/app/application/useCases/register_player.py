@@ -11,6 +11,7 @@ from app.domain.exceptions.invalid_username_exception import InvalidUsernameExce
 from app.domain.exceptions.password_is_not_secure_exception import PasswordIsNotSecureException
 from app.domain.exceptions.username_already_exist_exception import UsernameAlreadyExistsException
 from app.domain.models.player import Player
+from app.infrastructure.api.dto.auth_tokens_response import AuthTokensResponse
 
 if TYPE_CHECKING:
     from app.infrastructure.api.dto.register_player_request import RegisterPlayerRequest
@@ -23,7 +24,7 @@ class RegisterPlayer:
         self.token_service: ITokenService = token_service
         self.pass_hasher: IPasswordHasher = password_hasher
 
-    def execute(self, player_data: RegisterPlayerRequest) -> str:
+    def execute(self, player_data: RegisterPlayerRequest) -> AuthTokensResponse:
         # Se asume que lo que me llega es un mail por la validación de pydantic en el dto.
         # Validar que no exista otra cuenta con ese mail
         if not self.validate_mail(player_data.mail):
@@ -47,9 +48,9 @@ class RegisterPlayer:
         with self.uow as uow:
             registered_player = uow.player_repo.create_player(new_player)
 
-        registered_player_token = self.token_service.generate_access_token(cast(int, registered_player.player_id))
+        access_token, refresh_token = self.token_service.generate_tokens(cast(int, registered_player.player_id))
 
-        return registered_player_token
+        return AuthTokensResponse(access_token, refresh_token)
 
 
 

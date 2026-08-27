@@ -8,12 +8,14 @@ if TYPE_CHECKING:
 
 class GameProfile:
     def __init__(self, game_profile_id: Optional[int],
+                 player_id: int,
                  videogame: Videogame,
                  characters: list['Character'],
                  role_profiles: list['RoleProfile']
                  ):
 
         self._game_profile_id: Optional[int] = game_profile_id
+        self._player_id: int = player_id
         self._videogame: Videogame = videogame
         self._characters: list[Character] = characters
         self._role_profiles: list['RoleProfile'] = role_profiles
@@ -24,6 +26,13 @@ class GameProfile:
     @game_profile_id.setter
     def game_profile_id(self, value: Optional[int]) -> None:
         self._game_profile_id = value
+
+    @property
+    def player_id(self) -> int:
+        return self._player_id
+    @player_id.setter
+    def player_id(self, value: int) -> None:
+        self._player_id = value
 
     @property
     def videogame(self) -> 'Videogame':
