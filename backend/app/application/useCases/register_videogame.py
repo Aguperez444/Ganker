@@ -1,8 +1,8 @@
 from app.application.ports.i_unit_of_work import IUnitOfWork
 from app.infrastructure.api.dto.register_videogame_request import RegisterVideogameRequest
-from models.videogame import Videogame
-from exceptions.invalid_videogame_name_exception import InvalidVideogameNameException
-from exceptions.videogame_already_exists_exception import VideogameAlreadyExistsException
+from app.domain.models.videogame import Videogame
+from app.domain.exceptions.invalid_videogame_name_exception import InvalidVideogameNameException
+from app.domain.exceptions.videogame_already_exists_exception import VideogameAlreadyExistsException
 
 class RegisterVideogame:
     def __init__(self, unit_of_work: IUnitOfWork):
