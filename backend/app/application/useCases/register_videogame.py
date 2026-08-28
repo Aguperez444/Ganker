@@ -31,7 +31,7 @@ class RegisterVideogame:
             raise InvalidVideogameNameException(videogame_request.name)
         return videogame_request.name.strip()
 
-    # Validar que el videojuego no exista en la base de datos
+    # Validar que el nombre no exista en la base de datos
     def validate_not_exist_videogame(self, cleaned_name: str) -> bool:
         with self.uow as uow:
             existing_videogame = uow.videogame_repo.get_videogame_by_name(cleaned_name.lower())
