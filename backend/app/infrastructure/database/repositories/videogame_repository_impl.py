@@ -1,5 +1,6 @@
 from typing import Optional, TYPE_CHECKING
 
+from sqlalchemy import func
 from sqlalchemy.orm import Session
 from app.infrastructure.database.mappers.videogame_mapper import VideogameMapper
 from app.infrastructure.database.models.videogame_orm import VideogameORM
@@ -13,7 +14,7 @@ class VideogameRepositoryImpl(IVideogameRepository):
     def __init__(self, session: Session):
         self.session: Session = session
 
-    def register_videogame(self, videogame: VideogameORM) -> 'Videogame':
+    def register_videogame(self, videogame: Videogame) -> 'Videogame':
         orm_videogame = VideogameMapper.domain_to_orm(videogame)
 
         self.session.add(orm_videogame)
@@ -30,5 +31,7 @@ class VideogameRepositoryImpl(IVideogameRepository):
 
     def get_videogame_by_name(self, videogame_name: str) -> Optional['Videogame']:
         found = self.session.query(VideogameORM).filter(VideogameORM.name == videogame_name).first()
+
+        found = self.session.query(VideogameORM).filter(func.lower(VideogameORM.name) == videogame_name.lower()).first()
         domain_found = VideogameMapper.orm_to_domain(found) if found else None
         return domain_found

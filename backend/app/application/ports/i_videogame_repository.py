@@ -17,3 +17,4 @@ class IVideogameRepository(ABC):
     @abstractmethod
     def get_videogame_by_name(self, videogame_name: str) -> Optional['Videogame']:
         raise NotImplementedError
+    # Este metodo es utilizado recibiendo un str name.lower(), comparar nombres usando lower() para evitar problemas de mayusculas y minusculas
