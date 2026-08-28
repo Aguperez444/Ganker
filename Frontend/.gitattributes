@@ -1,0 +1,13 @@
+# El equipo trabaja con Windows y Linux: normalizamos los finales de linea
+# para que no aparezcan diffs falsos por CRLF vs LF.
+* text=auto eol=lf
+
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.webp binary
+*.svg text eol=lf
+*.ico binary
+*.woff binary
+*.woff2 binary
