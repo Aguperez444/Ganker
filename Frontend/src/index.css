@@ -1,0 +1,4 @@
+/* Tailwind CSS v4: una sola linea reemplaza a las tres directivas
+   @tailwind de la v3. La configuracion del tema, si hace falta,
+   se escribe aca mismo con @theme (config CSS-first). */
+@import "tailwindcss";

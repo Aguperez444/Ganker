@@ -1,0 +1,34 @@
+# Dependencias
+node_modules/
+
+# Build
+dist/
+dist-ssr/
+
+# Variables de entorno (cada dev arma su propio .env a partir de .env.example)
+.env
+.env.local
+.env.*.local
+
+# Testing
+coverage/
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Editores / SO
+.vscode/*
+!.vscode/extensions.json
+.idea/
+.DS_Store
+Thumbs.db
+
+# El .gitignore de la raiz del repo ignora package-lock.json (regla pensada para
+# el backend, que usa requirements.txt). Para el frontend el lockfile SI debe
+# versionarse: es lo que garantiza que todo el equipo instale exactamente las
+# mismas versiones. Esta regla lo vuelve a incluir.
+!package-lock.json
