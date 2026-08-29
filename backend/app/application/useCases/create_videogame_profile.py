@@ -2,18 +2,18 @@ from typing import TYPE_CHECKING
 
 from app.application.ports.i_unit_of_work import IUnitOfWork
 from app.infrastructure.api.dto.create_videogame_profile_request import CreateGameProfileRequest
-from exceptions.character_not_found_exception import CharacterNotFoundException
-from exceptions.game_profile_already_exist_exception import GameProfileAlreadyExistException
-from exceptions.rank_not_found_exception import RankNotFoundException
-from exceptions.role_not_found_exception import RoleNotFoundException
-from exceptions.videogame_not_found_exception import VideogameNotFoundException
-from models.videogame import Videogame
-from models.role_profile import RoleProfile
-from models.game_profile import GameProfile
+from app.domain.exceptions.character_not_found_exception import CharacterNotFoundException
+from app.domain.exceptions.game_profile_already_exist_exception import GameProfileAlreadyExistException
+from app.domain.exceptions.rank_not_found_exception import RankNotFoundException
+from app.domain.exceptions.role_not_found_exception import RoleNotFoundException
+from app.domain.exceptions.videogame_not_found_exception import VideogameNotFoundException
+from app.domain.models.videogame import Videogame
+from app.domain.models.role_profile import RoleProfile
+from app.domain.models.game_profile import GameProfile
 
 if TYPE_CHECKING:
-    from models.role import Role
-    from models.rank import Rank
+    from app.domain.models.role import Role
+    from app.domain.models.rank import Rank
 
 
 class CreateVideogameProfile:
@@ -30,11 +30,12 @@ class CreateVideogameProfile:
 
         # Buscar los personajes en la base de datos
         characters = []
-        for character_id in create_videogame_profile_request.character_ids:
-            character = self.uow.character_repo.get_character_by_id(character_id)
-            if not character:
-                raise CharacterNotFoundException(character_id)
-            characters.append(character)
+        with self.uow as uow:
+            for character_id in create_videogame_profile_request.character_ids:
+                character = uow.character_repo.get_character_by_id(character_id)
+                if not character:
+                    raise CharacterNotFoundException(character_id)
+                characters.append(character)
 
         # Busco los roles y rangos en la base de datos y creo el role_profile
         new_role_profiles: list[RoleProfile] = []

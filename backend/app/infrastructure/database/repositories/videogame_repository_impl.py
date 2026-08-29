@@ -6,7 +6,7 @@ from app.infrastructure.database.models.videogame_orm import VideogameORM
 from app.application.ports.i_videogame_repository import IVideogameRepository
 
 if TYPE_CHECKING:
-    from models.videogame import Videogame
+    from app.domain.models.videogame import Videogame
 
 
 class VideogameRepositoryImpl(IVideogameRepository):
