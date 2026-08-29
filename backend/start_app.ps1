@@ -1,6 +1,6 @@
 $ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
 
-$BackendDir = Join-Path $ScriptDir "Backend"
+$BackendDir = Join-Path $ScriptDir ""
 
 
 Write-Host "Levantando backend..."
