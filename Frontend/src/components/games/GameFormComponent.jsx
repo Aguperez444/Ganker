@@ -42,38 +42,43 @@ const GameForm = () => {
   };
 
   return (
-    <form
-      onSubmit={handleSubmit}
-      className="flex w-full max-w-md flex-col gap-5"
-    >
-      <div className="flex flex-col gap-2">
-        <label htmlFor="game-name" className="text-sm font-medium">
+    <form onSubmit={handleSubmit} className="flex flex-col gap-6">
+      <div>
+        <label
+          htmlFor="game-name"
+          className=" mb-2 block text-sm font-medium text-ganker-text"
+        >
           Nombre del videojuego
         </label>
 
-        <input
-          id="game-name"
-          type="text"
-          value={name}
-          onChange={(event) => setName(event.target.value)}
-          placeholder="Ej: Valorant"
-          disabled={isLoading}
-          className="rounded-lg border border-gray-300 px-4 py-3 outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/20 disabled:cursor-not-allowed disabled:opacity-50"
-        />
+        <div className="relative">
+          <input
+            id="game-name"
+            type="text"
+            value={name}
+            onChange={(event) => setName(event.target.value)}
+            placeholder="Ej: Valorant"
+            disabled={isLoading}
+            className="w-full rounded-lg border border-white/10 bg-ganker-surface-light py-3 pr-4 pl-12 text-ganker-text placeholder:text-ganker-muted outline-none transition-all duration-200 focus:border-ganker-purple-light focus:ring-2 focus:ring-ganker-purple/30 disabled:cursor-not-allowed disabled:opacity-50"
+          />
+        </div>
 
-        {error && <p className="text-sm text-red-500">{error}</p>}
+        {error && <p className=" mt-2 text-sm text-ganker-error">{error}</p>}
       </div>
 
       {successMessage && (
-        <p className="text-sm text-green-600">{successMessage}</p>
+        <div className="rounded-lg border border-ganker-success/20 bg-ganker-success/10 px-4 py-3">
+          <p className="text-sm text-ganker-success">✓ {successMessage}</p>
+        </div>
       )}
 
       <button
         type="submit"
         disabled={isLoading}
-        className="rounded-lg bg-primary px-4 py-3 font-semibold text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
+        className=" w-full cursor-pointer rounded-lg bg-gradient-to-r from-ganker-orange via-ganker-orange-light to-ganker-purple px-5 py-3 font-semibold text-white shadow-lg transition-all duration-200 hover:-translate-y-0.5 hover:shadow-ganker-purple/30 active:translate-y-0 disabled:cursor-not-allowed disabled:opacity-50
+        "
       >
-        {isLoading ? "Registrando..." : "Registrar videojuego"}
+        {isLoading ? "REGISTRANDO..." : "REGISTRAR VIDEOJUEGO"}
       </button>
     </form>
   );
