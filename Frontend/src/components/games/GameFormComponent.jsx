@@ -24,17 +24,19 @@ const GameForm = () => {
     try {
       setIsLoading(true);
 
-      await createGame(trimmedName);
+      const videogame = await createGame(trimmedName);
 
-      setSuccessMessage("Videojuego registrado correctamente.");
+      setSuccessMessage(
+        `Videojuego "${videogame.name}" registrado correctamente.`
+      );
       setName("");
     } catch (error) {
-      if (error.response?.status === 409) {
+      if (error.response?.status === 422) {
+        setError("El nombre ingresado no es válido.");
+      } else if (error.response?.status === 409) {
         setError("Ya existe un videojuego registrado con ese nombre.");
       } else {
-        setError(
-          "Ocurrió un error al registrar el videojuego. Inténtalo nuevamente."
-        );
+        setError("Ocurrió un error al registrar el videojuego.");
       }
     } finally {
       setIsLoading(false);
