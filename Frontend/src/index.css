@@ -7,6 +7,7 @@
 
   --color-ganker-orange: #FF6B00;  /* Naranja Accent */
   --color-ganker-purple: #6B46C1;   /* Morado Accent */
+  --color-ganker-sombra: rgba(255, 107, 0, 0.45);
   --color-ganker-bg: #0F0E17;       /* Fondo Principal */
   --color-ganker-card: #12111A;     /* Fondo de Tarjetas */
   --color-ganker-border: #2A273A;   /* Color de Bordes */
@@ -34,5 +35,26 @@
 
   /* Texto */
   --color-ganker-muted: #6B7280;
+
+
+  /* Colores Ganker */
+
+  --color-primary: #14152a;
+  --color-secondary: #1a192d;
+
+  /*--color-background: #...;
+  --color-surface: #...;*/
+
+  --color-text-primary: #ffffff;
+  --color-text-secondary: #b8b4c4;
+
+  --color-success: #38c793;
+  --color-error: #f05252;
+
+  /* Tipografías */
+
+  --font-heading: "Space Grotesk", sans-serif;
+  --font-body: "Inter", sans-serif;
+
 
 };

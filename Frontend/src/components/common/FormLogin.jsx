@@ -14,9 +14,9 @@ export default function FormLogin() {
   };
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="w-lg h-max border border-ganker-border2 bg-ganker-input p-6 text-ganker-text shadow-lg">
+    <form onSubmit={handleSubmit(onSubmit)} className="w-lg h-max   bg-ganker-card2 p-6 text-ganker-text shadow-lg">
 
-      <div className="space-y-4">
+      <div className="space-y-10">
         <div className="flex flex-col gap-2">
           <label htmlFor="email" className="text-sm font-medium text-ganker-text">Email</label>
           <input id="email" type="email" placeholder="correo@ejemplo.com" className="w-full rounded-lg border border-ganker-border2 bg-ganker-input px-3 py-2 text-ganker-text placeholder:text-ganker-text/70 focus:outline-none focus:ring-2 focus:ring-ganker-border2"
@@ -44,27 +44,14 @@ export default function FormLogin() {
 
         <div className="flex items-center justify-between text-xs text-ganker-text/80">
           <label className="flex items-center gap-2">
-            <input type="checkbox" className="h-3.5 w-3.5 accent-ganker-border2" />
+            <input type="checkbox" className="h-3.5 w-3.5 accent-ganker-" />
             Recordarme
           </label>
-          <a href="#" className="text-ganker-text hover:opacity-80">
+          <a href="#" className="text-ganker-text hover:opacity-80 ">
             ¿Olvidaste tu contraseña?
           </a>
         </div>
-
-        <button
-          type="submit"
-          className="mt-2 w-full rounded-lg border border-ganker-border2 bg-ganker-border2 px-4 py-3 text-sm font-semibold text-ganker-text transition hover:opacity-90"
-        >
-          Iniciar sesión
-        </button>
-
-        <p className="text-center text-sm text-ganker-text/80">
-          ¿No tienes cuenta?{' '}
-          <a href="#" className="font-semibold text-ganker-text hover:opacity-80">
-            Regístrate
-          </a>
-        </p>
+        
       </div>
     </form>
   );
