@@ -23,7 +23,7 @@ export default function LoginPage() {
                     <img src="../../Public/images/Ganker_sin_fondo.png" alt="Login" className="max-w-3xs h-full"></img>
                 </section>
 
-                <section align="center" className="flex flex-col items-center  color-ganker-text p-8 border border-ganker-border2 shadow-[0_-4px_28px] shadow-ganker-sombra">
+                <section align="center" className="flex flex-col items-center color-ganker-text p-8 border border-ganker-border2 shadow-[0_-4px_28px] shadow-ganker-sombra">
                     <FormLogin />
 
                     <img src="../../Public/images/banner_sin_fondo.png" alt="Login" className="max-w-3xs h-full pt-9"></img>            

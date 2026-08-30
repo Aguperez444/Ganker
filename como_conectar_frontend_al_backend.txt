@@ -1,0 +1,134 @@
+================================================================================
+CÓMO CONECTAR LoginPage.jsx (Frontend) AL BACKEND DE Ganker
+================================================================================
+
+1. RESUMEN DE LA ARQUITECTURA
+------------------------------
+
+   Backend (FastAPI):
+   - Endpoint de login: POST http://127.0.0.1:8000/auth/v1/login/
+   - Usa OAuth2PasswordRequestForm: espera los campos "username" (email) y "password"
+   - Respuesta exitosa: { access_token, refresh_token, token_type: "Bearer" }
+   - El CORS ya está configurado para http://localhost:5173 y http://localhost:5174
+
+   Frontend (React + Vite):
+   - URL base de la API ya configurada en .env.example como: VITE_API_URL=http://127.0.0.1:8000
+   - axiosClient.js ya está creado y listo para usar con ese baseURL
+   - FormLogin.jsx usa react-hook-form con los campos "email" y "password"
+   - Los tokens de autenticación aún no se guardan ni se usan (context/ está vacío)
+
+2. ARCHIVOS INVOLUCRADOS (NO MODIFICAR CÓDIGO DEL PROYECTO)
+-------------------------------------------------------------
+
+   - frontend/src/api/axiosClient.js         ← Ya existe, tiene el cliente listo
+   - frontend/src/components/common/FormLogin.jsx  ← Donde se hace el llamado a la API
+   - frontend/src/pages/LoginPage.jsx        ← Página que contiene FormLogin
+   - frontend/src/context/                   ← Donde podrías crear un contexto de auth
+   - backend/app/infrastructure/api/controllers/auth_controller.py ← Controlador
+
+3. PASOS PASO A PASO
+----------------------
+
+   PASO 1: Abrir el archivo FormLogin.jsx
+           Ruta: frontend/src/components/common/FormLogin.jsx
+
+   PASO 2: Importar axiosClient y useNavigate de react-router-dom
+
+           Agregar arriba del archivo:
+             import axiosClient from "../../api/axiosClient";
+             import { useNavigate } from "react-router-dom";
+
+   PASO 3: Obtener la función navigate del hook useNavigate
+
+           Dentro de la función FormLogin(), agregar:
+             const navigate = useNavigate();
+
+   PASO 4: Modificar la función onSubmit para hacer la petición al backend
+
+           El backend usa OAuth2PasswordRequestForm, que espera los datos como
+           form data (no JSON). Los campos del formulario son "email" y "password",
+           pero el backend espera "username" (para el email) y "password".
+
+           Reemplazar el onSubmit actual:
+
+             const onSubmit = async (data) => {
+               try {
+                 const response = await axiosClient.post("/auth/v1/login/",
+                   new URLSearchParams({
+                     username: data.email,
+                     password: data.password,
+                   }),
+                   {
+                     headers: { "Content-Type": "application/x-www-form-urlencoded" },
+                   }
+                 );
+
+                 // Guardar tokens en localStorage (o en un contexto de React)
+                 localStorage.setItem("access_token", response.data.access_token);
+                 localStorage.setItem("refresh_token", response.data.refresh_token);
+
+                 // Redirigir al home o donde corresponda
+                 navigate("/");
+               } catch (error) {
+                 console.error("Error en el login:", error.response?.data || error.message);
+               }
+             };
+
+   PASO 5: (Opcional) Crear un contexto de autenticación
+
+           Crear un archivo en frontend/src/context/AuthContext.jsx si quieres
+           manejar el estado de la sesión de forma global en lugar de
+           localStorage directamente.
+
+   PASO 6: Verificar que el backend esté corriendo
+
+           Ejecutar en una terminal:
+             cd backend
+             python -m app.infrastructure.start.main
+
+           El servidor debe estar disponible en http://127.0.0.1:8000
+
+   PASO 7: Verificar que el frontend esté corriendo
+
+           Ejecutar en otra terminal:
+             cd frontend
+             npm run dev
+
+           El frontend debe estar disponible en http://localhost:5173
+
+4. NOTAS IMPORTANTES
+---------------------
+
+   - El endpoint /auth/v1/login/ espera datos como form-urlencoded,
+     NO como JSON. Por eso se usa URLSearchParams con header
+     "Content-Type: application/x-www-form-urlencoded".
+
+   - El campo "username" del form de OAuth2 corresponde al email del usuario.
+
+   - Asegúrate de copiar el archivo .env.example como .env en la carpeta
+     frontend/ si aún no lo has hecho, para que VITE_API_URL esté disponible.
+
+   - Los tokens se pueden almacenar en localStorage como se muestra, o en
+     un contexto de React (recomendado para un manejo más limpio).
+
+   - Para proteger rutas que requieran autenticación, añade el token
+     como header Authorization: Bearer <access_token> en axiosClient.js
+     o en las peticiones que lo necesiten.
+
+5. FLUJO DE DATOS
+------------------
+
+   Usuario escribe email y password
+          ↓
+   FormLogin.jsx captura el formulario (react-hook-form valida)
+          ↓
+   onSubmit envía POST a /auth/v1/login/ con URLSearchParams
+          ↓
+   Backend valida credenciales, genera JWT tokens
+          ↓
+   Respuesta: { access_token, refresh_token, token_type }
+          ↓
+   Frontend guarda tokens (localStorage o contexto)
+          ↓
+   Frontend redirige al usuario (navigate("/"))
+================================================================================

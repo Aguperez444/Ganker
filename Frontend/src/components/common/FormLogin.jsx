@@ -1,6 +1,10 @@
 import { useForm } from 'react-hook-form';
+import { useAuth } from "../../context/AuthContext";
 
 export default function FormLogin() {
+
+  const { login } = useAuth();
+
   const {
     register,
     handleSubmit,
@@ -8,8 +12,11 @@ export default function FormLogin() {
     formState: { errors },
   } = useForm();
 
-  const onSubmit = (data) => {
-    console.log('Datos de login:', data);
+  const onSubmit = async (data) => {
+    const result = await login(data.email, data.password);
+    if (!result.success) {
+      console.error("Error en el login:", result.error);
+    }
     reset();
   };
 
