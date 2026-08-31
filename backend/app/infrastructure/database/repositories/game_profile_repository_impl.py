@@ -32,3 +32,6 @@ class GameProfileRepositoryImpl(IGameProfileRepository):
         ).first()
         domain_found = GameProfileMapper.orm_to_domain(found) if found else None
         return domain_found
+
+    def update_game_profile(self, game_profile: 'GameProfile') -> 'GameProfile':
+        pass
