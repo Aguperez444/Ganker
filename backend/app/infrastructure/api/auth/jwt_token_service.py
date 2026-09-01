@@ -47,14 +47,21 @@ class JwtTokenService(ITokenService):
         return access_token, refresh_token
 
     def verify_access_token(self, access_token: str) -> int:
-        payload = jwt.decode(access_token, self.secret_key, algorithms=["HS256"])
+        try:
+            payload = jwt.decode(access_token, self.secret_key, algorithms=["HS256"])
+        except jwt.PyJWTError as e:
+            raise InvalidTokenException(f"Token inválido: {str(e)}")
 
         if payload.get("type") != "access":
             raise InvalidTokenException("Token inválido: no es un access token")
         return int(payload["sub"])
 
     def verify_refresh_token(self, refresh_token: str) -> int:
-        payload = jwt.decode(refresh_token, self.secret_key, algorithms=["HS256"])
+        try:
+            payload = jwt.decode(refresh_token, self.secret_key, algorithms=["HS256"])
+        except jwt.PyJWTError as e:
+            raise InvalidTokenException(f"Token inválido: {str(e)}")
+
         if payload.get("type") != "refresh":
             raise InvalidTokenException("Token inválido: no es un refresh token")
         return int(payload["sub"])

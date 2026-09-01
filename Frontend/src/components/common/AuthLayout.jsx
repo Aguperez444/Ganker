@@ -5,7 +5,7 @@ import AuthTabs from "./AuthTabs";
 // quedan acá una sola vez; cada page solo aporta su propio formulario.
 function AuthLayout({ children }) {
   return (
-    <main className="grid min-h-screen bg-primary lg:grid-cols-2">
+    <main className="grid min-h-screen bg-ganker-bg lg:grid-cols-2">
       <section className="flex flex-col items-center justify-center px-8 py-12">
         <img
           src="/images/Logo_y_letras_blanco_con_subtitulo_y_juegos_blanco.svg"

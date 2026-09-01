@@ -2,6 +2,8 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import HomePage from "../pages/HomePage.jsx";
 import RegistroPage from "../pages/RegistroPage.jsx";
 // import LoginPage from "../pages/LoginPage.jsx";
+import RegisterGamePage from "../pages/admin/RegisterGamePage.jsx";
+
 
 /**
  * Definicion central de rutas de la aplicacion.
@@ -17,6 +19,7 @@ function AppRouter() {
             Cuando exista pages/LoginPage.jsx, descomentar el import de arriba
             y esta linea, y queda conectado. */}
         {/* <Route path="/login" element={<LoginPage />} /> */}
+        <Route path="/admin/games/register" element={<RegisterGamePage />} />
       </Routes>
     </BrowserRouter>
   );

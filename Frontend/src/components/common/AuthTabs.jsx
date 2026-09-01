@@ -12,7 +12,7 @@ function AuthTabs() {
   const { pathname } = useLocation();
 
   return (
-    <div className="mb-6 flex rounded-lg border border-tertiary bg-secondary p-1">
+    <div className="mb-6 flex rounded-lg border border-ganker-purple bg-ganker-surface p-1">
       {PESTANAS.map(({ ruta, etiqueta }) => {
         const activa = pathname === ruta;
         return (
@@ -20,7 +20,7 @@ function AuthTabs() {
             key={ruta}
             to={ruta}
             className={`flex-1 rounded-md py-2.5 text-center text-sm font-semibold font-body transition ${
-              activa ? "bg-tertiary text-text-primary" : "text-text-secondary hover:text-text-primary"
+              activa ? "bg-ganker-purple text-ganker-text" : "text-ganker-muted hover:text-ganker-text"
             }`}
           >
             {etiqueta}

@@ -22,7 +22,7 @@ function JugadorForm({ valores, errores, cargando, errorServidor, onChange, onBl
   return (
     <form
       onSubmit={onSubmit}
-      className="space-y-5 rounded-2xl border border-tertiary bg-secondary p-8"
+      className="space-y-5 rounded-2xl border border-ganker-purple bg-ganker-surface p-8"
     >
       <div className="grid gap-5 sm:grid-cols-2">
         <CampoTexto
@@ -77,7 +77,7 @@ function JugadorForm({ valores, errores, cargando, errorServidor, onChange, onBl
       />
 
       {errorServidor && (
-        <p className="rounded-lg border border-error/40 bg-error/10 px-3 py-2 text-sm text-error font-body">
+        <p className="rounded-lg border border-ganker-error/40 bg-ganker-error/10 px-3 py-2 text-sm text-ganker-error font-body">
           {errorServidor}
         </p>
       )}
@@ -85,11 +85,9 @@ function JugadorForm({ valores, errores, cargando, errorServidor, onChange, onBl
       <button
         type="submit"
         disabled={cargando}
-        className="w-full rounded-lg bg-gradient-to-r from-orange-500 to-violet-600 py-3
-          text-sm font-bold uppercase tracking-wide text-[#f4f2f5] font-heading transition
+        className="w-full rounded-lg bg-gradient-to-r from-ganker-orange to-ganker-purple py-3
+          text-sm font-bold uppercase tracking-wide text-ganker-text font-heading transition
           hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-60"
-        // from-orange-500 to-violet-600: sin tokens de acento en @theme todavia
-        // text-[#f4f2f5]: crema pedido, falta el token real
       >
         {cargando ? "Creando cuenta..." : "Crear mi cuenta"}
       </button>
