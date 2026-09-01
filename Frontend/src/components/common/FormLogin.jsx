@@ -7,6 +7,7 @@ export default function FormLogin() {
   const { login } = useAuth();
 
   const [successMsg, setSuccessMsg] = useState("");
+  const [errorMsg, setErrorMsg] = useState("");
 
   const {
     register,
@@ -17,22 +18,32 @@ export default function FormLogin() {
 
   const onSubmit = async (data) => {
     const result = await login(data.email, data.password);
+
     if (result.success) {
+      setErrorMsg("");
       setSuccessMsg(`¡Bienvenido, ${data.email}!`);
       setTimeout(() => setSuccessMsg(""), 3000);
-      alert(`¡Bienvenido, ${data.email}!`);
     } else {
+      setSuccessMsg("");
+      setErrorMsg("No encontramos una cuenta con ese email o la contraseña es incorrecta. \n Quizas deberia registrarse");
       console.error("Error en el login:", result.error);
     }
-      reset();
+
+    reset();
   };
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="w-lg h-max border border-ganker-border2 shadow-ganker-orange shadow-[0_-0px_28px] bg-ganker-card2 p-6 text-ganker-text  ">
 
       {successMsg && (
-        <div className="mb-4 rounded-lg bg-green-500/20 border border-green-400 text-green-400 px-4 py-2 text-sm text-center">
+        <div className="mb-4 rounded-lg border border-green-400 bg-green-500/20 px-4 py-2 text-center text-sm text-green-400">
           {successMsg}
+        </div>
+      )}
+
+      {errorMsg && (
+        <div className="mb-4 rounded-lg border border-red-500/60 bg-red-500/10 px-4 py-2 text-center text-sm text-red-300">
+          {errorMsg}
         </div>
       )}
 
