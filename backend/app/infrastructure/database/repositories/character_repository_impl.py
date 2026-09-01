@@ -15,3 +15,8 @@ class CharacterRepositoryImpl(ICharacterRepository):
         found = self.session.query(CharacterORM).filter(CharacterORM.character_id == character_id).first()
         domain_found = CharacterMapper.orm_to_domain(found) if found else None
         return domain_found
+
+    def get_characters_by_game_id(self, game_id: int) -> list['Character']:
+        found = self.session.query(CharacterORM).filter(CharacterORM.videogame_id == game_id).all()
+        domain_found = [CharacterMapper.orm_to_domain(character) for character in found]
+        return domain_found

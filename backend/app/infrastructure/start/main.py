@@ -10,6 +10,9 @@ from app.infrastructure.api.controllers.player_controller import router as playe
 from app.infrastructure.api.controllers.auth_controller import router as auth_router
 from app.infrastructure.api.controllers.game_profile_controller import router as game_profile_router
 from app.infrastructure.api.controllers.videogame_controller import router as videogame_router
+from app.infrastructure.api.controllers.role_controller import router as role_router
+from app.infrastructure.api.controllers.rank_controller import router as rank_router
+from app.infrastructure.api.controllers.character_controller import router as character_router
 
 app = FastAPI(title="Ganker", version="1.0.0")
 
@@ -40,6 +43,9 @@ app.include_router(player_router)
 app.include_router(game_profile_router)
 app.include_router(auth_router)
 app.include_router(videogame_router)
+app.include_router(role_router)
+app.include_router(rank_router)
+app.include_router(character_router)
 
 
 host = "127.0.0.1"

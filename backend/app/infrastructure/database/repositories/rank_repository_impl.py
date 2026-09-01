@@ -16,3 +16,8 @@ class RankRepositoryImpl(IRankRepository):
         found = self.session.query(RankORM).filter(RankORM.rank_id == rank_id).first()
         domain_found = RankMapper.orm_to_domain(found) if found else None
         return domain_found
+
+    def get_ranks_by_game_id(self, game_id: int) -> list['Rank']:
+        found = self.session.query(RankORM).filter(RankORM.videogame_id == game_id).all()
+        domain_found = [RankMapper.orm_to_domain(rank) for rank in found]
+        return domain_found
