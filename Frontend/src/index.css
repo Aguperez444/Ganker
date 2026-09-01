@@ -5,56 +5,67 @@
 
 @theme {
 
-  --color-ganker-orange: #FF6B00;  /* Naranja Accent */
-  --color-ganker-purple: #6B46C1;   /* Morado Accent */
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+
+  --color-ganker-orange: #FF6B00;
+  --color-ganker-purple: #8B5CF6;
   --color-ganker-sombra: rgba(255, 107, 0, 0.45);
-  --color-ganker-bg: #0F0E17;       /* Fondo Principal */
-  --color-ganker-card: #12111A;     /* Fondo de Tarjetas */
-  --color-ganker-border: #2A273A;   /* Color de Bordes */
-  --color-ganker-purple: #8B5CF6;    /* Púrpura brillante e intenso del logo */
-  /* Purpuras de la paleta de colores*/
-  --color-ganker-purple-dark: #2A004B; 
-  --color-ganker-purple-main: #630094;
-  --color-ganker-purple-light: #855F9E;
-  --color-ganker-purple-accent: #6F119B;
-  --color-ganker-text: #FFFFFF;    /* Texto principal */
-   /* Fondos Claros */
-   --color-ganker-bg-light: #E2E2E2;
-   --color-ganker-bg-light2: #F7F5F0;
-  /* Fondos y Estructura */
-  --color-ganker-bg2: #05020D;
-  --color-ganker-card2: #0B0718;
   --color-ganker-input: #070412;
+  --color-ganker-card2: #0B0718;
   --color-ganker-border2: #1C1535;
-
-  /* Colores de Marca y Accent */
-  --color-ganker-orange2: #FF6B00;
-  --color-ganker-pink2: #EC4899;
-  --color-ganker-purple2: #8B5CF6;
-  --color-ganker-purple-neon: #A855F7;
-
-  /* Texto */
-  --color-ganker-muted: #6B7280;
-
-
-  /* Colores Ganker */
-
-  --color-primary: #14152a;
-  --color-secondary: #1a192d;
-
-  /*--color-background: #...;
-  --color-surface: #...;*/
-
-  --color-text-primary: #ffffff;
-  --color-text-secondary: #b8b4c4;
-
-  --color-success: #38c793;
-  --color-error: #f05252;
-
-  /* Tipografías */
+  --color-ganker-text: #FFFFFF;
 
   --font-heading: "Space Grotesk", sans-serif;
   --font-body: "Inter", sans-serif;
-
-
 };
