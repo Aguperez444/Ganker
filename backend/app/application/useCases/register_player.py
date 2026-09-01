@@ -1,6 +1,5 @@
 import re
 
-
 from typing import TYPE_CHECKING, cast
 
 from app.application.ports.i_password_hasher import IPasswordHasher
@@ -24,7 +23,7 @@ class RegisterPlayer:
         self.token_service: ITokenService = token_service
         self.pass_hasher: IPasswordHasher = password_hasher
 
-    def execute(self, player_data: RegisterPlayerRequest) -> AuthTokensResponse:
+    def execute(self, player_data: 'RegisterPlayerRequest') -> AuthTokensResponse:
         # Se asume que lo que me llega es un mail por la validación de pydantic en el dto.
         # Validar que no exista otra cuenta con ese mail
         if not self.validate_mail(player_data.mail):
