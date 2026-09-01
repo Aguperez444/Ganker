@@ -42,7 +42,7 @@ export default function FormLogin() {
       )}
 
       {errorMsg && (
-        <div className="mb-4 rounded-lg border border-red-500/60 bg-red-500/10 px-4 py-2 text-center text-sm text-red-300">
+        <div className="mb-4 rounded-lg border border-ganker-purple/70 bg-ganker-purple/10 px-4 py-2 text-center text-sm text-purple-400">
           {errorMsg}
         </div>
       )}
