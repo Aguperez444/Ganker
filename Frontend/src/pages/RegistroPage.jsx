@@ -1,52 +1,46 @@
-import { Link } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
+import AuthLayout from "../components/common/AuthLayout";
 import JugadorForm from "../components/jugadores/JugadorForm";
 import { useRegistrarJugador } from "../hooks/useRegistrarJugador";
 
 function RegistroPage() {
   const { valores, errores, cargando, errorServidor, handleChange, handleBlur, handleSubmit } =
     useRegistrarJugador();
+  const navigate = useNavigate();
 
   async function onSubmit(e) {
     const tokens = await handleSubmit(e);
     if (tokens) {
-      // TODO: cuando exista la sesión global en context/, guardar los tokens
-      // acá y redirigir con useNavigate("/").
+      // Por ahora, si el registro sale bien, solo redirige a Home sin
+      // guardar sesion (no hay logueo automatico todavia).
+      //
+      // Cuando se arme el login, quien lo haga deberia:
+      //   1. Crear la sesion global (ej. src/context/AuthContext.jsx) que
+      //      guarde el token (localStorage) y le diga al resto de la app
+      //      si hay alguien logueado.
+      //   2. Reemplazar el navigate("/") de aca abajo por algo como:
+      //        guardarSesion(tokens);   // el metodo que exponga esa sesion
+      //        navigate("/");
+      //      usando estos mismos "tokens" que ya devuelve handleSubmit.
+      //   3. El propio login (useIniciarSesion.js, cuando exista) va a
+      //      necesitar hacer exactamente el mismo guardarSesion(tokens)
+      //      con sus propios tokens al iniciar sesion.
+      navigate("/");
     }
   }
 
   return (
-    <main className="grid min-h-screen bg-primary lg:grid-cols-2">
-      <section className="flex flex-col items-center justify-center gap-6 px-8 py-12 text-center">
-        <img
-            src="/images/logo-ganker.png"
-            alt="Ganker — Encuentra. Conecta. Compite."
-            className="w-full max-w-sm"
-        />
-        <p className="text-sm text-text-secondary font-body">
-            ¿Ya tenés cuenta?{" "}
-            <Link to="/login" className="text-orange-400 hover:underline">
-            {/* text-orange-400: sin token de acento en @theme todavia */}
-            Iniciar sesión
-            </Link>
-        </p>
-      </section>
-
-      <section className="flex flex-col justify-center px-8 py-12">
-        <div className="mx-auto w-full max-w-xl">
-          <h2 className="text-2xl font-bold text-text-primary font-heading">Registrar jugador</h2>
-          <p className="mb-6 mt-1 text-sm text-text-secondary font-body">Creá tu cuenta y unite a la comunidad</p>
-          <JugadorForm
-            valores={valores}
-            errores={errores}
-            cargando={cargando}
-            errorServidor={errorServidor}
-            onChange={handleChange}
-            onBlur={handleBlur}
-            onSubmit={onSubmit}
-          />
-        </div>
-      </section>
-    </main>
+    <AuthLayout>
+      <JugadorForm
+        valores={valores}
+        errores={errores}
+        cargando={cargando}
+        errorServidor={errorServidor}
+        onChange={handleChange}
+        onBlur={handleBlur}
+        onSubmit={onSubmit}
+      />
+    </AuthLayout>
   );
 }
 

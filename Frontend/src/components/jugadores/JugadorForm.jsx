@@ -22,8 +22,7 @@ function JugadorForm({ valores, errores, cargando, errorServidor, onChange, onBl
   return (
     <form
       onSubmit={onSubmit}
-      className="space-y-5 rounded-2xl border border-violet-900/40 bg-secondary p-8"
-      // border-violet-900/40: sin token de acento definido en @theme todavia
+      className="space-y-5 rounded-2xl border border-tertiary bg-secondary p-8"
     >
       <div className="grid gap-5 sm:grid-cols-2">
         <CampoTexto

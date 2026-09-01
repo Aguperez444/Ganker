@@ -14,9 +14,9 @@ function CampoTexto({ label, icono, error, extra, ...props }) {
           className={`w-full rounded-lg border bg-secondary py-2.5 text-sm text-[#f4f2f5] font-body
             placeholder:text-text-secondary focus:outline-none focus:ring-2 focus:ring-violet-500
             ${icono ? "pl-9" : "pl-3"} ${extra ? "pr-9" : "pr-3"}
-            ${error ? "border-error" : "border-violet-900/60"}`}
+            ${error ? "border-error" : "border-tertiary"}`}
           // text-[#f4f2f5]: crema pedido, todavia sin token real (confirmar con el equipo)
-          // focus:ring-violet-500 / border-violet-900/60: sin token de acento definido en @theme
+          // focus:ring-violet-500: sin token de acento para el foco todavia
           {...props}
         />
         {extra}
