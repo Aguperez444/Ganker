@@ -8,20 +8,27 @@
 @theme {
   /* Colores Ganker */
 
-  --color-primary: #14152a;
-  --color-secondary: #1a192d;
+  --color-ganker-bg: #08061f;
+  --color-ganker-surface: #100d2b;
+  --color-ganker-surface-light: #171238;
 
-  --color-background: #...;
-  --color-surface: #...;
+  --color-ganker-purple: #6d28d9;
+  --color-ganker-purple-light: #8b5cf6;
 
-  --color-text-primary: #ffffff;
-  --color-text-secondary: #b8b4c4;
+  --color-ganker-orange: #ff6b00;
+  --color-ganker-orange-light: #ff8a3d;
 
-  --color-success: #38c793;
-  --color-error: #f05252;
+  --color-ganker-text: #f5f3ff;
+  --color-ganker-muted: #9d97b5;
+
+  --color-ganker-error: #fb7185;
+  --color-ganker-success: #4ade80;
 
   /* Tipografías */
 
   --font-heading: "Space Grotesk", sans-serif;
   --font-body: "Inter", sans-serif;
+}
+body {
+  font-family: var(--font-body);
 }
