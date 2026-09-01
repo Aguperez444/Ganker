@@ -44,3 +44,8 @@ class VideogameRepositoryImpl(IVideogameRepository):
             self.session.refresh(orm_videogame)
             return VideogameMapper.orm_to_domain(orm_videogame)
         return videogame
+
+    def get_all_videogames(self) -> list['Videogame']:
+        orm_videogames = self.session.query(VideogameORM).all()
+        domain_videogames = [VideogameMapper.orm_to_domain(v) for v in orm_videogames]
+        return domain_videogames
