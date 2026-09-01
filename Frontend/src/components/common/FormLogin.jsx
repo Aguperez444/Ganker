@@ -1,9 +1,12 @@
 import { useForm } from 'react-hook-form';
 import { useAuth } from "../../context/AuthContext";
+import { useState } from "react";
 
 export default function FormLogin() {
-
+  
   const { login } = useAuth();
+
+  const [successMsg, setSuccessMsg] = useState("");
 
   const {
     register,
@@ -14,14 +17,24 @@ export default function FormLogin() {
 
   const onSubmit = async (data) => {
     const result = await login(data.email, data.password);
-    if (!result.success) {
+    if (result.success) {
+      setSuccessMsg(`¡Bienvenido, ${data.email}!`);
+      setTimeout(() => setSuccessMsg(""), 3000);
+      alert(`¡Bienvenido, ${data.email}!`);
+    } else {
       console.error("Error en el login:", result.error);
     }
-    reset();
+      reset();
   };
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="w-lg h-max   bg-ganker-card2 p-6 text-ganker-text shadow-lg">
+    <form onSubmit={handleSubmit(onSubmit)} className="w-lg h-max border border-ganker-border2 shadow-ganker-orange shadow-[0_-0px_28px] bg-ganker-card2 p-6 text-ganker-text  ">
+
+      {successMsg && (
+        <div className="mb-4 rounded-lg bg-green-500/20 border border-green-400 text-green-400 px-4 py-2 text-sm text-center">
+          {successMsg}
+        </div>
+      )}
 
       <div className="space-y-10">
         <div className="flex flex-col gap-2">
