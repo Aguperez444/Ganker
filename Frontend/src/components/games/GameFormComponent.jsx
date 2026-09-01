@@ -31,7 +31,7 @@ const GameForm = () => {
       );
       setName("");
     } catch (error) {
-      if (error.response?.status === 422) {
+      if (error.response?.status === 400) {
         setError("El nombre ingresado no es válido.");
       } else if (error.response?.status === 409) {
         setError("Ya existe un videojuego registrado con ese nombre.");
