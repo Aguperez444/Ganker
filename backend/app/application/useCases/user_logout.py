@@ -16,4 +16,3 @@ class UserLogout:
             revoked = self.uow.refresh_token_repo.revoke_by_jti(jti)
             if not revoked:
                 raise InvalidTokenException("Token revoked")
-            self.uow.commit()
