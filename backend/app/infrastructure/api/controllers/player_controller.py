@@ -35,7 +35,7 @@ def update_player(request: UpdatePlayerRequest, _player_id: int = Depends(get_cu
     update_player_use_case = UpdatePlayer(uow)
     updated_player = update_player_use_case.execute(_player_id, request)
     return UpdatePlayerResponse(
-        player_id= cast(int, updated_player.player_id),
+        player_id=cast(int, updated_player.player_id),
         username=updated_player.username,
         name=updated_player.name,
         mail=updated_player.mail
