@@ -6,7 +6,7 @@ from app.application.ports.i_rank_repository import IRankRepository
 
 
 if TYPE_CHECKING:
-    from models.rank import Rank
+    from app.domain.models.rank import Rank
 
 class RankRepositoryImpl(IRankRepository):
     def __init__(self, session):

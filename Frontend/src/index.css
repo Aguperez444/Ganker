@@ -1,63 +1,12 @@
 /* Tailwind CSS v4: una sola linea reemplaza a las tres directivas
    @tailwind de la v3. La configuracion del tema, si hace falta,
    se escribe aca mismo con @theme (config CSS-first). */
+@import url("https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&family=Open+Sans:ital,wght@0,300..800;1,300..800&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&family=Open+Sans:ital,wght@0,300..800;1,300..800&family=Space+Grotesk:wght@300..700&display=swap");
 @import "tailwindcss";
 
 @theme {
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-  
-
-
+  /* Ganker */
   --color-ganker-orange: #FF6B00;
   --color-ganker-purple: #8B5CF6;
   --color-ganker-sombra: rgba(255, 107, 0, 0.45);
@@ -66,6 +15,23 @@
   --color-ganker-border2: #1C1535;
   --color-ganker-text: #FFFFFF;
 
+  /* Colores Ganker */
+
+  --color-primary: #14152a;
+  --color-secondary: #1a192d;
+
+  --color-background: #...;
+  --color-surface: #...;
+
+  --color-text-primary: #ffffff;
+  --color-text-secondary: #b8b4c4;
+
+  --color-success: #38c793;
+  --color-error: #f05252;
+
+  /* Tipografías */
+
   --font-heading: "Space Grotesk", sans-serif;
   --font-body: "Inter", sans-serif;
+
 };
