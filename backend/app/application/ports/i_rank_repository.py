@@ -14,3 +14,7 @@ class IRankRepository(ABC):
     @abstractmethod
     def get_ranks_by_game_id(self, game_id: int) -> list['Rank']:
         raise NotImplementedError
+
+    @abstractmethod
+    def save_rank(self, rank: 'Rank') -> 'Rank':
+        raise NotImplementedError

@@ -1,18 +1,19 @@
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Optional
 
 if TYPE_CHECKING:
     from app.domain.models.videogame import Videogame
 
 
 class Rank:
-    def __init__(self, rank_id: int,name: str, value: int, videogame: 'Videogame'):
-        self._rank_id: int = rank_id
+    def __init__(self, rank_id: Optional[int], name: str, value: int, videogame: 'Videogame', icon_url: str):
+        self._rank_id: Optional[int] = rank_id
         self._name: str = name
         self._value: int = value
         self._videogame: 'Videogame' = videogame
+        self._icon_url: str = icon_url
 
     @property
-    def rank_id(self) -> int:
+    def rank_id(self) -> Optional[int]:
         return self._rank_id
     @rank_id.setter
     def rank_id(self, value: int) -> None:
@@ -38,3 +39,10 @@ class Rank:
     @videogame.setter
     def videogame(self, value: 'Videogame') -> None:
         self._videogame = value
+
+    @property
+    def icon_url(self) -> str:
+        return self._icon_url
+    @icon_url.setter
+    def icon_url(self, value: str) -> None:
+        self._icon_url = value
