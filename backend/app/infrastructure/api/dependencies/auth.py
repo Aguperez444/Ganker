@@ -7,5 +7,13 @@ from app.infrastructure.config.settings import settings
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/v1/login")
 token_service = JwtTokenService(settings.jwt_secret_key)
 
-def get_current_player_id(token: str = Depends(oauth2_scheme)) -> int:
-    return int(token_service.verify_access_token(token))
+def get_current_user(token: str = Depends(oauth2_scheme)) -> dict:
+    return token_service.verify_access_token(token)
+
+def get_current_player_id(token_data: dict = Depends(get_current_user)) -> int:
+    if token_data.get("role") != "player":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Acceso restringido únicamente a jugadores"
+        )
+    return token_data["user_id"]
