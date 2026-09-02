@@ -18,6 +18,7 @@ class RankORM(Base):
     videogame_id: Mapped[int] = mapped_column(ForeignKey("videogame.videogame_id"), nullable=False)
     name: Mapped[str] = mapped_column(String, nullable=False)
     value: Mapped[int] = mapped_column(nullable=False)
+    icon_url: Mapped[str] = mapped_column(String, nullable=False)
 
     # Relaciones
     videogame: Mapped["VideogameORM"] = relationship(back_populates="ranks")

@@ -21,3 +21,10 @@ class RankRepositoryImpl(IRankRepository):
         found = self.session.query(RankORM).filter(RankORM.videogame_id == game_id).all()
         domain_found = [RankMapper.orm_to_domain(rank) for rank in found]
         return domain_found
+
+    def save_rank(self, rank: 'Rank') -> 'Rank':
+        orm_rank = RankMapper.domain_to_orm(rank)
+        self.session.add(orm_rank)
+        self.session.flush()
+        self.session.refresh(orm_rank)
+        return RankMapper.orm_to_domain(orm_rank)

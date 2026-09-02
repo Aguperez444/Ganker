@@ -9,7 +9,8 @@ class RankMapper:
             rank_id = rank_orm.rank_id,
             name = rank_orm.name,
             value = rank_orm.value,
-            videogame = VideogameMapper.orm_to_domain(rank_orm.videogame)
+            videogame = VideogameMapper.orm_to_domain(rank_orm.videogame),
+            icon_url= rank_orm.icon_url
         )
 
     @staticmethod
@@ -18,5 +19,6 @@ class RankMapper:
             rank_id = rank.rank_id,
             name = rank.name,
             value = rank.value,
-            videogame_id = rank.videogame.videogame_id
+            videogame_id = rank.videogame.videogame_id,
+            icon_url = rank.icon_url
         )
