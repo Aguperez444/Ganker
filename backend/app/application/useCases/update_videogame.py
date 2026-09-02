@@ -10,7 +10,7 @@ class UpdateVideogame:
         self.uow: IUnitOfWork = unit_of_work
 
     def execute(self, videogame_id: int, update_videogame_request: UpdateVideogameRequest) -> Videogame:
-        pass
+
         existing_game = self.validate_videogame_id(videogame_id)
         cleaned_name = self.validate_videogame_name(update_videogame_request)
         self.validate_name_uniqueness(cleaned_name, videogame_id)

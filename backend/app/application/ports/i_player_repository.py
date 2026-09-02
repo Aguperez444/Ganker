@@ -19,5 +19,9 @@ class IPlayerRepository(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    def get_player_by_mail(self, mail) -> Optional['Player']:
+    def get_player_by_mail(self, mail: str) -> Optional['Player']:
+        raise NotImplementedError
+
+    @abstractmethod
+    def update_player(self, player: 'Player') -> 'Player':
         raise NotImplementedError
