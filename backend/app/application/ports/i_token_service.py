@@ -1,16 +1,17 @@
 from abc import ABC, abstractmethod
-from typing import Tuple
+from datetime import datetime
+from typing import Tuple, Dict, Any
 
 
 class ITokenService(ABC):
     @abstractmethod
-    def generate_tokens(self, user_id: int) -> Tuple[str, str]:
+    def generate_tokens(self, user_id: int, role: str) -> Tuple[str, str, str, datetime]:
         raise NotImplementedError
 
     @abstractmethod
-    def verify_access_token(self, access_token: str) -> int:
+    def verify_access_token(self, access_token: str) -> Dict[str, Any]:
         raise NotImplementedError
 
     @abstractmethod
-    def verify_refresh_token(self, refresh_token: str) -> int:
+    def verify_refresh_token(self, refresh_token: str) -> Dict[str, Any]:
         pass

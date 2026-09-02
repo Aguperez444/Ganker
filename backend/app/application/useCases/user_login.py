@@ -34,6 +34,23 @@ class UserLogin:
         if not self.pass_hasher.verify_password(player_data.password, cast(str, user.password_hash)): #TODO revisar este cast, cuando empecemos a usar cuentas por identidad federada puede llegar a darse el caso de que password sea None
             raise WrongPasswordException(player_data.mail)
 
-        # si la contraseña es correcta, generar un token de acceso
-        access_token, refresh_token = self.token_service.generate_tokens(cast(int, user.player_id))
+        player_id = cast(int, user.player_id)
+        role = "player"
+
+        # Generar tokens recibiendo jti y fecha de expiración
+        access_token, refresh_token, jti, expires_at = self.token_service.generate_tokens(
+            user_id=player_id,
+            role=role
+        )
+
+        # Persistir el refresh token en la bd
+        with self.uow:
+            self.uow.refresh_token_repo.save(
+                user_id=player_id,
+                role=role,
+                jti=jti,
+                expires_at=expires_at
+            )
+
+
         return AuthTokensResponse(access_token, refresh_token)
