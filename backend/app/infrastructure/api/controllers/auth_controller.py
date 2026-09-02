@@ -4,6 +4,7 @@ from fastapi.security import OAuth2PasswordRequestForm
 
 from app.application.useCases.user_login import UserLogin
 from app.application.useCases.refresh_token import RefreshToken
+from app.application.useCases.user_logout import UserLogout
 
 from app.infrastructure.api.auth.jwt_token_service import JwtTokenService
 from app.infrastructure.api.auth.password_hash_service import PasswordHashService
@@ -36,4 +37,11 @@ def refresh(refresh_data: RefreshTokenRequest) -> AuthTokensResponse:
     refresh_token_use_case = RefreshToken(uow, token_service)
     return refresh_token_use_case.execute(refresh_data.refresh_token)
 
+@router.post("/logout", status_code=status.HTTP_204_NO_CONTENT)
+def logout(refresh_data: RefreshTokenRequest):
+    uow = uow_factory()
+    token_service = JwtTokenService(settings.jwt_secret_key)
 
+    logout_use_case = UserLogout(uow, token_service)
+    logout_use_case.execute(refresh_data.refresh_token)
+    return None

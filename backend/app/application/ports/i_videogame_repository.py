@@ -22,3 +22,7 @@ class IVideogameRepository(ABC):
     @abstractmethod
     def update_videogame(self, videogame: 'Videogame') -> 'Videogame':
         raise NotImplementedError
+
+    @abstractmethod
+    def get_all_videogames(self) -> list['Videogame']:
+        raise NotImplementedError
