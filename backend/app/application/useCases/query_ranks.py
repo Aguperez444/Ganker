@@ -11,7 +11,7 @@ class QueryRanks:
         with self.uow as uow:
             ranks = uow.rank_repo.get_ranks_by_game_id(game_id)
 
-        ranks_response = [RankObjectResponse(rank_id=rank.rank_id, name=rank.name, value=rank.value) for rank in ranks]
+        ranks_response = [RankObjectResponse(rank_id=rank.rank_id, name=rank.name, value=rank.value, icon_url=rank.icon_url) for rank in ranks]
 
         return GetRanksResponse(ranks=ranks_response)
 

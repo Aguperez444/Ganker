@@ -1,6 +1,10 @@
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
+from app.infrastructure.config.settings import settings
+import os
 import uvicorn
+
+from fastapi.staticfiles import StaticFiles
 
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -24,6 +28,19 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# SERVIR MEDIOS EN MODO LOCAL (Solo si NO estamos dentro de Docker)
+# En Docker definimos UPLOAD_DIR=/app/media; en local esa variable no existe
+IS_DOCKER = os.getenv("UPLOAD_DIR") is not None
+
+if not IS_DOCKER:
+    # Asegurar que la carpeta local exista antes de montarla para evitar errores
+    settings.media_dir.mkdir(parents=True, exist_ok=True)
+
+    # FastAPI atiende las peticiones a /media directamente desde la carpeta física
+    app.mount("/media", StaticFiles(directory=str(settings.media_dir)), name="media")
+    print(f"[*] Modo Local: FastAPI está sirviendo estáticos desde {settings.media_dir}")
+
 
 # EXCEPTION HANDLERS
 @app.exception_handler(DomainException)
