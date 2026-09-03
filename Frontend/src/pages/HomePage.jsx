@@ -1,24 +1,23 @@
-/**
- * Pantalla inicial. Sirve como verificacion rapida de que el entorno
- * quedo bien configurado (React + Tailwind + variables de entorno).
- * Se puede reemplazar por completo cuando arranquen las features reales.
- */
-import FondoApp from "../components/common/FondoApp.jsx";
 import Header from "../components/common/Header.jsx";
 import Footer from "../components/common/Footer.jsx";
+import HeroSection from "../components/landing/HeroSection.jsx";
+import HowItWorksSection from "../components/landing/HowItWorksSection.jsx";
+import SupportedGamesSection from "../components/landing/SupportedGamesSection.jsx";
+import CtaBanner from "../components/landing/CtaBanner.jsx";
+
 function HomePage() {
-  const apiUrl = import.meta.env.VITE_API_URL;
-
   return (
-    <main className="flex min-h-screen flex-col" stroke="currentColor">
+    <div className="min-h-screen bg-[#0a0718] text-white flex flex-col selection:bg-orange-500 selection:text-white">
       <Header />
-      <div className="flex flex-1 flex-col">
-        <FondoApp />
-      </div>
+      <main className="flex-1">
+        <HeroSection />
+        <HowItWorksSection />
+        <SupportedGamesSection />
+        <CtaBanner />
+      </main>
       <Footer />
-    </main>
+    </div>
   );
-
 }
 
 export default HomePage;
