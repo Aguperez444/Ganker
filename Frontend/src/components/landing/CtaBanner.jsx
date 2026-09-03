@@ -10,7 +10,7 @@ function CtaBanner() {
               Tu próximo equipo ya está buscando.
             </h3>
             <p className="mt-1 text-xs sm:text-sm text-slate-400">
-              Gratis para siempre. Sin bots, sin smurfs sin verificar.
+              ¿Qué esperas para unirte?
             </p>
           </div>
 

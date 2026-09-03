@@ -77,3 +77,16 @@
 body {
   font-family: var(--font-body);
 }
+
+@keyframes gaming-pulse {
+  0%, 100% {
+    filter: brightness(1) drop-shadow(0 0 6px currentColor);
+  }
+  50% {
+    filter: brightness(1.2) drop-shadow(0 0 16px currentColor);
+  }
+}
+
+.animate-gaming-pulse {
+  animation: gaming-pulse 2.8s ease-in-out infinite;
+}

@@ -70,31 +70,6 @@ const STEPS = [
 function HowItWorksSection() {
   return (
     <section className="relative w-full py-16 overflow-hidden">
-      {/* Marcas de agua decorativas laterales */}
-      <div
-        className="pointer-events-none absolute -left-12 top-1/2 -translate-y-1/2 select-none opacity-5 hidden lg:block"
-        aria-hidden="true"
-      >
-        <img
-          src="/images/favicon.svg"
-          alt=""
-          className="h-72 w-72 filter brightness-150"
-        />
-      </div>
-
-      <div
-        className="pointer-events-none absolute -right-12 top-1/2 -translate-y-1/2 select-none opacity-5 hidden lg:block"
-        aria-hidden="true"
-      >
-        <svg
-          className="h-72 w-72 text-purple-400"
-          viewBox="740 809 130 140"
-          fill="currentColor"
-        >
-          <path d="m 742.35566,811.79709 h 50.82551 v 131.31867 h 40.24658 l 21.50323,-9.31422 h 5.28939 l -12.76372,34.95698 -0.80501,1.72485 H 740.40081 l -0.11477,-3.10472 15.1786,-18.16843 1.83984,-2.29979 V 827.66574 Z" />
-        </svg>
-      </div>
-
       <div className="relative z-10 mx-auto max-w-xl px-4">
         <h3 className="mb-8 text-center text-2xl sm:text-3xl font-bold text-white font-heading">
           Cómo funciona
