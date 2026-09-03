@@ -8,6 +8,7 @@ if TYPE_CHECKING:
     from app.domain.models.role import Role
 
 class RoleRepositoryImpl(IRoleRepository):
+
     def __init__(self, session):
         self.session = session
 
@@ -20,3 +21,11 @@ class RoleRepositoryImpl(IRoleRepository):
         found = self.session.query(RoleORM).filter(RoleORM.videogame_id == game_id).all()
         domain_found = [RoleMapper.orm_to_domain(role) for role in found]
         return domain_found
+
+
+    def save_role(self, role: 'Role') -> 'Role':
+        orm_role = RoleMapper.domain_to_orm(role)
+        self.session.add(orm_role)
+        self.session.flush()
+        self.session.refresh(orm_role)
+        return RoleMapper.orm_to_domain(orm_role)
