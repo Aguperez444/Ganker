@@ -16,6 +16,7 @@ class RoleORM(Base):
     role_id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     videogame_id: Mapped[int] = mapped_column(ForeignKey("videogame.videogame_id"), nullable=False)
     name: Mapped[str] = mapped_column(String, unique=True, nullable=False)
+    icon_url: Mapped[str] = mapped_column(String, nullable=False)
 
     # Relaciones
     videogame: Mapped["VideogameORM"] = relationship(back_populates="roles")

@@ -5,10 +5,11 @@ if TYPE_CHECKING:
 
 
 class Role:
-    def __init__(self, role_id: int, name: str, videogame: 'Videogame'):
+    def __init__(self, role_id: int, name: str, videogame: 'Videogame', icon_url: str):
         self._role_id: int = role_id
         self._name: str = name
         self._videogame: 'Videogame' = videogame
+        self._icon_url: str = icon_url
 
     @property
     def role_id(self) -> int:
@@ -28,3 +29,10 @@ class Role:
     @videogame.setter
     def videogame(self, value: 'Videogame'):
         self._videogame = value
+
+    @property
+    def icon_url(self) -> str:
+        return self._icon_url
+    @icon_url.setter
+    def icon_url(self, value: str):
+        self._icon_url = value

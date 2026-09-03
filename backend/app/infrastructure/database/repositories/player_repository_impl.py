@@ -36,3 +36,14 @@ class PlayerRepositoryImpl(IPlayerRepository):
         found = self.session.query(PlayerORM).filter(PlayerORM.username == username).first()
         domain_found = PlayerMapper.orm_to_domain(found) if found else None
         return domain_found
+
+    def update_player(self, player: 'Player') -> 'Player':
+        orm_player = self.session.query(PlayerORM).filter(PlayerORM.player_id == player.player_id).first()
+        if orm_player:
+            orm_player.name = player.name
+            orm_player.username = player.username
+            orm_player.mail = player.mail
+            self.session.flush()
+            self.session.refresh(orm_player)
+            return PlayerMapper.orm_to_domain(orm_player)
+        return player

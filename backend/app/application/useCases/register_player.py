@@ -1,6 +1,5 @@
 import re
 
-
 from typing import TYPE_CHECKING, cast
 
 from app.application.ports.i_password_hasher import IPasswordHasher
@@ -24,7 +23,7 @@ class RegisterPlayer:
         self.token_service: ITokenService = token_service
         self.pass_hasher: IPasswordHasher = password_hasher
 
-    def execute(self, player_data: RegisterPlayerRequest) -> AuthTokensResponse:
+    def execute(self, player_data: 'RegisterPlayerRequest') -> AuthTokensResponse:
         # Se asume que lo que me llega es un mail por la validación de pydantic en el dto.
         # Validar que no exista otra cuenta con ese mail
         if not self.validate_mail(player_data.mail):
@@ -47,12 +46,24 @@ class RegisterPlayer:
         # persistir el usuario en la base de datos y obtener el usuario registrado con su id
         with self.uow as uow:
             registered_player = uow.player_repo.create_player(new_player)
+            player_id = cast(int, registered_player.player_id)
+            role = "player"
 
-        access_token, refresh_token = self.token_service.generate_tokens(cast(int, registered_player.player_id))
+            # Generar tokens con id, rol, jti y fecha de expiración
+            access_token, refresh_token, jti, expires_at = self.token_service.generate_tokens(
+                user_id=player_id,
+                role=role
+            )
+
+            # Persistir el refresh token asociado
+            uow.refresh_token_repo.save(
+                user_id=player_id,
+                role=role,
+                jti=jti,
+                expires_at=expires_at
+            )
 
         return AuthTokensResponse(access_token, refresh_token)
-
-
 
 
     def validate_username(self, username: str) -> bool:
