@@ -8,8 +8,7 @@
 @theme {
   /* Colores Ganker */
 
-
-   --color-ganker-purple-dark: #2A004B; 
+  --color-ganker-purple-dark: #2A004B; 
   --color-ganker-purple-main: #630094;
   --color-ganker-purple-light: #855F9E;
   --color-ganker-purple-accent: #6F119B;
@@ -73,8 +72,7 @@
 
   /* Tipografías */
 
-  --font-heading: "Space Grotesk", sans-serif;
-  --font-body: "Inter", sans-serif;
+ 
 }
 body {
   font-family: var(--font-body);

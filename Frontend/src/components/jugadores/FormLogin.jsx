@@ -64,7 +64,7 @@ function FormLogin() {
   return (
     <form
       onSubmit={onSubmit}
-      className="space-y-5 rounded-2xl border border-ganker-purple bg-ganker-surface p-8"
+      className="space-y-5 rounded-2xl border border-ganker-bg bg-ganker-surface p-8 shadow-[0_0px_10px] shadow-ganker-purple"
     >
       <CampoTexto
         label="EMAIL"
