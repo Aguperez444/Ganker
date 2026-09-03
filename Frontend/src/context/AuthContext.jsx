@@ -28,6 +28,28 @@ export function AuthProvider({ children }) {
     setLoading(false);
   }, []);
 
+  // Guarda una sesion iniciada en el estado global y en localStorage.
+  // "tokens" tiene la forma { access_token, refresh_token, token_type } que
+  // devuelve tanto el registro como el login. Opcionalmente se puede pasar el
+  // objeto del usuario logueado en "datosUsuario".
+  const guardarSesion = (tokens, datosUsuario = null) => {
+    const { access_token, refresh_token, token_type } = tokens;
+
+    localStorage.setItem("access_token", access_token);
+    localStorage.setItem("refresh_token", refresh_token);
+    setTokens({ access_token, refresh_token, token_type });
+    setIsAuthenticated(true);
+
+    if (datosUsuario) {
+      setUser(datosUsuario);
+      localStorage.setItem("user", JSON.stringify(datosUsuario));
+    }
+
+    if (access_token) {
+      axiosClient.defaults.headers.common["Authorization"] = `Bearer ${access_token}`;
+    }
+  };
+
   const login = async (email, password) => {
     try {
       const response = await axiosClient.post("/auth/v1/login/",
@@ -42,14 +64,7 @@ export function AuthProvider({ children }) {
 
       const { access_token, refresh_token, token_type } = response.data;
 
-      localStorage.setItem("access_token", access_token);
-      localStorage.setItem("refresh_token", refresh_token);
-      setTokens({ access_token, refresh_token, token_type });
-      setIsAuthenticated(true);
-      setUser({ email });
-      localStorage.setItem("user", JSON.stringify({ email }));
-
-      axiosClient.defaults.headers.common["Authorization"] = `Bearer ${access_token}`;
+      guardarSesion({ access_token, refresh_token, token_type }, { email });
 
       return { success: true };
     } catch (error) {
@@ -75,6 +90,7 @@ export function AuthProvider({ children }) {
     loading,
     login,
     logout,
+    guardarSesion,
   };
 
   return (

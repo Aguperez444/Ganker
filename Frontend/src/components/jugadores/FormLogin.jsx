@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import CampoTexto from "../common/CampoTexto";
 import { useAuth } from "../../context/AuthContext";
 
@@ -16,6 +17,7 @@ const ICONO_CANDADO = (
 
 function FormLogin() {
   const { login } = useAuth();
+  const navigate = useNavigate();
 
   const [valores, setValores] = useState({ email: "", password: "" });
   const [errores, setErrores] = useState({});
@@ -53,7 +55,10 @@ function FormLogin() {
       setErrorServidor(
         "No encontramos una cuenta con ese email o la contraseña es incorrecta. Quizás deberías registrarte."
       );
+      return;
     }
+
+    navigate("/");
   }
 
   return (
