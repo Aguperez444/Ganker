@@ -26,6 +26,6 @@ def update_game_profile(game_profile_id: int, request: UpdateGameProfileRequest,
     uow = uow_factory()
     update_game_profile_use_case = UpdateVideogameProfile(uow)
     updated_game_profile = update_game_profile_use_case.execute(player_id, game_profile_id, request)
-    profile_id = cast(int, updated_game_profile.game_profile_id)
-    response = UpdateGameProfileResponse(profile_id=profile_id)
+
+    response = updated_game_profile
     return response

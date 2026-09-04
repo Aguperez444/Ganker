@@ -1,6 +1,10 @@
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, cast
 
 from app.application.ports.i_unit_of_work import IUnitOfWork
+from app.infrastructure.api.dto.character_object_response import CharacterObjectResponse
+from app.infrastructure.api.dto.rank_object_response import RankObjectResponse
+from app.infrastructure.api.dto.role_object_response import RoleObjectResponse
+from app.infrastructure.api.dto.role_profile_object_response import RoleProfileObjectResponse
 from app.infrastructure.api.dto.update_videogame_profile_request import UpdateGameProfileRequest
 from app.domain.exceptions.rank_not_found_exception import RankNotFoundException
 from app.domain.exceptions.role_not_found_exception import RoleNotFoundException
@@ -12,6 +16,8 @@ from app.domain.exceptions.does_not_belong_to_profile_exception import DoesNotBe
 
 from app.domain.models.role_profile import RoleProfile
 from app.domain.models.game_profile import GameProfile
+from app.infrastructure.api.dto.update_videogame_profile_response import UpdateGameProfileResponse
+from app.infrastructure.api.dto.videogame_object_response import VideogameObjectResponse
 
 if TYPE_CHECKING:
     from app.domain.models.role import Role
@@ -23,7 +29,7 @@ class UpdateVideogameProfile:
         self.uow: IUnitOfWork = unit_of_work
 
 
-    def execute(self, player_id: int, game_profile_id: int, update_videogame_profile_request: UpdateGameProfileRequest) -> GameProfile:
+    def execute(self, player_id: int, game_profile_id: int, update_videogame_profile_request: UpdateGameProfileRequest) -> UpdateGameProfileResponse:
 
         # Buscar el perfil en la BD y validar que pertenezca al jugador
         game_profile = self.validate_and_get_game_profile(game_profile_id, player_id)
@@ -64,7 +70,21 @@ class UpdateVideogameProfile:
         with self.uow as uow:
             updated_game_profile = uow.game_profile_repo.update_game_profile(game_profile)
 
-        return updated_game_profile
+        # crear el response object correspondiente #TODO REVISAR, ESTO PUEDE QUE SE REPLIQUE EN VARIOS LADOS Y TOQUE HACERLO UN SERVICE PARA NO DUPLICAR CODIGO
+        response = UpdateGameProfileResponse(
+            game_profile_id=cast(int, updated_game_profile.game_profile_id),
+            player_id=updated_game_profile.player_id,
+            videogame=VideogameObjectResponse(id=updated_game_profile.videogame.videogame_id, name=updated_game_profile.videogame.name),
+            characters=[CharacterObjectResponse(character_id=character.character_id, name=character.name) for character in updated_game_profile.characters],
+            role_profiles=[RoleProfileObjectResponse(
+                role_profile_id=cast(int,role_profile.role_profile_id),
+                role=RoleObjectResponse(role_id=role_profile.role.role_id, name=role_profile.role.name),
+                rank=RankObjectResponse(
+                    rank_id=cast(int, role_profile.rank.rank_id), name=role_profile.rank.name,
+                    icon_url= role_profile.rank.icon_url, value=role_profile.rank.value)
+            ) for role_profile in updated_game_profile.role_profiles]
+        )
+        return response
 
 
     def validate_and_get_game_profile(self, game_profile_id: int, player_id: int) -> GameProfile:

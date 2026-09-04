@@ -6,7 +6,6 @@ class RoleRankInput(BaseModel):
     rank_id: int
 
 class UpdateGameProfileRequest(BaseModel):
-    role_ids: list[int] = []
     character_ids: List[int] = Field(
         default_factory=list,
         description="Lista actualizada de IDs de personajes"
