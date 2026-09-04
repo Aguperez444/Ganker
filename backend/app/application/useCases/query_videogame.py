@@ -12,7 +12,7 @@ class QueryVideogames:
     def get_all_videogames(self) -> GetVideogamesResponse:
         with self.uow as uow:
             videogames = uow.videogame_repo.get_all_videogames()
-            videogames_response=[VideogameObjectResponse(id=game.videogame_id,name=game.name) for game in videogames]
+            videogames_response=[VideogameObjectResponse(id=game.videogame_id,name=game.name, icon_url=game.icon_url or "") for game in videogames]
             return GetVideogamesResponse(videogames=videogames_response)
 
 

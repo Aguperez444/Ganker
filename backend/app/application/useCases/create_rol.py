@@ -11,7 +11,7 @@ from app.domain.exceptions.invalid_role_name_exception import InvalidRoleNameExc
 
 class CreateRoleUseCase:
     def __init__(self, storage_service: IStorageService, uow: IUnitOfWork):
-        self.storage_service = storage_service
+        self.storage_service: IStorageService = storage_service
         self.uow: IUnitOfWork = uow
 
     async def execute(self, game_id: int, name: str, icon_stream: BinaryIO, filename: str) -> Role:
