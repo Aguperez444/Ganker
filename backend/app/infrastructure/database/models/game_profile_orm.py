@@ -24,7 +24,7 @@ class GameProfileORM(Base):
     # Relaciones
     player: Mapped["PlayerORM"] = relationship(back_populates="game_profiles")
     videogame: Mapped["VideogameORM"] = relationship(back_populates="game_profiles")
-    role_profiles: Mapped[List["RoleProfileORM"]] = relationship(back_populates="game_profile")
+    role_profiles: Mapped[List["RoleProfileORM"]] = relationship(back_populates="game_profile", cascade="all, delete-orphan")
 
     characters: Mapped[List["CharacterORM"]] = relationship(
         secondary=game_profile_x_characters,

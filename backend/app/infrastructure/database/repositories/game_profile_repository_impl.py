@@ -12,6 +12,7 @@ if TYPE_CHECKING:
 class GameProfileRepositoryImpl(IGameProfileRepository):
     def __init__(self, session: Session):
         self._session: Session = session
+
     #TODO agregar el método para crear role_profile
     def create_game_profile(self, game_profile: 'GameProfile') -> 'GameProfile':
         orm_game_profile = GameProfileMapper.domain_to_orm(game_profile)
@@ -32,3 +33,12 @@ class GameProfileRepositoryImpl(IGameProfileRepository):
         ).first()
         domain_found = GameProfileMapper.orm_to_domain(found) if found else None
         return domain_found
+
+    def update_game_profile(self, game_profile: 'GameProfile') -> 'GameProfile':
+        orm_to_update = GameProfileMapper.domain_to_orm(game_profile)
+        # merge() compara el estado actual de la base de datos con el objeto que se le pasa y
+        # deduce qué relaciones se agregaron y cuáles se eliminaron.
+        # (se tuvo que agregar el cascade en el game_profile_orm)
+        merged_orm = self._session.merge(orm_to_update)
+        self._session.flush()
+        return GameProfileMapper.orm_to_domain(merged_orm)
