@@ -1,6 +1,6 @@
 from app.application.ports.i_token_service import ITokenService
 from app.application.ports.i_unit_of_work import IUnitOfWork
-from exceptions.Invalid_token_exception import InvalidTokenException
+from app.domain.exceptions.Invalid_token_exception import InvalidTokenException
 
 
 class UserLogout:

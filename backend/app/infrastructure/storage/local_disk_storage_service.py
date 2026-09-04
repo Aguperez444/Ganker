@@ -16,7 +16,7 @@ class LocalDiskStorageService(IStorageService):
     async def save_file(
         self,
         file_content: BinaryIO,
-        filename    : str,
+        filename: str,
         subfolder: str,
         preserve_original_name: bool = False
     ) -> str:

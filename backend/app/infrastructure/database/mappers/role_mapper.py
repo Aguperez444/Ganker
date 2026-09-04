@@ -9,6 +9,7 @@ class RoleMapper:
             role_id = role_orm.role_id,
             name = role_orm.name,
             videogame = VideogameMapper.orm_to_domain(role_orm.videogame),
+            icon_url=role_orm.icon_url
         )
 
     @staticmethod
@@ -16,5 +17,6 @@ class RoleMapper:
         return RoleORM(
             role_id = role.role_id,
             name = role.name,
-            videogame_id = role.videogame.videogame_id
+            videogame_id = role.videogame.videogame_id,
+            icon_url=role.icon_url
         )
