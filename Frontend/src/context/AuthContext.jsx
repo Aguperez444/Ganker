@@ -24,6 +24,10 @@ export function AuthProvider({ children }) {
       if (storedUser) {
         setUser(JSON.parse(storedUser));
       }
+      // Sin esto, isAuthenticated queda en true tras recargar la pagina pero
+      // Axios no manda el header Authorization: cualquier pedido a una ruta
+      // protegida falla con 401 aunque la UI muestre al usuario logueado.
+      axiosClient.defaults.headers.common["Authorization"] = `Bearer ${storedTokens}`;
     }
     setLoading(false);
   }, []);
@@ -69,7 +73,11 @@ export function AuthProvider({ children }) {
       return { success: true };
     } catch (error) {
       console.error("Error en el login:", error.response?.data || error.message);
-      return { success: false, error: error.response?.data || error.message };
+      return {
+        success: false,
+        status: error.response?.status,
+        error: error.response?.data || error.message,
+      };
     }
   };
 

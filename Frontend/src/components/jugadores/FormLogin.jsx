@@ -1,7 +1,4 @@
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
 import CampoTexto from "../common/CampoTexto";
-import { useAuth } from "../../context/AuthContext";
 
 const ICONO_USUARIO = (
   <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
@@ -15,52 +12,7 @@ const ICONO_CANDADO = (
   </svg>
 );
 
-function FormLogin() {
-  const { login } = useAuth();
-  const navigate = useNavigate();
-
-  const [valores, setValores] = useState({ email: "", password: "" });
-  const [errores, setErrores] = useState({});
-  const [cargando, setCargando] = useState(false);
-  const [errorServidor, setErrorServidor] = useState(null);
-
-  function handleChange(campo, valor) {
-    setValores((prev) => ({ ...prev, [campo]: valor }));
-  }
-
-  async function onSubmit(e) {
-    e.preventDefault();
-    setErrorServidor(null);
-
-    const erroresValidacion = {};
-
-    if (!valores.email.trim()) {
-      erroresValidacion.email = "Ingresá tu email.";
-    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(valores.email.trim())) {
-      erroresValidacion.email = "El email no tiene un formato válido.";
-    }
-
-    if (!valores.password) {
-      erroresValidacion.password = "Ingresá tu contraseña.";
-    }
-
-    setErrores(erroresValidacion);
-    if (Object.keys(erroresValidacion).length > 0) return;
-
-    setCargando(true);
-    const result = await login(valores.email, valores.password);
-    setCargando(false);
-
-    if (!result.success) {
-      setErrorServidor(
-        "No encontramos una cuenta con ese email o la contraseña es incorrecta. Quizás deberías registrarte."
-      );
-      return;
-    }
-
-    navigate("/");
-  }
-
+function FormLogin({ valores, errores, cargando, errorServidor, onChange, onSubmit }) {
   return (
     <form
       onSubmit={onSubmit}
@@ -72,7 +24,7 @@ function FormLogin() {
         type="email"
         placeholder="tuemail@ejemplo.com"
         value={valores.email}
-        onChange={(e) => handleChange("email", e.target.value)}
+        onChange={(e) => onChange("email", e.target.value)}
         error={errores.email}
       />
       <CampoTexto
@@ -81,7 +33,7 @@ function FormLogin() {
         type="password"
         placeholder="Tu contraseña"
         value={valores.password}
-        onChange={(e) => handleChange("password", e.target.value)}
+        onChange={(e) => onChange("password", e.target.value)}
         error={errores.password}
       />
 
