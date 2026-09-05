@@ -14,7 +14,7 @@ function RegistroPage() {
     const tokens = await handleSubmit(e);
     if (tokens) {
       guardarSesion(tokens);
-      navigate("/");
+      navigate("/app", { replace: true });
     }
   }
 
