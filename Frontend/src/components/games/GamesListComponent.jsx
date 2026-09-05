@@ -1,4 +1,10 @@
-const GameListComponent = ({ games, isLoading, error }) => {
+const GameListComponent = ({
+  games,
+  isLoading,
+  error,
+  selectedGameId,
+  onEdit,
+}) => {
   if (isLoading) {
     return (
       <div className="rounded-xl border border-white/10 bg-ganker-surface-light p-6">
@@ -31,7 +37,12 @@ const GameListComponent = ({ games, isLoading, error }) => {
         {games.map((game) => (
           <li
             key={game.id}
-            className="flex items-center justify-between gap-4 bg-ganker-surface-light px-5 py-4 transition hover:bg-white/5"
+            className={[
+              "flex items-center justify-between gap-4 px-5 py-4 transition",
+              selectedGameId === game.id
+                ? "bg-ganker-purple/20"
+                : "bg-ganker-surface-light hover:bg-white/5",
+            ].join(" ")}
           >
             <div className="min-w-0">
               <p className="truncate font-medium text-ganker-text">
@@ -41,6 +52,7 @@ const GameListComponent = ({ games, isLoading, error }) => {
 
             <button
               type="button"
+              onClick={() => onEdit(game)}
               className="shrink-0 cursor-pointer rounded-lg px-3 py-2 text-sm font-semibold text-ganker-purple-light transition hover:bg-ganker-purple/20 hover:text-ganker-text"
             >
               Modificar

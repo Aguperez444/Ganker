@@ -13,3 +13,11 @@ export const createGame = async (name) => {
 
   return response.data;
 };
+
+export const updateGame = async (id, name) => {
+  const response = await axiosClient.put(`/api/v1/videogames/${id}`, {
+    name,
+  });
+
+  return response.data;
+};
