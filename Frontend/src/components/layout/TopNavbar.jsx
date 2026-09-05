@@ -1,11 +1,13 @@
+import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext.jsx";
 
   const TopNavbar = ({ onOpenMenu, onOpenChat, showChatButton = true }) => {
     const { logout } = useAuth();
+    const navigate = useNavigate();
 
-    const handleLogout = () => {
-      logout();
-      window.location.assign("/");
+    const handleLogout = async () => {
+      await logout();
+      navigate("/login");
     };
 
     return (

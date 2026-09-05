@@ -88,18 +88,25 @@ export function AuthProvider({ children }) {
     }
   };
 
-  const logout = () => {
+  const logout = async () => {
     const storedRefresh = localStorage.getItem(CLAVES_SESION.refresh);
 
-    localStorage.removeItem(CLAVES_SESION.access);
-    localStorage.removeItem(CLAVES_SESION.refresh);
-    localStorage.removeItem(CLAVES_SESION.user);
-
-    if (storedRefresh) {
-      // Fire-and-forget: no bloqueamos la salida del usuario esperando al backend.
-      axiosClient.post("/auth/v1/logout", { refresh_token: storedRefresh }).catch((error) => {
-        console.error("Error al cerrar sesion en el backend:", error.response?.data || error.message);
-      });
+    try {
+      if (storedRefresh) {
+        await axiosClient.post("/auth/v1/logout", { refresh_token: storedRefresh });
+      }
+    } catch (error) {
+      // Si el refresh token ya era invalido o el backend no responde,
+      // igualmente limpiamos la sesion local.
+      console.error("Error al cerrar sesion en el backend:", error.response?.data || error.message);
+    } finally {
+      localStorage.removeItem(CLAVES_SESION.access);
+      localStorage.removeItem(CLAVES_SESION.refresh);
+      localStorage.removeItem(CLAVES_SESION.user);
+      delete axiosClient.defaults.headers.common["Authorization"];
+      setTokens(null);
+      setUser(null);
+      setIsAuthenticated(false);
     }
   };
 
