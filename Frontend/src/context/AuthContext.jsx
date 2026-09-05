@@ -1,6 +1,5 @@
 import { createContext, useContext, useState, useEffect } from "react";
-import axiosClient, { registrarOnSesionExpirada } from "../api/axiosClient";
-
+ import axiosClient, { registrarOnSesionExpirada, CLAVES_SESION } from "../api/axiosClient";
 const AuthContext = createContext(null);
 
 export function AuthProvider({ children }) {
@@ -90,13 +89,18 @@ export function AuthProvider({ children }) {
   };
 
   const logout = () => {
-    localStorage.removeItem("access_token");
-    localStorage.removeItem("refresh_token");
-    localStorage.removeItem("user");
-    delete axiosClient.defaults.headers.common["Authorization"];
-    setTokens(null);
-    setUser(null);
-    setIsAuthenticated(false);
+    const storedRefresh = localStorage.getItem(CLAVES_SESION.refresh);
+
+    localStorage.removeItem(CLAVES_SESION.access);
+    localStorage.removeItem(CLAVES_SESION.refresh);
+    localStorage.removeItem(CLAVES_SESION.user);
+
+    if (storedRefresh) {
+      // Fire-and-forget: no bloqueamos la salida del usuario esperando al backend.
+      axiosClient.post("/auth/v1/logout", { refresh_token: storedRefresh }).catch((error) => {
+        console.error("Error al cerrar sesion en el backend:", error.response?.data || error.message);
+      });
+    }
   };
 
   const value = {
