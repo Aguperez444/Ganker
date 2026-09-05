@@ -1,7 +1,17 @@
-import { NavLink } from "react-router-dom";
+import { NavLink, useNavigate } from "react-router-dom";
 import { adminNavigationItems } from "./AdminSidebar.jsx";
+import { useAuth } from "../../context/AuthContext.jsx";
 
 const AdminMobileMenu = ({ isOpen, onClose }) => {
+  const { logout } = useAuth();
+  const navigate = useNavigate();
+
+  const handleLogout = async () => {
+    await logout();
+    onClose();
+    navigate("/login");
+  };
+
   if (!isOpen) {
     return null;
   }
@@ -65,6 +75,14 @@ const AdminMobileMenu = ({ isOpen, onClose }) => {
             >
               Volver a Ganker
             </NavLink>
+
+            <button
+              type="button"
+              onClick={handleLogout}
+              className="block w-full rounded-lg px-4 py-3 text-left text-sm font-semibold text-ganker-muted transition hover:bg-ganker-surface-light hover:text-ganker-text"
+            >
+              Cerrar sesión
+            </button>
           </div>
         </nav>
       </aside>
