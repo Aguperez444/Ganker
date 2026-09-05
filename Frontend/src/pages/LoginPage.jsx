@@ -11,7 +11,7 @@ function LoginPage() {
   async function onSubmit(e) {
     const exito = await handleSubmit(e);
     if (exito) {
-      navigate("/");
+          navigate("/app", { replace: true });;
     }
   }
 
