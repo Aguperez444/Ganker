@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, useEffect } from "react";
-import axiosClient from "../api/axiosClient";
+import axiosClient, { registrarOnSesionExpirada } from "../api/axiosClient";
 
 const AuthContext = createContext(null);
 
@@ -30,6 +30,14 @@ export function AuthProvider({ children }) {
       axiosClient.defaults.headers.common["Authorization"] = `Bearer ${storedTokens}`;
     }
     setLoading(false);
+  }, []);
+
+  useEffect(() => {
+    registrarOnSesionExpirada(() => {
+      setTokens(null);
+      setUser(null);
+      setIsAuthenticated(false);
+    });
   }, []);
 
   // Guarda una sesion iniciada en el estado global y en localStorage.
