@@ -2,9 +2,11 @@ from typing import cast
 
 from fastapi import APIRouter, Depends
 
+from app.application.useCases.query_players import QueryPlayers
 from app.application.useCases.update_player import UpdatePlayer
 from app.infrastructure.api.dependencies.auth import get_current_player_id
 from app.infrastructure.api.dto.auth_tokens_response import AuthTokensResponse
+from app.infrastructure.api.dto.get_player_response import GetPlayerResponse
 from app.infrastructure.api.dto.update_player_request import UpdatePlayerRequest
 from app.infrastructure.api.dto.update_player_response import UpdatePlayerResponse
 from app.infrastructure.config.settings import settings
@@ -40,3 +42,10 @@ def update_player(request: UpdatePlayerRequest, _player_id: int = Depends(get_cu
         name=updated_player.name,
         mail=updated_player.mail
     )
+@router.get("/me", response_model=GetPlayerResponse, status_code=200)
+def get_player(player_id: int = Depends(get_current_player_id)) -> GetPlayerResponse:
+    uow = uow_factory()
+    get_player_usecase = QueryPlayers(uow)
+    player_dto = get_player_usecase.get_by_id(player_id)
+    return player_dto
+

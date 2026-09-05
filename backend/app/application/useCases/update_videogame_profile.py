@@ -12,6 +12,7 @@ from app.domain.exceptions.character_not_found_exception import CharacterNotFoun
 from app.domain.exceptions.game_profile_not_found_exception import GameProfileNotFoundException
 from app.domain.exceptions.does_not_belong_to_game_exception import DoesNotBelongToGameException
 from app.domain.exceptions.does_not_belong_to_profile_exception import DoesNotBelongToProfileException
+from app.domain.services.create_game_profile_dto_service import CreateGameProfileDTOService
 
 
 from app.domain.models.role_profile import RoleProfile
@@ -71,19 +72,8 @@ class UpdateVideogameProfile:
             updated_game_profile = uow.game_profile_repo.update_game_profile(game_profile)
 
         # crear el response object correspondiente #TODO REVISAR, ESTO PUEDE QUE SE REPLIQUE EN VARIOS LADOS Y TOQUE HACERLO UN SERVICE PARA NO DUPLICAR CODIGO
-        response = UpdateGameProfileResponse(
-            game_profile_id=cast(int, updated_game_profile.game_profile_id),
-            player_id=updated_game_profile.player_id,
-            videogame=VideogameObjectResponse(id=updated_game_profile.videogame.videogame_id, name=updated_game_profile.videogame.name),
-            characters=[CharacterObjectResponse(character_id=character.character_id, name=character.name) for character in updated_game_profile.characters],
-            role_profiles=[RoleProfileObjectResponse(
-                role_profile_id=cast(int,role_profile.role_profile_id),
-                role=RoleObjectResponse(role_id=role_profile.role.role_id, name=role_profile.role.name),
-                rank=RankObjectResponse(
-                    rank_id=cast(int, role_profile.rank.rank_id), name=role_profile.rank.name,
-                    icon_url= role_profile.rank.icon_url, value=role_profile.rank.value)
-            ) for role_profile in updated_game_profile.role_profiles]
-        )
+
+        response = CreateGameProfileDTOService.create_game_profile(updated_game_profile)
         return response
 
 
