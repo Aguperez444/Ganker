@@ -1,64 +1,104 @@
 import { createContext, useContext, useState, useEffect } from "react";
 import axiosClient, { registrarOnSesionExpirada } from "../api/axiosClient";
+import { obtenerJugadorActual } from "../api/jugadoresApi";
 
 const AuthContext = createContext(null);
 
+/**
+ * Estado global de la sesion.
+ *
+ * `user` es el jugador logueado y tiene SIEMPRE la forma que devuelve
+ * GET /api/v1/players/me:
+ *
+ *   { player_id, username, name, mail }    (mas adelante tambien `role`)
+ *
+ * Regla: `user` lo escribe unicamente este provider, con lo que manda el
+ * backend. Ninguna pantalla lo arma a mano. Antes cada page se lo pasaba a
+ * guardarSesion() y terminaba distinto segun por donde entraba el usuario: el
+ * login guardaba solo { email } y el registro no guardaba nada, asi que el
+ * recien registrado se quedaba con user = null y cualquier pantalla que leyera
+ * user.algo se rompia.
+ *
+ * Invariante: si `isAuthenticated` es true y `loading` es false, `user` esta
+ * completo. Los consumidores pueden leerlo sin chequear null.
+ */
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [tokens, setTokens] = useState(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    const storedTokens = localStorage.getItem("access_token");
-    const storedRefresh = localStorage.getItem("refresh_token");
-    const storedUser = localStorage.getItem("user");
+  const cargarUsuario = async () => {
+    const datos = await obtenerJugadorActual();
+    setUser(datos);
+  };
 
-    if (storedTokens && storedRefresh) {
-      setTokens({
-        access_token: storedTokens,
-        refresh_token: storedRefresh,
-        token_type: "Bearer",
-      });
-      setIsAuthenticated(true);
-      if (storedUser) {
-        setUser(JSON.parse(storedUser));
+  const limpiarEstado = () => {
+    setTokens(null);
+    setUser(null);
+    setIsAuthenticated(false);
+  };
+
+  const logout = () => {
+    localStorage.removeItem("access_token");
+    localStorage.removeItem("refresh_token");
+    // Ya no guardamos el usuario en localStorage, pero lo seguimos borrando
+    // para limpiar el valor viejo de las sesiones abiertas antes de este cambio.
+    localStorage.removeItem("user");
+    limpiarEstado();
+  };
+
+  useEffect(() => {
+    // Al montar restauramos la sesion desde localStorage. El usuario NO sale de
+    // ahi: se lo pedimos al backend, asi los datos estan siempre frescos aunque
+    // el jugador haya editado su perfil desde otro dispositivo.
+    const restaurarSesion = async () => {
+      const access = localStorage.getItem("access_token");
+      const refresh = localStorage.getItem("refresh_token");
+
+      if (access && refresh) {
+        setTokens({ access_token: access, refresh_token: refresh, token_type: "Bearer" });
+        setIsAuthenticated(true);
+
+        try {
+          await cargarUsuario();
+        } catch {
+          // Token vencido o jugador inexistente: el interceptor de axiosClient
+          // ya limpia la sesion (ver registrarOnSesionExpirada mas abajo).
+        }
       }
-      // Sin esto, isAuthenticated queda en true tras recargar la pagina pero
-      // Axios no manda el header Authorization: cualquier pedido a una ruta
-      // protegida falla con 401 aunque la UI muestre al usuario logueado.
-      axiosClient.defaults.headers.common["Authorization"] = `Bearer ${storedTokens}`;
-    }
-    setLoading(false);
+
+      // OJO: tiene que quedar DESPUES del await. Si loading baja antes, las
+      // rutas protegidas se renderizan con user todavia en null.
+      setLoading(false);
+    };
+
+    restaurarSesion();
   }, []);
 
   useEffect(() => {
-    registrarOnSesionExpirada(() => {
-      setTokens(null);
-      setUser(null);
-      setIsAuthenticated(false);
-    });
+    registrarOnSesionExpirada(limpiarEstado);
   }, []);
 
-  // Guarda una sesion iniciada en el estado global y en localStorage.
-  // "tokens" tiene la forma { access_token, refresh_token, token_type } que
-  // devuelve tanto el registro como el login. Opcionalmente se puede pasar el
-  // objeto del usuario logueado en "datosUsuario".
-  const guardarSesion = (tokens, datosUsuario = null) => {
-    const { access_token, refresh_token, token_type } = tokens;
-
+  // Guarda una sesion recien creada y trae al usuario. Recibe
+  // { access_token, refresh_token, token_type }, que es lo que devuelven tanto
+  // el login como el registro.
+  //
+  // No recibe datos del usuario a proposito: es lo que impide que una pantalla
+  // vuelva a armar `user` por su cuenta.
+  const guardarSesion = async ({ access_token, refresh_token, token_type }) => {
     localStorage.setItem("access_token", access_token);
     localStorage.setItem("refresh_token", refresh_token);
     setTokens({ access_token, refresh_token, token_type });
     setIsAuthenticated(true);
 
-    if (datosUsuario) {
-      setUser(datosUsuario);
-      localStorage.setItem("user", JSON.stringify(datosUsuario));
-    }
-
-    if (access_token) {
-      axiosClient.defaults.headers.common["Authorization"] = `Bearer ${access_token}`;
+    try {
+      await cargarUsuario();
+    } catch (error) {
+      // O la sesion queda completa, o no queda sesion. Dejarla a medias es
+      // volver al bug de user en null.
+      logout();
+      throw error;
     }
   };
 
@@ -76,7 +116,7 @@ export function AuthProvider({ children }) {
 
       const { access_token, refresh_token, token_type } = response.data;
 
-      guardarSesion({ access_token, refresh_token, token_type }, { email });
+      await guardarSesion({ access_token, refresh_token, token_type });
 
       return { success: true };
     } catch (error) {
@@ -87,16 +127,6 @@ export function AuthProvider({ children }) {
         error: error.response?.data || error.message,
       };
     }
-  };
-
-  const logout = () => {
-    localStorage.removeItem("access_token");
-    localStorage.removeItem("refresh_token");
-    localStorage.removeItem("user");
-    delete axiosClient.defaults.headers.common["Authorization"];
-    setTokens(null);
-    setUser(null);
-    setIsAuthenticated(false);
   };
 
   const value = {

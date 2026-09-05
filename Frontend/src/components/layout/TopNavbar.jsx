@@ -1,4 +1,13 @@
+import { useAuth } from "../../context/AuthContext";
+
 const TopNavbar = ({ onOpenMenu, onOpenChat, showChatButton = true }) => {
+  const { user } = useAuth();
+
+  // Dentro de una ruta protegida `user` siempre esta cargado (ver la
+  // invariante en AuthContext). La inicial de respaldo es solo por si el
+  // navbar se renderiza fuera de sesion, por ejemplo en un test.
+  const inicial = user?.username?.charAt(0).toUpperCase() ?? "G";
+
   return (
     <header className="flex min-h-17 items-center border-b border-white/10 bg-ganker-surface px-4 sm:px-5">
       <div className="flex min-w-0 flex-1 items-center gap-3">
@@ -74,10 +83,13 @@ const TopNavbar = ({ onOpenMenu, onOpenChat, showChatButton = true }) => {
         {/* Usuario */}
         <button
           type="button"
-          aria-label="Abrir cuenta"
+          aria-label={
+            user ? `Abrir cuenta de ${user.username}` : "Abrir cuenta"
+          }
+          title={user?.username}
           className="flex h-10 w-10 cursor-pointer items-center justify-center rounded-full border border-ganker-purple/40 bg-ganker-surface-light text-sm font-semibold text-ganker-text transition hover:border-ganker-purple-light"
         >
-          G
+          {inicial}
         </button>
       </div>
     </header>
