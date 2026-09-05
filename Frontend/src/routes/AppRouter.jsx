@@ -3,10 +3,10 @@ import LandingPage from "../pages/LandingPage.jsx";
 import HomePage from "../pages/HomePage.jsx";
 import RegistroPage from "../pages/RegistroPage.jsx";
 import LoginPage from "../pages/LoginPage.jsx";
-import RegisterGamePage from "../pages/admin/GamesPage.jsx";
 import AppLayout from "../components/layout/AppLayout.jsx";
 import AdminLayout from "../components/layout/AdminLayout.jsx";
 import AdminHomePage from "../pages/admin/AdminHomePage.jsx";
+import GamesPage from "../pages/admin/GamesPage.jsx";
 import ProtectedRoute from "./ProtectedRoute.jsx";
 import PublicOnlyRoute from "./PublicOnlyRoute.jsx";
 
@@ -55,8 +55,8 @@ function AppRouter() {
         <Route element={<ProtectedRoute />}>
           <Route path="/app/admin" element={<AdminLayout />}>
             <Route index element={<AdminHomePage />} />
+            <Route path="games" element={<GamesPage />} />
           </Route>
-          <Route path="/admin/games/register" element={<RegisterGamePage />} />
         </Route>
 
         {/* Cualquier URL desconocida vuelve al inicio */}
