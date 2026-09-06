@@ -4,6 +4,7 @@ from app.domain.exceptions.character_name_invalid_exception import CharacterName
 from app.domain.exceptions.name_file_not_null_exception import NameFileNotNullException
 from app.domain.models.character import Character
 from app.domain.exceptions.file_not_null_exception import FileNotNullException
+from exceptions.videogame.videogame_not_found_exception import VideogameNotFoundException
 
 
 class RegisterCharacter:
@@ -21,18 +22,16 @@ class RegisterCharacter:
 
         with self.uow as uow:
             # Guardar imagen a través del puerto si se proporciona un archivo
-            icon_url = None
-            if icon_file and icon_filename:
-                icon_url = await self.storage_service.save_file(
-                    file_content=icon_file,
-                    filename=icon_filename,
-                    subfolder=f"characters/{videogame_id}",
-                    preserve_original_name=True
-                )
+            icon_url = await self.storage_service.save_file(
+                file_content=icon_file,
+                filename=icon_filename,
+                subfolder=f"characters/{videogame_id}",
+                preserve_original_name=True
+            )
 
             videogame = uow.videogame_repo.get_videogame_by_id(videogame_id)
             if not videogame:
-                raise ValueError(f"Videogame with ID {videogame_id} does not exist.")
+                raise VideogameNotFoundException(videogame_id)
 
             # Crear el nuevo personaje
             new_character = Character(

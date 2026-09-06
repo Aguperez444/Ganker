@@ -6,7 +6,7 @@ if TYPE_CHECKING:
 
 
 class Character:
-    def __init__(self, character_id: int, name: str, videogame: 'Videogame', icon_url: str):
+    def __init__(self, character_id: int|None, name: str, videogame: 'Videogame', icon_url: str):
         self._character_id: Optional[int] = character_id
         self._name: str = name
         self._videogame: 'Videogame' = videogame
