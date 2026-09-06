@@ -14,6 +14,7 @@ from app.domain.services.create_game_profile_dto_service import CreateGameProfil
 from app.domain.models.role_profile import RoleProfile
 from app.domain.models.game_profile import GameProfile
 from app.infrastructure.api.dto.update_videogame_profile_response import UpdateGameProfileResponse
+from models.character_priority import CharacterPriority
 
 if TYPE_CHECKING:
     from app.domain.models.role import Role
@@ -31,15 +32,20 @@ class UpdateVideogameProfile:
         game_profile = self.validate_and_get_game_profile(game_profile_id, player_id)
 
         # Buscar y validar los personajes en la base de datos
-        characters = []
+        characters_priority = []
         with self.uow as uow:
-            for character_id in update_videogame_profile_request.character_ids:
+            for index, character_id in enumerate(update_videogame_profile_request.character_ids, start=1):
                 character = uow.character_repo.get_character_by_id(character_id)
                 if not character:
                     raise CharacterNotFoundException(character_id)
                 if character.videogame.videogame_id != game_profile.videogame.videogame_id:
-                    raise DoesNotBelongToGameException("personaje", f"{character.name}")
-                characters.append(character)
+                    raise DoesNotBelongToGameException("personaje", f"{character.name}", f"{game_profile.videogame.name}")
+
+                prio_id = None
+                if game_profile.is_character_associated(character):
+                    prio_id = game_profile.get_character_priority_id(character)
+
+                characters_priority.append(CharacterPriority(character=character, priority=index, priority_id=prio_id))
 
 
         # Buscar roles/rangos y crear las nuevas relaciones role_profile
@@ -59,7 +65,7 @@ class UpdateVideogameProfile:
             new_role_profiles.append(role_profile)
 
         # Actualizar la entidad de dominio con las nuevas listas
-        game_profile.characters = characters
+        game_profile.characters_priority = characters_priority
         game_profile.role_profiles = new_role_profiles
 
         # Persistir los cambios del perfil en la base de datos
@@ -101,7 +107,7 @@ class UpdateVideogameProfile:
     @staticmethod
     def validate_belongs_to_videogame(role: 'Role', rank: 'Rank', videogame_id: int):
         if role.videogame.videogame_id != videogame_id:
-            raise DoesNotBelongToGameException("rol", f'{role.name}')
+            raise DoesNotBelongToGameException("rol", f'{role.name}', f'{role.videogame.name}')
 
         if rank.videogame.videogame_id != videogame_id:
-            raise DoesNotBelongToGameException("rango", f'{rank.name}')
+            raise DoesNotBelongToGameException("rango", f'{rank.name}', f'{rank.videogame.name}')

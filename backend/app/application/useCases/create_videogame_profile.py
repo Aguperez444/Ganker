@@ -11,6 +11,7 @@ from exceptions.videogame.videogame_not_found_exception import VideogameNotFound
 from app.domain.models.videogame import Videogame
 from app.domain.models.role_profile import RoleProfile
 from app.domain.models.game_profile import GameProfile
+from app.domain.models.character_priority import CharacterPriority
 
 if TYPE_CHECKING:
     from app.domain.models.role import Role
@@ -65,7 +66,7 @@ class CreateVideogameProfile:
             game_profile_id = None,
             player_id = player_id,
             videogame = videogame,
-            characters = characters,
+            characters_priority = [CharacterPriority(priority_id=None,priority=index,character=char) for index, char in enumerate(characters, start=1)],
             role_profiles = new_role_profiles
         )
 
