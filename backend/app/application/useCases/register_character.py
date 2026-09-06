@@ -4,7 +4,7 @@ from app.domain.exceptions.character_name_invalid_exception import CharacterName
 from app.domain.exceptions.name_file_not_null_exception import NameFileNotNullException
 from app.domain.models.character import Character
 from app.domain.exceptions.file_not_null_exception import FileNotNullException
-from exceptions.videogame.videogame_not_found_exception import VideogameNotFoundException
+from app.domain.exceptions.videogame.videogame_not_found_exception import VideogameNotFoundException
 
 
 class RegisterCharacter:
