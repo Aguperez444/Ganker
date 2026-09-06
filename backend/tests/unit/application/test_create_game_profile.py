@@ -7,11 +7,11 @@ from app.domain.models.character import Character
 from app.domain.models.role import Role
 from app.domain.models.rank import Rank
 from app.domain.models.game_profile import GameProfile
-from app.domain.exceptions.videogame_not_found_exception import VideogameNotFoundException
-from app.domain.exceptions.game_profile_already_exist_exception import GameProfileAlreadyExistException
-from app.domain.exceptions.character_not_found_exception import CharacterNotFoundException
-from app.domain.exceptions.role_not_found_exception import RoleNotFoundException
-from app.domain.exceptions.rank_not_found_exception import RankNotFoundException
+from exceptions.videogame.videogame_not_found_exception import VideogameNotFoundException
+from exceptions.game_profile.game_profile_already_exist_exception import GameProfileAlreadyExistException
+from exceptions.character.character_not_found_exception import CharacterNotFoundException
+from exceptions.role.role_not_found_exception import RoleNotFoundException
+from exceptions.rank.rank_not_found_exception import RankNotFoundException
 from app.infrastructure.api.dto.create_videogame_profile_request import CreateGameProfileRequest, RoleRankInput
 
 

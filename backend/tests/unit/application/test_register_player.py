@@ -5,10 +5,10 @@ from app.application.useCases.register_player import RegisterPlayer
 from app.application.ports.i_token_service import ITokenService
 from app.application.ports.i_password_hasher import IPasswordHasher
 from app.domain.models.player import Player
-from app.domain.exceptions.email_already_exists_exception import EmailAlreadyExistsException
-from app.domain.exceptions.invalid_username_exception import InvalidUsernameException
+from exceptions.mail.email_already_exists_exception import EmailAlreadyExistsException
+from exceptions.user.invalid_username_exception import InvalidUsernameException
 from app.domain.exceptions.password_is_not_secure_exception import PasswordIsNotSecureException
-from app.domain.exceptions.username_already_exist_exception import UsernameAlreadyExistsException
+from exceptions.user.username_already_exist_exception import UsernameAlreadyExistsException
 from app.infrastructure.api.dto.register_player_request import RegisterPlayerRequest
 
 

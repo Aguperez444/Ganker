@@ -4,7 +4,7 @@ from unittest.mock import MagicMock
 from app.application.useCases.refresh_token import RefreshToken
 from app.application.ports.i_token_service import ITokenService
 from app.domain.models.player import Player
-from app.domain.exceptions.user_not_found_exception import UserNotFoundException
+from exceptions.user.user_not_found_exception import UserNotFoundException
 from app.domain.exceptions.Invalid_token_exception import InvalidTokenException
 
 

@@ -5,7 +5,7 @@ from app.application.useCases.user_login import UserLogin
 from app.application.ports.i_token_service import ITokenService
 from app.application.ports.i_password_hasher import IPasswordHasher
 from app.domain.models.player import Player
-from app.domain.exceptions.mail_not_found_exception import EmailNotFoundException
+from exceptions.mail.mail_not_found_exception import EmailNotFoundException
 from app.domain.exceptions.wrong_password_exception import WrongPasswordException
 from app.infrastructure.api.dto.login_request import LoginRequest
 

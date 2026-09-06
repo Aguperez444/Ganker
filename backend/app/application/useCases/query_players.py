@@ -1,8 +1,6 @@
-from typing import cast
-
 from app.application.ports.i_unit_of_work import IUnitOfWork
 from app.infrastructure.api.dto.get_player_response import GetPlayerResponse
-from app.domain.exceptions.player_not_found_exception import PlayerNotFoundException
+from exceptions.user.player_not_found_exception import PlayerNotFoundException
 from app.domain.services.create_game_profile_dto_service import CreateGameProfileDTOService
 
 class QueryPlayers:

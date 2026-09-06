@@ -1,7 +1,7 @@
 from app.application.ports.i_password_hasher import IPasswordHasher
 from app.application.ports.i_token_service import ITokenService
 from app.application.ports.i_unit_of_work import IUnitOfWork
-from app.domain.exceptions.mail_not_found_exception import EmailNotFoundException
+from exceptions.mail.mail_not_found_exception import EmailNotFoundException
 
 
 from typing import TYPE_CHECKING, cast
