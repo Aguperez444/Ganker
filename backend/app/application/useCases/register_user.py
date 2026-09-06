@@ -4,7 +4,6 @@ from typing import cast
 from app.application.ports.i_password_hasher import IPasswordHasher
 from app.application.ports.i_token_service import ITokenService
 from app.application.ports.i_unit_of_work import IUnitOfWork
-from app.domain.models.UserRole import UserRole
 from app.infrastructure.api.dto.register_player_request import RegisterPlayerRequest
 from app.infrastructure.api.dto.register_user_response import RegisterUserResponse
 from app.domain.exceptions.mail.email_already_exists_exception import EmailAlreadyExistsException
@@ -14,6 +13,7 @@ from app.domain.exceptions.user.unauthotized_exception import UnauthorizedExcept
 from app.domain.exceptions.user.user_not_found_exception import UserNotFoundException
 from app.domain.exceptions.user.username_already_exist_exception import UsernameAlreadyExistsException
 from app.domain.models.user import User
+from app.domain.models.user_role import UserRole
 
 
 class RegisterUser:
@@ -43,11 +43,9 @@ class RegisterUser:
         if user is None:
             raise UserNotFoundException(actual_user_id)
 
-        if user.role == UserRole.ADMIN and not (user_data.role is UserRole.PLAYER):
-            raise UnauthorizedException(user.user_id, user.role, user_data.role)
-
-        if user.role == UserRole.OWNER and not (user_data.role is UserRole.ADMIN or user_data.role is UserRole.PLAYER):
-            raise UnauthorizedException(user.user_id, user.role, user_data.role)
+        print(f"Usuario actual: {user.user_id}, rol: {user.role.value}, intentando registrar usuario con rol: {user_data.role}")
+        if user.role == UserRole.ADMIN and user_data.role == UserRole.OWNER:
+            raise UnauthorizedException(user.user_id, user.role.value, user_data.role)
 
         # Crear el usuario en el dominio
         new_user = User(None, user_data.username, user_data.name, user_data.mail, user_data.password, UserRole(user_data.role), [])

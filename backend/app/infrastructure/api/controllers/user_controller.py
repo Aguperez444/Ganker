@@ -18,11 +18,11 @@ from app.infrastructure.api.auth.jwt_token_service import JwtTokenService
 from app.infrastructure.api.auth.password_hash_service import PasswordHashService
 from app.application.useCases.register_player import RegisterPlayer
 from app.infrastructure.database.unit_of_work.uow_factory import uow_factory
-from app.domain.models.UserRole import UserRole
+from app.domain.models.user_role import UserRole
 
 router = APIRouter(prefix="/api/v1/users")
 
-@router.post("/", response_model=AuthTokensResponse, status_code=201, dependencies=[Depends(require_player)])
+@router.post("/register", response_model=AuthTokensResponse, status_code=201, dependencies=[Depends(require_player)])
 def register_player(request: RegisterPlayerRequest) -> AuthTokensResponse:
     uow = uow_factory()
 
@@ -33,7 +33,7 @@ def register_player(request: RegisterPlayerRequest) -> AuthTokensResponse:
     tokens = register_player_use_case.execute(request)
     return tokens
 
-@router.post("/", response_model=RegisterUserResponse, status_code=201, dependencies=[Depends(require_admin)])
+@router.post("/register_user", response_model=RegisterUserResponse, status_code=201, dependencies=[Depends(require_admin)])
 def register_user(request: RegisterPlayerRequest, _user_id: int = Depends(get_current_user_id)) -> RegisterUserResponse:
     uow = uow_factory()
 
