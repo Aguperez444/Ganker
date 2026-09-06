@@ -23,7 +23,7 @@ class TestGameProfileRepositoryIntegration:
 
         game_profile = GameProfile(
             game_profile_id=None,
-            player_id=seed_player.player_id,
+            player_id=seed_player.user_id,
             videogame=vg_domain,
             characters=[char1, char2],
             role_profiles=[role_profile]
@@ -33,7 +33,7 @@ class TestGameProfileRepositoryIntegration:
         test_db_session.commit()
 
         assert created.game_profile_id is not None
-        assert created.player_id == seed_player.player_id
+        assert created.player_id == seed_player.user_id
         assert len(created.characters) == 2
         assert len(created.role_profiles) == 1
 
@@ -47,7 +47,7 @@ class TestGameProfileRepositoryIntegration:
 
         # Retrieve by Player and Videogame
         found_by_pv = repo.get_game_profile_by_player_and_videogame(
-            player_id=seed_player.player_id,
+            player_id=seed_player.user_id,
             videogame_id=vg_domain.videogame_id
         )
         assert found_by_pv is not None

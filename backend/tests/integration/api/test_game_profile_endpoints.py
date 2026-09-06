@@ -5,7 +5,7 @@ class TestGameProfileEndpointsIntegration:
 
     @pytest.fixture
     def auth_headers(self, jwt_service, seed_player):
-        access_token, _ = jwt_service.generate_tokens(user_id=seed_player.player_id)
+        access_token, _ = jwt_service.generate_tokens(user_id=seed_player.user_id)
         return {"Authorization": f"Bearer {access_token}"}
 
     def test_create_game_profile_success(self, client, auth_headers, seed_catalog_data):

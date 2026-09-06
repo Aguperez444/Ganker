@@ -18,22 +18,16 @@ from app.infrastructure.api.dto.login_request import LoginRequest
 router = APIRouter(prefix="/auth/v1")
 
 @router.post("/login")
-def login(form_data: OAuth2PasswordRequestForm = Depends(), force_role: str|None = None) -> AuthTokensResponse:
+def login(form_data: OAuth2PasswordRequestForm = Depends()) -> AuthTokensResponse:
     uow = uow_factory()
     token_service = JwtTokenService(settings.jwt_secret_key)
     password_hasher = PasswordHashService()
 
     login_data = LoginRequest(mail=form_data.username, password=form_data.password)
 
-    role = None
-
-    if force_role:
-        role = force_role
-    # TODO CAMBIAR TODO ESTO QUE ESTÁ HARDCODEADO
     user_login_use_case = UserLogin(uow, token_service, password_hasher)
 
-    # TODO CAMBIAR EN ESTE USECASE TAMBIÉN
-    access_tokens = user_login_use_case.execute(login_data, role)
+    access_tokens = user_login_use_case.execute(login_data)
 
 
 

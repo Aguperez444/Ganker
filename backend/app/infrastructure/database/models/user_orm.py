@@ -5,18 +5,23 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.infrastructure.database.base import Base
 
 from typing import TYPE_CHECKING
+
+from app.infrastructure.database.models.refresh_token_orm import RefreshTokenORM
+
 if TYPE_CHECKING:
     from app.infrastructure.database.models.game_profile_orm import GameProfileORM
 
 
-class PlayerORM(Base):
-    __tablename__ = "player"
+class UserORM(Base):
+    __tablename__ = "user"
 
-    player_id: Mapped[Optional[int]] = mapped_column(primary_key=True, autoincrement=True)
+    user_id: Mapped[Optional[int]] = mapped_column(primary_key=True, autoincrement=True)
     name: Mapped[str] = mapped_column(String, nullable=False)
     username: Mapped[str] = mapped_column(String, unique=True, nullable=False)
     mail: Mapped[Optional[str]] = mapped_column(String, unique=True, nullable=True)
     password_hash: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+    role: Mapped[str] = mapped_column(String, nullable=False, default="player")
 
     # Relaciones
-    game_profiles: Mapped[List["GameProfileORM"]] = relationship(back_populates="player")
+    game_profiles: Mapped[List["GameProfileORM"]] = relationship(back_populates="user")
+    refresh_tokens: Mapped[List["RefreshTokenORM"]] = relationship(back_populates="user")

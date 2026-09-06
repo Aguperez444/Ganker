@@ -7,6 +7,7 @@ from typing_extensions import Any
 
 from app.application.ports.i_token_service import ITokenService
 from app.domain.exceptions.Invalid_token_exception import InvalidTokenException
+from app.domain.models.UserRole import UserRole
 
 
 class JwtTokenService(ITokenService):
@@ -16,7 +17,7 @@ class JwtTokenService(ITokenService):
         self.expiration_minutes = access_expiration_minutes
         self.refresh_expiration_days = refresh_expiration_days
 
-    def generate_tokens(self, user_id: int, role: str) -> Tuple[str, str, str, datetime]:
+    def generate_tokens(self, user_id: int, role: UserRole) -> Tuple[str, str, str, datetime]:
 
         now = datetime.now(timezone.utc)
         access_expiration = now + timedelta(minutes=self.expiration_minutes)

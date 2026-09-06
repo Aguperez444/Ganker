@@ -1,5 +1,3 @@
-from typing import cast
-
 from app.application.ports.i_unit_of_work import IUnitOfWork
 from app.infrastructure.api.dto.get_player_response import GetPlayerResponse
 from app.domain.exceptions.player_not_found_exception import PlayerNotFoundException
@@ -12,7 +10,7 @@ class QueryPlayers:
     def get_by_id(self, player_id: int) -> GetPlayerResponse:
         with self.uow as uow:
             #obtener el player de la base de datos usando el repositorio de players
-            player = uow.player_repo.get_player_by_id(player_id)
+            player = uow.user_repo.get_user_by_id(player_id)
 
             if player is None:
                 raise PlayerNotFoundException(player_id)

@@ -1,5 +1,7 @@
-from app.application.ports.i_password_hasher import IPasswordHasher
 from argon2 import PasswordHasher
+
+from app.application.ports.i_password_hasher import IPasswordHasher
+
 
 class PasswordHashService(IPasswordHasher):
     def __init__(self):

@@ -1,5 +1,5 @@
 import pytest
-from app.domain.models.player import Player
+from app.domain.models.user import User
 from app.domain.models.videogame import Videogame
 from app.domain.models.character import Character
 from app.domain.models.role import Role
@@ -11,8 +11,8 @@ from app.domain.models.game_profile import GameProfile
 class TestDomainModels:
 
     def test_player_instantiation_and_properties(self):
-        player = Player(
-            player_id=1,
+        player = User(
+            user_id=1,
             username="player1",
             name="Player One",
             mail="player1@example.com",

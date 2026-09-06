@@ -4,7 +4,7 @@ from fastapi import APIRouter, Depends
 
 from app.application.useCases.query_players import QueryPlayers
 from app.application.useCases.update_player import UpdatePlayer
-from app.infrastructure.api.dependencies.auth import get_current_player_id
+from app.infrastructure.api.dependencies.auth import get_current_user_id, require_player
 from app.infrastructure.api.dto.auth_tokens_response import AuthTokensResponse
 from app.infrastructure.api.dto.get_player_response import GetPlayerResponse
 from app.infrastructure.api.dto.update_player_request import UpdatePlayerRequest
@@ -30,20 +30,20 @@ def register_player(request: RegisterPlayerRequest) -> AuthTokensResponse:
     tokens = register_player_use_case.execute(request)
     return tokens
 
-@router.put("/", response_model=UpdatePlayerResponse, status_code=200)
-def update_player(request: UpdatePlayerRequest, _player_id: int = Depends(get_current_player_id)) -> UpdatePlayerResponse:
+@router.put("/", response_model=UpdatePlayerResponse, status_code=200,dependencies=[Depends(require_player)])
+def update_player(request: UpdatePlayerRequest, _player_id: int = Depends(get_current_user_id)) -> UpdatePlayerResponse:
     uow = uow_factory()
 
     update_player_use_case = UpdatePlayer(uow)
     updated_player = update_player_use_case.execute(_player_id, request)
     return UpdatePlayerResponse(
-        player_id=cast(int, updated_player.player_id),
+        player_id=cast(int, updated_player.user_id),
         username=updated_player.username,
         name=updated_player.name,
         mail=updated_player.mail
     )
-@router.get("/me", response_model=GetPlayerResponse, status_code=200)
-def get_player(player_id: int = Depends(get_current_player_id)) -> GetPlayerResponse:
+@router.get("/me", response_model=GetPlayerResponse, status_code=200,dependencies=[Depends(require_player)])
+def get_player(player_id: int = Depends(get_current_user_id)) -> GetPlayerResponse:
     uow = uow_factory()
     get_player_usecase = QueryPlayers(uow)
     player_dto = get_player_usecase.get_by_id(player_id)
