@@ -23,4 +23,4 @@ class ICharacterRepository(ABC):
         raise NotImplementedError
 
     def get_character_by_name_and_videogame(self, name, videogame_id):
-        pass
+        raise NotImplementedError
