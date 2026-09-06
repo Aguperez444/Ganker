@@ -3,8 +3,8 @@ from typing import cast
 from app.application.ports.i_unit_of_work import IUnitOfWork
 from app.domain.models.user import User
 from app.infrastructure.api.dto.update_player_request import UpdatePlayerRequest
-from exceptions.user.username_already_exist_exception import UsernameAlreadyExistsException
-from exceptions.mail.email_already_exists_exception import EmailAlreadyExistsException
+from app.domain.exceptions.user.username_already_exist_exception import UsernameAlreadyExistsException
+from app.domain.exceptions.mail.email_already_exists_exception import EmailAlreadyExistsException
 
 
 class UpdatePlayer:

@@ -3,11 +3,11 @@ from app.application.ports.i_storage_service import IStorageService
 from app.application.ports.i_unit_of_work import IUnitOfWork
 
 from app.domain.models.rank import Rank
-from exceptions.rank.duplicated_rank_name_exception import DuplicatedRankNameException
-from exceptions.rank.duplicated_rank_value_exception import DuplicatedRankValueException
-from exceptions.rank.invalid_rank_name_exception import InvalidRankNameException
-from exceptions.rank.invalid_rank_value_exception import InvalidRankValueException
-from exceptions.videogame.videogame_not_found_exception import VideogameNotFoundException
+from app.domain.exceptions.rank.duplicated_rank_name_exception import DuplicatedRankNameException
+from app.domain.exceptions.rank.duplicated_rank_value_exception import DuplicatedRankValueException
+from app.domain.exceptions.rank.invalid_rank_name_exception import InvalidRankNameException
+from app.domain.exceptions.rank.invalid_rank_value_exception import InvalidRankValueException
+from app.domain.exceptions.videogame.videogame_not_found_exception import VideogameNotFoundException
 from app.domain.services.slug_service import SlugService
 
 

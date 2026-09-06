@@ -3,19 +3,19 @@ from typing import TYPE_CHECKING
 from typing import cast
 from app.application.ports.i_unit_of_work import IUnitOfWork
 from app.infrastructure.api.dto.update_videogame_profile_request import UpdateGameProfileRequest
-from exceptions.rank.rank_not_found_exception import RankNotFoundException
-from exceptions.role.role_not_found_exception import RoleNotFoundException
-from exceptions.character.character_not_found_exception import CharacterNotFoundException
-from exceptions.game_profile.game_profile_not_found_exception import GameProfileNotFoundException
-from exceptions.does_not_belong_to_game_exception import DoesNotBelongToGameException
-from exceptions.game_profile.does_not_belong_to_profile_exception import DoesNotBelongToProfileException
+from app.domain.exceptions.rank.rank_not_found_exception import RankNotFoundException
+from app.domain.exceptions.role.role_not_found_exception import RoleNotFoundException
+from app.domain.exceptions.character.character_not_found_exception import CharacterNotFoundException
+from app.domain.exceptions.game_profile.game_profile_not_found_exception import GameProfileNotFoundException
+from app.domain.exceptions.does_not_belong_to_game_exception import DoesNotBelongToGameException
+from app.domain.exceptions.game_profile.does_not_belong_to_profile_exception import DoesNotBelongToProfileException
 from app.domain.services.create_game_profile_dto_service import CreateGameProfileDTOService
 
 
 from app.domain.models.role_profile import RoleProfile
 from app.domain.models.game_profile import GameProfile
 from app.infrastructure.api.dto.update_videogame_profile_response import UpdateGameProfileResponse
-from models.character_priority import CharacterPriority
+from app.domain.models.character_priority import CharacterPriority
 
 if TYPE_CHECKING:
     from app.domain.models.role import Role

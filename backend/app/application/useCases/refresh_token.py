@@ -1,7 +1,7 @@
 from app.application.ports.i_token_service import ITokenService
 from app.application.ports.i_unit_of_work import IUnitOfWork
 from app.infrastructure.api.dto.auth_tokens_response import AuthTokensResponse
-from exceptions.user.user_not_found_exception import UserNotFoundException
+from app.domain.exceptions.user.user_not_found_exception import UserNotFoundException
 from app.domain.exceptions.Invalid_token_exception import InvalidTokenException
 
 
