@@ -1,18 +1,18 @@
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Optional
 
 if TYPE_CHECKING:
     from app.domain.models.videogame import Videogame
 
 
 class Role:
-    def __init__(self, role_id: int, name: str, videogame: 'Videogame', icon_url: str):
-        self._role_id: int = role_id
+    def __init__(self, role_id: Optional[int], name: str, videogame: 'Videogame', icon_url: str):
+        self._role_id: Optional[int] = role_id
         self._name: str = name
         self._videogame: 'Videogame' = videogame
         self._icon_url: str = icon_url
 
     @property
-    def role_id(self) -> int:
+    def role_id(self) -> Optional[int]:
         return self._role_id
     @role_id.setter
     def role_id(self, value: int):

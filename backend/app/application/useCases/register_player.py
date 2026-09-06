@@ -49,7 +49,7 @@ class RegisterPlayer:
             registered_player = uow.user_repo.create_user(new_player)
             player_id = cast(int, registered_player.user_id)
             role = registered_player.role
-            # Generar tokens con id, rol, jti y fecha de expiración
+            # Generar tokens con ID, rol, jti y fecha de expiración
             access_token, refresh_token, jti, expires_at = self.token_service.generate_tokens(
                 user_id=player_id,
                 role=role

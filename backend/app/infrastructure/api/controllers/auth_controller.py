@@ -40,12 +40,7 @@ def refresh(refresh_data: RefreshTokenRequest) -> AuthTokensResponse:
 
     refresh_token_use_case = RefreshToken(uow, token_service)
 
-    #TODO CAMBIAR ESTO HARCODEADO ACA TAMBIÉN
-    role = None
-    if refresh_data.force_token:
-        role = refresh_data.force_token
-
-    return refresh_token_use_case.execute(refresh_data.refresh_token, role)
+    return refresh_token_use_case.execute(refresh_data.refresh_token)
 
 @router.post("/logout", status_code=status.HTTP_204_NO_CONTENT)
 def logout(refresh_data: RefreshTokenRequest):

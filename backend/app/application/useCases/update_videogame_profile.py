@@ -1,5 +1,6 @@
 from typing import TYPE_CHECKING
 
+from typing import cast
 from app.application.ports.i_unit_of_work import IUnitOfWork
 from app.infrastructure.api.dto.update_videogame_profile_request import UpdateGameProfileRequest
 from exceptions.rank.rank_not_found_exception import RankNotFoundException
@@ -51,7 +52,7 @@ class UpdateVideogameProfile:
             rank: Rank = self.validate_rank_exist(role_rank.rank_id)
 
             # Validar que correspondan al videojuego (Criterio de aceptación)
-            self.validate_belongs_to_videogame(role, rank, game_profile.videogame.videogame_id)
+            self.validate_belongs_to_videogame(role, rank, cast(int, game_profile.videogame.videogame_id))
 
             role_profile: RoleProfile = RoleProfile(
                 role_profile_id=None,  # Al ser una asignación nueva, el ORM genera el ID

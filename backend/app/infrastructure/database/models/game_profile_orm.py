@@ -10,7 +10,6 @@ from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from app.infrastructure.database.models.user_orm import UserORM
-    from app.infrastructure.database.models.character_orm import CharacterORM
     from app.infrastructure.database.models.videogame_orm import VideogameORM
     from app.infrastructure.database.models.role_profile_orm import RoleProfileORM
 

@@ -9,7 +9,7 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/v1/login")
 token_service = JwtTokenService(settings.jwt_secret_key)
 
 def get_current_user_data(token: str = Depends(oauth2_scheme)) -> dict:
-    # Valida el token y devuelve el payload decodificado
+    # Válida el token y devuelve el payload decodificado
     return token_service.verify_access_token(token)
 
 def get_current_user_id(token_data: dict = Depends(get_current_user_data)) -> int:

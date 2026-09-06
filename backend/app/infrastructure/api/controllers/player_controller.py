@@ -45,7 +45,7 @@ def update_player(request: UpdatePlayerRequest, _player_id: int = Depends(get_cu
 @router.get("/me", response_model=GetPlayerResponse, status_code=200,dependencies=[Depends(require_player)])
 def get_player(player_id: int = Depends(get_current_user_id)) -> GetPlayerResponse:
     uow = uow_factory()
-    get_player_usecase = QueryPlayers(uow)
-    player_dto = get_player_usecase.get_by_id(player_id)
+    get_player_use_case = QueryPlayers(uow)
+    player_dto = get_player_use_case.get_by_id(player_id)
     return player_dto
 

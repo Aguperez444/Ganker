@@ -1,3 +1,4 @@
+from typing import cast
 
 from app.application.ports.i_unit_of_work import IUnitOfWork
 from app.infrastructure.api.dto.get_roles_response import GetRolesResponse
@@ -13,7 +14,7 @@ class QueryRoles:
         with self.uow as uow:
             roles = uow.role_repo.get_roles_by_game_id(game_id)
 
-        roles_response = [RoleObjectResponse(role_id=role.role_id, name=role.name, icon_url=role.icon_url or "Sin icono") for role in roles]
+        roles_response = [RoleObjectResponse(role_id=cast(int, role.role_id), name=role.name, icon_url=role.icon_url or "Sin icono") for role in roles]
 
         return GetRolesResponse(roles=roles_response)
 

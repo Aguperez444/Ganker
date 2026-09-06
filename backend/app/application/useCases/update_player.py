@@ -37,13 +37,13 @@ class UpdatePlayer:
     def validate_username_uniqueness(self, username: str, current_player_id: int) -> bool:
         with self.uow as uow:
             found_player = uow.user_repo.get_user_by_username(username)
-            if found_player and found_player.player_id != current_player_id:
+            if found_player and found_player.user_id != current_player_id:
                 raise UsernameAlreadyExistsException(username)
             return True
 
     def validate_mail_uniqueness(self, mail: str, current_player_id: int) -> bool:
         with self.uow as uow:
             found_player = uow.user_repo.get_user_by_mail(mail)
-            if found_player and found_player.player_id != current_player_id:
+            if found_player and found_player.user_id != current_player_id:
                 raise EmailAlreadyExistsException(mail)
             return True
