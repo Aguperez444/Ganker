@@ -1,6 +1,6 @@
 from pydantic import Field, BaseModel
 
-class UpdatePlayerRequest(BaseModel):
+class UpdateUserRequest(BaseModel):
 
     username: str = Field(..., description="The username of the player")
 

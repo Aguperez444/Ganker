@@ -7,3 +7,4 @@ class RegisterPlayerRequest(BaseModel):
     username: str
     mail: EmailStr
     password: str
+    role: str
