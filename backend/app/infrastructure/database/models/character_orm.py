@@ -23,6 +23,7 @@ class CharacterORM(Base):
     videogame: Mapped["VideogameORM"] = relationship(back_populates="characters")
 
     game_profile_associations: Mapped[List["CharacterPriorityORM"]] = relationship(
+        "CharacterPriorityORM",
         back_populates="character",
         cascade="all, delete-orphan"
     )
