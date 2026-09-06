@@ -55,14 +55,3 @@ class GameProfile:
     def role_profiles(self, value: list['RoleProfile']) -> None:
         self._role_profiles = value
 
-    def is_character_associated(self, character):
-        for char_prio in self._characters_priority:
-            if char_prio.character.character_id == character.character_id:
-                return True
-        return False
-
-    def get_character_priority_id(self, character):
-        for char_prio in self._characters_priority:
-            if char_prio.character.character_id == character.character_id:
-                return char_prio.priority_id
-        return None
