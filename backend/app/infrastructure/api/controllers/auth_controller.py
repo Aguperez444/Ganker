@@ -18,15 +18,25 @@ from app.infrastructure.api.dto.login_request import LoginRequest
 router = APIRouter(prefix="/auth/v1")
 
 @router.post("/login")
-def login(form_data: OAuth2PasswordRequestForm = Depends()) -> AuthTokensResponse:
+def login(form_data: OAuth2PasswordRequestForm = Depends(), force_role: str|None = None) -> AuthTokensResponse:
     uow = uow_factory()
     token_service = JwtTokenService(settings.jwt_secret_key)
     password_hasher = PasswordHashService()
 
     login_data = LoginRequest(mail=form_data.username, password=form_data.password)
 
+    role = None
+
+    if force_role:
+        role = force_role
+    # TODO CAMBIAR TODO ESTO QUE ESTÁ HARDCODEADO
     user_login_use_case = UserLogin(uow, token_service, password_hasher)
-    access_tokens = user_login_use_case.execute(login_data)
+
+    # TODO CAMBIAR EN ESTE USECASE TAMBIÉN
+    access_tokens = user_login_use_case.execute(login_data, role)
+
+
+
     return access_tokens
 
 @router.post("/refresh", response_model=AuthTokensResponse, status_code=status.HTTP_200_OK)
@@ -35,7 +45,13 @@ def refresh(refresh_data: RefreshTokenRequest) -> AuthTokensResponse:
     token_service = JwtTokenService(settings.jwt_secret_key)
 
     refresh_token_use_case = RefreshToken(uow, token_service)
-    return refresh_token_use_case.execute(refresh_data.refresh_token)
+
+    #TODO CAMBIAR ESTO HARCODEADO ACA TAMBIÉN
+    role = None
+    if refresh_data.force_token:
+        role = refresh_data.force_token
+
+    return refresh_token_use_case.execute(refresh_data.refresh_token, role)
 
 @router.post("/logout", status_code=status.HTTP_204_NO_CONTENT)
 def logout(refresh_data: RefreshTokenRequest):

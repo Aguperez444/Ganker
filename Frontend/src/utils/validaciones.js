@@ -36,3 +36,19 @@ export function validarFormularioRegistro({ nombre, username, mail, password, co
 
   return errores;
 }
+
+export function validarFormularioLogin({ email, password }) {
+  const errores = {};
+
+  if (!email.trim()) {
+    errores.email = "Ingresá tu email.";
+  } else if (!esEmailValido(email)) {
+    errores.email = "El email no tiene un formato válido.";
+  }
+
+  if (!password) {
+    errores.password = "Ingresá tu contraseña.";
+  }
+
+  return errores;
+}

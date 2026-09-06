@@ -1,8 +1,8 @@
 from app.application.ports.i_storage_service import IStorageService
 from app.application.ports.i_unit_of_work import IUnitOfWork
 from app.domain.models.videogame import Videogame
-from app.domain.exceptions.invalid_videogame_name_exception import InvalidVideogameNameException
-from app.domain.exceptions.videogame_already_exists_exception import VideogameAlreadyExistsException
+from app.domain.exceptions.videogame.invalid_videogame_name_exception import InvalidVideogameNameException
+from app.domain.exceptions.videogame.videogame_already_exists_exception import VideogameAlreadyExistsException
 from app.domain.exceptions.name_file_not_null_exception import NameFileNotNullException
 
 
@@ -10,7 +10,6 @@ class RegisterVideogame:
     def __init__(self, storage_service: IStorageService,unit_of_work: IUnitOfWork):
         self.storage_service: IStorageService = storage_service
         self.uow: IUnitOfWork = unit_of_work
-
 
 
     async def execute(self, name: str, icon_file, icon_filename) -> Videogame:
@@ -25,7 +24,7 @@ class RegisterVideogame:
             icon_url = await self.storage_service.save_file(
                 file_content=icon_file,
                 filename=icon_filename,
-                subfolder=f"",
+                subfolder=f"games/{cleaned_name}",
                 preserve_original_name=True
             )
 

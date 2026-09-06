@@ -4,7 +4,7 @@ from app.application.useCases.query_characters import QueryCharacters
 from app.application.useCases.register_character import RegisterCharacter
 from app.application.useCases.update_character import UpdateCharacter
 from app.infrastructure.api.dependencies.auth import get_current_player_id
-from app.infrastructure.api.dto.get_ranks_response import GetRanksResponse
+from app.infrastructure.api.dto.get_characters_response import GetCharactersResponse
 
 from app.infrastructure.database.unit_of_work.uow_factory import uow_factory
 from app.infrastructure.storage.local_disk_storage_service import LocalDiskStorageService
@@ -13,7 +13,9 @@ router = APIRouter(prefix="/api/v1/characters")
 
 def get_storage_service():
     return LocalDiskStorageService()
+
 @router.get("/{videogame_id}", status_code=200)
+@router.get("/{videogame_id}", response_model=GetCharactersResponse, status_code=200)
 def get_characters_by_videogame_id(videogame_id: int, _player_id: int = Depends(get_current_player_id)):
     # lo del player_id está para que el endpoint esté protegido, pero no se usa en la lógica de este endpoint
     uow = uow_factory()

@@ -2,11 +2,11 @@ from typing import BinaryIO
 from app.application.ports.i_storage_service import IStorageService
 from app.application.ports.i_unit_of_work import IUnitOfWork
 
-from app.domain.exceptions.videogame_not_found_exception import VideogameNotFoundException
+from exceptions.videogame.videogame_not_found_exception import VideogameNotFoundException
 from app.domain.services.slug_service import SlugService
 from app.domain.models.role import Role
-from app.domain.exceptions.duplicated_role_name_exception import DuplicateRoleNameException
-from app.domain.exceptions.invalid_role_name_exception import InvalidRoleNameException
+from exceptions.role.duplicated_role_name_exception import DuplicateRoleNameException
+from exceptions.role.invalid_role_name_exception import InvalidRoleNameException
 
 
 class CreateRoleUseCase:

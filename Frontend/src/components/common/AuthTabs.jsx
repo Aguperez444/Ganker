@@ -12,7 +12,7 @@ function AuthTabs() {
   const { pathname } = useLocation();
 
   return (
-    <div className="mb-6 flex rounded-lg border border-ganker-purple bg-ganker-surface p-1">
+    <div className="mb-6 flex rounded-lg border border-ganker-purple bg-ganker-surface p-1 shadow-[0_0px_10px] shadow-ganker-purple">
       {PESTANAS.map(({ ruta, etiqueta }) => {
         const activa = pathname === ruta;
         return (

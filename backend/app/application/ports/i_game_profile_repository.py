@@ -17,3 +17,7 @@ class IGameProfileRepository(ABC):
     @abstractmethod
     def get_game_profile_by_player_and_videogame(self, player_id: int, videogame_id: int) -> Optional['GameProfile']:
         raise NotImplementedError
+
+    @abstractmethod
+    def update_game_profile(self, game_profile: 'GameProfile') -> 'GameProfile':
+        raise NotImplementedError

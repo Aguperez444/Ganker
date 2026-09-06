@@ -3,9 +3,9 @@ from fastapi import UploadFile
 from app.application.ports.i_storage_service import IStorageService
 from app.application.ports.i_unit_of_work import IUnitOfWork
 from app.domain.models.videogame import Videogame
-from app.domain.exceptions.invalid_videogame_name_exception import InvalidVideogameNameException
-from app.domain.exceptions.videogame_already_exists_exception import VideogameAlreadyExistsException
-from app.domain.exceptions.videogame_not_found_exception import VideogameNotFoundException
+from exceptions.videogame.invalid_videogame_name_exception import InvalidVideogameNameException
+from exceptions.videogame.videogame_already_exists_exception import VideogameAlreadyExistsException
+from exceptions.videogame.videogame_not_found_exception import VideogameNotFoundException
 
 class UpdateVideogame:
     def __init__(self, storage_service: IStorageService, unit_of_work: IUnitOfWork):

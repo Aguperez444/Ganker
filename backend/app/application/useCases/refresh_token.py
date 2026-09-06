@@ -1,7 +1,7 @@
 from app.application.ports.i_token_service import ITokenService
 from app.application.ports.i_unit_of_work import IUnitOfWork
 from app.infrastructure.api.dto.auth_tokens_response import AuthTokensResponse
-from app.domain.exceptions.user_not_found_exception import UserNotFoundException
+from exceptions.user.user_not_found_exception import UserNotFoundException
 from app.domain.exceptions.Invalid_token_exception import InvalidTokenException
 
 
@@ -10,7 +10,7 @@ class RefreshToken:
         self.uow = uow
         self.token_service = token_service
 
-    def execute(self, refresh_token: str) -> AuthTokensResponse:
+    def execute(self, refresh_token: str, role_param: str|None) -> AuthTokensResponse:
         # 1. Validar firma del token y extraer datos del payload
         token_data = self.token_service.verify_refresh_token(refresh_token)
         user_id = token_data["user_id"]
@@ -29,6 +29,10 @@ class RefreshToken:
 
             # 4. Revocar el token viejo (Rotación)
             self.uow.refresh_token_repo.revoke_by_jti(old_jti)
+
+            #TODO eliminar el hardcodeado de acá también
+            if role_param:
+                role = role_param
 
             # 5. Generar nuevo par de tokens
             new_access_token, new_refresh_token, new_jti, new_expires_at = self.token_service.generate_tokens(

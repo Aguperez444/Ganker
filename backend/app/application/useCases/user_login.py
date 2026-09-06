@@ -1,7 +1,7 @@
 from app.application.ports.i_password_hasher import IPasswordHasher
 from app.application.ports.i_token_service import ITokenService
 from app.application.ports.i_unit_of_work import IUnitOfWork
-from app.domain.exceptions.mail_not_found_exception import EmailNotFoundException
+from exceptions.mail.mail_not_found_exception import EmailNotFoundException
 
 
 from typing import TYPE_CHECKING, cast
@@ -20,7 +20,7 @@ class UserLogin:
 
 
 
-    def execute(self, player_data: 'LoginRequest') -> AuthTokensResponse:
+    def execute(self, player_data: 'LoginRequest', role_param: str|None = None) -> AuthTokensResponse:
         pass
 
         # revisar si el mail pertenece a un usuario registrado
@@ -36,6 +36,10 @@ class UserLogin:
 
         player_id = cast(int, user.player_id)
         role = "player"
+
+        # TODO CAMBIAR ESTO HARCODEADO ACÁ TAMBIÉN
+        if role_param:
+            role = role_param
 
         # Generar tokens recibiendo jti y fecha de expiración
         access_token, refresh_token, jti, expires_at = self.token_service.generate_tokens(

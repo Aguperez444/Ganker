@@ -1,7 +1,7 @@
 const HomePage = () => {
   return (
     <section className="min-h-full bg-ganker-bg p-6">
-      {/* 
+      {/*
         Home base de Ganker.
 
         Las próximas User Stories irán agregando
