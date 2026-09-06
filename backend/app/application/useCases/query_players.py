@@ -1,6 +1,6 @@
 from app.application.ports.i_unit_of_work import IUnitOfWork
 from app.infrastructure.api.dto.get_player_response import GetPlayerResponse
-from app.domain.exceptions.player_not_found_exception import PlayerNotFoundException
+from app.domain.exceptions.user_not_found_exception import UserNotFoundException
 from app.domain.services.create_game_profile_dto_service import CreateGameProfileDTOService
 
 class QueryPlayers:
@@ -13,7 +13,7 @@ class QueryPlayers:
             player = uow.user_repo.get_user_by_id(player_id)
 
             if player is None:
-                raise PlayerNotFoundException(player_id)
+                raise UserNotFoundException(player_id)
 
             return GetPlayerResponse(
                 username=player.username,
