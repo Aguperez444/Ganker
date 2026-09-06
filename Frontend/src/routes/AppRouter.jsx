@@ -8,7 +8,6 @@ import AdminLayout from "../components/layout/AdminLayout.jsx";
 import AdminHomePage from "../pages/admin/AdminHomePage.jsx";
 import GamesPage from "../pages/admin/GamesPage.jsx";
 import ProtectedRoute from "./ProtectedRoute.jsx";
-import PublicOnlyRoute from "./PublicOnlyRoute.jsx";
 
 /**
  * Definicion central de rutas de la aplicacion.
@@ -18,12 +17,10 @@ function AppRouter() {
   return (
     <BrowserRouter>
       <Routes>
-        {/* Solo accesibles SIN sesion: si ya esta logueado, se lo manda a /app */}
-        <Route element={<PublicOnlyRoute />}>
-          <Route path="/" element={<LandingPage />} />
-          <Route path="/registro" element={<RegistroPage />} />
-          <Route path="/login" element={<LoginPage />} />
-        </Route>
+        {/* Rutas publicas */}
+        <Route path="/" element={<LandingPage />} />
+        <Route path="/registro" element={<RegistroPage />} />
+        <Route path="/login" element={<LoginPage />} />
 
         {/* Privadas: requieren sesion iniciada */}
         <Route element={<ProtectedRoute />}>

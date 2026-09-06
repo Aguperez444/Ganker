@@ -1,4 +1,4 @@
-import { NavLink } from "react-router-dom";
+import { Link, NavLink } from "react-router-dom";
 import { navigationItems } from "./Sidebar.jsx";
 
 const MobileMenu = ({ isOpen, onClose }) => {
@@ -19,7 +19,7 @@ const MobileMenu = ({ isOpen, onClose }) => {
       {/* Drawer */}
       <aside className="relative flex h-full w-72 max-w-[85vw] flex-col border-r border-white/10 bg-ganker-surface shadow-2xl">
         <header className="flex h-17 items-center justify-between border-b border-white/10 px-5">
-          <div className="flex items-center gap-3">
+          <Link to="/" onClick={onClose} className="flex items-center gap-3">
             <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-gradient-to-br from-ganker-orange to-ganker-purple font-heading font-bold text-white">
               G
             </div>
@@ -27,7 +27,7 @@ const MobileMenu = ({ isOpen, onClose }) => {
             <span className="font-heading text-lg font-semibold text-ganker-text">
               Ganker
             </span>
-          </div>
+          </Link>
 
           <button
             type="button"

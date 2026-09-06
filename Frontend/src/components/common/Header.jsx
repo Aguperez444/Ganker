@@ -1,6 +1,15 @@
-import { Link, NavLink } from "react-router-dom";
+import { Link, NavLink, useNavigate } from "react-router-dom";
+import { useAuth } from "../../context/AuthContext";
 
 function Header() {
+  const { isAuthenticated, logout } = useAuth();
+  const navigate = useNavigate();
+
+  const handleLogout = () => {
+    logout();
+    navigate("/");
+  };
+
   return (
     <header className="sticky top-0 z-50 w-full border-b border-[#1f173b]/70 bg-[#0a0718]/90 backdrop-blur-md px-4 sm:px-8 py-3.5 font-heading text-white">
       <div className="mx-auto flex max-w-7xl items-center justify-between">
@@ -14,30 +23,50 @@ function Header() {
         </Link>
 
         <nav className="flex items-center gap-4 sm:gap-6 text-xs sm:text-sm font-bold uppercase tracking-wider">
-          <NavLink
-            to="/registro"
-            className={({ isActive }) =>
-              `rounded-lg px-3 py-1.5 transition-colors duration-200 ${
-                isActive
-                  ? "text-[#f27238]"
-                  : "text-slate-300 hover:text-white hover:bg-white/5"
-              }`
-            }
-          >
-            Registrarse
-          </NavLink>
-          <NavLink
-            to="/login"
-            className={({ isActive }) =>
-              `rounded-lg px-3 py-1.5 transition-colors duration-200 ${
-                isActive
-                  ? "text-[#f27238]"
-                  : "text-slate-300 hover:text-white hover:bg-white/5"
-              }`
-            }
-          >
-            Iniciar sesión
-          </NavLink>
+          {isAuthenticated ? (
+            <>
+              <NavLink
+                to="/app"
+                className="rounded-lg px-3 py-1.5 text-slate-300 transition-colors duration-200 hover:bg-white/5 hover:text-white"
+              >
+                Ir a la app
+              </NavLink>
+              <button
+                type="button"
+                onClick={handleLogout}
+                className="cursor-pointer rounded-lg px-3 py-1.5 text-[#f27238] transition-colors duration-200 hover:bg-white/5 hover:text-orange-400"
+              >
+                Cerrar sesión
+              </button>
+            </>
+          ) : (
+            <>
+              <NavLink
+                to="/registro"
+                className={({ isActive }) =>
+                  `rounded-lg px-3 py-1.5 transition-colors duration-200 ${
+                    isActive
+                      ? "text-[#f27238]"
+                      : "text-slate-300 hover:text-white hover:bg-white/5"
+                  }`
+                }
+              >
+                Registrarse
+              </NavLink>
+              <NavLink
+                to="/login"
+                className={({ isActive }) =>
+                  `rounded-lg px-3 py-1.5 transition-colors duration-200 ${
+                    isActive
+                      ? "text-[#f27238]"
+                      : "text-slate-300 hover:text-white hover:bg-white/5"
+                  }`
+                }
+              >
+                Iniciar sesión
+              </NavLink>
+            </>
+          )}
         </nav>
       </div>
     </header>

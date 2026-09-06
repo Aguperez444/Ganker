@@ -1,23 +1,20 @@
-import { Navigate, Outlet, useLocation } from "react-router-dom";
+import { Navigate, Outlet } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 
 // Envuelve las rutas que requieren sesion iniciada.
 // Se usa como ruta "layout" en AppRouter: las hijas se renderizan en <Outlet />.
 function ProtectedRoute(/* { rolesPermitidos } */) {
-  const { isAuthenticated, loading /*, user */ } = useAuth();
-  const location = useLocation();
+  const { isAuthenticated, loading } = useAuth();
 
   // Mientras AuthContext lee localStorage todavia no sabemos si hay sesion.
-  // Sin esta guarda expulsariamos a /login a un usuario que SI esta logueado,
+  // Sin esta guarda expulsariamos a la landing page a un usuario que SI esta logueado,
   // en cada recarga de pagina.
   if (loading) {
     return null;
   }
 
   if (!isAuthenticated) {
-    // "from" guarda a donde queria entrar, para poder devolverlo ahi despues
-    // de que se loguee (leerlo en LoginPage con useLocation().state?.from).
-    return <Navigate to="/login" replace state={{ from: location }} />;
+    return <Navigate to="/" replace />;
   }
 
   // -------------------------------------------------------------------------
