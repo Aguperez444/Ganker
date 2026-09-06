@@ -14,7 +14,6 @@ router = APIRouter(prefix="/api/v1/characters")
 def get_storage_service():
     return LocalDiskStorageService()
 
-@router.get("/{videogame_id}", status_code=200)
 @router.get("/{videogame_id}", response_model=GetCharactersResponse, status_code=200)
 def get_characters_by_videogame_id(videogame_id: int, _player_id: int = Depends(get_current_player_id)):
     # lo del player_id está para que el endpoint esté protegido, pero no se usa en la lógica de este endpoint
