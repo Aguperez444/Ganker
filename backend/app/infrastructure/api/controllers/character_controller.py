@@ -4,6 +4,7 @@ from app.application.useCases.query_characters import QueryCharacters
 from app.application.useCases.register_character import RegisterCharacter
 from app.application.useCases.update_character import UpdateCharacter
 from app.infrastructure.api.dependencies.auth import get_current_player_id
+from app.infrastructure.api.dto.character_object_response import CharacterObjectResponse
 from app.infrastructure.api.dto.get_characters_response import GetCharactersResponse
 
 from app.infrastructure.database.unit_of_work.uow_factory import uow_factory
@@ -22,7 +23,7 @@ def get_characters_by_videogame_id(videogame_id: int, _player_id: int = Depends(
     return query_characters_use_case.get_by_game_id(videogame_id)
 
 
-@router.post("/", status_code=201)
+@router.post("/", status_code=201, response_model=CharacterObjectResponse)
 async def register_character(name: str = Form(..., description="Name of the character"),
                              videogame_id: int = Form(..., description="ID of the videogame"),
                              icon: UploadFile = File(..., description="Icon image file"),
@@ -42,7 +43,7 @@ async def register_character(name: str = Form(..., description="Name of the char
 
     return character
 
-@router.put("/{character_id}", status_code=200)
+@router.put("/{character_id}", status_code=200, response_model=CharacterObjectResponse)
 async def update_character(character_id: int,
                            name: str = Form(..., description="Name of the character"),
                            videogame_id: int = Form(..., description="ID of the videogame"),

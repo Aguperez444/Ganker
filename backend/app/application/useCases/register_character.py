@@ -7,14 +7,16 @@ from app.domain.models.character import Character
 from app.domain.exceptions.file_not_null_exception import FileNotNullException
 from app.domain.exceptions.videogame.videogame_not_found_exception import VideogameNotFoundException
 from app.domain.services.slug_service import SlugService
+from app.infrastructure.api.dto.character_object_response import CharacterObjectResponse
 
+from typing import cast
 
 class RegisterCharacter:
     def __init__(self,storage_service: IStorageService, unit_of_work: IUnitOfWork):
         self.uow: IUnitOfWork = unit_of_work
         self.storage_service: IStorageService = storage_service
 
-    async def execute(self, name: str, videogame_id: int, icon_file, icon_filename):
+    async def execute(self, name: str, videogame_id: int, icon_file, icon_filename) -> CharacterObjectResponse:
         cleaned_name = self.validate_character_name(name)
 
         # Comprobar que existe el juego
@@ -65,7 +67,11 @@ class RegisterCharacter:
                     await self.storage_service.delete_file(icon_url)
                 raise e  # volver a levantar la excepción después de limpiar el archivo para hacer rollback
 
-        return saved_character
+        return CharacterObjectResponse(
+            character_id=cast(int, saved_character.character_id),
+            name=saved_character.name,
+            icon_url=saved_character.icon_url or "Sin icono"
+        )
 
     @staticmethod
     def validate_character_name(name: str) -> str:

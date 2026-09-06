@@ -7,7 +7,10 @@ from app.domain.exceptions.videogame.videogame_not_found_exception import Videog
 from app.domain.services.slug_service import SlugService
 
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, cast
+
+from app.infrastructure.api.dto.character_object_response import CharacterObjectResponse
+
 if TYPE_CHECKING:
     from app.domain.models.videogame import Videogame
 
@@ -17,7 +20,7 @@ class UpdateCharacter:
         self.storage_service: IStorageService = storage_service
         self.uow: IUnitOfWork = uow
 
-    async def execute(self, character_id: int, name: str, videogame_id: int, icon):
+    async def execute(self, character_id: int, name: str, videogame_id: int, icon) -> CharacterObjectResponse:
 
         # Validar que el nombre no esté vacío
         if not name.strip():
@@ -58,7 +61,11 @@ class UpdateCharacter:
                 # Si hay un error al actualizar, se lanza una excepción
                 raise Exception(f"Error al actualizar el personaje: {str(e)}")
 
-        return updated_character
+        return CharacterObjectResponse(
+            character_id=cast(int, updated_character.character_id),
+            name=updated_character.name,
+            icon_url=updated_character.icon_url or "Sin icono",
+        )
 
     def validate_name_uniqueness(self, character_id: int, name: str, videogame_id: int):
         with self.uow as uow:
