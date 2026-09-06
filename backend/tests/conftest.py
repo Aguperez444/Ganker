@@ -26,7 +26,7 @@ from app.infrastructure.api.auth.jwt_token_service import JwtTokenService
 from app.infrastructure.api.auth.password_hash_service import PasswordHashService
 from app.infrastructure.start.main import app
 import app.infrastructure.database.unit_of_work.uow_factory as uow_factory_module
-import app.infrastructure.api.controllers.player_controller as player_ctrl_module
+import app.infrastructure.api.controllers.user_controller as player_ctrl_module
 import app.infrastructure.api.controllers.auth_controller as auth_ctrl_module
 import app.infrastructure.api.controllers.game_profile_controller as gp_ctrl_module
 

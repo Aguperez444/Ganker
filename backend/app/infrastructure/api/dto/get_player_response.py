@@ -5,7 +5,7 @@ from pydantic import BaseModel, Field
 from app.infrastructure.api.dto.game_profile_object_response import GameProfileObjectResponse
 
 
-class GetPlayerResponse(BaseModel):
+class GetUserResponse(BaseModel):
     name: str = Field(..., description="Nombre del jugador")
     username: str = Field(..., description="Nombre de usuario del jugador")
     mail: str|None = Field(..., description="Correo electrónico del jugador")

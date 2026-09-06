@@ -10,7 +10,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.domain.exceptions.domain_exception import DomainException
 
-from app.infrastructure.api.controllers.player_controller import router as player_router
+from app.infrastructure.api.controllers.user_controller import router as player_router
 from app.infrastructure.api.controllers.auth_controller import router as auth_router
 from app.infrastructure.api.controllers.game_profile_controller import router as game_profile_router
 from app.infrastructure.api.controllers.videogame_controller import router as videogame_router
