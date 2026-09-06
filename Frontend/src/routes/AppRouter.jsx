@@ -18,9 +18,11 @@ function AppRouter() {
   return (
     <BrowserRouter>
       <Routes>
+        {/* Landing: accesible siempre, con o sin sesion iniciada */}
+        <Route path="/" element={<LandingPage />} />
+
         {/* Solo accesibles SIN sesion: si ya esta logueado, se lo manda a /app */}
         <Route element={<PublicOnlyRoute />}>
-          <Route path="/" element={<LandingPage />} />
           <Route path="/registro" element={<RegistroPage />} />
           <Route path="/login" element={<LoginPage />} />
         </Route>
