@@ -1,7 +1,7 @@
 from app.domain.models.user import User
 from app.infrastructure.database.mappers.game_profile_mapper import GameProfileMapper
 from app.infrastructure.database.models.user_orm import UserORM
-from app.domain.models.UserRole import UserRole
+from app.domain.models.user_role import UserRole
 
 
 class UserMapper:

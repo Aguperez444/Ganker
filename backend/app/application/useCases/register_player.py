@@ -11,7 +11,7 @@ from app.domain.exceptions.password_is_not_secure_exception import PasswordIsNot
 from app.domain.exceptions.user.username_already_exist_exception import UsernameAlreadyExistsException
 from app.domain.models.user import User
 from app.infrastructure.api.dto.auth_tokens_response import AuthTokensResponse
-from app.domain.models.UserRole import UserRole
+from app.domain.models.user_role import UserRole
 
 if TYPE_CHECKING:
     from app.infrastructure.api.dto.register_player_request import RegisterPlayerRequest

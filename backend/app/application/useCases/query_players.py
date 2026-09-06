@@ -19,7 +19,8 @@ class QueryPlayers:
                 username=player.username,
                 name=player.name,
                 mail=player.mail,
-                profiles=[CreateGameProfileDTOService.create_game_profile(profile) for profile in player.profiles]
+                profiles=[CreateGameProfileDTOService.create_game_profile(profile) for profile in player.profiles],
+                role=player.role
             )
 
 

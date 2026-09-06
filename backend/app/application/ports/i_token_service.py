@@ -2,7 +2,7 @@ from abc import ABC, abstractmethod
 from datetime import datetime
 from typing import Tuple, Dict, Any
 
-from app.domain.models.UserRole import UserRole
+from app.domain.models.user_role import UserRole
 
 
 class ITokenService(ABC):

@@ -3,7 +3,7 @@ from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 from app.infrastructure.api.auth.jwt_token_service import JwtTokenService
 from app.infrastructure.config.settings import settings
-from app.domain.models.UserRole import UserRole
+from app.domain.models.user_role import UserRole
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/v1/login")
 token_service = JwtTokenService(settings.jwt_secret_key)

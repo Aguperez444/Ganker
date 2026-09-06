@@ -1,6 +1,6 @@
 from typing import TYPE_CHECKING, Optional
 
-from app.domain.models.UserRole import UserRole
+from app.domain.models.user_role import UserRole
 
 if TYPE_CHECKING:
     from app.domain.models.game_profile import GameProfile
