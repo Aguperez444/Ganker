@@ -22,7 +22,7 @@ class RegisterUser:
         self.token_service: ITokenService = token_service
         self.pass_hasher: IPasswordHasher = password_hasher
 
-    def execute(self, user_data: 'RegisterPlayerRequest', actual_user_id: int) -> RegisterUserResponse:
+    def execute(self, user_data: 'RegisterPlayerRequest', current_user_id: int) -> RegisterUserResponse:
         # Se asume que lo que me llega es un mail por la validación de pydantic en el dto.
         # Validar que no exista otra cuenta con ese mail
         if not self.validate_mail(user_data.mail):
@@ -39,11 +39,11 @@ class RegisterUser:
         # Validar que el rol del usuario sea válido para lo que se está registrando
 
 
-        user = self.uow.user_repo.get_user_by_id(actual_user_id)
+        user = self.uow.user_repo.get_user_by_id(current_user_id)
         if user is None:
-            raise UserNotFoundException(actual_user_id)
+            raise UserNotFoundException(current_user_id)
 
-        print(f"Usuario actual: {user.user_id}, rol: {user.role.value}, intentando registrar usuario con rol: {user_data.role}")
+        
         if user.role == UserRole.ADMIN and user_data.role == UserRole.OWNER:
             raise UnauthorizedException(user.user_id, user.role.value, user_data.role)
 
