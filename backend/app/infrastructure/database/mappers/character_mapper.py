@@ -10,6 +10,7 @@ class CharacterMapper:
             character_id = character_orm.character_id,
             name = character_orm.name,
             videogame = VideogameMapper.orm_to_domain(character_orm.videogame),
+            icon_url = character_orm.icon_url
         )
 
     @staticmethod
@@ -17,5 +18,6 @@ class CharacterMapper:
         return CharacterORM(
             character_id = character.character_id,
             name = character.name,
-            videogame_id = character.videogame.videogame_id
+            videogame_id = character.videogame.videogame_id,
+            icon_url = character.icon_url
         )
