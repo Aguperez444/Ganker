@@ -3,6 +3,8 @@ from app.application.ports.i_unit_of_work import IUnitOfWork
 from app.domain.models.videogame import Videogame
 from app.domain.exceptions.invalid_videogame_name_exception import InvalidVideogameNameException
 from app.domain.exceptions.videogame_already_exists_exception import VideogameAlreadyExistsException
+from app.domain.exceptions.name_file_not_null_exception import NameFileNotNullException
+
 
 class RegisterVideogame:
     def __init__(self, storage_service: IStorageService,unit_of_work: IUnitOfWork):
@@ -16,7 +18,7 @@ class RegisterVideogame:
         cleaned_name = self.validate_videogame_name(name)
         self.validate_name_uniqueness(cleaned_name)
         if icon_file and not icon_filename:
-            raise InvalidVideogameNameException("El archivo de ícono debe tener un nombre válido.")
+            raise NameFileNotNullException()
 
         with self.uow as uow:
             # Guardar imagen a través del puerto

@@ -40,6 +40,7 @@ class VideogameRepositoryImpl(IVideogameRepository):
         orm_videogame = self.session.query(VideogameORM).filter(VideogameORM.videogame_id == videogame.videogame_id).first()
         if orm_videogame:
             orm_videogame.name = videogame.name
+            orm_videogame.icon_url = videogame.icon_url
             self.session.flush()
             self.session.refresh(orm_videogame)
             return VideogameMapper.orm_to_domain(orm_videogame)

@@ -13,3 +13,14 @@ class ICharacterRepository(ABC):
     @abstractmethod
     def get_characters_by_game_id(self, game_id: int) -> list['Character']:
         raise NotImplementedError
+
+    @abstractmethod
+    def create_character(self, character: 'Character') -> 'Character':
+        raise NotImplementedError
+
+    @abstractmethod
+    def update_character(self, character: 'Character') -> 'Character':
+        raise NotImplementedError
+
+    def get_character_by_name_and_videogame(self, name, videogame_id):
+        pass

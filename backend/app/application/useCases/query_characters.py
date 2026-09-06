@@ -12,7 +12,7 @@ class QueryCharacters:
         with self.uow as uow:
             characters = uow.character_repo.get_characters_by_game_id(game_id)
 
-        characters_response = [CharacterObjectResponse(character_id=character.character_id, name=character.name) for character in characters]
+        characters_response = [CharacterObjectResponse(character_id=character.character_id, name=character.name, icon_url=character.icon_url) for character in characters]
 
         return GetCharactersResponse(characters=characters_response)
 
