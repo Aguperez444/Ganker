@@ -7,9 +7,9 @@ from app.domain.exceptions.videogame.videogame_not_found_exception import Videog
 from app.domain.services.slug_service import SlugService
 
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, cast
 
-
+from app.infrastructure.api.dto.videogame_object_response import VideogameObjectResponse
 
 if TYPE_CHECKING:
     from app.domain.models.videogame import Videogame
@@ -19,7 +19,7 @@ class UpdateVideogame:
         self.storage_service: IStorageService = storage_service
         self.uow: IUnitOfWork = unit_of_work
 
-    async def execute(self, videogame_id: int, name: str, icon: UploadFile) -> 'Videogame':
+    async def execute(self, videogame_id: int, name: str, icon: UploadFile) -> VideogameObjectResponse:
 
         existing_game = self.validate_videogame_exists(videogame_id)
         cleaned_name = name.strip() if name else existing_game.name
@@ -49,7 +49,11 @@ class UpdateVideogame:
                 # Si hay un error al actualizar, se lanza una excepción
                 raise Exception(f"Error al actualizar el videojuego: {str(e)}")
 
-        return updated_game
+        return VideogameObjectResponse(
+            id=cast(int,updated_game.videogame_id),
+            name=updated_game.name,
+            icon_url=updated_game.icon_url or "Sin icono",
+        )
 
     # Validar existencia del juego
     def validate_videogame_exists(self, videogame_id: int) -> 'Videogame':

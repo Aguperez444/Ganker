@@ -4,6 +4,7 @@ from app.application.useCases.query_videogame import QueryVideogames
 from app.application.useCases.register_videogame import RegisterVideogame
 from app.application.useCases.update_videogame import UpdateVideogame
 from app.infrastructure.api.dto.get_videogames_response import GetVideogamesResponse
+from app.infrastructure.api.dto.videogame_object_response import VideogameObjectResponse
 from app.infrastructure.database.unit_of_work.uow_factory import uow_factory
 from app.infrastructure.api.dependencies.auth import get_current_player_id
 from app.infrastructure.storage.local_disk_storage_service import LocalDiskStorageService
@@ -12,7 +13,7 @@ router = APIRouter(prefix="/api/v1/videogames")
 
 def get_storage_service():
     return LocalDiskStorageService()
-@router.post("/", status_code=201)
+@router.post("/", status_code=201, response_model=VideogameObjectResponse)
 async def register_videogame(name: str = Form(..., description="Name of the rank"),
     icon: UploadFile = File(..., description="Icon image file"), _player_id: int = Depends(get_current_player_id)):
 
@@ -31,7 +32,7 @@ async def register_videogame(name: str = Form(..., description="Name of the rank
 
     return videogame
 
-@router.put("/{videogame_id}", status_code=200)
+@router.put("/{videogame_id}", status_code=200, response_model=VideogameObjectResponse)
 async def update_videogame(videogame_id: int, name: str = Form(..., description="Name of the rank"),
                            icon: UploadFile = File(..., description="Icon image file"),
                            _player_id: int = Depends(get_current_player_id)):

@@ -1,3 +1,5 @@
+from typing import cast
+
 from app.application.ports.i_storage_service import IStorageService
 from app.application.ports.i_unit_of_work import IUnitOfWork
 from app.domain.models.videogame import Videogame
@@ -6,6 +8,8 @@ from app.domain.exceptions.videogame.videogame_already_exists_exception import V
 from app.domain.exceptions.file_name_not_null_exception import FileNameNotNullException
 from app.domain.exceptions.file_not_null_exception import FileNotNullException
 from app.domain.services.slug_service import SlugService
+from app.infrastructure.api.dto.videogame_object_response import VideogameObjectResponse
+
 
 
 class RegisterVideogame:
@@ -14,7 +18,7 @@ class RegisterVideogame:
         self.uow: IUnitOfWork = unit_of_work
 
 
-    async def execute(self, name: str, icon_file, icon_filename) -> Videogame:
+    async def execute(self, name: str, icon_file, icon_filename) -> VideogameObjectResponse:
 
         cleaned_name = self.validate_videogame_name(name)
         self.validate_name_uniqueness(cleaned_name)
@@ -49,8 +53,11 @@ class RegisterVideogame:
                 await self.storage_service.delete_file(icon_url)
                 raise e  # volver a levantar la excepción después de limpiar el archivo para hacer rollback
 
-
-        return saved_videogame
+        return VideogameObjectResponse(
+            id=cast(int, new_videogame.videogame_id),
+            name=new_videogame.name,
+            icon_url=new_videogame.icon_url or "Sin icono",
+        )
 
     # Validar que el nombre del videojuego no esté vacío
     @staticmethod
