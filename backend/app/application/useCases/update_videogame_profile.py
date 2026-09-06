@@ -41,11 +41,7 @@ class UpdateVideogameProfile:
                 if character.videogame.videogame_id != game_profile.videogame.videogame_id:
                     raise DoesNotBelongToGameException("personaje", f"{character.name}", f"{game_profile.videogame.name}")
 
-                prio_id = None
-                if game_profile.is_character_associated(character):
-                    prio_id = game_profile.get_character_priority_id(character)
-
-                characters_priority.append(CharacterPriority(character=character, priority=index, priority_id=prio_id))
+                characters_priority.append(CharacterPriority(priority_id=None, character=character, priority=index))
 
 
         # Buscar roles/rangos y crear las nuevas relaciones role_profile
