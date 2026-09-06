@@ -1,4 +1,4 @@
-import { NavLink } from "react-router-dom";
+import { Link, NavLink } from "react-router-dom";
 
 export const navigationItems = [
   {
@@ -28,9 +28,9 @@ const Sidebar = () => {
   return (
     <aside className="hidden w-20 shrink-0 flex-col border-r border-white/10 bg-ganker-surface lg:flex">
       <div className="flex h-17 items-center justify-center border-b border-white/10">
-        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-ganker-orange to-ganker-purple font-heading text-lg font-bold text-white">
-          G
-        </div>
+        <Link to="/" className="flex items-center justify-center transition hover:opacity-90">
+          <img src="/images/favicon.svg" alt="Ganker" className="h-12 w-12" />
+        </Link>
       </div>
 
       <nav className="flex flex-1 flex-col gap-2 px-2 py-5">

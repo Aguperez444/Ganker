@@ -1,4 +1,31 @@
+import { useState, useRef, useEffect } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { useAuth } from "../../context/AuthContext";
+
 const TopNavbar = ({ onOpenMenu, onOpenChat, showChatButton = true }) => {
+  const { user, logout } = useAuth();
+  const navigate = useNavigate();
+  const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
+  const userMenuRef = useRef(null);
+
+  useEffect(() => {
+    function handleClickOutside(event) {
+      if (userMenuRef.current && !userMenuRef.current.contains(event.target)) {
+        setIsUserMenuOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
+
+  const handleLogout = () => {
+    setIsUserMenuOpen(false);
+    navigate("/", { replace: true });
+    logout();
+  };
+
   return (
     <header className="flex min-h-17 items-center border-b border-white/10 bg-ganker-surface px-4 sm:px-5">
       <div className="flex min-w-0 flex-1 items-center gap-3">
@@ -72,13 +99,40 @@ const TopNavbar = ({ onOpenMenu, onOpenChat, showChatButton = true }) => {
         )}
 
         {/* Usuario */}
-        <button
-          type="button"
-          aria-label="Abrir cuenta"
-          className="flex h-10 w-10 cursor-pointer items-center justify-center rounded-full border border-ganker-purple/40 bg-ganker-surface-light text-sm font-semibold text-ganker-text transition hover:border-ganker-purple-light"
-        >
-          G
-        </button>
+        <div className="relative" ref={userMenuRef}>
+          <button
+            type="button"
+            onClick={() => setIsUserMenuOpen((prev) => !prev)}
+            aria-label="Abrir cuenta"
+            className="flex h-10 w-10 cursor-pointer items-center justify-center rounded-full border border-ganker-purple/40 bg-ganker-surface-light text-sm font-semibold text-ganker-text transition hover:border-ganker-purple-light"
+          >
+            {user?.email ? user.email.charAt(0).toUpperCase() : "G"}
+          </button>
+
+          {isUserMenuOpen && (
+            <div className="absolute right-0 mt-2 w-48 rounded-xl border border-white/10 bg-ganker-surface p-2 shadow-2xl z-50">
+              {user?.email && (
+                <div className="px-3 py-2 border-b border-white/10 text-xs text-ganker-muted truncate">
+                  {user.email}
+                </div>
+              )}
+              <Link
+                to="/"
+                onClick={() => setIsUserMenuOpen(false)}
+                className="block rounded-lg px-3 py-2 text-xs font-semibold text-ganker-muted hover:bg-ganker-surface-light hover:text-ganker-text transition"
+              >
+                Página principal
+              </Link>
+              <button
+                type="button"
+                onClick={handleLogout}
+                className="w-full text-left rounded-lg px-3 py-2 text-xs font-semibold text-ganker-error hover:bg-ganker-surface-light transition cursor-pointer"
+              >
+                Cerrar sesión
+              </button>
+            </div>
+          )}
+        </div>
       </div>
     </header>
   );
