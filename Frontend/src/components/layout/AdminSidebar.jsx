@@ -31,9 +31,13 @@ const AdminSidebar = () => {
         <Link
           to="/"
           title="Ir a la página principal"
-          className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-ganker-orange to-ganker-purple font-heading text-lg font-bold text-white transition hover:opacity-90"
+          className="flex h-10 w-10 items-center justify-center transition hover:opacity-90 hover:scale-105"
         >
-          G
+          <img
+            src="/images/logo_svg.svg"
+            alt="Logo de Ganker"
+            className="h-10 w-10 object-contain"
+          />
         </Link>
       </div>
 
