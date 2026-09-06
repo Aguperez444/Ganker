@@ -1,10 +1,9 @@
 import re
-from typing import cast
+from typing import cast, TYPE_CHECKING
 
 from app.application.ports.i_password_hasher import IPasswordHasher
 from app.application.ports.i_token_service import ITokenService
 from app.application.ports.i_unit_of_work import IUnitOfWork
-from app.infrastructure.api.dto.register_player_request import RegisterPlayerRequest
 from app.infrastructure.api.dto.register_user_response import RegisterUserResponse
 from app.domain.exceptions.mail.email_already_exists_exception import EmailAlreadyExistsException
 from app.domain.exceptions.password_is_not_secure_exception import PasswordIsNotSecureException
@@ -15,6 +14,8 @@ from app.domain.exceptions.user.username_already_exist_exception import Username
 from app.domain.models.user import User
 from app.domain.models.user_role import UserRole
 
+if TYPE_CHECKING:
+    from app.infrastructure.api.dto.register_user_request import RegisterUserRequest
 
 class RegisterUser:
     def __init__(self, unit_of_work: IUnitOfWork, token_service: ITokenService, password_hasher: IPasswordHasher):
@@ -22,7 +23,7 @@ class RegisterUser:
         self.token_service: ITokenService = token_service
         self.pass_hasher: IPasswordHasher = password_hasher
 
-    def execute(self, user_data: 'RegisterPlayerRequest', current_user_id: int) -> RegisterUserResponse:
+    def execute(self, user_data: 'RegisterUserRequest', current_user_id: int) -> RegisterUserResponse:
         # Se asume que lo que me llega es un mail por la validación de pydantic en el dto.
         # Validar que no exista otra cuenta con ese mail
         if not self.validate_mail(user_data.mail):
@@ -43,7 +44,7 @@ class RegisterUser:
         if user is None:
             raise UserNotFoundException(current_user_id)
 
-        
+
         if user.role == UserRole.ADMIN and user_data.role == UserRole.OWNER:
             raise UnauthorizedException(user.user_id, user.role.value, user_data.role)
 

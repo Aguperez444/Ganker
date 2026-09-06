@@ -8,6 +8,7 @@ from app.application.useCases.update_player import UpdateUser
 from app.infrastructure.api.dependencies.auth import get_current_user_id, require_player, require_admin
 from app.infrastructure.api.dto.auth_tokens_response import AuthTokensResponse
 from app.infrastructure.api.dto.get_player_response import GetUserResponse
+from app.infrastructure.api.dto.register_user_request import RegisterUserRequest
 from app.infrastructure.api.dto.register_user_response import RegisterUserResponse
 from app.infrastructure.api.dto.update_user_request import UpdateUserRequest
 from app.infrastructure.api.dto.update_user_response import UpdateUserResponse
@@ -18,7 +19,6 @@ from app.infrastructure.api.auth.jwt_token_service import JwtTokenService
 from app.infrastructure.api.auth.password_hash_service import PasswordHashService
 from app.application.useCases.register_player import RegisterPlayer
 from app.infrastructure.database.unit_of_work.uow_factory import uow_factory
-from app.domain.models.user_role import UserRole
 
 router = APIRouter(prefix="/api/v1/users")
 
@@ -28,13 +28,13 @@ def register_player(request: RegisterPlayerRequest) -> AuthTokensResponse:
 
     password_hasher_service = PasswordHashService()
     token_service = JwtTokenService(settings.jwt_secret_key)
-    register_player_use_case = RegisterPlayer(uow, token_service, password_hasher_service, UserRole.PLAYER)
+    register_player_use_case = RegisterPlayer(uow, token_service, password_hasher_service)
 
     tokens = register_player_use_case.execute(request)
     return tokens
 
 @router.post("/register_user", response_model=RegisterUserResponse, status_code=201, dependencies=[Depends(require_admin)])
-def register_user(request: RegisterPlayerRequest, _user_id: int = Depends(get_current_user_id)) -> RegisterUserResponse:
+def register_user(request: RegisterUserRequest, _user_id: int = Depends(get_current_user_id)) -> RegisterUserResponse:
     uow = uow_factory()
 
     password_hasher_service = PasswordHashService()
@@ -43,7 +43,7 @@ def register_user(request: RegisterPlayerRequest, _user_id: int = Depends(get_cu
 
     tokens = register_user_use_case.execute(request, _user_id)
     return RegisterUserResponse(
-        user_id=cast(int, tokens.user_id),
+        user_id=tokens.user_id,
         username=tokens.username,
         name=tokens.name,
         mail=tokens.mail,

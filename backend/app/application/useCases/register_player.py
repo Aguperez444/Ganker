@@ -19,11 +19,10 @@ if TYPE_CHECKING:
 
 
 class RegisterPlayer:
-    def __init__(self, unit_of_work: IUnitOfWork, token_service: ITokenService, password_hasher: IPasswordHasher, role: UserRole):
+    def __init__(self, unit_of_work: IUnitOfWork, token_service: ITokenService, password_hasher: IPasswordHasher):
         self.uow: IUnitOfWork = unit_of_work
         self.token_service: ITokenService = token_service
         self.pass_hasher: IPasswordHasher = password_hasher
-        self.role: UserRole = role
 
     def execute(self, player_data: 'RegisterPlayerRequest') -> AuthTokensResponse:
         # Se asume que lo que me llega es un mail por la validación de pydantic en el dto.
@@ -40,7 +39,7 @@ class RegisterPlayer:
         self.validate_password_security(player_data.password)
 
         # crear el usuario en el dominio
-        new_player = User(None, player_data.username, player_data.name, player_data.mail, player_data.password, role, [])
+        new_player = User(None, player_data.username, player_data.name, player_data.mail, player_data.password, UserRole.PLAYER, [])
 
         #hashear la password del usuario antes de persistirlo en la base de datos
         new_player.password_hash = self.pass_hasher.hash_password(player_data.password)
