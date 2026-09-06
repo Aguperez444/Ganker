@@ -46,14 +46,15 @@ async def register_character(name: str = Form(..., description="Name of the char
 async def update_character(character_id: int,
                            name: str = Form(..., description="Name of the character"),
                            videogame_id: int = Form(..., description="ID of the videogame"),
-                           icon: UploadFile = File(..., description="Icon image file"),
+                           icon: UploadFile = File(description="Icon image file"),
                            _player_id: int = Depends(get_current_player_id)):
 
-    if not icon or not icon.filename:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="El archivo es obligatorio y debe tener un nombre válido."
-        )
+    if icon:
+        if not icon.filename:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="El archivo debe tener un nombre válido."
+            )
 
     uow = uow_factory()
     storage_service = get_storage_service()
