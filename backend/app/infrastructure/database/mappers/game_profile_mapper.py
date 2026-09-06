@@ -23,5 +23,5 @@ class GameProfileMapper:
             player_id=game_profile_domain.player_id,
             videogame_id=game_profile_domain.videogame.videogame_id,
             role_profiles=[RoleProfileMapper.domain_to_orm(role_profile, game_profile_domain.game_profile_id) for role_profile in game_profile_domain.role_profiles],
-            character_associations=[CharacterPriorityMapper.domain_to_orm(char_priority) for char_priority in game_profile_domain.characters_priority]
+            character_associations=[CharacterPriorityMapper.domain_to_orm(char_priority, game_profile_domain.game_profile_id) for char_priority in game_profile_domain.characters_priority]
         )

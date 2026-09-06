@@ -6,7 +6,7 @@ if TYPE_CHECKING:
 
 
 class CharacterPriority:
-    def __init__(self, priority_id: int, character: Character, priority: int):
+    def __init__(self, priority_id: int|None, character: Character, priority: int):
         self._priority_id: int|None = priority_id
         self._character: Character = character
         self._priority: int = priority

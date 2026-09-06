@@ -14,9 +14,10 @@ class CharacterPriorityMapper:
         )
 
     @staticmethod
-    def domain_to_orm(character_priority_domain: CharacterPriority) -> CharacterPriorityORM:
+    def domain_to_orm(character_priority_domain: CharacterPriority, game_profile_id: int) -> CharacterPriorityORM:
         return CharacterPriorityORM(
             character_priority_id=character_priority_domain.priority_id,
             character_id=character_priority_domain.character.character_id,
-            priority=character_priority_domain.priority
+            priority=character_priority_domain.priority,
+            game_profile_id=game_profile_id
         )

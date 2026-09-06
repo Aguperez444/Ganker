@@ -11,7 +11,7 @@ if TYPE_CHECKING:
 class CharacterPriorityORM(Base):
     __tablename__ = "game_profile_character_priority"
     __table_args__ = (
-        UniqueConstraint("game_profile_id", "preference_order", name="uq_game_profile_preference"),
+        UniqueConstraint("game_profile_id", "priority", name="uq_game_profile_preference"),
         UniqueConstraint("game_profile_id", "character_id", name="uq_game_profile_character"),
     )
 
