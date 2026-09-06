@@ -28,5 +28,5 @@ class GameProfileORM(Base):
     character_associations: Mapped[List["CharacterPriorityORM"]] = relationship(
         back_populates="game_profile",
         cascade="all, delete-orphan",
-        order_by="GameProfileCharacterORM.preference_order"
+        order_by="GameProfileCharacterORM.priority"
     )
