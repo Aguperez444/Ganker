@@ -1,6 +1,6 @@
 from app.application.ports.i_unit_of_work import IUnitOfWork
 from app.infrastructure.api.dto.get_player_response import GetPlayerResponse
-from exceptions.user.player_not_found_exception import PlayerNotFoundException
+from app.domain.exceptions.user.user_not_found_exception import UserNotFoundException
 from app.domain.services.create_game_profile_dto_service import CreateGameProfileDTOService
 
 class QueryPlayers:
@@ -10,10 +10,10 @@ class QueryPlayers:
     def get_by_id(self, player_id: int) -> GetPlayerResponse:
         with self.uow as uow:
             #obtener el player de la base de datos usando el repositorio de players
-            player = uow.player_repo.get_player_by_id(player_id)
+            player = uow.user_repo.get_user_by_id(player_id)
 
             if player is None:
-                raise PlayerNotFoundException(player_id)
+                raise UserNotFoundException()
 
             return GetPlayerResponse(
                 username=player.username,

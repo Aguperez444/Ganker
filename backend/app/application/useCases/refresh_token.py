@@ -10,11 +10,10 @@ class RefreshToken:
         self.uow = uow
         self.token_service = token_service
 
-    def execute(self, refresh_token: str, role_param: str|None) -> AuthTokensResponse:
+    def execute(self, refresh_token: str) -> AuthTokensResponse:
         # 1. Validar firma del token y extraer datos del payload
         token_data = self.token_service.verify_refresh_token(refresh_token)
         user_id = token_data["user_id"]
-        role = token_data["role"]
         old_jti = token_data["jti"]
 
         with self.uow:
@@ -23,16 +22,15 @@ class RefreshToken:
                 raise InvalidTokenException("El refresh token ha sido revocado o es inválido")
 
             # 3. Verificar existencia del usuario en DB
-            user = self.uow.player_repo.get_player_by_id(user_id)
+            user = self.uow.user_repo.get_user_by_id(user_id)
             if user is None:
                 raise UserNotFoundException()
 
             # 4. Revocar el token viejo (Rotación)
             self.uow.refresh_token_repo.revoke_by_jti(old_jti)
 
-            #TODO eliminar el hardcodeado de acá también
-            if role_param:
-                role = role_param
+            # 4.1 Obtener el rol del usuario
+            role = user.role
 
             # 5. Generar nuevo par de tokens
             new_access_token, new_refresh_token, new_jti, new_expires_at = self.token_service.generate_tokens(

@@ -6,16 +6,16 @@ from app.application.useCases.update_videogame import UpdateVideogame
 from app.infrastructure.api.dto.get_videogames_response import GetVideogamesResponse
 from app.infrastructure.api.dto.videogame_object_response import VideogameObjectResponse
 from app.infrastructure.database.unit_of_work.uow_factory import uow_factory
-from app.infrastructure.api.dependencies.auth import get_current_player_id
+from app.infrastructure.api.dependencies.auth import get_current_user_id, require_admin, require_player
 from app.infrastructure.storage.local_disk_storage_service import LocalDiskStorageService
 
 router = APIRouter(prefix="/api/v1/videogames")
 
 def get_storage_service():
     return LocalDiskStorageService()
-@router.post("/", status_code=201, response_model=VideogameObjectResponse)
+@router.post("/", status_code=201, response_model=VideogameObjectResponse, dependencies=[Depends(require_admin)])
 async def register_videogame(name: str = Form(..., description="Name of the rank"),
-    icon: UploadFile = File(..., description="Icon image file"), _player_id: int = Depends(get_current_player_id)):
+    icon: UploadFile = File(..., description="Icon image file"), _player_id: int = Depends(get_current_user_id)):
 
 
     # Asegurarse de que la petición incluya un archivo con nombre
@@ -32,10 +32,10 @@ async def register_videogame(name: str = Form(..., description="Name of the rank
 
     return videogame
 
-@router.put("/{videogame_id}", status_code=200, response_model=VideogameObjectResponse)
+@router.put("/{videogame_id}", status_code=200, response_model=VideogameObjectResponse, dependencies=[Depends(require_admin)])
 async def update_videogame(videogame_id: int, name: str = Form(..., description="Name of the rank"),
                            icon: UploadFile = File(..., description="Icon image file"),
-                           _player_id: int = Depends(get_current_player_id)):
+                           _player_id: int = Depends(get_current_user_id)):
 
     if not icon or not icon.filename:
         raise HTTPException(
@@ -52,8 +52,8 @@ async def update_videogame(videogame_id: int, name: str = Form(..., description=
     return updated_videogame
 
 
-@router.get("/", response_model=GetVideogamesResponse, status_code=200)
-def get_all_videogames(_player_id: int = Depends(get_current_player_id)):
+@router.get("/", response_model=GetVideogamesResponse, status_code=200, dependencies=[Depends(require_player)])
+def get_all_videogames(_player_id: int = Depends(get_current_user_id)):
     # lo del player_id está para que el endpoint esté protegido, pero no se usa en la lógica de este endpoint
     uow = uow_factory()
     query_games_use_case = QueryVideogames(uow)

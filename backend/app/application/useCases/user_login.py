@@ -3,7 +3,6 @@ from app.application.ports.i_token_service import ITokenService
 from app.application.ports.i_unit_of_work import IUnitOfWork
 from exceptions.mail.mail_not_found_exception import EmailNotFoundException
 
-
 from typing import TYPE_CHECKING, cast
 
 from app.domain.exceptions.wrong_password_exception import WrongPasswordException
@@ -20,37 +19,30 @@ class UserLogin:
 
 
 
-    def execute(self, player_data: 'LoginRequest', role_param: str|None = None) -> AuthTokensResponse:
-        pass
+    def execute(self, user_data: 'LoginRequest') -> AuthTokensResponse:
 
         # revisar si el mail pertenece a un usuario registrado
         with self.uow:
-            user = self.uow.player_repo.get_player_by_mail(player_data.mail)
+            user = self.uow.user_repo.get_user_by_mail(user_data.mail)
+            if user is None:
+                raise EmailNotFoundException(user_data.mail)
 
-        if user is None:
-            raise EmailNotFoundException(player_data.mail)
+            # caso que se haya encontrado el usuario, comprobar la contraseña contra la del usuario encontrado
+            if not self.pass_hasher.verify_password(user_data.password, cast(str, user.password_hash)): #TODO revisar este cast, cuando empecemos a usar cuentas por identidad federada puede llegar a darse el caso de que password sea None
+                raise WrongPasswordException(user_data.mail)
 
-        # caso que se haya encontrado el usuario, comprobar la contraseña contra la del usuario encontrado
-        if not self.pass_hasher.verify_password(player_data.password, cast(str, user.password_hash)): #TODO revisar este cast, cuando empecemos a usar cuentas por identidad federada puede llegar a darse el caso de que password sea None
-            raise WrongPasswordException(player_data.mail)
+            user_id = cast(int, user.user_id)
+            role = user.role
 
-        player_id = cast(int, user.player_id)
-        role = "player"
+            # Generar tokens recibiendo jti y fecha de expiración
+            access_token, refresh_token, jti, expires_at = self.token_service.generate_tokens(
+                user_id=user_id,
+                role=role
+            )
 
-        # TODO CAMBIAR ESTO HARCODEADO ACÁ TAMBIÉN
-        if role_param:
-            role = role_param
-
-        # Generar tokens recibiendo jti y fecha de expiración
-        access_token, refresh_token, jti, expires_at = self.token_service.generate_tokens(
-            user_id=player_id,
-            role=role
-        )
-
-        # Persistir el refresh token en la bd
-        with self.uow:
+            # Persistir el refresh token en la bd
             self.uow.refresh_token_repo.save(
-                user_id=player_id,
+                user_id=user_id,
                 role=role,
                 jti=jti,
                 expires_at=expires_at

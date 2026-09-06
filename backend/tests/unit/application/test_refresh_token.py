@@ -3,8 +3,8 @@ from unittest.mock import MagicMock
 
 from app.application.useCases.refresh_token import RefreshToken
 from app.application.ports.i_token_service import ITokenService
-from app.domain.models.player import Player
-from exceptions.user.user_not_found_exception import UserNotFoundException
+from app.domain.models.user import User
+from app.domain.exceptions.user.user_not_found_exception import UserNotFoundException
 from app.domain.exceptions.Invalid_token_exception import InvalidTokenException
 
 
@@ -29,15 +29,15 @@ class TestRefreshTokenUseCase:
         use_case, mock_uow, mock_token_service = mock_dependencies
 
         mock_token_service.verify_refresh_token.return_value = 5
-        existing_player = Player(
-            player_id=5,
+        existing_player = User(
+            user_id=5,
             username="johndoe",
             name="John Doe",
             mail="john@example.com",
             password_hash="hash",
             profiles=[]
         )
-        mock_uow.player_repo.get_player_by_id.return_value = existing_player
+        mock_uow.player_repo.get_user_by_id.return_value = existing_player
         mock_token_service.generate_tokens.return_value = ("new_access_token", "new_refresh_token")
 
         response = use_case.execute("valid_refresh_token_str")
@@ -47,14 +47,14 @@ class TestRefreshTokenUseCase:
         assert response.token_type == "Bearer"
 
         mock_token_service.verify_refresh_token.assert_called_once_with("valid_refresh_token_str")
-        mock_uow.player_repo.get_player_by_id.assert_called_once_with(5)
+        mock_uow.player_repo.get_user_by_id.assert_called_once_with(5)
         mock_token_service.generate_tokens.assert_called_once_with(5)
 
     def test_refresh_token_user_not_found_in_db(self, mock_dependencies):
         use_case, mock_uow, mock_token_service = mock_dependencies
 
         mock_token_service.verify_refresh_token.return_value = 999
-        mock_uow.player_repo.get_player_by_id.return_value = None
+        mock_uow.player_repo.get_user_by_id.return_value = None
 
         with pytest.raises(UserNotFoundException) as exc_info:
             use_case.execute("valid_refresh_token_str")

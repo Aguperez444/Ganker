@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, cast
 
 from app.application.ports.i_unit_of_work import IUnitOfWork
 from app.infrastructure.api.dto.create_videogame_profile_request import CreateGameProfileRequest
@@ -28,7 +28,7 @@ class CreateVideogameProfile:
 
         # Buscar el videojuego en la base de datos
         videogame = self.validate_exist_videogame(create_videogame_profile_request.videogame_id)
-        self.validate_not_exist_game_profile(player_id, videogame.videogame_id)
+        self.validate_not_exist_game_profile(player_id, cast(int, videogame.videogame_id))
 
         # Buscar los personajes en la base de datos
         characters = []

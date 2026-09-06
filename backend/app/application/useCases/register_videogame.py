@@ -54,9 +54,9 @@ class RegisterVideogame:
                 raise e  # volver a levantar la excepción después de limpiar el archivo para hacer rollback
 
         return VideogameObjectResponse(
-            id=cast(int, new_videogame.videogame_id),
-            name=new_videogame.name,
-            icon_url=new_videogame.icon_url or "Sin icono",
+            id=cast(int, saved_videogame.videogame_id),
+            name=saved_videogame.name,
+            icon_url=saved_videogame.icon_url or "Sin icono",
         )
 
     # Validar que el nombre del videojuego no esté vacío

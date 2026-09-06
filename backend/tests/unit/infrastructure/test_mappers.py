@@ -1,5 +1,5 @@
 import pytest
-from app.domain.models.player import Player
+from app.domain.models.user import User
 from app.domain.models.videogame import Videogame
 from app.domain.models.character import Character
 from app.domain.models.role import Role
@@ -7,7 +7,7 @@ from app.domain.models.rank import Rank
 from app.domain.models.role_profile import RoleProfile
 from app.domain.models.game_profile import GameProfile
 
-from app.infrastructure.database.models.player_orm import PlayerORM
+from app.infrastructure.database.models.user_orm import UserORM
 from app.infrastructure.database.models.videogame_orm import VideogameORM
 from app.infrastructure.database.models.character_orm import CharacterORM
 from app.infrastructure.database.models.role_orm import RoleORM
@@ -15,7 +15,7 @@ from app.infrastructure.database.models.rank_orm import RankORM
 from app.infrastructure.database.models.role_profile_orm import RoleProfileORM
 from app.infrastructure.database.models.game_profile_orm import GameProfileORM
 
-from app.infrastructure.database.mappers.player_mapper import PlayerMapper
+from app.infrastructure.database.mappers.user_mapper import UserMapper
 from app.infrastructure.database.mappers.videogame_mapper import VideogameMapper
 from app.infrastructure.database.mappers.character_mapper import CharacterMapper
 from app.infrastructure.database.mappers.role_mapper import RoleMapper
@@ -28,16 +28,16 @@ class TestDatabaseMappers:
 
     def test_player_mapper(self):
         # Domain to ORM
-        player_domain = Player(
-            player_id=1,
+        player_domain = User(
+            user_id=1,
             username="johndoe",
             name="John Doe",
             mail="john@example.com",
             password_hash="hash",
             profiles=[]
         )
-        player_orm = PlayerMapper.domain_to_orm(player_domain)
-        assert player_orm.player_id == 1
+        player_orm = UserMapper.domain_to_orm(player_domain)
+        assert player_orm.user_id == 1
         assert player_orm.username == "johndoe"
         assert player_orm.name == "John Doe"
         assert player_orm.mail == "john@example.com"
@@ -45,7 +45,7 @@ class TestDatabaseMappers:
 
         # ORM to Domain
         player_orm.game_profiles = []
-        domain_converted = PlayerMapper.orm_to_domain(player_orm)
+        domain_converted = UserMapper.orm_to_domain(player_orm)
         assert domain_converted.player_id == 1
         assert domain_converted.username == "johndoe"
         assert domain_converted.name == "John Doe"
