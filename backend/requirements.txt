@@ -15,6 +15,5 @@ pydantic-settings>=2.15.0
 python-multipart>=0.0.32
 httpx>=0.27.0
 aiofiles>=25.1.0
-
-afn
+afn>=0.1.2012.05.17.22.08
 typing-extensions

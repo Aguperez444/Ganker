@@ -35,6 +35,19 @@ class GameProfileRepositoryImpl(IGameProfileRepository):
         return domain_found
 
     def update_game_profile(self, game_profile: 'GameProfile') -> 'GameProfile':
+        # 1. Obtenemos la entidad gestionada por la sesión actual
+        orm_existing = self._session.query(GameProfileORM).filter(
+            GameProfileORM.game_profile_id == game_profile.game_profile_id
+        ).first()
+
+        if orm_existing:
+            # 2. Vaciamos las colecciones y flusheamos para ejecutar los DELETE primero
+            # esto significa que cada update va a borrar las relaciones existentes y luego insertar las nuevas, lo cual es más seguro que intentar hacer un merge directo
+            orm_existing.character_associations.clear()
+            orm_existing.role_profiles.clear()
+            self._session.flush()
+
+        # 3. Mapeamos y persistimos el nuevo estado sin riesgo de colisión
         orm_to_update = GameProfileMapper.domain_to_orm(game_profile)
         # merge() compara el estado actual de la base de datos con el objeto que se le pasa y
         # deduce qué relaciones se agregaron y cuáles se eliminaron.

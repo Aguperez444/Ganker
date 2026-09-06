@@ -1,39 +1,67 @@
+from fastapi import UploadFile
+
+from app.application.ports.i_storage_service import IStorageService
 from app.application.ports.i_unit_of_work import IUnitOfWork
-from app.infrastructure.api.dto.update_videogame_request import UpdateVideogameRequest
-from app.domain.models.videogame import Videogame
-from app.domain.exceptions.invalid_videogame_name_exception import InvalidVideogameNameException
-from app.domain.exceptions.videogame_already_exists_exception import VideogameAlreadyExistsException
-from app.domain.exceptions.videogame_not_found_exception import VideogameNotFoundException
+from app.domain.exceptions.videogame.videogame_already_exists_exception import VideogameAlreadyExistsException
+from app.domain.exceptions.videogame.videogame_not_found_exception import VideogameNotFoundException
+from app.domain.services.slug_service import SlugService
+
+
+from typing import TYPE_CHECKING, cast
+
+from app.infrastructure.api.dto.videogame_object_response import VideogameObjectResponse
+
+if TYPE_CHECKING:
+    from app.domain.models.videogame import Videogame
 
 class UpdateVideogame:
-    def __init__(self, unit_of_work: IUnitOfWork):
+    def __init__(self, storage_service: IStorageService, unit_of_work: IUnitOfWork):
+        self.storage_service: IStorageService = storage_service
         self.uow: IUnitOfWork = unit_of_work
 
-    def execute(self, videogame_id: int, update_videogame_request: UpdateVideogameRequest) -> Videogame:
+    async def execute(self, videogame_id: int, name: str, icon: UploadFile) -> VideogameObjectResponse:
 
-        existing_game = self.validate_videogame_id(videogame_id)
-        cleaned_name = self.validate_videogame_name(update_videogame_request)
+        existing_game = self.validate_videogame_exists(videogame_id)
+        cleaned_name = name.strip() if name else existing_game.name
         self.validate_name_uniqueness(cleaned_name, videogame_id)
 
         #actualizar juego
         existing_game.name = cleaned_name
-        with self.uow as uow:
-            updated_game = uow.videogame_repo.update_videogame(existing_game)
 
-        return updated_game
+        game_folder = SlugService.to_slug(cleaned_name)
+        with self.uow as uow:
+            if icon and icon.filename:
+                # Eliminar la imagen anterior si existe
+                if existing_game.icon_url:
+                    await self.storage_service.delete_file(existing_game.icon_url)
+                # Guardar la nueva imagen a través del puerto
+                new_icon_url = await self.storage_service.save_file(
+                    file_content=icon.file,
+                    filename=icon.filename,
+                    subfolder=f"games/{game_folder}",
+                    preserve_original_name=True
+                )
+                existing_game.icon_url = new_icon_url
+
+            try:
+                updated_game = uow.videogame_repo.update_videogame(existing_game)
+            except Exception as e:
+                # Si hay un error al actualizar, se lanza una excepción
+                raise Exception(f"Error al actualizar el videojuego: {str(e)}")
+
+        return VideogameObjectResponse(
+            id=cast(int,updated_game.videogame_id),
+            name=updated_game.name,
+            icon_url=updated_game.icon_url or "Sin icono",
+        )
 
     # Validar existencia del juego
-    def validate_videogame_id(self, videogame_id: int) -> Videogame:
+    def validate_videogame_exists(self, videogame_id: int) -> 'Videogame':
         with self.uow as uow:
             found_videogame = uow.videogame_repo.get_videogame_by_id(videogame_id)
             if not found_videogame:
                 raise VideogameNotFoundException(videogame_id)
             return found_videogame
-
-    def validate_videogame_name(self, videogame_request: UpdateVideogameRequest) -> str:
-        if not videogame_request.name or not videogame_request.name.strip():
-            raise InvalidVideogameNameException(videogame_request.name)
-        return videogame_request.name.strip()
 
     # Validar que el nombre no exista en la base de datos
     def validate_name_uniqueness(self, cleaned_name: str, current_game_id: int) -> bool:

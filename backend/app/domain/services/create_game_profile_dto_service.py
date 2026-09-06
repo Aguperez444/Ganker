@@ -14,11 +14,14 @@ from app.infrastructure.api.dto.videogame_object_response import VideogameObject
 class CreateGameProfileDTOService:
     @staticmethod
     def create_game_profile(domain_game_profile: 'GameProfile'):
+
+        ordered_characters = [char_priority.character for char_priority in sorted(domain_game_profile.characters_priority, key=lambda cp: cp.priority)]
+
         return UpdateGameProfileResponse(
             game_profile_id=cast(int, domain_game_profile.game_profile_id),
             player_id=domain_game_profile.player_id,
             videogame=VideogameObjectResponse(id=domain_game_profile.videogame.videogame_id, name=domain_game_profile.videogame.name),
-            characters=[CharacterObjectResponse(character_id=character.character_id, name=character.name) for character in domain_game_profile.characters],
+            characters=[CharacterObjectResponse(character_id=character.character_id, name=character.name) for character in ordered_characters],
             role_profiles=[RoleProfileObjectResponse(
                 role_profile_id=cast(int,role_profile.role_profile_id),
                 role=RoleObjectResponse(role_id=role_profile.role.role_id, name=role_profile.role.name),

@@ -3,7 +3,8 @@ from sqlalchemy import ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.infrastructure.database.base import Base
-from app.infrastructure.database.models.associations import game_profile_x_characters
+from app.infrastructure.database.models.character_priority_orm import CharacterPriorityORM
+
 
 from typing import TYPE_CHECKING
 
@@ -26,7 +27,8 @@ class GameProfileORM(Base):
     videogame: Mapped["VideogameORM"] = relationship(back_populates="game_profiles")
     role_profiles: Mapped[List["RoleProfileORM"]] = relationship(back_populates="game_profile", cascade="all, delete-orphan")
 
-    characters: Mapped[List["CharacterORM"]] = relationship(
-        secondary=game_profile_x_characters,
-        back_populates="game_profiles"
+    character_associations: Mapped[List["CharacterPriorityORM"]] = relationship(
+        back_populates="game_profile",
+        cascade="all, delete-orphan",
+        order_by="GameProfileCharacterORM.priority"
     )

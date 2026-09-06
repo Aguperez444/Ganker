@@ -3,8 +3,8 @@ from typing import cast
 from app.application.ports.i_unit_of_work import IUnitOfWork
 from app.domain.models.user import User
 from app.infrastructure.api.dto.update_player_request import UpdatePlayerRequest
-from app.domain.exceptions.mail_already_exist_exception import MailAlreadyExistsException
-from app.domain.exceptions.username_already_exist_exception import UsernameAlreadyExistsException
+from exceptions.user.username_already_exist_exception import UsernameAlreadyExistsException
+from exceptions.mail.email_already_exists_exception import EmailAlreadyExistsException
 
 
 class UpdatePlayer:
@@ -45,5 +45,5 @@ class UpdatePlayer:
         with self.uow as uow:
             found_player = uow.user_repo.get_user_by_mail(mail)
             if found_player and found_player.player_id != current_player_id:
-                raise MailAlreadyExistsException(mail)
+                raise EmailAlreadyExistsException(mail)
             return True

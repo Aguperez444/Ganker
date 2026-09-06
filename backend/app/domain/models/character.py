@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Optional
 
 if TYPE_CHECKING:
     from app.domain.models.videogame import Videogame
@@ -6,13 +6,14 @@ if TYPE_CHECKING:
 
 
 class Character:
-    def __init__(self, character_id: int, name: str, videogame: 'Videogame'):
-        self._character_id: int = character_id
+    def __init__(self, character_id: int|None, name: str, videogame: 'Videogame', icon_url: str):
+        self._character_id: Optional[int] = character_id
         self._name: str = name
         self._videogame: 'Videogame' = videogame
+        self.icon_url: str = icon_url
 
     @property
-    def character_id(self) -> int:
+    def character_id(self) -> Optional[int]:
         return self._character_id
     @character_id.setter
     def character_id(self, value: int) -> None:
@@ -32,3 +33,9 @@ class Character:
     def videogame(self, value: 'Videogame') -> None:
         self._videogame = value
 
+    @property
+    def icon_url(self) -> str:
+        return self._icon_url
+    @icon_url.setter
+    def icon_url(self, value: str) -> None:
+        self._icon_url = value

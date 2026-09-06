@@ -13,7 +13,7 @@ class QueryRoles:
         with self.uow as uow:
             roles = uow.role_repo.get_roles_by_game_id(game_id)
 
-        roles_response = [RoleObjectResponse(role_id=role.role_id, name=role.name) for role in roles]
+        roles_response = [RoleObjectResponse(role_id=role.role_id, name=role.name, icon_url=role.icon_url or "Sin icono") for role in roles]
 
         return GetRolesResponse(roles=roles_response)
 
