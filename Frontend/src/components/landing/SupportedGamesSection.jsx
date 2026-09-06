@@ -21,7 +21,7 @@ const GAMES = [
     name: "Overwatch 2",
     image: "/images/games/ow.webp",
     alt: "Overwatch 2 art",
-    objectPosition: "center 22%",
+    objectPosition: "center 75%",
   },
 ];
 
