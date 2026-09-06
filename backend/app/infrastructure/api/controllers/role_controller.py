@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, Form, UploadFile, File, HTTPException, status
 
-from app.application.useCases.create_rol import CreateRoleUseCase
+from app.application.useCases.create_role import CreateRoleUseCase
 from app.application.useCases.query_roles import QueryRoles
 from app.infrastructure.api.dependencies.auth import get_current_player_id
 

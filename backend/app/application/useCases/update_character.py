@@ -1,9 +1,16 @@
 from app.application.ports.i_storage_service import IStorageService
 from app.application.ports.i_unit_of_work import IUnitOfWork
-from app.domain.exceptions.character_name_invalid_exception import CharacterNameInvalidException
-from app.domain.exceptions.character_not_found_exception import CharacterNotFoundException
-from app.domain.exceptions.duplicated_character_name_exception import DuplicatedCharacterNameException
-from app.domain.exceptions.videogame_not_found_exception import VideogameNotFoundException
+from app.domain.exceptions.character.invalid_character_name_exception import InvalidCharacterNameException
+from app.domain.exceptions.character.character_not_found_exception import CharacterNotFoundException
+from app.domain.exceptions.character.duplicated_character_name_exception import DuplicatedCharacterNameException
+from app.domain.exceptions.videogame.videogame_not_found_exception import VideogameNotFoundException
+from app.domain.services.slug_service import SlugService
+
+
+from typing import TYPE_CHECKING
+if TYPE_CHECKING:
+    from app.domain.models.videogame import Videogame
+
 
 class UpdateCharacter:
     def __init__(self, storage_service: IStorageService, uow: IUnitOfWork):
@@ -14,10 +21,10 @@ class UpdateCharacter:
 
         # Validar que el nombre no esté vacío
         if not name.strip():
-            raise CharacterNameInvalidException(name)
+            raise InvalidCharacterNameException(name)
 
         # Validar existencia del juego
-        self.validate_videogame_exist(videogame_id)
+        videogame = self.validate_videogame_exist(videogame_id)
 
         # Validar que otro personaje no tenga el mismo nombre
         self.validate_name_uniqueness(character_id, name, videogame_id)
@@ -27,16 +34,17 @@ class UpdateCharacter:
         with self.uow as uow:
             character_repo = uow.character_repo
             character = character_repo.get_character_by_id(character_id)
-            videogame = uow.videogame_repo.get_videogame_by_id(videogame_id)
             if not character:
                 raise CharacterNotFoundException(character_id)
+
+            game_folder = SlugService.to_slug(videogame.name)
 
             if icon and icon.filename:
                 # Guardar la nueva imagen a través del puerto
                 new_icon_url = await self.storage_service.save_file(
                     file_content=icon.file,
                     filename=icon.filename,
-                    subfolder=f"{videogame.name}/characters",
+                    subfolder=f"games/{game_folder}/characters",
                     preserve_original_name=True
                 )
 
@@ -58,8 +66,9 @@ class UpdateCharacter:
             if existing_character and existing_character.character_id != character_id:
                 raise DuplicatedCharacterNameException(name, videogame_id)
 
-    def validate_videogame_exist(self, videogame_id: int):
+    def validate_videogame_exist(self, videogame_id: int) -> 'Videogame':
         with self.uow as uow:
             existing_videogame = uow.videogame_repo.get_videogame_by_id(videogame_id)
             if not existing_videogame:
                 raise VideogameNotFoundException(videogame_id)
+            return existing_videogame

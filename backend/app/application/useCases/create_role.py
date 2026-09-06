@@ -1,12 +1,14 @@
 from typing import BinaryIO
 from app.application.ports.i_storage_service import IStorageService
 from app.application.ports.i_unit_of_work import IUnitOfWork
+from app.domain.exceptions.file_name_not_null_exception import FileNameNotNullException
+from app.domain.exceptions.file_not_null_exception import FileNotNullException
 
-from exceptions.videogame.videogame_not_found_exception import VideogameNotFoundException
+from app.domain.exceptions.videogame.videogame_not_found_exception import VideogameNotFoundException
 from app.domain.services.slug_service import SlugService
 from app.domain.models.role import Role
-from exceptions.role.duplicated_role_name_exception import DuplicateRoleNameException
-from exceptions.role.invalid_role_name_exception import InvalidRoleNameException
+from app.domain.exceptions.role.duplicated_role_name_exception import DuplicateRoleNameException
+from app.domain.exceptions.role.invalid_role_name_exception import InvalidRoleNameException
 
 
 class CreateRoleUseCase:
@@ -31,6 +33,11 @@ class CreateRoleUseCase:
                 if role.name == name:
                     raise DuplicateRoleNameException(name)
 
+            if not icon_stream:
+                raise FileNotNullException()
+            if icon_stream and not filename:
+                raise FileNameNotNullException()
+
             # confirmado que este rango es nuevo y único para ese juego, se puede crear y persistir
             # Sanitizar el nombre del juego para la sub carpeta (ej: "League of Legends" -> "league_of_legends")
             game_folder = SlugService.to_slug(game.name)
@@ -39,7 +46,7 @@ class CreateRoleUseCase:
             icon_url = await self.storage_service.save_file(
                 file_content=icon_stream,
                 filename=filename,
-                subfolder=f"{game_folder}/roles",
+                subfolder=f"games/{game_folder}/roles",
                 preserve_original_name=True
             )
 
