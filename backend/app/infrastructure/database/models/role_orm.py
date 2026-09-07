@@ -1,5 +1,5 @@
 from typing import List
-from sqlalchemy import ForeignKey, String
+from sqlalchemy import ForeignKey, String, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.infrastructure.database.base import Base
@@ -15,9 +15,12 @@ class RoleORM(Base):
 
     role_id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     videogame_id: Mapped[int] = mapped_column(ForeignKey("videogame.videogame_id"), nullable=False)
-    name: Mapped[str] = mapped_column(String, unique=True, nullable=False)
+    name: Mapped[str] = mapped_column(String, nullable=False)
     icon_url: Mapped[str] = mapped_column(String, nullable=False)
 
     # Relaciones
     videogame: Mapped["VideogameORM"] = relationship(back_populates="roles")
     role_profiles: Mapped[List["RoleProfileORM"]] = relationship(back_populates="role")
+
+    # Constraints
+    __table_args__ = (UniqueConstraint("videogame_id", "name", name="uq_videogame_role_name"),)
