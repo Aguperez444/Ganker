@@ -10,12 +10,15 @@ function CuentaPage() {
   const { user } = useAuth();
   const {
     valores,
+    previewAvatar,
     errores,
     cargando,
     errorServidor,
     exito,
     handleChange,
     handleBlur,
+    handleAvatarChange,
+    handleQuitarAvatar,
     handleSubmit,
   } = useModificarJugador();
 
@@ -48,13 +51,17 @@ function CuentaPage() {
         </div>
 
         <CuentaFormComponent
+          user={user}
           valores={valores}
+          previewAvatar={previewAvatar}
           errores={errores}
           cargando={cargando}
           errorServidor={errorServidor}
           exito={exito}
           onChange={handleChange}
           onBlur={handleBlur}
+          onAvatarChange={handleAvatarChange}
+          onQuitarAvatar={handleQuitarAvatar}
           onSubmit={handleSubmit}
         />
       </div>

@@ -14,7 +14,7 @@ import { urlDeMedia } from "../../utils/media";
  * DTO). Se muestra igual para tener el diseno completo en la review de sprint.
  * Cuando el backend guarde una imagen por usuario, esto funciona sin cambios.
  */
-function AvatarUsuarioComponent({ user }) {
+function AvatarUsuarioComponent({ user, alt }) {
   const [imagenFallo, setImagenFallo] = useState(false);
 
   const inicial = user?.username?.charAt(0).toUpperCase() ?? "G";
@@ -28,7 +28,10 @@ function AvatarUsuarioComponent({ user }) {
     <img
       src={foto}
       alt={
-        user?.username ? `Foto de perfil de ${user.username}` : "Foto de perfil"
+        alt ??
+        (user?.username
+          ? `Foto de perfil de ${user.username}`
+          : "Foto de perfil")
       }
       // Si la imagen no carga (ruta rota, backend caido) volvemos a la inicial
       // en vez de dejar el icono de imagen rota del navegador.

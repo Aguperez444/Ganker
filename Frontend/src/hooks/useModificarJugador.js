@@ -27,8 +27,10 @@ export function useModificarJugador() {
     nombre: user.name,
     username: user.username,
     mail: user.mail ?? "",
+    icon: null,
   });
 
+  const [previewAvatar, setPreviewAvatar] = useState(null);
   const [errores, setErrores] = useState({});
   const [cargando, setCargando] = useState(false);
   const [errorServidor, setErrorServidor] = useState(null);
@@ -37,6 +39,26 @@ export function useModificarJugador() {
   function handleChange(campo, valor) {
     setValores((prev) => ({ ...prev, [campo]: valor }));
     // Si el jugador vuelve a editar, la confirmacion anterior ya no aplica.
+    setExito(null);
+  }
+
+  function handleAvatarChange(archivo, previewUrl) {
+    setValores((prev) => ({ ...prev, icon: archivo }));
+    setPreviewAvatar(previewUrl);
+    setExito(null);
+    setErrores((prev) => {
+      const resto = { ...prev };
+      delete resto.icon;
+      return resto;
+    });
+  }
+
+  function handleQuitarAvatar() {
+    setValores((prev) => ({ ...prev, icon: null }));
+    if (previewAvatar) {
+      URL.revokeObjectURL(previewAvatar);
+    }
+    setPreviewAvatar(null);
     setExito(null);
   }
 
@@ -62,6 +84,12 @@ export function useModificarJugador() {
       // que `user` siga saliendo de una sola fuente. De paso, el navbar y
       // cualquier otra pantalla se enteran del cambio sin recargar.
       const usuarioActualizado = await refrescarUsuario();
+
+      if (previewAvatar) {
+        URL.revokeObjectURL(previewAvatar);
+        setPreviewAvatar(null);
+      }
+      setValores((prev) => ({ ...prev, icon: null }));
 
       setExito("Tus datos se guardaron correctamente.");
       return usuarioActualizado;
@@ -98,12 +126,15 @@ export function useModificarJugador() {
 
   return {
     valores,
+    previewAvatar,
     errores,
     cargando,
     errorServidor,
     exito,
     handleChange,
     handleBlur,
+    handleAvatarChange,
+    handleQuitarAvatar,
     handleSubmit,
   };
 }

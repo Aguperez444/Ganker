@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from "@testing-library/react";
+import { render, screen, waitFor, fireEvent } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router-dom";
 import { describe, it, expect, beforeEach, vi } from "vitest";
@@ -120,6 +120,7 @@ describe("US 02 - Modificar mis datos", () => {
         nombre: JUGADOR.name,
         username: "joaco_ganker",
         mail: JUGADOR.mail,
+        icon: null,
       })
     );
 
@@ -198,5 +199,249 @@ describe("US 02 - Modificar mis datos", () => {
       await screen.findByText(/el username.*ya está ocupado/i)
     ).toBeInTheDocument();
     expect(screen.queryByRole("status")).toBeNull();
+  });
+
+  it("permite seleccionar una imagen, recortarla en el modal y enviarla en el formulario", async () => {
+    const usuario = userEvent.setup();
+    actualizarJugador.mockResolvedValue({
+      ...JUGADOR,
+      icon_url: "/media/users/icons/nuevo_avatar.png",
+    });
+
+    // Mock URL.createObjectURL y URL.revokeObjectURL para jsdom
+    const origCreateObjectURL = URL.createObjectURL;
+    const origRevokeObjectURL = URL.revokeObjectURL;
+    URL.createObjectURL = vi.fn(() => "blob:http://localhost/fake-blob");
+    URL.revokeObjectURL = vi.fn();
+
+    // Mock Image naturalWidth / naturalHeight / src para jsdom
+    const origNaturalWidth = Object.getOwnPropertyDescriptor(
+      globalThis.Image.prototype,
+      "naturalWidth"
+    );
+    const origNaturalHeight = Object.getOwnPropertyDescriptor(
+      globalThis.Image.prototype,
+      "naturalHeight"
+    );
+    const origSrc = Object.getOwnPropertyDescriptor(
+      globalThis.Image.prototype,
+      "src"
+    );
+
+    Object.defineProperty(globalThis.Image.prototype, "naturalWidth", {
+      get: () => 300,
+      configurable: true,
+    });
+    Object.defineProperty(globalThis.Image.prototype, "naturalHeight", {
+      get: () => 300,
+      configurable: true,
+    });
+    Object.defineProperty(globalThis.Image.prototype, "src", {
+      set(v) {
+        origSrc?.set?.call(this, v);
+        setTimeout(() => {
+          if (typeof this.onload === "function") this.onload();
+        }, 0);
+      },
+      get() {
+        return origSrc?.get?.call(this);
+      },
+      configurable: true,
+    });
+
+    try {
+      await renderCuenta();
+
+      // Buscar el input file
+      const inputArchivo = document.querySelector('input[type="file"]');
+      expect(inputArchivo).toBeInTheDocument();
+
+      const archivoFoto = new File(
+        ["dummy image content"],
+        "avatar_nuevo.png",
+        {
+          type: "image/png",
+        }
+      );
+
+      await usuario.upload(inputArchivo, archivoFoto);
+
+      // Esperar a que se abra el modal de recorte
+      expect(
+        await screen.findByRole("dialog", { name: /encuadrar foto de perfil/i })
+      ).toBeInTheDocument();
+
+      // Aplicar el recorte
+      const botonRecortar = screen.getByRole("button", {
+        name: /aplicar recorte/i,
+      });
+      await usuario.click(botonRecortar);
+
+      // El modal debe haberse cerrado y debe mostrarse la vista previa y botón de descartar
+      await waitFor(() =>
+        expect(screen.queryByRole("dialog")).not.toBeInTheDocument()
+      );
+      expect(
+        screen.getByRole("button", { name: /descartar foto/i })
+      ).toBeInTheDocument();
+
+      // Guardar cambios
+      await usuario.click(
+        screen.getByRole("button", { name: /guardar cambios/i })
+      );
+
+      await waitFor(() =>
+        expect(actualizarJugador).toHaveBeenCalledWith({
+          nombre: JUGADOR.name,
+          username: JUGADOR.username,
+          mail: JUGADOR.mail,
+          icon: expect.any(File),
+        })
+      );
+
+      expect(await screen.findByRole("status")).toHaveTextContent(
+        /tus datos se guardaron correctamente/i
+      );
+    } finally {
+      URL.createObjectURL = origCreateObjectURL;
+      URL.revokeObjectURL = origRevokeObjectURL;
+      if (origNaturalWidth) {
+        Object.defineProperty(
+          globalThis.Image.prototype,
+          "naturalWidth",
+          origNaturalWidth
+        );
+      }
+      if (origNaturalHeight) {
+        Object.defineProperty(
+          globalThis.Image.prototype,
+          "naturalHeight",
+          origNaturalHeight
+        );
+      }
+      if (origSrc) {
+        Object.defineProperty(globalThis.Image.prototype, "src", origSrc);
+      }
+    }
+  });
+
+  it("muestra un error si se intenta cargar un archivo que no es una imagen", async () => {
+    await renderCuenta();
+
+    const inputArchivo = document.querySelector('input[type="file"]');
+    const archivoInvalido = new File(["texto"], "documento.pdf", {
+      type: "application/pdf",
+    });
+
+    fireEvent.change(inputArchivo, { target: { files: [archivoInvalido] } });
+
+    expect(
+      await screen.findByText(
+        /por favor seleccioná un archivo de imagen válido/i
+      )
+    ).toBeInTheDocument();
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+  });
+
+  it("permite descartar la foto seleccionada antes de guardar", async () => {
+    const usuario = userEvent.setup();
+
+    const origCreateObjectURL = URL.createObjectURL;
+    const origRevokeObjectURL = URL.revokeObjectURL;
+    URL.createObjectURL = vi.fn(() => "blob:http://localhost/fake-blob");
+    URL.revokeObjectURL = vi.fn();
+
+    // Mock Image naturalWidth / naturalHeight / src para jsdom
+    const origNaturalWidth = Object.getOwnPropertyDescriptor(
+      globalThis.Image.prototype,
+      "naturalWidth"
+    );
+    const origNaturalHeight = Object.getOwnPropertyDescriptor(
+      globalThis.Image.prototype,
+      "naturalHeight"
+    );
+    const origSrc = Object.getOwnPropertyDescriptor(
+      globalThis.Image.prototype,
+      "src"
+    );
+
+    Object.defineProperty(globalThis.Image.prototype, "naturalWidth", {
+      get: () => 200,
+      configurable: true,
+    });
+    Object.defineProperty(globalThis.Image.prototype, "naturalHeight", {
+      get: () => 200,
+      configurable: true,
+    });
+    Object.defineProperty(globalThis.Image.prototype, "src", {
+      set(v) {
+        origSrc?.set?.call(this, v);
+        setTimeout(() => {
+          if (typeof this.onload === "function") this.onload();
+        }, 0);
+      },
+      get() {
+        return origSrc?.get?.call(this);
+      },
+      configurable: true,
+    });
+
+    try {
+      await renderCuenta();
+
+      const inputArchivo = document.querySelector('input[type="file"]');
+      const archivoFoto = new File(["imagen"], "foto.png", {
+        type: "image/png",
+      });
+
+      await usuario.upload(inputArchivo, archivoFoto);
+
+      const botonRecortar = await screen.findByRole("button", {
+        name: /aplicar recorte/i,
+      });
+      await usuario.click(botonRecortar);
+
+      const botonDescartar = await screen.findByRole("button", {
+        name: /descartar foto/i,
+      });
+      await usuario.click(botonDescartar);
+
+      expect(
+        screen.queryByRole("button", { name: /descartar foto/i })
+      ).toBeNull();
+
+      await usuario.click(
+        screen.getByRole("button", { name: /guardar cambios/i })
+      );
+
+      await waitFor(() =>
+        expect(actualizarJugador).toHaveBeenCalledWith({
+          nombre: JUGADOR.name,
+          username: JUGADOR.username,
+          mail: JUGADOR.mail,
+          icon: null,
+        })
+      );
+    } finally {
+      URL.createObjectURL = origCreateObjectURL;
+      URL.revokeObjectURL = origRevokeObjectURL;
+      if (origNaturalWidth) {
+        Object.defineProperty(
+          globalThis.Image.prototype,
+          "naturalWidth",
+          origNaturalWidth
+        );
+      }
+      if (origNaturalHeight) {
+        Object.defineProperty(
+          globalThis.Image.prototype,
+          "naturalHeight",
+          origNaturalHeight
+        );
+      }
+      if (origSrc) {
+        Object.defineProperty(globalThis.Image.prototype, "src", origSrc);
+      }
+    }
   });
 });

@@ -19,13 +19,32 @@ export function obtenerJugadorActual() {
 
 // Actualiza los datos de la cuenta del jugador logueado (US 02).
 // El backend saca el id del token, por eso no se manda en el body.
-// Devuelve { user_id, username, name, mail }.
-export function actualizarJugador({ nombre, username, mail }) {
+// Según la nueva firma del backend (update_user.txt):
+// PUT /api/v1/users/
+// username: str = Form(...)
+// name: str = Form(...)
+// mail: str = Form(...)
+// icon: UploadFile = File(...)
+// Devuelve UpdateUserResponse: { user_id, username, name, mail, icon_url }.
+export function actualizarJugador(datos) {
+  let formData;
+  if (datos instanceof FormData) {
+    formData = datos;
+  } else {
+    formData = new FormData();
+    formData.append("username", datos.username);
+    formData.append("name", datos.nombre ?? datos.name ?? "");
+    formData.append("mail", datos.mail ?? "");
+    if (datos.icon) {
+      formData.append("icon", datos.icon, datos.icon.name || "avatar.png");
+    }
+  }
+
   return axiosClient
-    .put("/api/v1/users/", {
-      name: nombre,
-      username,
-      mail,
+    .put("/api/v1/users/", formData, {
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
     })
     .then((res) => res.data);
 }
