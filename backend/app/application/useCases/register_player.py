@@ -38,11 +38,11 @@ class RegisterPlayer:
         # al menos una mayúscula, al menos una minúscula y al menos un número)
         self.validate_password_security(player_data.password)
 
-        # crear el usuario en el dominio
-        new_player = User(None, player_data.username, player_data.name, player_data.mail, player_data.password, UserRole.PLAYER, [])
-
         #hashear la password del usuario antes de persistirlo en la base de datos
-        new_player.password_hash = self.pass_hasher.hash_password(player_data.password)
+        hashed_pass = self.pass_hasher.hash_password(player_data.password)
+
+        # crear el usuario en el dominio
+        new_player = User(None, player_data.username, player_data.name, player_data.mail, hashed_pass, UserRole.PLAYER, [])
 
         # persistir el usuario en la base de datos y obtener el usuario registrado con su id
         with self.uow as uow:
