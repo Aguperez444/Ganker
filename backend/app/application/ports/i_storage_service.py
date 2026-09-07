@@ -3,7 +3,7 @@ from typing import BinaryIO
 
 class IStorageService(ABC):
     @abstractmethod
-    async def save_file(
+    async def save_image_file(
         self,
         file_content: BinaryIO,
         filename: str,

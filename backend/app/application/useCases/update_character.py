@@ -44,7 +44,7 @@ class UpdateCharacter:
 
             if icon and icon.filename:
                 # Guardar la nueva imagen a través del puerto
-                new_icon_url = await self.storage_service.save_file(
+                new_icon_url = await self.storage_service.save_image_file(
                     file_content=icon.file,
                     filename=icon.filename,
                     subfolder=f"games/{game_folder}/characters",

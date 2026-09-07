@@ -38,7 +38,7 @@ class RegisterCharacter:
 
         with self.uow as uow:
             # Guardar imagen a través del puerto si se proporciona un archivo
-            icon_url = await self.storage_service.save_file(
+            icon_url = await self.storage_service.save_image_file(
                 file_content=icon_file,
                 filename=icon_filename,
                 subfolder=f"games/{game_folder}/characters",

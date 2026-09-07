@@ -1,6 +1,6 @@
-from typing import cast, Optional
-
 from fastapi import APIRouter, Depends, UploadFile, File, HTTPException, status, Form
+from typing import Optional
+
 
 from app.application.useCases.query_users import QueryUsers
 from app.application.useCases.register_user import RegisterUser
@@ -41,8 +41,7 @@ def register_user(request: RegisterUserRequest, _user_id: int = Depends(get_curr
     uow = uow_factory()
 
     password_hasher_service = PasswordHashService()
-    token_service = JwtTokenService(settings.jwt_secret_key)
-    register_user_use_case = RegisterUser(uow, token_service, password_hasher_service)
+    register_user_use_case = RegisterUser(uow, password_hasher_service)
 
     tokens = register_user_use_case.execute(request, _user_id)
     return RegisterUserResponse(
@@ -70,14 +69,8 @@ async def update_user(username: str = Form(...),name: str = Form(...),mail: str 
     storage_service = get_storage_service()
 
     update_user_use_case = UpdateUser(uow, storage_service)
-    updated_user = await update_user_use_case.execute(user_id, username, name, mail, icon)
-    return UpdateUserResponse(
-        user_id=cast(int, updated_user.user_id),
-        username=updated_user.username,
-        name=updated_user.name,
-        mail=updated_user.mail,
-        icon_url=updated_user.icon_url
-    )
+    return await update_user_use_case.execute(user_id, username, name, mail, icon)
+
 @router.get("/me", response_model=GetUserResponse, status_code=200, dependencies=[Depends(require_player)])
 def get_user(user_id: int = Depends(get_current_user_id)) -> GetUserResponse:
     uow = uow_factory()

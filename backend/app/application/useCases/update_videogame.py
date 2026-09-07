@@ -35,7 +35,7 @@ class UpdateVideogame:
                 if existing_game.icon_url:
                     await self.storage_service.delete_file(existing_game.icon_url)
                 # Guardar la nueva imagen a través del puerto
-                new_icon_url = await self.storage_service.save_file(
+                new_icon_url = await self.storage_service.save_image_file(
                     file_content=icon.file,
                     filename=icon.filename,
                     subfolder=f"games/{game_folder}",

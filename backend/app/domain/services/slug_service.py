@@ -2,6 +2,8 @@ import re
 import unicodedata
 from pathlib import Path
 
+from app.domain.exceptions.file.invalid_file_extension_error import InvalidFileExtensionError
+
 
 class SlugService:
     @staticmethod
@@ -22,15 +24,17 @@ class SlugService:
         return clean_text or "unknown"
 
     @classmethod
-    def sanitize_filename(cls, filename: str) -> tuple[str, str]:
+    def sanitize_image_filename(cls, filename: str) -> tuple[str, str]:
         """
         Limpia y normaliza un nombre de archivo.
         Separa un nombre de archivo en (nombre_base_seguro, extension).
         """
+        allowed_extensions = {"png", "jpg", "jpeg", "webp"}
         path = Path(filename)
         stem = cls.to_slug(path.stem)
         ext = path.suffix.lower().lstrip(".")
-        if not ext:
-            ext = "png"
+        # Si no tiene extensión o la extensión no está permitida, se rechaza
+        if not ext or ext not in allowed_extensions:
+            raise InvalidFileExtensionError(ext, list(allowed_extensions))
 
         return stem, ext
