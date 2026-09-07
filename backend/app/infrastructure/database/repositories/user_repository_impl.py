@@ -43,6 +43,7 @@ class UserRepositoryImpl(IUserRepository):
             orm_user.name = user.name
             orm_user.username = user.username
             orm_user.mail = user.mail
+            orm_user.icon_url = user.icon_url
             self.session.flush()
             self.session.refresh(orm_user)
             return UserMapper.orm_to_domain(orm_user)

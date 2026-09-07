@@ -1,10 +1,10 @@
 from enum import Enum
 
 class UserRole(str, Enum):
-
+    OWNER = "owner"
     ADMIN = "admin"
     PLAYER = "player"
-    OWNER = "owner"
+
 
     def is_player(self) -> bool:
         return self == UserRole.PLAYER

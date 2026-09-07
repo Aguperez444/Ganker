@@ -11,11 +11,11 @@ from app.infrastructure.api.auth.password_hash_service import PasswordHashServic
 from app.infrastructure.database.unit_of_work.uow_factory import uow_factory
 from app.infrastructure.config.settings import settings
 
-from app.infrastructure.api.dto.auth_tokens_response import AuthTokensResponse
-from app.infrastructure.api.dto.refresh_token_request import RefreshTokenRequest
-from app.infrastructure.api.dto.login_request import LoginRequest
+from app.infrastructure.api.dto.response.auth_tokens_response import AuthTokensResponse
+from app.infrastructure.api.dto.request.refresh_token_request import RefreshTokenRequest
+from app.infrastructure.api.dto.request.login_request import LoginRequest
 
-router = APIRouter(prefix="/auth/v1")
+router = APIRouter(prefix="/auth/v1", tags=["Authentication"])
 
 @router.post("/login")
 def login(form_data: OAuth2PasswordRequestForm = Depends()) -> AuthTokensResponse:

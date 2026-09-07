@@ -1,7 +1,17 @@
-import { Link, NavLink } from "react-router-dom";
+import { NavLink, useNavigate } from "react-router-dom";
 import { navigationItems } from "./Sidebar.jsx";
+import { useAuth } from "../../context/AuthContext.jsx";
 
 const MobileMenu = ({ isOpen, onClose }) => {
+  const { logout } = useAuth();
+  const navigate = useNavigate();
+
+  const handleLogout = async () => {
+    await logout();
+    onClose();
+    navigate("/login");
+  };
+
   if (!isOpen) {
     return null;
   }
@@ -67,13 +77,13 @@ const MobileMenu = ({ isOpen, onClose }) => {
 
           <div className="my-2 border-t border-white/10" />
 
-          <NavLink
-            to="/app/admin"
-            onClick={onClose}
-            className="rounded-lg px-4 py-3 text-sm font-semibold text-ganker-muted transition hover:bg-ganker-surface-light hover:text-ganker-text"
+          <button
+            type="button"
+            onClick={handleLogout}
+            className="rounded-lg px-4 py-3 text-left text-sm font-semibold text-ganker-muted transition hover:bg-ganker-surface-light hover:text-ganker-text"
           >
-            Administración
-          </NavLink>
+            Cerrar sesión
+          </button>
         </nav>
       </aside>
     </div>

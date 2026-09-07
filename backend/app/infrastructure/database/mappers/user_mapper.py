@@ -14,16 +14,18 @@ class UserMapper:
             mail=user_orm.mail,
             password_hash=user_orm.password_hash,
             role=UserRole(user_orm.role),
-            profiles = [GameProfileMapper.orm_to_domain(game_profile) for game_profile in user_orm.game_profiles]
+            profiles = [GameProfileMapper.orm_to_domain(game_profile) for game_profile in user_orm.game_profiles],
+            icon_url=user_orm.icon_url
         )
 
     @staticmethod
-    def domain_to_orm(user: User) -> UserORM:
+    def domain_to_orm(user_domain: User) -> UserORM:
         return UserORM(
-            user_id=user.user_id,
-            username=user.username,
-            name=user.name,
-            mail=user.mail,
-            role=user.role.value,
-            password_hash=user.password_hash
+            user_id=user_domain.user_id,
+            username=user_domain.username,
+            name=user_domain.name,
+            mail=user_domain.mail,
+            role=user_domain.role.value,
+            password_hash=user_domain.password_hash,
+            icon_url=user_domain.icon_url
         )
