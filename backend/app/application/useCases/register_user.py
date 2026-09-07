@@ -6,7 +6,7 @@ from app.application.ports.i_token_service import ITokenService
 from app.application.ports.i_unit_of_work import IUnitOfWork
 from app.infrastructure.api.dto.response.register_user_response import RegisterUserResponse
 from app.domain.exceptions.mail.email_already_exists_exception import EmailAlreadyExistsException
-from exceptions.auth.password_is_not_secure_exception import PasswordIsNotSecureException
+from app.domain.exceptions.auth.password_is_not_secure_exception import PasswordIsNotSecureException
 from app.domain.exceptions.user.invalid_username_exception import InvalidUsernameException
 from app.domain.exceptions.user.unauthotized_exception import UnauthorizedException
 from app.domain.exceptions.user.user_not_found_exception import UserNotFoundException

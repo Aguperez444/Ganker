@@ -4,7 +4,7 @@ import jwt
 from freezegun import freeze_time
 
 from app.infrastructure.api.auth.jwt_token_service import JwtTokenService
-from exceptions.auth.Invalid_token_exception import InvalidTokenException
+from app.domain.exceptions.auth.Invalid_token_exception import InvalidTokenException
 from app.domain.models.user_role import UserRole
 
 

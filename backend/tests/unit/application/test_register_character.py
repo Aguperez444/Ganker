@@ -8,8 +8,8 @@ from app.domain.models.character import Character
 from app.domain.exceptions.character.invalid_character_name_exception import InvalidCharacterNameException
 from app.domain.exceptions.character.duplicated_character_name_exception import DuplicatedCharacterNameException
 from app.domain.exceptions.videogame.videogame_not_found_exception import VideogameNotFoundException
-from exceptions.file.file_not_null_exception import FileNotNullException
-from exceptions.file.file_name_not_null_exception import FileNameNotNullException
+from app.domain.exceptions.file.file_not_null_exception import FileNotNullException
+from app.domain.exceptions.file.file_name_not_null_exception import FileNameNotNullException
 
 
 class TestRegisterCharacterUseCase:

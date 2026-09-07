@@ -8,7 +8,7 @@ from app.application.ports.i_password_hasher import IPasswordHasher
 from app.domain.models.user import User
 from app.domain.models.user_role import UserRole
 from app.domain.exceptions.mail.mail_not_found_exception import EmailNotFoundException
-from exceptions.auth.wrong_password_exception import WrongPasswordException
+from app.domain.exceptions.auth.wrong_password_exception import WrongPasswordException
 from app.infrastructure.api.dto.request.login_request import LoginRequest
 
 

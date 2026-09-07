@@ -1,8 +1,8 @@
 from typing import BinaryIO, cast
 from app.application.ports.i_storage_service import IStorageService
 from app.application.ports.i_unit_of_work import IUnitOfWork
-from exceptions.file.file_name_not_null_exception import FileNameNotNullException
-from exceptions.file.file_not_null_exception import FileNotNullException
+from app.domain.exceptions.file.file_name_not_null_exception import FileNameNotNullException
+from app.domain.exceptions.file.file_not_null_exception import FileNotNullException
 
 from app.domain.exceptions.videogame.videogame_not_found_exception import VideogameNotFoundException
 from app.domain.services.slug_service import SlugService

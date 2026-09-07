@@ -8,8 +8,8 @@ from app.domain.models.role import Role
 from app.domain.exceptions.role.invalid_role_name_exception import InvalidRoleNameException
 from app.domain.exceptions.role.duplicated_role_name_exception import DuplicateRoleNameException
 from app.domain.exceptions.videogame.videogame_not_found_exception import VideogameNotFoundException
-from exceptions.file.file_not_null_exception import FileNotNullException
-from exceptions.file.file_name_not_null_exception import FileNameNotNullException
+from app.domain.exceptions.file.file_not_null_exception import FileNotNullException
+from app.domain.exceptions.file.file_name_not_null_exception import FileNameNotNullException
 
 
 class TestCreateRoleUseCase:

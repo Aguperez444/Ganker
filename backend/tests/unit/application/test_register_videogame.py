@@ -6,8 +6,8 @@ from app.application.ports.i_storage_service import IStorageService
 from app.domain.models.videogame import Videogame
 from app.domain.exceptions.videogame.invalid_videogame_name_exception import InvalidVideogameNameException
 from app.domain.exceptions.videogame.videogame_already_exists_exception import VideogameAlreadyExistsException
-from exceptions.file.file_not_null_exception import FileNotNullException
-from exceptions.file.file_name_not_null_exception import FileNameNotNullException
+from app.domain.exceptions.file.file_not_null_exception import FileNotNullException
+from app.domain.exceptions.file.file_name_not_null_exception import FileNameNotNullException
 
 
 class TestRegisterVideogameUseCase:

@@ -28,7 +28,7 @@ def get_roles_by_videogame_id(videogame_id: int, _player_id: int = Depends(get_c
 @router.post("", status_code=201, response_model=RoleObjectResponse, dependencies=[Depends(require_admin)])
 async def create_game_role(
     videogame_id: int = Form(..., description="ID of the videogame"),
-    name: str = Form(..., description="Name of the rank"),
+    name: str = Form(..., description="Name of the role"),
     icon: UploadFile = File(..., description="Icon image file"),
     _player_id: int = Depends(get_current_user_id)
 ):
