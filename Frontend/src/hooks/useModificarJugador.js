@@ -6,7 +6,7 @@ import { validarFormularioCuenta } from "../utils/validaciones";
 /**
  * US 02 - Como jugador, quiero modificar mis datos.
  *
- * Los campos editables son los que acepta PUT /api/v1/players/: nombre,
+ * Los campos editables son los que acepta PUT /api/v1/users/: nombre,
  * username y mail. La contrasena queda deliberadamente afuera (US 34).
  *
  * Sigue el mismo patron que useRegistrarJugador: valida en el blur de cada

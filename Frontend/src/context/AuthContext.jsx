@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect } from "react";
+import { createContext, useContext, useState, useEffect, useCallback } from "react";
 import axiosClient, { registrarOnSesionExpirada } from "../api/axiosClient";
 import { obtenerJugadorActual } from "../api/jugadoresApi";
 
@@ -8,9 +8,12 @@ const AuthContext = createContext(null);
  * Estado global de la sesion.
  *
  * `user` es el jugador logueado y tiene SIEMPRE la forma que devuelve
- * GET /api/v1/players/me:
+ * GET /api/v1/users/me:
  *
- *   { player_id, username, name, mail }    (mas adelante tambien `role`)
+ *   { name, username, mail, role, profiles[], icon_url }
+ *
+ * Ojo: no trae el id del usuario. El backend lo saca del token en cada
+ * endpoint, asi que el front no lo necesita.
  *
  * Regla: `user` lo escribe unicamente este provider, con lo que manda el
  * backend. Ninguna pantalla lo arma a mano. Antes cada page se lo pasaba a
@@ -28,32 +31,32 @@ export function AuthProvider({ children }) {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [loading, setLoading] = useState(true);
 
-  const cargarUsuario = async () => {
+  const cargarUsuario = useCallback(async () => {
     const datos = await obtenerJugadorActual();
     setUser(datos);
-  };
+  }, []);
 
   // Vuelve a pedir el usuario al backend. La usan las pantallas que modifican
   // datos de la cuenta (US 02): en vez de escribir `user` con lo que devolvio
   // el PUT, piden que se recargue, asi la unica fuente sigue siendo /me.
-  const refrescarUsuario = async () => {
+  const refrescarUsuario = useCallback(async () => {
     await cargarUsuario();
-  };
+  }, [cargarUsuario]);
 
-  const limpiarEstado = () => {
+  const limpiarEstado = useCallback(() => {
     setTokens(null);
     setUser(null);
     setIsAuthenticated(false);
-  };
+  }, []);
 
-  const logout = () => {
+  const logout = useCallback(() => {
     localStorage.removeItem("access_token");
     localStorage.removeItem("refresh_token");
     // Ya no guardamos el usuario en localStorage, pero lo seguimos borrando
     // para limpiar el valor viejo de las sesiones abiertas antes de este cambio.
     localStorage.removeItem("user");
     limpiarEstado();
-  };
+  }, [limpiarEstado]);
 
   useEffect(() => {
     // Al montar restauramos la sesion desde localStorage. El usuario NO sale de
@@ -87,11 +90,11 @@ export function AuthProvider({ children }) {
     };
 
     restaurarSesion();
-  }, []);
+  }, [cargarUsuario, logout]);
 
   useEffect(() => {
     registrarOnSesionExpirada(limpiarEstado);
-  }, []);
+  }, [limpiarEstado]);
 
   // Guarda una sesion recien creada y trae al usuario. Recibe
   // { access_token, refresh_token, token_type }, que es lo que devuelven tanto

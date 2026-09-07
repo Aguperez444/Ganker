@@ -1,15 +1,17 @@
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, cast
 
 from app.application.ports.i_unit_of_work import IUnitOfWork
 from app.infrastructure.api.dto.create_videogame_profile_request import CreateGameProfileRequest
-from app.domain.exceptions.character_not_found_exception import CharacterNotFoundException
-from app.domain.exceptions.game_profile_already_exist_exception import GameProfileAlreadyExistException
-from app.domain.exceptions.rank_not_found_exception import RankNotFoundException
-from app.domain.exceptions.role_not_found_exception import RoleNotFoundException
-from app.domain.exceptions.videogame_not_found_exception import VideogameNotFoundException
+from app.domain.exceptions.character.character_not_found_exception import CharacterNotFoundException
+from app.domain.exceptions.does_not_belong_to_game_exception import DoesNotBelongToGameException
+from app.domain.exceptions.game_profile.game_profile_already_exist_exception import GameProfileAlreadyExistException
+from app.domain.exceptions.rank.rank_not_found_exception import RankNotFoundException
+from app.domain.exceptions.role.role_not_found_exception import RoleNotFoundException
+from app.domain.exceptions.videogame.videogame_not_found_exception import VideogameNotFoundException
 from app.domain.models.videogame import Videogame
 from app.domain.models.role_profile import RoleProfile
 from app.domain.models.game_profile import GameProfile
+from app.domain.models.character_priority import CharacterPriority
 
 if TYPE_CHECKING:
     from app.domain.models.role import Role
@@ -26,7 +28,7 @@ class CreateVideogameProfile:
 
         # Buscar el videojuego en la base de datos
         videogame = self.validate_exist_videogame(create_videogame_profile_request.videogame_id)
-        self.validate_not_exist_game_profile(player_id, videogame.videogame_id)
+        self.validate_not_exist_game_profile(player_id, cast(int, videogame.videogame_id))
 
         # Buscar los personajes en la base de datos
         characters = []
@@ -35,6 +37,8 @@ class CreateVideogameProfile:
                 character = uow.character_repo.get_character_by_id(character_id)
                 if not character:
                     raise CharacterNotFoundException(character_id)
+                if character.videogame.videogame_id != videogame.videogame_id:
+                    raise DoesNotBelongToGameException("personaje", character.name, videogame.name)
                 characters.append(character)
 
         # Busco los roles y rangos en la base de datos y creo el role_profile
@@ -43,6 +47,11 @@ class CreateVideogameProfile:
 
             role: Role = self.validate_role_exist(new_role_profile.role_id)
             rank: Rank = self.validate_rank_exist(new_role_profile.rank_id)
+
+            if role.videogame != videogame:
+                raise DoesNotBelongToGameException("rol", role.name, videogame.name)
+            if rank.videogame != videogame:
+                raise DoesNotBelongToGameException("rango", rank.name, videogame.name)
 
             role_profile: RoleProfile = RoleProfile(
                 role_profile_id=None,
@@ -57,7 +66,7 @@ class CreateVideogameProfile:
             game_profile_id = None,
             player_id = player_id,
             videogame = videogame,
-            characters = characters,
+            characters_priority = [CharacterPriority(priority_id=None,priority=index,character=char) for index, char in enumerate(characters, start=1)],
             role_profiles = new_role_profiles
         )
 

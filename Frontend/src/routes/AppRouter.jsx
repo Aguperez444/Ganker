@@ -19,9 +19,11 @@ function AppRouter() {
   return (
     <BrowserRouter>
       <Routes>
+        {/* Landing: accesible siempre, con o sin sesion iniciada */}
+        <Route path="/" element={<LandingPage />} />
+
         {/* Solo accesibles SIN sesion: si ya esta logueado, se lo manda a /app */}
         <Route element={<PublicOnlyRoute />}>
-          <Route path="/" element={<LandingPage />} />
           <Route path="/registro" element={<RegistroPage />} />
           <Route path="/login" element={<LoginPage />} />
         </Route>
@@ -48,12 +50,10 @@ function AppRouter() {
         {/*
           Area administrativa.
 
-          Por ahora exige solamente sesion iniciada, igual que el resto: el
-          backend no distingue admin de jugador (role = "player" hardcodeado),
-          asi que no hay nada real contra que validar todavia.
-
-          Cuando existan roles, cambiar la linea de abajo por:
-            <Route element={<ProtectedRoute rolesPermitidos={["admin"]} />}>
+          Exige solamente sesion iniciada, igual que el resto. El backend ya
+          tiene roles reales y /me devuelve user.role, pero todavia no se pueden
+          crear cuentas admin desde la app: restringir esto ahora dejaria el
+          area inaccesible para todos. Ver la nota en ProtectedRoute.jsx.
         */}
         <Route element={<ProtectedRoute />}>
           <Route path="/app/admin" element={<AdminLayout />}>

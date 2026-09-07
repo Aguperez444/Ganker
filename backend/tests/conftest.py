@@ -7,7 +7,7 @@ from fastapi.testclient import TestClient
 from app.infrastructure.database.base import Base
 # Import all ORM models to ensure they are registered with Base.metadata
 import app.infrastructure.database.models.associations
-import app.infrastructure.database.models.player_orm
+import app.infrastructure.database.models.user_orm
 import app.infrastructure.database.models.videogame_orm
 import app.infrastructure.database.models.character_orm
 import app.infrastructure.database.models.rank_orm
@@ -19,14 +19,14 @@ from app.infrastructure.database.models.videogame_orm import VideogameORM
 from app.infrastructure.database.models.character_orm import CharacterORM
 from app.infrastructure.database.models.role_orm import RoleORM
 from app.infrastructure.database.models.rank_orm import RankORM
-from app.infrastructure.database.models.player_orm import PlayerORM
+from app.infrastructure.database.models.user_orm import UserORM
 
 from app.infrastructure.database.unit_of_work.unit_of_work_impl import SqlAlchemyUnitOfWork
 from app.infrastructure.api.auth.jwt_token_service import JwtTokenService
 from app.infrastructure.api.auth.password_hash_service import PasswordHashService
 from app.infrastructure.start.main import app
 import app.infrastructure.database.unit_of_work.uow_factory as uow_factory_module
-import app.infrastructure.api.controllers.player_controller as player_ctrl_module
+import app.infrastructure.api.controllers.user_controller as player_ctrl_module
 import app.infrastructure.api.controllers.auth_controller as auth_ctrl_module
 import app.infrastructure.api.controllers.game_profile_controller as gp_ctrl_module
 
@@ -115,7 +115,7 @@ def seed_catalog_data(test_db_session):
 @pytest.fixture(scope="function")
 def seed_player(test_db_session, password_hasher):
     """Seeds a registered player in the test DB."""
-    player = PlayerORM(
+    player = UserORM(
         name="John Doe",
         username="johndoe",
         mail="john.doe@example.com",

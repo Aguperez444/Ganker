@@ -1,7 +1,7 @@
 from typing import TYPE_CHECKING, Optional
 
 if TYPE_CHECKING:
-    from app.domain.models.character import Character
+    from app.domain.models.character_priority import CharacterPriority
     from app.domain.models.role_profile import RoleProfile
     from app.domain.models.videogame import Videogame
 
@@ -10,14 +10,14 @@ class GameProfile:
     def __init__(self, game_profile_id: Optional[int],
                  player_id: int,
                  videogame: Videogame,
-                 characters: list['Character'],
+                 characters_priority: list['CharacterPriority'],
                  role_profiles: list['RoleProfile']
                  ):
 
         self._game_profile_id: Optional[int] = game_profile_id
         self._player_id: int = player_id
         self._videogame: Videogame = videogame
-        self._characters: list[Character] = characters
+        self._characters_priority: list[CharacterPriority] = characters_priority
         self._role_profiles: list['RoleProfile'] = role_profiles
 
     @property
@@ -42,11 +42,11 @@ class GameProfile:
         self._videogame = value
 
     @property
-    def characters(self) -> list['Character']:
-        return self._characters
-    @characters.setter
-    def characters(self, value: list['Character']) -> None:
-        self._characters = value
+    def characters_priority(self) -> list['CharacterPriority']:
+        return self._characters_priority
+    @characters_priority.setter
+    def characters_priority(self, value: list['CharacterPriority']) -> None:
+        self._characters_priority = value
 
     @property
     def role_profiles(self) -> list['RoleProfile']:

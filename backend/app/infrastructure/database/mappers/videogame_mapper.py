@@ -7,7 +7,8 @@ class VideogameMapper:
     def orm_to_domain(videogame_orm: VideogameORM) -> Videogame:
         return Videogame(
             videogame_id = videogame_orm.videogame_id,
-            name = videogame_orm.name
+            name = videogame_orm.name,
+            icon_url = videogame_orm.icon_url
         )
 
     @staticmethod
@@ -15,4 +16,5 @@ class VideogameMapper:
         return VideogameORM(
             videogame_id = videogame.videogame_id,
             name = videogame.name,
+            icon_url = videogame.icon_url
         )

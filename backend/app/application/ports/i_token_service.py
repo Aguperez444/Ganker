@@ -2,10 +2,12 @@ from abc import ABC, abstractmethod
 from datetime import datetime
 from typing import Tuple, Dict, Any
 
+from app.domain.models.user_role import UserRole
+
 
 class ITokenService(ABC):
     @abstractmethod
-    def generate_tokens(self, user_id: int, role: str) -> Tuple[str, str, str, datetime]:
+    def generate_tokens(self, user_id: int, role: UserRole) -> Tuple[str, str, str, datetime]:
         raise NotImplementedError
 
     @abstractmethod
@@ -14,4 +16,4 @@ class ITokenService(ABC):
 
     @abstractmethod
     def verify_refresh_token(self, refresh_token: str) -> Dict[str, Any]:
-        pass
+        raise NotImplementedError
