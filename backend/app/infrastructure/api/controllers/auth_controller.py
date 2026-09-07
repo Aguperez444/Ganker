@@ -17,7 +17,7 @@ from app.infrastructure.api.dto.request.login_request import LoginRequest
 
 router = APIRouter(prefix="/auth/v1", tags=["Authentication"])
 
-@router.post("/login")
+@router.post("/login", response_model=AuthTokensResponse)
 def login(form_data: OAuth2PasswordRequestForm = Depends()) -> AuthTokensResponse:
     uow = uow_factory()
     token_service = JwtTokenService(settings.jwt_secret_key)
