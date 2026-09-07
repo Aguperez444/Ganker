@@ -5,6 +5,7 @@ from app.application.useCases.query_roles import QueryRoles
 from app.infrastructure.api.dependencies.auth import get_current_user_id, require_admin, require_player
 
 from app.infrastructure.api.dto.get_roles_response import GetRolesResponse
+from app.infrastructure.api.dto.role_object_response import RoleObjectResponse
 from app.infrastructure.database.unit_of_work.uow_factory import uow_factory
 from app.infrastructure.storage.local_disk_storage_service import LocalDiskStorageService
 
@@ -24,8 +25,8 @@ def get_roles_by_videogame_id(videogame_id: int, _player_id: int = Depends(get_c
     return query_roles_use_case.get_by_game_id(videogame_id)
 
 
-@router.post("", status_code=201, dependencies=[Depends(require_admin)])
-async def create_game_rank(
+@router.post("", status_code=201, response_model=RoleObjectResponse, dependencies=[Depends(require_admin)])
+async def create_game_role(
     videogame_id: int = Form(..., description="ID of the videogame"),
     name: str = Form(..., description="Name of the rank"),
     icon: UploadFile = File(..., description="Icon image file"),

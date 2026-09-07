@@ -1,4 +1,4 @@
-from typing import BinaryIO
+from typing import BinaryIO, cast
 from app.application.ports.i_storage_service import IStorageService
 from app.application.ports.i_unit_of_work import IUnitOfWork
 
@@ -9,6 +9,7 @@ from app.domain.exceptions.rank.invalid_rank_name_exception import InvalidRankNa
 from app.domain.exceptions.rank.invalid_rank_value_exception import InvalidRankValueException
 from app.domain.exceptions.videogame.videogame_not_found_exception import VideogameNotFoundException
 from app.domain.services.slug_service import SlugService
+from app.infrastructure.api.dto.rank_object_response import RankObjectResponse
 
 
 class CreateRankUseCase:
@@ -16,7 +17,7 @@ class CreateRankUseCase:
         self.storage_service = storage_service
         self.uow: IUnitOfWork = uow
 
-    async def execute(self, game_id: int, name: str, icon_stream: BinaryIO, filename: str, value: int) -> Rank:
+    async def execute(self, game_id: int, name: str, icon_stream: BinaryIO, filename: str, value: int) -> RankObjectResponse:
         # Comprobar que el nombre no está vacío
         if not name.strip():
             raise InvalidRankNameException(name)
@@ -63,4 +64,9 @@ class CreateRankUseCase:
                 await self.storage_service.delete_file(icon_url)
                 raise e # volver a levantar la excepción después de limpiar el archivo para hacer rollback
 
-        return saved_rank
+        return RankObjectResponse(
+            rank_id=cast(int, saved_rank.rank_id),
+            name=saved_rank.name,
+            value=saved_rank.value,
+            icon_url=saved_rank.icon_url,
+        )

@@ -48,9 +48,9 @@ class CreateVideogameProfile:
             role: Role = self.validate_role_exist(new_role_profile.role_id)
             rank: Rank = self.validate_rank_exist(new_role_profile.rank_id)
 
-            if role.videogame != videogame:
+            if role.videogame.videogame_id != videogame.videogame_id:
                 raise DoesNotBelongToGameException("rol", role.name, videogame.name)
-            if rank.videogame != videogame:
+            if rank.videogame.videogame_id != videogame.videogame_id:
                 raise DoesNotBelongToGameException("rango", rank.name, videogame.name)
 
             role_profile: RoleProfile = RoleProfile(

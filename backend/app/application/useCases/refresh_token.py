@@ -24,7 +24,7 @@ class RefreshToken:
             # 3. Verificar existencia del usuario en DB
             user = self.uow.user_repo.get_user_by_id(user_id)
             if user is None:
-                raise UserNotFoundException()
+                raise UserNotFoundException(user_id)
 
             # 4. Revocar el token viejo (Rotación)
             self.uow.refresh_token_repo.revoke_by_jti(old_jti)
