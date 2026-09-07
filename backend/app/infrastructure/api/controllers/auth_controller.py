@@ -15,7 +15,7 @@ from app.infrastructure.api.dto.auth_tokens_response import AuthTokensResponse
 from app.infrastructure.api.dto.refresh_token_request import RefreshTokenRequest
 from app.infrastructure.api.dto.login_request import LoginRequest
 
-router = APIRouter(prefix="/auth/v1")
+router = APIRouter(prefix="/auth/v1", tags=["Authentication"])
 
 @router.post("/login")
 def login(form_data: OAuth2PasswordRequestForm = Depends()) -> AuthTokensResponse:

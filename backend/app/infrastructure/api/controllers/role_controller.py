@@ -7,7 +7,9 @@ from app.infrastructure.api.dependencies.auth import get_current_user_id, requir
 from app.infrastructure.api.dto.get_roles_response import GetRolesResponse
 from app.infrastructure.database.unit_of_work.uow_factory import uow_factory
 from app.infrastructure.storage.local_disk_storage_service import LocalDiskStorageService
-router = APIRouter(prefix="/api/v1/roles")
+
+
+router = APIRouter(prefix="/api/v1/roles", tags=["Roles"])
 
 def get_storage_service():
     return LocalDiskStorageService()

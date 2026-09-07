@@ -11,7 +11,7 @@ from app.infrastructure.api.dependencies.auth import get_current_user_id, requir
 from app.infrastructure.database.unit_of_work.uow_factory import uow_factory
 from app.infrastructure.storage.local_disk_storage_service import LocalDiskStorageService
 
-router = APIRouter(prefix="/api/v1/characters")
+router = APIRouter(prefix="/api/v1/characters", tags=["Characters"])
 
 def get_storage_service():
     return LocalDiskStorageService()

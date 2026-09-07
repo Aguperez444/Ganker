@@ -10,7 +10,7 @@ from app.infrastructure.api.dto.update_videogame_profile_request import UpdateGa
 from app.infrastructure.api.dto.update_videogame_profile_response import UpdateGameProfileResponse
 from app.infrastructure.database.unit_of_work.uow_factory import uow_factory
 
-router = APIRouter(prefix="/api/v1/game_profiles")
+router = APIRouter(prefix="/api/v1/game_profiles", tags=["Game Profiles"])
 
 @router.post("/", status_code=201, response_model = CreateGameProfileResponse, dependencies=[Depends(require_player)])
 def create_game_profile(request: CreateGameProfileRequest, player_id: int = Depends(get_current_user_id)):

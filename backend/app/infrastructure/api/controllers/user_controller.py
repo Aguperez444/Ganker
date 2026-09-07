@@ -20,9 +20,9 @@ from app.infrastructure.api.auth.password_hash_service import PasswordHashServic
 from app.application.useCases.register_player import RegisterPlayer
 from app.infrastructure.database.unit_of_work.uow_factory import uow_factory
 
-router = APIRouter(prefix="/api/v1/users")
+router = APIRouter(prefix="/api/v1/users", tags=["Users"])
 
-@router.post("/register", response_model=AuthTokensResponse, status_code=201, dependencies=[Depends(require_player)])
+@router.post("/register", response_model=AuthTokensResponse, status_code=201)
 def register_player(request: RegisterPlayerRequest) -> AuthTokensResponse:
     uow = uow_factory()
 

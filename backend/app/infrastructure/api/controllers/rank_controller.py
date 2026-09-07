@@ -9,7 +9,7 @@ from app.infrastructure.api.dto.get_ranks_response import GetRanksResponse
 from app.infrastructure.database.unit_of_work.uow_factory import uow_factory
 from app.infrastructure.storage.local_disk_storage_service import LocalDiskStorageService
 
-router = APIRouter(prefix="/api/v1/ranks")
+router = APIRouter(prefix="/api/v1/ranks", tags=["Ranks"])
 
 # está hecho asi por si después hay que cambiar el storage service por algún otro, solo habría que cambiarlo aquí y no en cada endpoint
 def get_storage_service():
