@@ -1,43 +1,25 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
-const resolveIconUrl = (url) => {
-  if (!url || url === "Sin icono") return null;
-  if (
-    url.startsWith("http://") ||
-    url.startsWith("https://") ||
-    url.startsWith("blob:")
-  ) {
-    return url;
-  }
-  const baseUrl = import.meta.env.VITE_API_URL || "";
-  return `${baseUrl.replace(/\/$/, "")}${url.startsWith("/") ? "" : "/"}${url}`;
-};
-
-const GameForm = ({
-  mode = "create",
-  initialName = "",
-  initialIconUrl = "",
+const RankForm = ({
+  games = [],
+  initialVideogameId = "",
   isLoading = false,
   error = "",
   onSubmit,
   onCancel,
 }) => {
-  const [name, setName] = useState(initialName);
+  const [videogameId, setVideogameId] = useState(initialVideogameId ?? "");
+  const [name, setName] = useState("");
+  const [value, setValue] = useState("");
   const [iconFile, setIconFile] = useState(null);
+  const [previewUrl, setPreviewUrl] = useState(null);
   const [validationError, setValidationError] = useState("");
   const [isDragging, setIsDragging] = useState(false);
   const fileInputRef = useRef(null);
 
-  const resolvedInitialPreview = useMemo(
-    () => resolveIconUrl(initialIconUrl),
-    [initialIconUrl]
-  );
-
-  const [previewUrl, setPreviewUrl] = useState(resolvedInitialPreview);
-
   useEffect(() => {
     return () => {
-      if (previewUrl && previewUrl.startsWith("blob:")) {
+      if (previewUrl) {
         URL.revokeObjectURL(previewUrl);
       }
     };
@@ -61,16 +43,14 @@ const GameForm = ({
     setValidationError("");
     setIconFile(file);
 
-    if (previewUrl && previewUrl.startsWith("blob:")) {
+    if (previewUrl) {
       URL.revokeObjectURL(previewUrl);
     }
-    const objectUrl = URL.createObjectURL(file);
-    setPreviewUrl(objectUrl);
+    setPreviewUrl(URL.createObjectURL(file));
   };
 
   const handleFileChange = (event) => {
-    const file = event.target.files?.[0];
-    processFile(file);
+    processFile(event.target.files?.[0]);
   };
 
   const handleDragOver = (e) => {
@@ -93,16 +73,15 @@ const GameForm = ({
     setIsDragging(false);
     if (isLoading) return;
 
-    const file = e.dataTransfer.files?.[0];
-    processFile(file);
+    processFile(e.dataTransfer.files?.[0]);
   };
 
   const handleRemoveIcon = () => {
-    if (previewUrl && previewUrl.startsWith("blob:")) {
+    if (previewUrl) {
       URL.revokeObjectURL(previewUrl);
     }
     setIconFile(null);
-    setPreviewUrl(mode === "edit" ? resolvedInitialPreview : null);
+    setPreviewUrl(null);
     if (fileInputRef.current) {
       fileInputRef.current.value = "";
     }
@@ -115,79 +94,98 @@ const GameForm = ({
 
     const trimmedName = name.trim();
 
-    if (!trimmedName) {
-      setValidationError("El nombre del videojuego es obligatorio.");
+    if (!videogameId) {
+      setValidationError("Debés seleccionar un videojuego.");
       return;
     }
 
-    if (mode === "create" && !iconFile) {
+    if (!trimmedName) {
+      setValidationError("El nombre del rango es obligatorio.");
+      return;
+    }
+
+    if (value === "" || Number.isNaN(Number(value))) {
+      setValidationError("El valor jerárquico del rango es obligatorio.");
+      return;
+    }
+
+    if (!iconFile) {
       setValidationError("La imagen del ícono es obligatoria.");
       return;
     }
 
-    if (mode === "edit" && !iconFile && !previewUrl) {
-      setValidationError("Debes seleccionar una imagen para el ícono.");
-      return;
-    }
-
     await onSubmit({
+      videogame_id: Number(videogameId),
       name: trimmedName,
+      value: Number(value),
       icon: iconFile,
     });
   };
 
-  const title =
-    mode === "edit" ? "Modificar videojuego" : "Registrar videojuego";
-
-  const description =
-    mode === "edit"
-      ? "Actualizá la información del videojuego."
-      : "Agregá un nuevo videojuego a la plataforma.";
-
-  const buttonText =
-    mode === "edit" ? "GUARDAR CAMBIOS" : "REGISTRAR VIDEOJUEGO";
-
-  const loadingText = mode === "edit" ? "GUARDANDO..." : "REGISTRANDO...";
-
   const displayedError = validationError || error;
 
   const hasChanges =
-    mode === "create"
-      ? name.trim().length > 0 && iconFile !== null
-      : (name.trim().length > 0 && name.trim() !== initialName.trim()) ||
-        iconFile !== null;
+    Boolean(videogameId) && name.trim().length > 0 && value !== "" && iconFile !== null;
 
   return (
     <section className="rounded-2xl border border-white/10 bg-ganker-surface p-6 shadow-xl">
       <header className="mb-6">
         <h2 className="font-heading text-xl font-semibold text-ganker-text">
-          {title}
+          Registrar rango
         </h2>
 
-        <p className="mt-1 text-sm text-ganker-muted">{description}</p>
+        <p className="mt-1 text-sm text-ganker-muted">
+          Agregá un nuevo rango para un videojuego.
+        </p>
       </header>
 
       <form onSubmit={handleSubmit} className="flex flex-col gap-6">
         <div>
           <label
-            htmlFor="game-name"
+            htmlFor="rank-videogame"
             className="mb-2 block text-sm font-medium text-ganker-text"
           >
-            Nombre del videojuego <span className="text-ganker-orange">*</span>
+            Videojuego <span className="text-ganker-orange">*</span>
+          </label>
+
+          <select
+            id="rank-videogame"
+            value={videogameId}
+            onChange={(event) => {
+              setVideogameId(event.target.value);
+              if (validationError) setValidationError("");
+            }}
+            disabled={isLoading}
+            className="w-full rounded-lg border border-white/10 bg-ganker-surface-light px-4 py-3 text-ganker-text outline-none transition-all duration-200 focus:border-ganker-purple-light focus:ring-2 focus:ring-ganker-purple/30 disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            <option value="" disabled>
+              Seleccioná un videojuego
+            </option>
+            {games.map((game) => (
+              <option key={game.id} value={game.id}>
+                {game.name}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        <div>
+          <label
+            htmlFor="rank-name"
+            className="mb-2 block text-sm font-medium text-ganker-text"
+          >
+            Nombre del rango <span className="text-ganker-orange">*</span>
           </label>
 
           <input
-            id="game-name"
+            id="rank-name"
             type="text"
             value={name}
             onChange={(event) => {
               setName(event.target.value);
-
-              if (validationError) {
-                setValidationError("");
-              }
+              if (validationError) setValidationError("");
             }}
-            placeholder="Ej: Valorant"
+            placeholder="Ej: Oro"
             disabled={isLoading}
             className="w-full rounded-lg border border-white/10 bg-ganker-surface-light px-4 py-3 text-ganker-text placeholder:text-ganker-muted outline-none transition-all duration-200 focus:border-ganker-purple-light focus:ring-2 focus:ring-ganker-purple/30 disabled:cursor-not-allowed disabled:opacity-50"
           />
@@ -195,15 +193,39 @@ const GameForm = ({
 
         <div>
           <label
-            htmlFor="game-icon"
+            htmlFor="rank-value"
             className="mb-2 block text-sm font-medium text-ganker-text"
           >
-            Ícono del videojuego <span className="text-ganker-orange">*</span>
+            Valor jerárquico <span className="text-ganker-orange">*</span>
+          </label>
+
+          <input
+            id="rank-value"
+            type="number"
+            min="0"
+            step="1"
+            value={value}
+            onChange={(event) => {
+              setValue(event.target.value);
+              if (validationError) setValidationError("");
+            }}
+            placeholder="Ej: 2 (a mayor valor, mayor jerarquía)"
+            disabled={isLoading}
+            className="w-full rounded-lg border border-white/10 bg-ganker-surface-light px-4 py-3 text-ganker-text placeholder:text-ganker-muted outline-none transition-all duration-200 focus:border-ganker-purple-light focus:ring-2 focus:ring-ganker-purple/30 disabled:cursor-not-allowed disabled:opacity-50"
+          />
+        </div>
+
+        <div>
+          <label
+            htmlFor="rank-icon"
+            className="mb-2 block text-sm font-medium text-ganker-text"
+          >
+            Ícono del rango <span className="text-ganker-orange">*</span>
           </label>
 
           <input
             ref={fileInputRef}
-            id="game-icon"
+            id="rank-icon"
             type="file"
             accept="image/png,image/jpeg,image/webp,image/svg+xml"
             onChange={handleFileChange}
@@ -223,12 +245,10 @@ const GameForm = ({
 
               <div className="min-w-0 flex-1">
                 <p className="truncate text-sm font-medium text-ganker-text">
-                  {iconFile ? iconFile.name : "Ícono actual"}
+                  {iconFile.name}
                 </p>
                 <p className="text-xs text-ganker-muted">
-                  {iconFile
-                    ? `${(iconFile.size / 1024).toFixed(1)} KB`
-                    : "Imagen guardada en el servidor"}
+                  {(iconFile.size / 1024).toFixed(1)} KB
                 </p>
               </div>
 
@@ -241,16 +261,14 @@ const GameForm = ({
                 >
                   Cambiar
                 </button>
-                {iconFile && (
-                  <button
-                    type="button"
-                    onClick={handleRemoveIcon}
-                    disabled={isLoading}
-                    className="cursor-pointer rounded-lg border border-white/10 px-3 py-1.5 text-xs font-semibold text-ganker-error transition hover:bg-ganker-error/10 disabled:cursor-not-allowed disabled:opacity-50"
-                  >
-                    Quitar
-                  </button>
-                )}
+                <button
+                  type="button"
+                  onClick={handleRemoveIcon}
+                  disabled={isLoading}
+                  className="cursor-pointer rounded-lg border border-white/10 px-3 py-1.5 text-xs font-semibold text-ganker-error transition hover:bg-ganker-error/10 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  Quitar
+                </button>
               </div>
             </div>
           ) : (
@@ -318,7 +336,7 @@ const GameForm = ({
             disabled={isLoading || !hasChanges}
             className="cursor-pointer rounded-lg bg-gradient-to-r from-ganker-orange via-ganker-orange-light to-ganker-purple px-5 py-3 text-sm font-semibold text-white shadow-lg transition-all duration-200 hover:-translate-y-0.5 hover:shadow-ganker-purple/30 active:translate-y-0 disabled:cursor-not-allowed disabled:opacity-50"
           >
-            {isLoading ? loadingText : buttonText}
+            {isLoading ? "REGISTRANDO..." : "REGISTRAR RANGO"}
           </button>
         </div>
       </form>
@@ -326,4 +344,4 @@ const GameForm = ({
   );
 };
 
-export default GameForm;
+export default RankForm;

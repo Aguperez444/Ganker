@@ -7,17 +7,11 @@ const resolveIconUrl = (url) => {
   return `${baseUrl.replace(/\/$/, "")}${url.startsWith("/") ? "" : "/"}${url}`;
 };
 
-const GameListComponent = ({
-  games,
-  isLoading,
-  error,
-  selectedGameId,
-  onEdit,
-}) => {
+const RanksListComponent = ({ ranks, isLoading, error }) => {
   if (isLoading) {
     return (
       <div className="rounded-xl border border-white/10 bg-ganker-surface-light p-6">
-        <p className="text-sm text-ganker-muted">Cargando videojuegos...</p>
+        <p className="text-sm text-ganker-muted">Cargando rangos...</p>
       </div>
     );
   }
@@ -30,34 +24,31 @@ const GameListComponent = ({
     );
   }
 
-  if (games.length === 0) {
+  if (ranks.length === 0) {
     return (
       <div className="rounded-xl border border-white/10 bg-ganker-surface-light p-6">
         <p className="text-sm text-ganker-muted">
-          Todavía no hay videojuegos registrados.
+          Este videojuego todavía no tiene rangos registrados.
         </p>
       </div>
     );
   }
 
+  const sortedRanks = [...ranks].sort((a, b) => a.value - b.value);
+
   return (
     <div className="overflow-hidden rounded-xl border border-white/10">
       <ul className="divide-y divide-white/10">
-        {games.map((game) => (
+        {sortedRanks.map((rank) => (
           <li
-            key={game.id}
-            className={[
-              "flex items-center justify-between gap-4 px-5 py-4 transition",
-              selectedGameId === game.id
-                ? "bg-ganker-purple/20"
-                : "bg-ganker-surface-light hover:bg-white/5",
-            ].join(" ")}
+            key={rank.id}
+            className="flex items-center justify-between gap-4 bg-ganker-surface-light px-5 py-4 transition hover:bg-white/5"
           >
             <div className="flex min-w-0 items-center gap-3">
-              {resolveIconUrl(game.icon_url) ? (
+              {resolveIconUrl(rank.icon_url) ? (
                 <img
-                  src={resolveIconUrl(game.icon_url)}
-                  alt={game.name}
+                  src={resolveIconUrl(rank.icon_url)}
+                  alt={rank.name}
                   className="h-10 w-10 shrink-0 rounded-lg border border-white/10 bg-ganker-surface object-cover"
                   onError={(e) => {
                     e.currentTarget.style.display = "none";
@@ -82,17 +73,13 @@ const GameListComponent = ({
               )}
 
               <p className="truncate font-medium text-ganker-text">
-                {game.name}
+                {rank.name}
               </p>
             </div>
 
-            <button
-              type="button"
-              onClick={() => onEdit(game)}
-              className="shrink-0 cursor-pointer rounded-lg px-3 py-2 text-sm font-semibold text-ganker-purple-light transition hover:bg-ganker-purple/20 hover:text-ganker-text"
-            >
-              Modificar
-            </button>
+            <span className="shrink-0 rounded-full bg-ganker-purple/20 px-3 py-1 text-xs font-semibold text-ganker-purple-light">
+              Valor {rank.value}
+            </span>
           </li>
         ))}
       </ul>
@@ -100,4 +87,4 @@ const GameListComponent = ({
   );
 };
 
-export default GameListComponent;
+export default RanksListComponent;

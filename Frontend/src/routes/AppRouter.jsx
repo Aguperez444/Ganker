@@ -8,6 +8,7 @@ import AppLayout from "../components/layout/AppLayout.jsx";
 import AdminLayout from "../components/layout/AdminLayout.jsx";
 import AdminHomePage from "../pages/admin/AdminHomePage.jsx";
 import GamesPage from "../pages/admin/GamesPage.jsx";
+import RanksPage from "../pages/admin/RanksPage.jsx";
 import ProtectedRoute from "./ProtectedRoute.jsx";
 import PublicOnlyRoute from "./PublicOnlyRoute.jsx";
 import { ROLES_ADMIN } from "../utils/rutas.js";
@@ -60,6 +61,7 @@ function AppRouter() {
           <Route path="/app/admin" element={<AdminLayout />}>
             <Route index element={<AdminHomePage />} />
             <Route path="games" element={<GamesPage />} />
+            <Route path="ranks" element={<RanksPage />} />
           </Route>
         </Route>
 

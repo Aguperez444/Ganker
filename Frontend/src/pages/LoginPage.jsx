@@ -1,4 +1,4 @@
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import AuthLayout from "../components/common/AuthLayout";
 import FormLogin from "../components/jugadores/FormLogin";
 import { useIniciarSesion } from "../hooks/useIniciarSesion";
@@ -14,6 +14,8 @@ function LoginPage() {
     handleSubmit,
   } = useIniciarSesion();
   const navigate = useNavigate();
+  const location = useLocation();
+  const destino = location.state?.from?.pathname || "/app";
 
   async function onSubmit(e) {
     const usuario = await handleSubmit(e);

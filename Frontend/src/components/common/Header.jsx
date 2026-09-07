@@ -1,5 +1,9 @@
 import { Link, NavLink, useNavigate } from "react-router-dom";
+<<<<<<< HEAD
+import { useAuth } from "../../context/AuthContext";
+=======
 import { useAuth } from "../../context/AuthContext.jsx";
+>>>>>>> origin/main
 
 function Header() {
   const { isAuthenticated, logout } = useAuth();
@@ -27,6 +31,9 @@ function Header() {
             <>
               <NavLink
                 to="/app"
+<<<<<<< HEAD
+                className="rounded-lg px-3 py-1.5 text-slate-300 transition-colors duration-200 hover:bg-white/5 hover:text-white"
+=======
                 className={({ isActive }) =>
                   `rounded-lg px-3 py-1.5 transition-colors duration-200 ${
                     isActive
@@ -34,13 +41,18 @@ function Header() {
                       : "text-slate-300 hover:text-white hover:bg-white/5"
                   }`
                 }
+>>>>>>> origin/main
               >
                 Ir a la app
               </NavLink>
               <button
                 type="button"
                 onClick={handleLogout}
+<<<<<<< HEAD
+                className="cursor-pointer rounded-lg px-3 py-1.5 text-[#f27238] transition-colors duration-200 hover:bg-white/5 hover:text-orange-400"
+=======
                 className="rounded-lg px-3 py-1.5 text-ganker-error transition-colors duration-200 hover:bg-white/5"
+>>>>>>> origin/main
               >
                 CERRAR SESIÓN
               </button>
