@@ -5,7 +5,7 @@ from app.application.useCases.register_character import RegisterCharacter
 from app.application.useCases.update_character import UpdateCharacter
 from app.infrastructure.api.dto.character_object_response import CharacterObjectResponse
 from app.infrastructure.api.dto.get_characters_response import GetCharactersResponse
-from app.infrastructure.api.dependencies.auth import get_current_user_id, require_admin
+from app.infrastructure.api.dependencies.auth import get_current_user_id, require_admin, require_player
 
 
 from app.infrastructure.database.unit_of_work.uow_factory import uow_factory
@@ -16,19 +16,19 @@ router = APIRouter(prefix="/api/v1/characters", tags=["Characters"])
 def get_storage_service():
     return LocalDiskStorageService()
 
-@router.get("/{videogame_id}", response_model=GetCharactersResponse, status_code=200,dependencies=[Depends(require_admin)])
-def get_characters_by_videogame_id(videogame_id: int, _player_id: int = Depends(get_current_user_id)):
+@router.get("/{videogame_id}", response_model=GetCharactersResponse, status_code=200,dependencies=[Depends(require_player)])
+def get_characters_by_videogame_id(videogame_id: int):
     # lo del player_id está para que el endpoint esté protegido, pero no se usa en la lógica de este endpoint
     uow = uow_factory()
     query_characters_use_case = QueryCharacters(uow)
     return query_characters_use_case.get_by_game_id(videogame_id)
 
 
-@router.post("/", status_code=201, response_model=CharacterObjectResponse)
+@router.post("/", status_code=201, response_model=CharacterObjectResponse, dependencies=[Depends(require_admin)])
 async def register_character(name: str = Form(..., description="Name of the character"),
                              videogame_id: int = Form(..., description="ID of the videogame"),
                              icon: UploadFile = File(..., description="Icon image file"),
-                             _player_id: int = Depends(get_current_user_id)):
+                             ):
 
     # Asegurarse de que la petición incluya un archivo con nombre
     if not icon or not icon.filename:
@@ -44,12 +44,12 @@ async def register_character(name: str = Form(..., description="Name of the char
 
     return character
 
-@router.put("/{character_id}", status_code=200, response_model=CharacterObjectResponse)
+@router.put("/{character_id}", status_code=200, response_model=CharacterObjectResponse, dependencies=[Depends(require_admin)])
 async def update_character(character_id: int,
                            name: str = Form(..., description="Name of the character"),
                            videogame_id: int = Form(..., description="ID of the videogame"),
                            icon: UploadFile = File(description="Icon image file"),
-                           _player_id: int = Depends(get_current_user_id)):
+                           ):
 
     if icon:
         if not icon.filename:
