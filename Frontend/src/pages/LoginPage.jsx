@@ -1,17 +1,27 @@
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import AuthLayout from "../components/common/AuthLayout";
 import FormLogin from "../components/jugadores/FormLogin";
 import { useIniciarSesion } from "../hooks/useIniciarSesion";
+import { rutaInicialPara } from "../utils/rutas";
 
 function LoginPage() {
-  const { valores, errores, cargando, errorServidor, handleChange, handleSubmit } =
-    useIniciarSesion();
+  const {
+    valores,
+    errores,
+    cargando,
+    errorServidor,
+    handleChange,
+    handleSubmit,
+  } = useIniciarSesion();
   const navigate = useNavigate();
+  const location = useLocation();
+  const destino = location.state?.from?.pathname || "/app";
 
   async function onSubmit(e) {
-    const exito = await handleSubmit(e);
-    if (exito) {
-          navigate("/app", { replace: true });;
+    const usuario = await handleSubmit(e);
+    if (usuario) {
+      // Los admin y owner arrancan en el panel; el resto en la home.
+      navigate(rutaInicialPara(usuario), { replace: true });
     }
   }
 

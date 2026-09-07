@@ -11,7 +11,13 @@ export function esPasswordValida(password) {
   return REGEX_PASSWORD.test(password);
 }
 
-export function validarFormularioRegistro({ nombre, username, mail, password, confirmarPassword }) {
+export function validarFormularioRegistro({
+  nombre,
+  username,
+  mail,
+  password,
+  confirmarPassword,
+}) {
   const errores = {};
 
   if (!nombre.trim()) errores.nombre = "Ingresá tu nombre completo.";
@@ -48,6 +54,23 @@ export function validarFormularioLogin({ email, password }) {
 
   if (!password) {
     errores.password = "Ingresá tu contraseña.";
+  }
+
+  return errores;
+}
+// US 02 - Modificar mis datos.
+// La contrasena NO se valida ni se toca aca: cambiarla es la US 34 y tiene su
+// propia pantalla.
+export function validarFormularioCuenta({ nombre, username, mail }) {
+  const errores = {};
+
+  if (!nombre.trim()) errores.nombre = "Ingresá tu nombre completo.";
+  if (!username.trim()) errores.username = "Ingresá un nombre de usuario.";
+
+  if (!mail.trim()) {
+    errores.mail = "Ingresá tu email.";
+  } else if (!esEmailValido(mail)) {
+    errores.mail = "El email no tiene un formato válido.";
   }
 
   return errores;

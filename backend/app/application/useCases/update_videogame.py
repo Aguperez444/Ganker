@@ -9,7 +9,7 @@ from app.domain.services.slug_service import SlugService
 
 from typing import TYPE_CHECKING, cast
 
-from app.infrastructure.api.dto.videogame_object_response import VideogameObjectResponse
+from app.infrastructure.api.dto.response.base_classes.videogame_object_response import VideogameObjectResponse
 
 if TYPE_CHECKING:
     from app.domain.models.videogame import Videogame

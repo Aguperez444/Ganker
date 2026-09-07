@@ -3,12 +3,12 @@ from typing import cast
 from app.domain.models.game_profile import GameProfile
 
 
-from app.infrastructure.api.dto.character_object_response import CharacterObjectResponse
-from app.infrastructure.api.dto.rank_object_response import RankObjectResponse
-from app.infrastructure.api.dto.role_object_response import RoleObjectResponse
-from app.infrastructure.api.dto.role_profile_object_response import RoleProfileObjectResponse
-from app.infrastructure.api.dto.update_videogame_profile_response import UpdateGameProfileResponse
-from app.infrastructure.api.dto.videogame_object_response import VideogameObjectResponse
+from app.infrastructure.api.dto.response.base_classes.character_object_response import CharacterObjectResponse
+from app.infrastructure.api.dto.response.base_classes.rank_object_response import RankObjectResponse
+from app.infrastructure.api.dto.response.base_classes.role_object_response import RoleObjectResponse
+from app.infrastructure.api.dto.response.base_classes.role_profile_object_response import RoleProfileObjectResponse
+from app.infrastructure.api.dto.response.update_videogame_profile_response import UpdateGameProfileResponse
+from app.infrastructure.api.dto.response.base_classes.videogame_object_response import VideogameObjectResponse
 
 
 class CreateGameProfileDTOService:

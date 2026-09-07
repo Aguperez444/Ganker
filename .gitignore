@@ -267,3 +267,9 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# Imagenes que suben los usuarios desde la app. Se versiona solo el placeholder
+# por defecto (icon_example_1.png); el resto son datos de cada entorno y no
+# tienen por que viajar en el repo.
+backend/media/users/icons/*
+!backend/media/users/icons/icon_example_1.png

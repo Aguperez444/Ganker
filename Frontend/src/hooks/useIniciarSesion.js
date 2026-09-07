@@ -37,11 +37,20 @@ export function useIniciarSesion() {
       } else {
         setErrorServidor("No pudimos iniciar sesión. Probá de nuevo.");
       }
-      return false;
+      return null;
     }
 
-    return true;
+    // Devuelve el usuario (no un booleano) para que la page pueda decidir a
+    // donde navegar segun el rol.
+    return result.user;
   }
 
-  return { valores, errores, cargando, errorServidor, handleChange, handleSubmit };
+  return {
+    valores,
+    errores,
+    cargando,
+    errorServidor,
+    handleChange,
+    handleSubmit,
+  };
 }

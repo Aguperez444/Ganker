@@ -1,4 +1,4 @@
-import { NavLink, useNavigate } from "react-router-dom";
+import { Link, NavLink, useNavigate } from "react-router-dom";
 import { adminNavigationItems } from "./AdminSidebar.jsx";
 import { useAuth } from "../../context/AuthContext.jsx";
 
@@ -27,7 +27,7 @@ const AdminMobileMenu = ({ isOpen, onClose }) => {
 
       <aside className="relative flex h-full w-72 max-w-[85vw] flex-col border-r border-white/10 bg-ganker-surface shadow-2xl">
         <header className="flex h-17 items-center justify-between border-b border-white/10 px-5">
-          <div>
+          <Link to="/" onClick={onClose} className="block">
             <p className="text-xs font-semibold tracking-[0.14em] text-ganker-purple-light uppercase">
               Ganker
             </p>
@@ -35,7 +35,7 @@ const AdminMobileMenu = ({ isOpen, onClose }) => {
             <p className="font-heading font-semibold text-ganker-text">
               Administración
             </p>
-          </div>
+          </Link>
 
           <button
             type="button"

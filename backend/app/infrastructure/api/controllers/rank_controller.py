@@ -4,7 +4,8 @@ from fastapi import APIRouter, Depends, File, UploadFile, Form, HTTPException, s
 from app.application.useCases.create_rank import CreateRankUseCase
 from app.application.useCases.query_ranks import QueryRanks
 from app.infrastructure.api.dependencies.auth import get_current_user_id, require_admin
-from app.infrastructure.api.dto.get_ranks_response import GetRanksResponse
+from app.infrastructure.api.dto.response.get_ranks_response import GetRanksResponse
+from app.infrastructure.api.dto.response.base_classes.rank_object_response import RankObjectResponse
 
 from app.infrastructure.database.unit_of_work.uow_factory import uow_factory
 from app.infrastructure.storage.local_disk_storage_service import LocalDiskStorageService
@@ -23,7 +24,7 @@ def get_ranks_by_videogame_id(videogame_id: int, _player_id: int = Depends(get_c
     return query_ranks_use_case.get_by_game_id(videogame_id)
 
 
-@router.post("", status_code=201, dependencies=[Depends(require_admin)])
+@router.post("", status_code=201, response_model=RankObjectResponse, dependencies=[Depends(require_admin)])
 async def create_game_rank(
     videogame_id: int = Form(..., description="ID of the videogame"),
     name: str = Form(..., description="Name of the rank"),

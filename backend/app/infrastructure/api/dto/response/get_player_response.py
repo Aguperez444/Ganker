@@ -2,7 +2,7 @@ from typing import List
 
 from pydantic import BaseModel, Field
 
-from app.infrastructure.api.dto.game_profile_object_response import GameProfileObjectResponse
+from app.infrastructure.api.dto.response.base_classes.game_profile_object_response import GameProfileObjectResponse
 
 
 class GetUserResponse(BaseModel):

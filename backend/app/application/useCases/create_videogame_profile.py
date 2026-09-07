@@ -1,8 +1,7 @@
 from typing import TYPE_CHECKING, cast, Optional
 
 from app.application.ports.i_unit_of_work import IUnitOfWork
-from app.infrastructure.api.dto.create_videogame_profile_request import CreateGameProfileRequest
-
+from app.infrastructure.api.dto.response.create_videogame_profile_request import CreateGameProfileRequest
 from app.domain.exceptions.character.character_not_found_exception import CharacterNotFoundException
 from app.domain.exceptions.does_not_belong_to_game_exception import DoesNotBelongToGameException
 from app.domain.exceptions.game_profile.game_profile_already_exist_exception import GameProfileAlreadyExistException

@@ -39,30 +39,32 @@ const GamesPage = () => {
     setSelectedGame(null);
   };
 
-  const handleRegister = async (name) => {
-    const success = await registerGame(name);
+  const handleRegister = async (gameData) => {
+    const success = await registerGame(gameData);
 
     if (!success) {
       return;
     }
 
-    setSuccessMessage(`Videojuego "${name}" registrado correctamente.`);
+    const gameName = typeof gameData === "object" ? gameData.name : gameData;
+    setSuccessMessage(`Videojuego "${gameName}" registrado correctamente.`);
 
     setMode(null);
   };
 
-  const handleEdit = async (name) => {
+  const handleEdit = async (gameData) => {
     if (!selectedGame) {
       return;
     }
 
-    const success = await editGame(selectedGame.id, name);
+    const success = await editGame(selectedGame.id, gameData);
 
     if (!success) {
       return;
     }
 
-    setSuccessMessage(`Videojuego "${name}" modificado correctamente.`);
+    const gameName = typeof gameData === "object" ? gameData.name : gameData;
+    setSuccessMessage(`Videojuego "${gameName}" modificado correctamente.`);
 
     setMode(null);
     setSelectedGame(null);
@@ -129,6 +131,7 @@ const GamesPage = () => {
 
           {mode === "create" && (
             <GameForm
+              key="create"
               mode="create"
               isLoading={isSaving}
               error={actionError}
@@ -139,8 +142,10 @@ const GamesPage = () => {
 
           {mode === "edit" && selectedGame && (
             <GameForm
+              key={`edit-${selectedGame.id}`}
               mode="edit"
               initialName={selectedGame.name}
+              initialIconUrl={selectedGame.icon_url}
               isLoading={isSaving}
               error={actionError}
               onSubmit={handleEdit}

@@ -1,8 +1,8 @@
 from app.application.ports.i_token_service import ITokenService
 from app.application.ports.i_unit_of_work import IUnitOfWork
-from app.infrastructure.api.dto.auth_tokens_response import AuthTokensResponse
+from app.infrastructure.api.dto.response.auth_tokens_response import AuthTokensResponse
 from app.domain.exceptions.user.user_not_found_exception import UserNotFoundException
-from exceptions.auth.Invalid_token_exception import InvalidTokenException
+from app.domain.exceptions.auth.Invalid_token_exception import InvalidTokenException
 
 
 class RefreshToken:
@@ -24,7 +24,7 @@ class RefreshToken:
             # 3. Verificar existencia del usuario en DB
             user = self.uow.user_repo.get_user_by_id(user_id)
             if user is None:
-                raise UserNotFoundException()
+                raise UserNotFoundException(user_id)
 
             # 4. Revocar el token viejo (Rotación)
             self.uow.refresh_token_repo.revoke_by_jti(old_jti)

@@ -10,9 +10,9 @@ from app.domain.exceptions.file.storage_security_error import StorageSecurityErr
 
 
 class LocalDiskStorageService(IStorageService):
-    def __init__(self, base_dir: Path = settings.media_dir, base_url: str = settings.media_url):
-        self.base_dir = base_dir
-        self.base_url = base_url.rstrip("/")
+    def __init__(self, base_dir: Path | None = None, base_url: str | None = None):
+        self.base_dir = base_dir if base_dir is not None else settings.media_dir
+        self.base_url = (base_url if base_url is not None else settings.media_url).rstrip("/")
 
     def _resolve_and_validate_path(self, relative_path: str | Path) -> Path:
         """

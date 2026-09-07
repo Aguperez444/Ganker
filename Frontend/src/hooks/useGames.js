@@ -21,7 +21,13 @@ const useGames = () => {
 
       const videogames = await getGames();
 
-      setGames(videogames);
+      setGames(
+        (videogames || []).map((game) => ({
+          id: game.id ?? game.videogame_id,
+          name: game.name,
+          icon_url: game.icon_url,
+        }))
+      );
     } catch (error) {
       console.error("Error al cargar videojuegos:", error);
       setError("No se pudieron cargar los videojuegos.");
@@ -34,25 +40,42 @@ const useGames = () => {
     loadGames();
   }, [loadGames]);
 
-  const registerGame = async (name) => {
+  const registerGame = async (nameOrData, icon) => {
     try {
       setIsSaving(true);
       setActionError("");
 
-      const newGame = await createGameRequest(name);
+      let name = nameOrData;
+      let iconFile = icon;
+
+      if (typeof nameOrData === "object" && nameOrData !== null) {
+        name = nameOrData.name;
+        iconFile = nameOrData.icon;
+      }
+
+      const newGame = await createGameRequest(name, iconFile);
 
       setGames((currentGames) => [
         ...currentGames,
         {
-          id: newGame.videogame_id,
+          id: newGame.id ?? newGame.videogame_id,
           name: newGame.name,
+          icon_url: newGame.icon_url,
         },
       ]);
 
       return true;
     } catch (error) {
-      if (error.response?.status === 400) {
-        setActionError("El nombre ingresado no es válido.");
+      if (error.response?.data?.error) {
+        setActionError(error.response.data.error);
+      } else if (error.response?.data?.detail) {
+        setActionError(
+          typeof error.response.data.detail === "string"
+            ? error.response.data.detail
+            : "Error de validación al registrar el videojuego."
+        );
+      } else if (error.response?.status === 400) {
+        setActionError("Los datos ingresados no son válidos.");
       } else if (error.response?.status === 409) {
         setActionError("Ya existe un videojuego registrado con ese nombre.");
       } else {
@@ -65,19 +88,28 @@ const useGames = () => {
     }
   };
 
-  const editGame = async (id, name) => {
+  const editGame = async (id, nameOrData, icon) => {
     try {
       setIsSaving(true);
       setActionError("");
 
-      const updatedGame = await updateGameRequest(id, name);
+      let name = nameOrData;
+      let iconFile = icon;
+
+      if (typeof nameOrData === "object" && nameOrData !== null) {
+        name = nameOrData.name;
+        iconFile = nameOrData.icon;
+      }
+
+      const updatedGame = await updateGameRequest(id, name, iconFile);
 
       setGames((currentGames) =>
         currentGames.map((game) =>
           game.id === id
             ? {
-                id: updatedGame.videogame_id,
+                id: updatedGame.id ?? updatedGame.videogame_id,
                 name: updatedGame.name,
+                icon_url: updatedGame.icon_url,
               }
             : game
         )
@@ -85,8 +117,16 @@ const useGames = () => {
 
       return true;
     } catch (error) {
-      if (error.response?.status === 400) {
-        setActionError("El nombre ingresado no es válido.");
+      if (error.response?.data?.error) {
+        setActionError(error.response.data.error);
+      } else if (error.response?.data?.detail) {
+        setActionError(
+          typeof error.response.data.detail === "string"
+            ? error.response.data.detail
+            : "Error de validación al modificar el videojuego."
+        );
+      } else if (error.response?.status === 400) {
+        setActionError("Los datos ingresados no son válidos.");
       } else if (error.response?.status === 409) {
         setActionError("Ya existe otro videojuego registrado con ese nombre.");
       } else if (error.response?.status === 404) {
