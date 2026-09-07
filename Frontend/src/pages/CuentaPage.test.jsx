@@ -18,6 +18,25 @@ vi.mock("../api/axiosClient", () => ({
   registrarOnSesionExpirada: vi.fn(),
 }));
 
+// jsdom no implementa canvas, asi que el recorte real no puede ejecutarse aca.
+// Mockeamos SOLO la conversion del canvas a archivo; el resto de recorteAvatar
+// (incluida calcularDimensionesRecorte) sigue siendo el codigo real.
+//
+// Antes esto no hacia falta porque canvasAArchivo traia un respaldo interno que
+// fabricaba un File falso cuando no habia canvas. Ese respaldo vivia en codigo
+// de produccion: hacia pasar el test sin recortar nada y, en un navegador donde
+// toBlob fallara, el usuario habria subido una imagen corrupta sin enterarse.
+vi.mock("../utils/recorteAvatar", async (importOriginal) => {
+  const real = await importOriginal();
+  return {
+    ...real,
+    canvasAArchivo: vi.fn(async (_canvas, nombreArchivo = "avatar.png") => ({
+      file: new File(["contenido-png"], nombreArchivo, { type: "image/png" }),
+      previewUrl: "blob:recorte-de-prueba",
+    })),
+  };
+});
+
 const JUGADOR = {
   username: "joaco_gg",
   name: "Joaquin Trabucco",

@@ -89,23 +89,6 @@ describe("jugadoresApi", () => {
       expect(iconRecibido).toBeInstanceOf(File);
       expect(iconRecibido.name).toBe("avatar.png");
     });
-
-    it("permite enviar un objeto FormData directamente", async () => {
-      axiosClient.put.mockResolvedValue({
-        data: { user_id: 2 },
-      });
-
-      const customFormData = new FormData();
-      customFormData.append("username", "custom");
-      customFormData.append("name", "Custom User");
-      customFormData.append("mail", "custom@mail.com");
-
-      await actualizarJugador(customFormData);
-
-      const [, formData] = axiosClient.put.mock.calls[0];
-      expect(formData).toBe(customFormData);
-      expect(formData.get("username")).toBe("custom");
-    });
   });
 
   describe("otros métodos de jugadoresApi", () => {

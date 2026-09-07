@@ -192,15 +192,16 @@ function ModalRecortarAvatar({
 
       const nombreLimpio =
         nombreArchivoOriginal.replace(/\.[^.]+$/, "") || "avatar";
-      const resultado = await canvasAArchivo(
-        canvas,
-        `${nombreLimpio}.png`,
-        imagenSrc
-      );
+      const resultado = await canvasAArchivo(canvas, `${nombreLimpio}.png`);
 
-      if (resultado) {
-        onConfirm(resultado.file, resultado.previewUrl);
+      if (!resultado) {
+        // Sin canvas no se puede recortar. Antes esto pasaba en silencio y el
+        // usuario terminaba subiendo una imagen vacia.
+        setErrorCarga("No pudimos recortar la imagen. Probá con otra.");
+        return;
       }
+
+      onConfirm(resultado.file, resultado.previewUrl);
     } catch {
       setErrorCarga("Hubo un error al procesar el recorte de la imagen.");
     } finally {

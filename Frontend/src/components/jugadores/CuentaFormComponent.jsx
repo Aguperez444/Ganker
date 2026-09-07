@@ -1,7 +1,7 @@
 import { useState } from "react";
 import CampoTexto from "../common/CampoTexto";
 import AvatarUsuarioComponent from "../common/AvatarUsuarioComponent";
-import ModalRecortarAvatar from "./ModalRecortarAvatar";
+import ModalRecortarAvatar from "./ModalRecortarAvatarComponent";
 
 const ICONO_USUARIO = (
   <svg

@@ -3,8 +3,11 @@ export const RADIUS = 120; // Diámetro del círculo de recorte: 240px
 export const CENTER = VIEWPORT_SIZE / 2; // 160px
 
 /**
- * Calcula el tamaño del lienzo final recortado, garantizando que esté
- * siempre acotado entre 128x128 y 512x512 píxeles según los requisitos del backend.
+ * Calcula el tamaño del lienzo final recortado, acotado entre 128x128 y
+ * 512x512 pixeles.
+ *
+ * Es una decision del frontend, no una regla del backend: hoy el endpoint no
+ * valida ni el tipo ni el tamano del archivo que recibe.
  */
 export function calcularDimensionesRecorte(sourceDiameter) {
   const diametroRedondeado = Math.round(sourceDiameter);
@@ -52,11 +55,7 @@ export function recortarImagenEnCanvas({
 /**
  * Convierte el canvas a un archivo File y una URL de vista previa.
  */
-export function canvasAArchivo(
-  canvas,
-  nombreArchivo = "avatar.png",
-  fallbackUrl = ""
-) {
+export function canvasAArchivo(canvas, nombreArchivo = "avatar.png") {
   return new Promise((resolve) => {
     if (canvas && typeof canvas.toBlob === "function") {
       canvas.toBlob((blob) => {
@@ -69,15 +68,10 @@ export function canvasAArchivo(
         resolve({ file, previewUrl });
       }, "image/png");
     } else {
-      // Respaldo para entornos sin implementación completa de toBlob/canvas (ej. jsdom)
-      const blob = new Blob(["avatar-data"], { type: "image/png" });
-      const file = new File([blob], nombreArchivo, { type: "image/png" });
-      const previewUrl =
-        fallbackUrl ||
-        (typeof URL !== "undefined" && typeof URL.createObjectURL === "function"
-          ? URL.createObjectURL(blob)
-          : "");
-      resolve({ file, previewUrl });
+      // Sin canvas no hay recorte posible. Devolvemos null para que el modal
+      // muestre el error: fabricar un archivo de reemplazo aca haria que el
+      // usuario suba una imagen corrupta sin enterarse.
+      resolve(null);
     }
   });
 }
