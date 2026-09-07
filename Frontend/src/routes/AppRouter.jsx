@@ -9,7 +9,7 @@ import AdminHomePage from "../pages/admin/AdminHomePage.jsx";
 import GamesPage from "../pages/admin/GamesPage.jsx";
 import ProtectedRoute from "./ProtectedRoute.jsx";
 import PublicOnlyRoute from "./PublicOnlyRoute.jsx";
-
+import ProfilePage from "../pages/ProfilePage.jsx";
 /**
  * Definicion central de rutas de la aplicacion.
  * Cada nueva pantalla se agrega aca como un <Route> apuntando a su page.
@@ -31,6 +31,7 @@ function AppRouter() {
         <Route element={<ProtectedRoute />}>
           <Route path="/app" element={<AppLayout />}>
             <Route index element={<HomePage />} />
+            <Route path="perfil" element={<ProfilePage />} />
             {/*
               Las próximas User Stories se incorporarán acá.
 

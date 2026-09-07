@@ -2,7 +2,7 @@ import axiosClient from "./axiosClient";
 
 export function registrarJugador({ nombre, username, mail, password }) {
   return axiosClient
-    .post("/api/v1/players/", {
+    .post("/api/v1/users/register", {
       name: nombre,
       username,
       mail,
