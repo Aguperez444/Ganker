@@ -42,7 +42,7 @@ class UpdateUser:
                     cambio_icono = True
                     old_icon_url = user.icon_url
                     # Guardo la nueva imagen a través del puerto
-                    new_icon_url = await self.storage_service.save_file(
+                    new_icon_url = await self.storage_service.save_image_file(
                         file_content=icon.file,
                         filename=icon.filename,
                         subfolder=f"users/icons",

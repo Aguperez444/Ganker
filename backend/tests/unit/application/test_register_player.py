@@ -7,7 +7,7 @@ from app.application.ports.i_password_hasher import IPasswordHasher
 from app.domain.models.user import User
 from app.domain.exceptions.mail.email_already_exists_exception import EmailAlreadyExistsException
 from app.domain.exceptions.user.invalid_username_exception import InvalidUsernameException
-from app.domain.exceptions.password_is_not_secure_exception import PasswordIsNotSecureException
+from exceptions.auth.password_is_not_secure_exception import PasswordIsNotSecureException
 from app.domain.exceptions.user.username_already_exist_exception import UsernameAlreadyExistsException
 from app.infrastructure.api.dto.register_player_request import RegisterPlayerRequest
 

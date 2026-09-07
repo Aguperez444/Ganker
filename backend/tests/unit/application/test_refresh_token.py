@@ -5,7 +5,7 @@ from app.application.useCases.refresh_token import RefreshToken
 from app.application.ports.i_token_service import ITokenService
 from app.domain.models.user import User
 from app.domain.exceptions.user.user_not_found_exception import UserNotFoundException
-from app.domain.exceptions.Invalid_token_exception import InvalidTokenException
+from exceptions.auth.Invalid_token_exception import InvalidTokenException
 
 
 class TestRefreshTokenUseCase:

@@ -5,8 +5,8 @@ from app.application.ports.i_unit_of_work import IUnitOfWork
 from app.domain.models.videogame import Videogame
 from app.domain.exceptions.videogame.invalid_videogame_name_exception import InvalidVideogameNameException
 from app.domain.exceptions.videogame.videogame_already_exists_exception import VideogameAlreadyExistsException
-from app.domain.exceptions.file_name_not_null_exception import FileNameNotNullException
-from app.domain.exceptions.file_not_null_exception import FileNotNullException
+from exceptions.file.file_name_not_null_exception import FileNameNotNullException
+from exceptions.file.file_not_null_exception import FileNotNullException
 from app.domain.services.slug_service import SlugService
 from app.infrastructure.api.dto.videogame_object_response import VideogameObjectResponse
 
@@ -31,7 +31,7 @@ class RegisterVideogame:
 
         with self.uow as uow:
             # Guardar imagen a través del puerto
-            icon_url = await self.storage_service.save_file(
+            icon_url = await self.storage_service.save_image_file(
                 file_content=icon_file,
                 filename=icon_filename,
                 subfolder=f"games/{game_folder}",
