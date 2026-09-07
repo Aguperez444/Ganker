@@ -12,14 +12,3 @@ class GetUserResponse(BaseModel):
     profiles: List[GameProfileObjectResponse] = Field(..., description="Perfiles de juego del jugador")
     role: str = Field(..., description="Rol del jugador")
     icon_url: str = "/media/users/icons/icon_example_1.png"
-
-
-    def __init__(self, **data):
-        super().__init__(**data)
-        print('\n'*3)
-        print('-'*100)
-        print("IMPLEMENTAR EL ICON_URL DEL JUGADOR EN LA RESPUESTA DE GET_PLAYER_RESPONSE")
-        print("TODAVÍA SE ESTA USANDO EL ICON_URL POR DEFECTO, SE DEBE OBTENER EL ICON_URL DEL JUGADOR DESDE LA BASE DE DATOS")
-        print("TODAVÍA NO SE IMPLEMENTÓ EL ICON_URL DEL JUGADOR")
-        print('-'*100)
-        print('\n' * 3)

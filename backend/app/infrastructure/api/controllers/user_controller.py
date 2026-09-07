@@ -1,6 +1,6 @@
 from typing import cast
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, UploadFile, File, HTTPException, status, Form
 
 from app.application.useCases.query_users import QueryUsers
 from app.application.useCases.register_user import RegisterUser
@@ -10,7 +10,6 @@ from app.infrastructure.api.dto.auth_tokens_response import AuthTokensResponse
 from app.infrastructure.api.dto.get_player_response import GetUserResponse
 from app.infrastructure.api.dto.register_user_request import RegisterUserRequest
 from app.infrastructure.api.dto.register_user_response import RegisterUserResponse
-from app.infrastructure.api.dto.update_user_request import UpdateUserRequest
 from app.infrastructure.api.dto.update_user_response import UpdateUserResponse
 from app.infrastructure.config.settings import settings
 
@@ -19,8 +18,12 @@ from app.infrastructure.api.auth.jwt_token_service import JwtTokenService
 from app.infrastructure.api.auth.password_hash_service import PasswordHashService
 from app.application.useCases.register_player import RegisterPlayer
 from app.infrastructure.database.unit_of_work.uow_factory import uow_factory
+from app.infrastructure.storage.local_disk_storage_service import LocalDiskStorageService
 
 router = APIRouter(prefix="/api/v1/users", tags=["Users"])
+
+def get_storage_service():
+    return LocalDiskStorageService()
 
 @router.post("/register", response_model=AuthTokensResponse, status_code=201)
 def register_player(request: RegisterPlayerRequest) -> AuthTokensResponse:
@@ -52,16 +55,30 @@ def register_user(request: RegisterUserRequest, _user_id: int = Depends(get_curr
 
 
 @router.put("/", response_model=UpdateUserResponse, status_code=200, dependencies=[Depends(require_player)])
-def update_user(request: UpdateUserRequest, _user_id: int = Depends(get_current_user_id)) -> UpdateUserResponse:
-    uow = uow_factory()
+async def update_user(username: str = Form(...),name: str = Form(...),mail: str = Form(...),
+                      icon: UploadFile = File(..., description="Icon image file"),
+                      user_id: int = Depends(get_current_user_id)
+                      ) -> UpdateUserResponse:
+    # Asegurarse de que la petición incluya un archivo con nombre
+    if icon and not icon.filename:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="El archivo debe tener un nombre válido."
+        )
 
-    update_user_use_case = UpdateUser(uow)
-    updated_user = update_user_use_case.execute(_user_id, request)
+
+    uow = uow_factory()
+    storage_service = get_storage_service()
+
+
+    update_user_use_case = UpdateUser(uow, storage_service)
+    updated_user = await update_user_use_case.execute(user_id, username, name, mail, icon)
     return UpdateUserResponse(
         user_id=cast(int, updated_user.user_id),
         username=updated_user.username,
         name=updated_user.name,
-        mail=updated_user.mail
+        mail=updated_user.mail,
+        icon_url=updated_user.icon_url
     )
 @router.get("/me", response_model=GetUserResponse, status_code=200, dependencies=[Depends(require_player)])
 def get_user(user_id: int = Depends(get_current_user_id)) -> GetUserResponse:

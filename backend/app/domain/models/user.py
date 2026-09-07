@@ -15,7 +15,8 @@ class User:
                  mail: Optional[str],
                  password_hash: Optional[str],
                  role: UserRole,
-                 profiles: list['GameProfile']
+                 profiles: list['GameProfile'],
+                 icon_url: Optional[str] = None
                  ):
         self._user_id: Optional[int] = user_id
         self._username: str = username
@@ -24,6 +25,7 @@ class User:
         self._password_hash: Optional[str] = password_hash
         self._role: UserRole = role
         self._profiles: list['GameProfile'] = profiles
+        self._icon_url: Optional[str] = icon_url
 
     @property
     def user_id(self) -> Optional[int]:
@@ -74,3 +76,9 @@ class User:
     def profiles(self, value: list['GameProfile']) -> None:
         self._profiles = value
 
+    @property
+    def icon_url(self) -> Optional[str]:
+        return self._icon_url
+    @icon_url.setter
+    def icon_url(self, value: Optional[str]) -> None:
+        self._icon_url = value
