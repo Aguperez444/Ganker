@@ -2,6 +2,7 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import LandingPage from "../pages/LandingPage.jsx";
 import HomePage from "../pages/HomePage.jsx";
 import RegistroPage from "../pages/RegistroPage.jsx";
+import CuentaPage from "../pages/CuentaPage.jsx";
 import LoginPage from "../pages/LoginPage.jsx";
 import AppLayout from "../components/layout/AppLayout.jsx";
 import AdminLayout from "../components/layout/AdminLayout.jsx";
@@ -29,6 +30,8 @@ function AppRouter() {
         <Route element={<ProtectedRoute />}>
           <Route path="/app" element={<AppLayout />}>
             <Route index element={<HomePage />} />
+            {/* US 02 - Modificar mis datos. Es el boton "Cuenta" del sidebar. */}
+            <Route path="cuenta" element={<CuentaPage />} />
             {/*
               Las próximas User Stories se incorporarán acá.
 

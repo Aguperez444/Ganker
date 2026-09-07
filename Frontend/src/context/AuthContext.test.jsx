@@ -154,6 +154,45 @@ describe("AuthContext: restaurar sesion al recargar la pagina", () => {
     expect(sesionAMedias).toBe(false);
   });
 
+  // Regresion: /me devolvia 404 (el endpoint todavia no existe en el backend) y
+  // la sesion quedaba con isAuthenticated en true y user en null. ProtectedRoute
+  // dejaba entrar y la pantalla de cuenta explotaba con "Cannot read properties
+  // of null". El interceptor de axiosClient no ayuda: solo reacciona al 401.
+  it("cierra la sesion si /me falla al restaurarla", async () => {
+    localStorage.setItem("access_token", TOKENS.access_token);
+    localStorage.setItem("refresh_token", TOKENS.refresh_token);
+    obtenerJugadorActual.mockRejectedValue({ response: { status: 404 } });
+
+    const estados = [];
+
+    function Espia() {
+      const { user, loading, isAuthenticated } = useAuth();
+      estados.push({ user, loading, isAuthenticated });
+      return null;
+    }
+
+    render(
+      <MemoryRouter>
+        <AuthProvider>
+          <Espia />
+        </AuthProvider>
+      </MemoryRouter>
+    );
+
+    await waitFor(() => expect(estados.at(-1).loading).toBe(false));
+
+    const final = estados.at(-1);
+    expect(final.isAuthenticated).toBe(false);
+    expect(final.user).toBeNull();
+    expect(localStorage.getItem("access_token")).toBeNull();
+
+    const sesionAMedias = estados.some(
+      (estado) =>
+        !estado.loading && estado.isAuthenticated && estado.user === null
+    );
+    expect(sesionAMedias).toBe(false);
+  });
+
   it("pide el usuario al backend en vez de leerlo de localStorage", async () => {
     localStorage.setItem("access_token", TOKENS.access_token);
     localStorage.setItem("refresh_token", TOKENS.refresh_token);

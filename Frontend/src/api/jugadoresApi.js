@@ -17,14 +17,15 @@ export function obtenerJugadorActual() {
   return axiosClient.get("/api/v1/players/me").then((res) => res.data);
 }
 
-// MIENTRAS EL BACKEND NO TENGA EL ENDPOINT: comentar la funcion de arriba y
-// descomentar esta para poder probar la UI. Es lo unico que hay que tocar.
-//
-// export function obtenerJugadorActual() {
-//   return Promise.resolve({
-//     player_id: 1,
-//     username: "joaco_gg",
-//     name: "Joaquin Trabucco",
-//     mail: "joaco@ejemplo.com",
-//   });
-// }
+// Actualiza los datos de la cuenta del jugador logueado (US 02).
+// El backend saca el id del token, por eso no se manda en el body.
+// Devuelve { player_id, username, name, mail }: la misma forma que /me.
+export function actualizarJugador({ nombre, username, mail }) {
+  return axiosClient
+    .put("/api/v1/players/", {
+      name: nombre,
+      username,
+      mail,
+    })
+    .then((res) => res.data);
+}

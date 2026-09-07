@@ -33,6 +33,13 @@ export function AuthProvider({ children }) {
     setUser(datos);
   };
 
+  // Vuelve a pedir el usuario al backend. La usan las pantallas que modifican
+  // datos de la cuenta (US 02): en vez de escribir `user` con lo que devolvio
+  // el PUT, piden que se recargue, asi la unica fuente sigue siendo /me.
+  const refrescarUsuario = async () => {
+    await cargarUsuario();
+  };
+
   const limpiarEstado = () => {
     setTokens(null);
     setUser(null);
@@ -63,8 +70,14 @@ export function AuthProvider({ children }) {
         try {
           await cargarUsuario();
         } catch {
-          // Token vencido o jugador inexistente: el interceptor de axiosClient
-          // ya limpia la sesion (ver registrarOnSesionExpirada mas abajo).
+          // Si no podemos traer al jugador, no hay sesion. Vale para cualquier
+          // motivo: token vencido, /me caido o el endpoint todavia inexistente.
+          //
+          // No alcanza con delegar en el interceptor de axiosClient: ese solo
+          // reacciona al 401. Con un 404 o un 500 la sesion quedaria con
+          // isAuthenticated en true y user en null, que es justo el estado a
+          // medias que este provider tiene que evitar.
+          logout();
         }
       }
 
@@ -137,6 +150,7 @@ export function AuthProvider({ children }) {
     login,
     logout,
     guardarSesion,
+    refrescarUsuario,
   };
 
   return (
