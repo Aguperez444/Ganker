@@ -2,13 +2,12 @@ import re
 from typing import cast, TYPE_CHECKING
 
 from app.application.ports.i_password_hasher import IPasswordHasher
-from app.application.ports.i_token_service import ITokenService
 from app.application.ports.i_unit_of_work import IUnitOfWork
 from app.infrastructure.api.dto.register_user_response import RegisterUserResponse
 from app.domain.exceptions.mail.email_already_exists_exception import EmailAlreadyExistsException
 from app.domain.exceptions.password_is_not_secure_exception import PasswordIsNotSecureException
 from app.domain.exceptions.user.invalid_username_exception import InvalidUsernameException
-from app.domain.exceptions.user.unauthotized_exception import UnauthorizedException
+from exceptions.auth.unauthorized_exception import UnauthorizedException
 from app.domain.exceptions.user.user_not_found_exception import UserNotFoundException
 from app.domain.exceptions.user.username_already_exist_exception import UsernameAlreadyExistsException
 from app.domain.models.user import User
@@ -18,60 +17,50 @@ if TYPE_CHECKING:
     from app.infrastructure.api.dto.register_user_request import RegisterUserRequest
 
 class RegisterUser:
-    def __init__(self, unit_of_work: IUnitOfWork, token_service: ITokenService, password_hasher: IPasswordHasher):
+    def __init__(self, unit_of_work: IUnitOfWork,password_hasher: IPasswordHasher):
         self.uow: IUnitOfWork = unit_of_work
-        self.token_service: ITokenService = token_service
         self.pass_hasher: IPasswordHasher = password_hasher
 
-    def execute(self, user_data: 'RegisterUserRequest', current_user_id: int) -> RegisterUserResponse:
-        # Se asume que lo que me llega es un mail por la validación de pydantic en el dto.
-        # Validar que no exista otra cuenta con ese mail
-        if not self.validate_mail(user_data.mail):
-            raise EmailAlreadyExistsException(user_data.mail)
+    def execute(self, user_data: 'RegisterUserRequest', authenticated_user_id: int) -> RegisterUserResponse:
 
-        # Validar que no exista otra cuenta con ese username y que el mismo sea válido
-        if not self.validate_username(user_data.username):
-            raise UsernameAlreadyExistsException(user_data.username)
+        # hacer las validaciones que se puedan antes de abrir sesión contra la bdd:
+        # Validar que el username no sea nulo o vacío
+        self.validate_username(user_data.username)
 
         # Validar que la contraseña cumpla el criterio de seguridad (mínimo 8 caracteres,
         # al menos una mayúscula, al menos una minúscula y al menos un número)
         self.validate_password_security(user_data.password)
 
-        # Validar que el rol del usuario sea válido para lo que se está registrando
+        # el formato de userRole ya viene validado por pydantic en el dto., así que no hace falta validar eso acá
+        # el formato del mail ya viene validado por pydantic en el dto., así que no hace falta validar eso acá tampoco
 
-
-        user = self.uow.user_repo.get_user_by_id(current_user_id)
-        if user is None:
-            raise UserNotFoundException(current_user_id)
-
-
-        if user.role == UserRole.ADMIN and user_data.role == UserRole.OWNER:
-            raise UnauthorizedException(user.user_id, user.role.value, user_data.role)
-
-        # Crear el usuario en el dominio
-        new_user = User(None, user_data.username, user_data.name, user_data.mail, user_data.password, UserRole(user_data.role), [])
-
-
-        #hashear la password del usuario antes de persistirlo en la base de datos
-        new_user.password_hash = self.pass_hasher.hash_password(user_data.password)
-
-        # persistir el usuario en la base de datos y obtener el usuario registrado con su id
+        # Validar que no exista otra cuenta con ese mail
         with self.uow as uow:
+            # Validar que el rol del usuario que creo la request sea válido para lo que se está registrando
+            authenticated_user = uow.user_repo.get_user_by_id(authenticated_user_id)
+            if authenticated_user is None:
+                raise UserNotFoundException(authenticated_user_id)
+
+            self.validate_is_authorized_to_register(authenticated_user, user_data.role)
+
+            # Verificar que no existan duplicaciones de datos importantes
+            # Se asume que lo que me llega es un mail por la validación de pydantic en el dto.
+            if self.email_is_duplicated(user_data.mail, uow):
+                raise EmailAlreadyExistsException(user_data.mail)
+
+            # Validar que no exista otra cuenta con ese username y que el mismo sea válido
+            if self.username_is_duplicated(user_data.username, uow):
+                raise UsernameAlreadyExistsException(user_data.username)
+
+            #hashear la password del usuario antes de crearlo en la base de datos
+            hashed_pass = self.pass_hasher.hash_password(user_data.password)
+
+            # Crear el usuario en el dominio
+            new_user = User(None, user_data.username, user_data.name, user_data.mail, hashed_pass, UserRole(user_data.role), [])
+
+            # persistir el usuario en la base de datos y obtener el usuario registrado con su id
             registered_user = uow.user_repo.create_user(new_user)
             user_id = cast(int, registered_user.user_id)
-            # Generar tokens con ID, rol, jti y fecha de expiración
-            access_token, refresh_token, jti, expires_at = self.token_service.generate_tokens(
-                user_id=user_id,
-                role=registered_user.role
-            )
-
-            # Persistir el refresh token asociado
-            uow.refresh_token_repo.save(
-                user_id=user_id,
-                role=registered_user.role,
-                jti=jti,
-                expires_at=expires_at
-            )
 
         return RegisterUserResponse(
             user_id=user_id,
@@ -80,23 +69,24 @@ class RegisterUser:
             mail=registered_user.mail,
             role=registered_user.role
         )
-
-    def validate_username(self, username: str) -> bool:
+    @staticmethod
+    def validate_username(username: str):
         if username is None or username.strip() == "":
             raise InvalidUsernameException(username)
-        with self.uow as uow:
-            usuario_con_ese_username = uow.user_repo.get_user_by_username(username)
-        return usuario_con_ese_username is None
 
+    @staticmethod
+    def username_is_duplicated(username: str, uow: IUnitOfWork) -> bool:
+        usuario_con_ese_username = uow.user_repo.get_user_by_username(username)
+        return usuario_con_ese_username is not None
 
-    def validate_mail(self, mail: str) -> bool:
-        with self.uow as uow:
-            usuario_con_ese_mail = uow.user_repo.get_user_by_mail(mail)
-        return usuario_con_ese_mail is None
+    @staticmethod
+    def email_is_duplicated(mail: str, uow: IUnitOfWork) -> bool:
+        usuario_con_ese_mail = uow.user_repo.get_user_by_mail(mail)
+        return usuario_con_ese_mail is not None
 
 
     @staticmethod
-    def validate_password_security(password: str) -> bool:
+    def validate_password_security(password: str):
         if len(password) < 8:
             raise PasswordIsNotSecureException("Debe tener al menos 8 caracteres")
 
@@ -109,4 +99,14 @@ class RegisterUser:
         if not re.search(r"\d", password):  # Número
             raise PasswordIsNotSecureException("Debe contener al menos un número")
 
-        return True
+    @staticmethod
+    def validate_is_authorized_to_register(authenticated_user: User, new_user_role: str):
+        if authenticated_user.role == UserRole.PLAYER:
+            # un player no puede crear ningún usuario, solo un admin o un owner pueden crear usuarios
+            raise UnauthorizedException(cast(int, authenticated_user.user_id), authenticated_user.role.value,
+                                        new_user_role)
+        elif authenticated_user.role == UserRole.ADMIN and new_user_role == UserRole.OWNER:
+            # un admin no puede crear un owner, solo un owner puede crear otro owner
+            raise UnauthorizedException(cast(int, authenticated_user.user_id), authenticated_user.role.value,
+                                        new_user_role)
+        # un owner puede crear lo que quiera, asi que no hay necesidad de validar nada más en ese caso

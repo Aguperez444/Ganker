@@ -39,8 +39,7 @@ def register_user(request: RegisterUserRequest, _user_id: int = Depends(get_curr
     uow = uow_factory()
 
     password_hasher_service = PasswordHashService()
-    token_service = JwtTokenService(settings.jwt_secret_key)
-    register_user_use_case = RegisterUser(uow, token_service, password_hasher_service)
+    register_user_use_case = RegisterUser(uow, password_hasher_service)
 
     tokens = register_user_use_case.execute(request, _user_id)
     return RegisterUserResponse(
