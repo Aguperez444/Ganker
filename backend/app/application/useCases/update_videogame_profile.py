@@ -2,7 +2,7 @@ from typing import TYPE_CHECKING
 
 from typing import cast
 from app.application.ports.i_unit_of_work import IUnitOfWork
-from app.infrastructure.api.dto.update_videogame_profile_request import UpdateGameProfileRequest
+from app.infrastructure.api.dto.request.update_videogame_profile_request import UpdateGameProfileRequest
 from app.domain.exceptions.rank.rank_not_found_exception import RankNotFoundException
 from app.domain.exceptions.role.role_not_found_exception import RoleNotFoundException
 from app.domain.exceptions.character.character_not_found_exception import CharacterNotFoundException
@@ -14,7 +14,7 @@ from app.domain.services.create_game_profile_dto_service import CreateGameProfil
 
 from app.domain.models.role_profile import RoleProfile
 from app.domain.models.game_profile import GameProfile
-from app.infrastructure.api.dto.update_videogame_profile_response import UpdateGameProfileResponse
+from app.infrastructure.api.dto.response.update_videogame_profile_response import UpdateGameProfileResponse
 from app.domain.models.character_priority import CharacterPriority
 
 if TYPE_CHECKING:

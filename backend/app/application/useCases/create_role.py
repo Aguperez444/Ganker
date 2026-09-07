@@ -1,14 +1,15 @@
-from typing import BinaryIO
+from typing import BinaryIO, cast
 from app.application.ports.i_storage_service import IStorageService
 from app.application.ports.i_unit_of_work import IUnitOfWork
-from app.domain.exceptions.file_name_not_null_exception import FileNameNotNullException
-from app.domain.exceptions.file_not_null_exception import FileNotNullException
+from app.domain.exceptions.file.file_name_not_null_exception import FileNameNotNullException
+from app.domain.exceptions.file.file_not_null_exception import FileNotNullException
 
 from app.domain.exceptions.videogame.videogame_not_found_exception import VideogameNotFoundException
 from app.domain.services.slug_service import SlugService
 from app.domain.models.role import Role
 from app.domain.exceptions.role.duplicated_role_name_exception import DuplicateRoleNameException
 from app.domain.exceptions.role.invalid_role_name_exception import InvalidRoleNameException
+from app.infrastructure.api.dto.response.base_classes.role_object_response import RoleObjectResponse
 
 
 class CreateRoleUseCase:
@@ -16,7 +17,7 @@ class CreateRoleUseCase:
         self.storage_service: IStorageService = storage_service
         self.uow: IUnitOfWork = uow
 
-    async def execute(self, game_id: int, name: str, icon_stream: BinaryIO, filename: str) -> Role:
+    async def execute(self, game_id: int, name: str, icon_stream: BinaryIO, filename: str) -> RoleObjectResponse:
         # Comprobar que el nombre no está vacío
         if not name.strip():
             raise InvalidRoleNameException(name)
@@ -62,4 +63,8 @@ class CreateRoleUseCase:
                 await self.storage_service.delete_file(icon_url)
                 raise e # volver a levantar la excepción después de limpiar el archivo para hacer rollback
 
-        return saved_role
+        return RoleObjectResponse(
+            role_id=cast(int, saved_role.role_id),
+            name=saved_role.name,
+            icon_url=saved_role.icon_url,
+        )

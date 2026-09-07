@@ -1,6 +1,6 @@
 from pydantic import BaseModel
 
-from app.infrastructure.api.dto.role_object_response import RoleObjectResponse
+from app.infrastructure.api.dto.response.base_classes.role_object_response import RoleObjectResponse
 
 
 class GetRolesResponse(BaseModel):
