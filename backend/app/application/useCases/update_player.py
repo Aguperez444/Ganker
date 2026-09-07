@@ -1,4 +1,4 @@
-from typing import cast
+from typing import cast, Optional
 
 from fastapi import UploadFile
 
@@ -16,7 +16,7 @@ class UpdateUser:
         self.uow: IUnitOfWork = unit_of_work
         self.storage_service: IStorageService = storage_service
 
-    async def execute(self, user_id: int, username: str, name: str, mail: str, icon: UploadFile) -> User:
+    async def execute(self, user_id: int, username: str, name: str, mail: str, icon: Optional[UploadFile]) -> User:
 
         # Valido que el nuevo username y mail no existan en la base de datos para otro jugador
         self.validate_username_uniqueness(username, user_id)
@@ -35,12 +35,13 @@ class UpdateUser:
 
         # Guardo los cambios en la base de datos
         with self.uow as uow:
-
-            if user.icon_url is not None:
-                # Elimino la imagen anterior a través del puerto
-                await self.storage_service.delete_file(cast(str,user.icon_url))
-
+            new_icon_url = user.icon_url  # Inicializo con la URL actual del icono
             if icon and icon.filename:
+                if user.icon_url is not None:
+                    # Elimino la imagen anterior a través del puerto
+                    await self.storage_service.delete_file(cast(str,user.icon_url))
+
+
                 # Guardar la nueva imagen a través del puerto
                 new_icon_url = await self.storage_service.save_file(
                     file_content=icon.file,

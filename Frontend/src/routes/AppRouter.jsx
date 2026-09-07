@@ -2,6 +2,7 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import LandingPage from "../pages/LandingPage.jsx";
 import HomePage from "../pages/HomePage.jsx";
 import RegistroPage from "../pages/RegistroPage.jsx";
+import CuentaPage from "../pages/CuentaPage.jsx";
 import LoginPage from "../pages/LoginPage.jsx";
 import AppLayout from "../components/layout/AppLayout.jsx";
 import AdminLayout from "../components/layout/AdminLayout.jsx";
@@ -9,6 +10,7 @@ import AdminHomePage from "../pages/admin/AdminHomePage.jsx";
 import GamesPage from "../pages/admin/GamesPage.jsx";
 import ProtectedRoute from "./ProtectedRoute.jsx";
 import PublicOnlyRoute from "./PublicOnlyRoute.jsx";
+import { ROLES_ADMIN } from "../utils/rutas.js";
 
 /**
  * Definicion central de rutas de la aplicacion.
@@ -31,6 +33,8 @@ function AppRouter() {
         <Route element={<ProtectedRoute />}>
           <Route path="/app" element={<AppLayout />}>
             <Route index element={<HomePage />} />
+            {/* US 02 - Modificar mis datos. Es el boton "Cuenta" del sidebar. */}
+            <Route path="cuenta" element={<CuentaPage />} />
             {/*
               Las próximas User Stories se incorporarán acá.
 
@@ -45,16 +49,14 @@ function AppRouter() {
         </Route>
 
         {/*
-          Area administrativa.
+          Area administrativa. Solo admin y owner: un jugador que fuerce la URL
+          vuelve a su home. El backend ademas protege sus endpoints con
+          require_admin, asi que esto es la mitad de la defensa, no toda.
 
-          Por ahora exige solamente sesion iniciada, igual que el resto: el
-          backend no distingue admin de jugador (role = "player" hardcodeado),
-          asi que no hay nada real contra que validar todavia.
-
-          Cuando existan roles, cambiar la linea de abajo por:
-            <Route element={<ProtectedRoute rolesPermitidos={["admin"]} />}>
+          Los admin no quedan encerrados aca: pueden usar /app como cualquier
+          jugador y volver al panel desde el menu del avatar.
         */}
-        <Route element={<ProtectedRoute />}>
+        <Route element={<ProtectedRoute rolesPermitidos={ROLES_ADMIN} />}>
           <Route path="/app/admin" element={<AdminLayout />}>
             <Route index element={<AdminHomePage />} />
             <Route path="games" element={<GamesPage />} />

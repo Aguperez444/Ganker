@@ -12,9 +12,19 @@ function RegistroPage() {
 
   async function onSubmit(e) {
     const tokens = await handleSubmit(e);
-    if (tokens) {
-      guardarSesion(tokens);
+    if (!tokens) return;
+
+    try {
+      await guardarSesion(tokens);
       navigate("/app", { replace: true });
+    } catch {
+      // La cuenta se creo, pero no pudimos traer el perfil. guardarSesion ya
+      // dejo la sesion limpia, asi que lo mandamos a loguearse en vez de
+      // dejarlo mirando el formulario sin saber que su cuenta ya existe.
+      navigate("/login", {
+        replace: true,
+        state: { mensaje: "Tu cuenta se creo correctamente. Inicia sesion para entrar." },
+      });
     }
   }
 
