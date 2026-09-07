@@ -4,10 +4,8 @@ from unittest.mock import MagicMock
 from app.application.useCases.update_videogame_profile import UpdateVideogameProfile
 from app.domain.models.videogame import Videogame
 from app.domain.models.character import Character
-from app.domain.models.character_priority import CharacterPriority
 from app.domain.models.role import Role
 from app.domain.models.rank import Rank
-from app.domain.models.role_profile import RoleProfile
 from app.domain.models.game_profile import GameProfile
 from app.domain.exceptions.game_profile.game_profile_not_found_exception import GameProfileNotFoundException
 from app.domain.exceptions.game_profile.does_not_belong_to_profile_exception import DoesNotBelongToProfileException
@@ -15,7 +13,7 @@ from app.domain.exceptions.character.character_not_found_exception import Charac
 from app.domain.exceptions.role.role_not_found_exception import RoleNotFoundException
 from app.domain.exceptions.rank.rank_not_found_exception import RankNotFoundException
 from app.domain.exceptions.does_not_belong_to_game_exception import DoesNotBelongToGameException
-from app.infrastructure.api.dto.update_videogame_profile_request import UpdateGameProfileRequest, RoleRankInput
+from app.infrastructure.api.dto.request.update_videogame_profile_request import UpdateGameProfileRequest, RoleRankInput
 
 
 class TestUpdateVideogameProfileUseCase:

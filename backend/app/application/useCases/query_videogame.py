@@ -2,8 +2,8 @@ from typing import cast
 
 from app.application.ports.i_unit_of_work import IUnitOfWork
 
-from app.infrastructure.api.dto.get_videogames_response import GetVideogamesResponse
-from app.infrastructure.api.dto.videogame_object_response import VideogameObjectResponse
+from app.infrastructure.api.dto.response.get_videogames_response import GetVideogamesResponse
+from app.infrastructure.api.dto.response.base_classes.videogame_object_response import VideogameObjectResponse
 
 
 class QueryVideogames:

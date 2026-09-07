@@ -1,13 +1,11 @@
-import pytest
-
 from app.domain.exceptions.domain_exception import DomainException
-from app.domain.exceptions.Invalid_token_exception import InvalidTokenException
-from app.domain.exceptions.password_is_not_secure_exception import PasswordIsNotSecureException
-from app.domain.exceptions.wrong_password_exception import WrongPasswordException
+from exceptions.auth.Invalid_token_exception import InvalidTokenException
+from exceptions.auth.password_is_not_secure_exception import PasswordIsNotSecureException
+from exceptions.auth.wrong_password_exception import WrongPasswordException
 from app.domain.exceptions.does_not_belong_to_game_exception import DoesNotBelongToGameException
-from app.domain.exceptions.file_name_not_null_exception import FileNameNotNullException
-from app.domain.exceptions.file_not_null_exception import FileNotNullException
-from app.domain.exceptions.invalid_name_file_exception import InvalidNameFileException
+from exceptions.file.file_name_not_null_exception import FileNameNotNullException
+from exceptions.file.file_not_null_exception import FileNotNullException
+from exceptions.file.invalid_name_file_exception import InvalidNameFileException
 
 from app.domain.exceptions.character.character_not_found_exception import CharacterNotFoundException
 from app.domain.exceptions.character.duplicated_character_name_exception import DuplicatedCharacterNameException

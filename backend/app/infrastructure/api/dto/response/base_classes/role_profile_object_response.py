@@ -1,7 +1,7 @@
 from pydantic import BaseModel, Field
 
-from app.infrastructure.api.dto.rank_object_response import RankObjectResponse
-from app.infrastructure.api.dto.role_object_response import RoleObjectResponse
+from app.infrastructure.api.dto.response.base_classes.rank_object_response import RankObjectResponse
+from app.infrastructure.api.dto.response.base_classes.role_object_response import RoleObjectResponse
 
 
 class RoleProfileObjectResponse(BaseModel):

@@ -1,8 +1,8 @@
 from typing import cast
 
 from app.application.ports.i_unit_of_work import IUnitOfWork
-from app.infrastructure.api.dto.get_ranks_response import GetRanksResponse
-from app.infrastructure.api.dto.rank_object_response import RankObjectResponse
+from app.infrastructure.api.dto.response.get_ranks_response import GetRanksResponse
+from app.infrastructure.api.dto.response.base_classes.rank_object_response import RankObjectResponse
 
 
 class QueryRanks:

@@ -1,15 +1,15 @@
 from typing import BinaryIO, cast
 from app.application.ports.i_storage_service import IStorageService
 from app.application.ports.i_unit_of_work import IUnitOfWork
-from app.domain.exceptions.file_name_not_null_exception import FileNameNotNullException
-from app.domain.exceptions.file_not_null_exception import FileNotNullException
+from exceptions.file.file_name_not_null_exception import FileNameNotNullException
+from exceptions.file.file_not_null_exception import FileNotNullException
 
 from app.domain.exceptions.videogame.videogame_not_found_exception import VideogameNotFoundException
 from app.domain.services.slug_service import SlugService
 from app.domain.models.role import Role
 from app.domain.exceptions.role.duplicated_role_name_exception import DuplicateRoleNameException
 from app.domain.exceptions.role.invalid_role_name_exception import InvalidRoleNameException
-from app.infrastructure.api.dto.role_object_response import RoleObjectResponse
+from app.infrastructure.api.dto.response.base_classes.role_object_response import RoleObjectResponse
 
 
 class CreateRoleUseCase:

@@ -15,7 +15,7 @@ from app.domain.exceptions.character.character_not_found_exception import Charac
 from app.domain.exceptions.role.role_not_found_exception import RoleNotFoundException
 from app.domain.exceptions.rank.rank_not_found_exception import RankNotFoundException
 from app.domain.exceptions.does_not_belong_to_game_exception import DoesNotBelongToGameException
-from app.infrastructure.api.dto.create_videogame_profile_request import CreateGameProfileRequest, RoleRankInput
+from app.infrastructure.api.dto.response.create_videogame_profile_request import CreateGameProfileRequest, RoleRankInput
 
 
 class TestCreateVideogameProfileUseCase:

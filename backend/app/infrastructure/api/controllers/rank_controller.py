@@ -4,8 +4,8 @@ from fastapi import APIRouter, Depends, File, UploadFile, Form, HTTPException, s
 from app.application.useCases.create_rank import CreateRankUseCase
 from app.application.useCases.query_ranks import QueryRanks
 from app.infrastructure.api.dependencies.auth import get_current_user_id, require_admin
-from app.infrastructure.api.dto.get_ranks_response import GetRanksResponse
-from app.infrastructure.api.dto.rank_object_response import RankObjectResponse
+from app.infrastructure.api.dto.response.get_ranks_response import GetRanksResponse
+from app.infrastructure.api.dto.response.base_classes.rank_object_response import RankObjectResponse
 
 from app.infrastructure.database.unit_of_work.uow_factory import uow_factory
 from app.infrastructure.storage.local_disk_storage_service import LocalDiskStorageService

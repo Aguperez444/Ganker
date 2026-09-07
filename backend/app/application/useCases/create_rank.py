@@ -9,7 +9,7 @@ from app.domain.exceptions.rank.invalid_rank_name_exception import InvalidRankNa
 from app.domain.exceptions.rank.invalid_rank_value_exception import InvalidRankValueException
 from app.domain.exceptions.videogame.videogame_not_found_exception import VideogameNotFoundException
 from app.domain.services.slug_service import SlugService
-from app.infrastructure.api.dto.rank_object_response import RankObjectResponse
+from app.infrastructure.api.dto.response.base_classes.rank_object_response import RankObjectResponse
 
 
 class CreateRankUseCase:

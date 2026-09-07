@@ -1,8 +1,8 @@
 from app.application.ports.i_token_service import ITokenService
 from app.application.ports.i_unit_of_work import IUnitOfWork
-from app.infrastructure.api.dto.auth_tokens_response import AuthTokensResponse
+from app.infrastructure.api.dto.response.auth_tokens_response import AuthTokensResponse
 from app.domain.exceptions.user.user_not_found_exception import UserNotFoundException
-from app.domain.exceptions.Invalid_token_exception import InvalidTokenException
+from exceptions.auth.Invalid_token_exception import InvalidTokenException
 
 
 class RefreshToken:

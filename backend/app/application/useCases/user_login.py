@@ -5,11 +5,11 @@ from app.domain.exceptions.mail.mail_not_found_exception import EmailNotFoundExc
 
 from typing import TYPE_CHECKING, cast
 
-from app.domain.exceptions.wrong_password_exception import WrongPasswordException
-from app.infrastructure.api.dto.auth_tokens_response import AuthTokensResponse
+from exceptions.auth.wrong_password_exception import WrongPasswordException
+from app.infrastructure.api.dto.response.auth_tokens_response import AuthTokensResponse
 
 if TYPE_CHECKING:
-    from app.infrastructure.api.dto.login_request import LoginRequest
+    from app.infrastructure.api.dto.request.login_request import LoginRequest
 
 class UserLogin:
     def __init__(self, uow: IUnitOfWork, token_service: ITokenService, password_hasher: IPasswordHasher):
