@@ -1,14 +1,15 @@
-from typing import TYPE_CHECKING, cast
+from typing import TYPE_CHECKING, cast, Optional
 
 from app.application.ports.i_unit_of_work import IUnitOfWork
 from app.infrastructure.api.dto.create_videogame_profile_request import CreateGameProfileRequest
+
 from app.domain.exceptions.character.character_not_found_exception import CharacterNotFoundException
 from app.domain.exceptions.does_not_belong_to_game_exception import DoesNotBelongToGameException
 from app.domain.exceptions.game_profile.game_profile_already_exist_exception import GameProfileAlreadyExistException
 from app.domain.exceptions.rank.rank_not_found_exception import RankNotFoundException
 from app.domain.exceptions.role.role_not_found_exception import RoleNotFoundException
 from app.domain.exceptions.videogame.videogame_not_found_exception import VideogameNotFoundException
-from app.domain.models.videogame import Videogame
+
 from app.domain.models.role_profile import RoleProfile
 from app.domain.models.game_profile import GameProfile
 from app.domain.models.character_priority import CharacterPriority
@@ -16,6 +17,8 @@ from app.domain.models.character_priority import CharacterPriority
 if TYPE_CHECKING:
     from app.domain.models.role import Role
     from app.domain.models.rank import Rank
+    from app.domain.models.videogame import Videogame
+    from app.domain.models.character import Character
 
 
 class CreateVideogameProfile:
@@ -27,17 +30,17 @@ class CreateVideogameProfile:
     def execute(self, player_id: int, create_videogame_profile_request: CreateGameProfileRequest) -> GameProfile:
 
         # Buscar el videojuego en la base de datos
-        videogame = self.validate_exist_videogame(create_videogame_profile_request.videogame_id)
+        videogame: 'Videogame' = self.validate_exist_videogame(create_videogame_profile_request.videogame_id)
         self.validate_not_exist_game_profile(player_id, cast(int, videogame.videogame_id))
 
         # Buscar los personajes en la base de datos
-        characters = []
+        characters: list['Character'] = []
         with self.uow as uow:
             for character_id in create_videogame_profile_request.character_ids:
-                character = uow.character_repo.get_character_by_id(character_id)
+                character: Optional['Character'] = uow.character_repo.get_character_by_id(character_id)
                 if not character:
                     raise CharacterNotFoundException(character_id)
-                if character.videogame.videogame_id != videogame.videogame_id:
+                if character.videogame != videogame:
                     raise DoesNotBelongToGameException("personaje", character.name, videogame.name)
                 characters.append(character)
 
@@ -45,8 +48,8 @@ class CreateVideogameProfile:
         new_role_profiles: list[RoleProfile] = []
         for new_role_profile in create_videogame_profile_request.roles:
 
-            role: Role = self.validate_role_exist(new_role_profile.role_id)
-            rank: Rank = self.validate_rank_exist(new_role_profile.rank_id)
+            role: 'Role' = self.validate_role_exist(new_role_profile.role_id)
+            rank: 'Rank' = self.validate_rank_exist(new_role_profile.rank_id)
 
             if role.videogame != videogame:
                 raise DoesNotBelongToGameException("rol", role.name, videogame.name)
@@ -76,7 +79,7 @@ class CreateVideogameProfile:
 
         return new_game_profile
 
-    def validate_exist_videogame(self, videogame_id: int) -> Videogame:
+    def validate_exist_videogame(self, videogame_id: int) -> 'Videogame':
         with self.uow as uow:
             # 1. Validar que el videojuego exista
             videogame = uow.videogame_repo.get_videogame_by_id(videogame_id)
@@ -92,13 +95,13 @@ class CreateVideogameProfile:
             raise GameProfileAlreadyExistException(player_id, videogame_id)
         return True
 
-    def validate_role_exist(self, role_id: int) -> Role:
+    def validate_role_exist(self, role_id: int) -> 'Role':
         with self.uow as uow:
             role = uow.role_repo.get_role_by_id(role_id)
             if not role:
                 raise RoleNotFoundException(role_id)
             return role
-    def validate_rank_exist(self, rank_id: int) -> Rank:
+    def validate_rank_exist(self, rank_id: int) -> 'Rank':
         with self.uow as uow:
             rank = uow.rank_repo.get_rank_by_id(rank_id)
             if not rank:

@@ -27,3 +27,9 @@ class Videogame:
     @icon_url.setter
     def icon_url(self, value: str):
         self._icon_url = value
+
+
+    def __eq__(self, other: object) -> bool:
+        if isinstance(other, Videogame):
+            return self._videogame_id is not None and self._videogame_id == other._videogame_id
+        return False

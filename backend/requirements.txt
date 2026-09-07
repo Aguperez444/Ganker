@@ -16,3 +16,4 @@ python-multipart>=0.0.32
 httpx>=0.28.1
 aiofiles>=25.1.0
 typing-extensions
+colorama>=0.4.6

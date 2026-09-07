@@ -21,7 +21,7 @@ def create_game_profile(request: CreateGameProfileRequest, player_id: int = Depe
     response = CreateGameProfileResponse(profile_id=profile_id)
     return response
 
-@router.put("/game_profile_id", response_model=UpdateGameProfileResponse, status_code=200, dependencies=[Depends(require_player)])
+@router.put("/{game_profile_id}", response_model=UpdateGameProfileResponse, status_code=200, dependencies=[Depends(require_player)])
 def update_game_profile(game_profile_id: int, request: UpdateGameProfileRequest, player_id: int = Depends(get_current_user_id)):
     uow = uow_factory()
     update_game_profile_use_case = UpdateVideogameProfile(uow)

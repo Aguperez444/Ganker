@@ -1,5 +1,3 @@
-from typing import cast
-
 from fastapi import APIRouter, Depends, UploadFile, File, HTTPException, status, Form
 
 from app.application.useCases.query_users import QueryUsers
@@ -56,7 +54,7 @@ def register_user(request: RegisterUserRequest, _user_id: int = Depends(get_curr
 
 @router.put("/", response_model=UpdateUserResponse, status_code=200, dependencies=[Depends(require_player)])
 async def update_user(username: str = Form(...),name: str = Form(...),mail: str = Form(...),
-                      icon: UploadFile = File(..., description="Icon image file"),
+                      icon: UploadFile = File(None, description="Icon image file"),
                       user_id: int = Depends(get_current_user_id)
                       ) -> UpdateUserResponse:
     # Asegurarse de que la petición incluya un archivo con nombre
@@ -72,14 +70,8 @@ async def update_user(username: str = Form(...),name: str = Form(...),mail: str 
 
 
     update_user_use_case = UpdateUser(uow, storage_service)
-    updated_user = await update_user_use_case.execute(user_id, username, name, mail, icon)
-    return UpdateUserResponse(
-        user_id=cast(int, updated_user.user_id),
-        username=updated_user.username,
-        name=updated_user.name,
-        mail=updated_user.mail,
-        icon_url=updated_user.icon_url
-    )
+    return await update_user_use_case.execute(user_id, username, name, mail, icon)
+
 @router.get("/me", response_model=GetUserResponse, status_code=200, dependencies=[Depends(require_player)])
 def get_user(user_id: int = Depends(get_current_user_id)) -> GetUserResponse:
     uow = uow_factory()
