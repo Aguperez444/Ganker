@@ -26,7 +26,7 @@ def get_roles_by_videogame_id(videogame_id: int, _player_id: int = Depends(get_c
 
 
 @router.post("", status_code=201, response_model=RoleObjectResponse, dependencies=[Depends(require_admin)])
-async def create_game_role(
+def create_game_role(
     videogame_id: int = Form(..., description="ID of the videogame"),
     name: str = Form(..., description="Name of the role"),
     icon: UploadFile = File(..., description="Icon image file"),
@@ -43,7 +43,7 @@ async def create_game_role(
     storage_service = get_storage_service()
     use_case = CreateRoleUseCase(storage_service=storage_service, uow=uow)
 
-    result = await use_case.execute(
+    result = use_case.execute(
         game_id=videogame_id,
         name=name,
         icon_stream=icon.file,

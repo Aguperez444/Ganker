@@ -25,7 +25,7 @@ def get_ranks_by_videogame_id(videogame_id: int, _player_id: int = Depends(get_c
 
 
 @router.post("", status_code=201, response_model=RankObjectResponse, dependencies=[Depends(require_admin)])
-async def create_game_rank(
+def create_game_rank(
     videogame_id: int = Form(..., description="ID of the videogame"),
     name: str = Form(..., description="Name of the rank"),
     value: int = Form(..., description="Value of the rank"),
@@ -43,7 +43,7 @@ async def create_game_rank(
     storage_service = get_storage_service()
     use_case = CreateRankUseCase(storage_service=storage_service, uow=uow)
 
-    result = await use_case.execute(
+    result = use_case.execute(
         game_id=videogame_id,
         name=name,
         icon_stream=icon.file,

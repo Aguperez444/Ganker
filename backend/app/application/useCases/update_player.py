@@ -1,6 +1,4 @@
-from typing import cast, Optional
-
-from fastapi import UploadFile
+from typing import cast, Optional, BinaryIO
 
 from app.application.ports.i_storage_service import IStorageService
 from app.application.ports.i_unit_of_work import IUnitOfWork
@@ -16,7 +14,8 @@ class UpdateUser:
         self.uow: IUnitOfWork = unit_of_work
         self.storage_service: IStorageService = storage_service
 
-    async def execute(self, user_id: int, username: str, name: str, mail: str, icon: Optional[UploadFile] = None) -> UpdateUserResponse:
+    def execute(self, user_id: int, username: str, name: str, mail: str,
+                icon_file: Optional[BinaryIO] = None, icon_filename: Optional[str] = None) -> UpdateUserResponse:
         cambio_icono: bool = False
         old_icon_url: str | None = None
         with self.uow as uow:
@@ -36,15 +35,15 @@ class UpdateUser:
 
             new_icon_url = user.icon_url  # por defecto persisto la url anterior
             # si me llegó una imagen nueva
-            if icon and icon.filename:
+            if icon_file and icon_filename:
                 try:
                     # actualizo la bandera de cambio de icono
                     cambio_icono = True
                     old_icon_url = user.icon_url
                     # Guardo la nueva imagen a través del puerto
-                    new_icon_url = await self.storage_service.save_image_file(
-                        file_content=icon.file,
-                        filename=icon.filename,
+                    new_icon_url = self.storage_service.save_image_file(
+                        file_content=icon_file,
+                        filename=icon_filename,
                         subfolder=f"users/icons",
                         preserve_original_name=False
                     )
@@ -63,7 +62,7 @@ class UpdateUser:
                 if cambio_icono:
                     if new_icon_url is not None:
                         #borrar la imagen que se subio para no persistir basura
-                        await self.storage_service.delete_file(new_icon_url)
+                         self.storage_service.delete_file(new_icon_url)
                 # Si hay un error al actualizar, se lanza una excepción
                 raise Exception(f"Error inesperado al actualizar los datos del usuario", str(e))
 
@@ -71,7 +70,7 @@ class UpdateUser:
                 # si pude guardar correctamente los cambios en la bdd, ahora si debo borrar la imagen anterior si es que se subió una nueva
                 if cambio_icono and old_icon_url is not None:
                     #borrar la imagen anterior para no persistir basura
-                    await self.storage_service.delete_file(old_icon_url)
+                     self.storage_service.delete_file(old_icon_url)
             except Exception:
                 # Si hay un error al borrar la imagen anterior, se informa por consola, pero no se lanza una excepción
                 # porque el usuario ya fue actualizado correctamente y no quiero que eso afecte la respuesta al cliente

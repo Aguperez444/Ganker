@@ -54,7 +54,7 @@ def register_user(request: RegisterUserRequest, _user_id: int = Depends(get_curr
 
 
 @router.put("/", response_model=UpdateUserResponse, status_code=200, dependencies=[Depends(require_player)])
-async def update_user(username: str = Form(...),name: str = Form(...),mail: str = Form(...),
+def update_user(username: str = Form(...),name: str = Form(...),mail: str = Form(...),
                       icon: Optional[UploadFile] = File(None, description="Icon image file"),
                       user_id: int = Depends(get_current_user_id)
                       ) -> UpdateUserResponse:
@@ -65,11 +65,14 @@ async def update_user(username: str = Form(...),name: str = Form(...),mail: str 
             detail="El archivo debe tener un nombre válido."
         )
 
+    file_obj = icon.file if icon else None
+    filename = icon.filename if icon else None
+
     uow = uow_factory()
     storage_service = get_storage_service()
 
     update_user_use_case = UpdateUser(uow, storage_service)
-    return await update_user_use_case.execute(user_id, username, name, mail, icon)
+    return update_user_use_case.execute(user_id, username, name, mail, file_obj, filename)
 
 @router.get("/me", response_model=GetUserResponse, status_code=200, dependencies=[Depends(require_player)])
 def get_user(user_id: int = Depends(get_current_user_id)) -> GetUserResponse:

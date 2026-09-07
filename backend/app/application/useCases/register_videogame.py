@@ -18,7 +18,7 @@ class RegisterVideogame:
         self.uow: IUnitOfWork = unit_of_work
 
 
-    async def execute(self, name: str, icon_file, icon_filename) -> VideogameObjectResponse:
+    def execute(self, name: str, icon_file, icon_filename) -> VideogameObjectResponse:
 
         cleaned_name = self.validate_videogame_name(name)
         self.validate_name_uniqueness(cleaned_name)
@@ -31,7 +31,7 @@ class RegisterVideogame:
 
         with self.uow as uow:
             # Guardar imagen a través del puerto
-            icon_url = await self.storage_service.save_image_file(
+            icon_url = self.storage_service.save_image_file(
                 file_content=icon_file,
                 filename=icon_filename,
                 subfolder=f"games/{game_folder}",
@@ -50,7 +50,7 @@ class RegisterVideogame:
                 saved_videogame = uow.videogame_repo.register_videogame(new_videogame)
             except Exception as e:
                 # Evitar basura en disco si la BD rechaza la inserción
-                await self.storage_service.delete_file(icon_url)
+                self.storage_service.delete_file(icon_url)
                 raise e  # volver a levantar la excepción después de limpiar el archivo para hacer rollback
 
         return VideogameObjectResponse(
