@@ -1,6 +1,7 @@
 import { useAuth } from "../context/AuthContext";
 import { useModificarJugador } from "../hooks/useModificarJugador";
 import CuentaFormComponent from "../components/jugadores/CuentaFormComponent";
+import AvatarUsuarioComponent from "../components/common/AvatarUsuarioComponent";
 
 // US 02 - Modificar mis datos.
 // Se llega desde el boton "Cuenta" del sidebar (ruta /app/cuenta) y se
@@ -33,8 +34,8 @@ function CuentaPage() {
         {/* Datos actuales, para visualizar. Salen de `user`, asi que se
             actualizan solos al guardar los cambios. */}
         <div className="flex items-center gap-4 rounded-2xl border border-white/10 bg-ganker-surface p-6">
-          <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-ganker-orange to-ganker-purple font-heading text-xl font-bold text-white">
-            {user.username.charAt(0).toUpperCase()}
+          <div className="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-full bg-gradient-to-br from-ganker-orange to-ganker-purple font-heading text-xl font-bold text-white">
+            <AvatarUsuarioComponent user={user} />
           </div>
 
           <div className="min-w-0">

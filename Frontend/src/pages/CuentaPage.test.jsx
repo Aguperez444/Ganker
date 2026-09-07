@@ -19,10 +19,12 @@ vi.mock("../api/axiosClient", () => ({
 }));
 
 const JUGADOR = {
-  player_id: 1,
   username: "joaco_gg",
   name: "Joaquin Trabucco",
   mail: "joaco@ejemplo.com",
+  role: "PLAYER",
+  profiles: [],
+  icon_url: "/media/users/icons/icon_example_1.png",
 };
 
 // Hace de ProtectedRoute: en la app real CuentaPage nunca se renderiza sin
@@ -67,6 +69,28 @@ describe("US 02 - Modificar mis datos", () => {
 
     expect(screen.getByDisplayValue(JUGADOR.name)).toBeInTheDocument();
     expect(screen.getByDisplayValue(JUGADOR.mail)).toBeInTheDocument();
+  });
+
+  it("muestra la foto de perfil que devuelve /me", async () => {
+    await renderCuenta();
+
+    const foto = screen.getByAltText(`Foto de perfil de ${JUGADOR.username}`);
+    // La ruta llega relativa desde el backend y hay que resolverla contra la
+    // API, no contra el server de Vite.
+    expect(foto).toHaveAttribute(
+      "src",
+      expect.stringContaining(JUGADOR.icon_url)
+    );
+    expect(foto.getAttribute("src").startsWith("/media")).toBe(false);
+  });
+
+  it("cae en la inicial del username si el backend no manda foto", async () => {
+    obtenerJugadorActual.mockResolvedValue({ ...JUGADOR, icon_url: null });
+
+    await renderCuenta();
+
+    expect(screen.queryByAltText(/foto de perfil/i)).toBeNull();
+    expect(screen.getAllByText("J").length).toBeGreaterThan(0);
   });
 
   it("no ofrece cambiar la contraseña desde esta pantalla", async () => {

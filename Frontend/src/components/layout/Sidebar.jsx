@@ -18,10 +18,8 @@ export const navigationItems = [
     label: "Mi perfil",
     path: "/app/perfil",
   },
-  {
-    label: "Cuenta",
-    path: "/app/cuenta",
-  },
+  // "Cuenta" (/app/cuenta) vive en el menu desplegable del avatar, en el
+  // TopNavbar, junto a "Cerrar sesion". No se duplica aca.
 ];
 
 const Sidebar = () => {

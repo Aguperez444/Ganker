@@ -1,17 +1,13 @@
 import { useState, useRef, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
+import AvatarUsuarioComponent from "../common/AvatarUsuarioComponent";
 
 const TopNavbar = ({ onOpenMenu, onOpenChat, showChatButton = true }) => {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const userMenuRef = useRef(null);
-
-  // Dentro de una ruta protegida `user` siempre esta cargado (ver la
-  // invariante en AuthContext). La inicial de respaldo es solo por si el
-  // navbar se renderiza fuera de sesion, por ejemplo en un test.
-  const inicial = user?.username?.charAt(0).toUpperCase() ?? "G";
 
   useEffect(() => {
     function handleClickOutside(event) {
@@ -112,9 +108,9 @@ const TopNavbar = ({ onOpenMenu, onOpenChat, showChatButton = true }) => {
               user ? `Abrir cuenta de ${user.username}` : "Abrir cuenta"
             }
             title={user?.username}
-            className="flex h-10 w-10 cursor-pointer items-center justify-center rounded-full border border-ganker-purple/40 bg-ganker-surface-light text-sm font-semibold text-ganker-text transition hover:border-ganker-purple-light"
+            className="flex h-10 w-10 cursor-pointer items-center justify-center overflow-hidden rounded-full border border-ganker-purple/40 bg-ganker-surface-light text-sm font-semibold text-ganker-text transition hover:border-ganker-purple-light"
           >
-            {inicial}
+            <AvatarUsuarioComponent user={user} />
           </button>
 
           {isUserMenuOpen && (
@@ -129,6 +125,14 @@ const TopNavbar = ({ onOpenMenu, onOpenChat, showChatButton = true }) => {
                   </p>
                 </div>
               )}
+              {/* US 02 - Modificar mis datos */}
+              <Link
+                to="/app/cuenta"
+                onClick={() => setIsUserMenuOpen(false)}
+                className="block rounded-lg px-3 py-2 text-xs font-semibold text-ganker-muted transition hover:bg-ganker-surface-light hover:text-ganker-text"
+              >
+                Mi cuenta
+              </Link>
               <Link
                 to="/"
                 onClick={() => setIsUserMenuOpen(false)}
