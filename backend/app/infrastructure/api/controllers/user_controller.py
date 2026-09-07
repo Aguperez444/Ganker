@@ -1,4 +1,4 @@
-from typing import cast
+from typing import cast, Optional
 
 from fastapi import APIRouter, Depends, UploadFile, File, HTTPException, status, Form
 
@@ -56,7 +56,7 @@ def register_user(request: RegisterUserRequest, _user_id: int = Depends(get_curr
 
 @router.put("/", response_model=UpdateUserResponse, status_code=200, dependencies=[Depends(require_player)])
 async def update_user(username: str = Form(...),name: str = Form(...),mail: str = Form(...),
-                      icon: UploadFile = File(..., description="Icon image file"),
+                      icon: Optional[UploadFile] = File(None, description="Icon image file"),
                       user_id: int = Depends(get_current_user_id)
                       ) -> UpdateUserResponse:
     # Asegurarse de que la petición incluya un archivo con nombre
@@ -66,10 +66,8 @@ async def update_user(username: str = Form(...),name: str = Form(...),mail: str 
             detail="El archivo debe tener un nombre válido."
         )
 
-
     uow = uow_factory()
     storage_service = get_storage_service()
-
 
     update_user_use_case = UpdateUser(uow, storage_service)
     updated_user = await update_user_use_case.execute(user_id, username, name, mail, icon)
