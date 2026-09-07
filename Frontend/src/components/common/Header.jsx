@@ -36,7 +36,7 @@ function Header() {
                 onClick={handleLogout}
                 className="cursor-pointer rounded-lg px-3 py-1.5 text-[#f27238] transition-colors duration-200 hover:bg-white/5 hover:text-orange-400"
               >
-                Cerrar sesión
+                CERRAR SESIÓN
               </button>
             </>
           ) : (

@@ -89,14 +89,23 @@ export function AuthProvider({ children }) {
     }
   };
 
-  const logout = () => {
-    localStorage.removeItem("access_token");
-    localStorage.removeItem("refresh_token");
-    localStorage.removeItem("user");
-    delete axiosClient.defaults.headers.common["Authorization"];
-    setTokens(null);
-    setUser(null);
-    setIsAuthenticated(false);
+  const logout = async () => {
+    try {
+      await axiosClient.post("/auth/v1/logout");
+    } catch (error) {
+      console.error(
+        "Error al cerrar sesión en el backend:",
+        error.response?.data || error.message
+      );
+    } finally {
+      localStorage.removeItem("access_token");
+      localStorage.removeItem("refresh_token");
+      localStorage.removeItem("user");
+      delete axiosClient.defaults.headers.common["Authorization"];
+      setTokens(null);
+      setUser(null);
+      setIsAuthenticated(false);
+    }
   };
 
   const value = {

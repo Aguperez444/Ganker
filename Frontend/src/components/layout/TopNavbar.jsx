@@ -128,7 +128,7 @@ const TopNavbar = ({ onOpenMenu, onOpenChat, showChatButton = true }) => {
                 onClick={handleLogout}
                 className="w-full text-left rounded-lg px-3 py-2 text-xs font-semibold text-ganker-error hover:bg-ganker-surface-light transition cursor-pointer"
               >
-                Cerrar sesión
+                CERRAR SESIÓN
               </button>
             </div>
           )}
