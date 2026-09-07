@@ -26,10 +26,12 @@ const TOKENS = {
 };
 
 const JUGADOR = {
-  player_id: 1,
   username: "joaco_gg",
   name: "Joaquin Trabucco",
   mail: "joaco@ejemplo.com",
+  role: "player",
+  profiles: [],
+  icon_url: "/media/users/icons/icon_example_1.png",
 };
 
 function MostrarUser() {

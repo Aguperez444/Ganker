@@ -22,7 +22,7 @@ const JUGADOR = {
   username: "joaco_gg",
   name: "Joaquin Trabucco",
   mail: "joaco@ejemplo.com",
-  role: "PLAYER",
+  role: "player",
   profiles: [],
   icon_url: "/media/users/icons/icon_example_1.png",
 };

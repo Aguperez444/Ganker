@@ -12,6 +12,10 @@ import { validarFormularioCuenta } from "../utils/validaciones";
  * Sigue el mismo patron que useRegistrarJugador: valida en el blur de cada
  * campo y de nuevo entero antes de mandar, asi un formulario invalido nunca
  * llega al backend.
+ *
+ * handleSubmit devuelve el dato util o null, igual que los otros hooks de
+ * formulario: useRegistrarJugador devuelve los tokens y useIniciarSesion el
+ * usuario logueado. Aca devuelve el usuario ya actualizado.
  */
 export function useModificarJugador() {
   const { user, refrescarUsuario } = useAuth();
@@ -48,7 +52,7 @@ export function useModificarJugador() {
 
     const erroresValidacion = validarFormularioCuenta(valores);
     setErrores(erroresValidacion);
-    if (Object.keys(erroresValidacion).length > 0) return false;
+    if (Object.keys(erroresValidacion).length > 0) return null;
 
     setCargando(true);
     try {
@@ -57,10 +61,10 @@ export function useModificarJugador() {
       // El PUT ya devuelve el jugador actualizado, pero igual pedimos /me para
       // que `user` siga saliendo de una sola fuente. De paso, el navbar y
       // cualquier otra pantalla se enteran del cambio sin recargar.
-      await refrescarUsuario();
+      const usuarioActualizado = await refrescarUsuario();
 
       setExito("Tus datos se guardaron correctamente.");
-      return true;
+      return usuarioActualizado;
     } catch (error) {
       const mensaje = error.response?.data?.error;
 
@@ -86,7 +90,7 @@ export function useModificarJugador() {
         );
       }
 
-      return false;
+      return null;
     } finally {
       setCargando(false);
     }

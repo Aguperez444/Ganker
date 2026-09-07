@@ -1,4 +1,10 @@
-import { createContext, useContext, useState, useEffect, useCallback } from "react";
+import {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  useCallback,
+} from "react";
 import axiosClient, { registrarOnSesionExpirada } from "../api/axiosClient";
 import { obtenerJugadorActual } from "../api/jugadoresApi";
 
@@ -31,16 +37,20 @@ export function AuthProvider({ children }) {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [loading, setLoading] = useState(true);
 
+  // Devuelve los datos ademas de guardarlos: quien inicia sesion necesita el
+  // rol para decidir a donde navegar, y no puede leerlo del estado `user` en
+  // el mismo evento (setUser no actualiza la closure que ya se ejecuta).
   const cargarUsuario = useCallback(async () => {
     const datos = await obtenerJugadorActual();
     setUser(datos);
+    return datos;
   }, []);
 
   // Vuelve a pedir el usuario al backend. La usan las pantallas que modifican
   // datos de la cuenta (US 02): en vez de escribir `user` con lo que devolvio
   // el PUT, piden que se recargue, asi la unica fuente sigue siendo /me.
   const refrescarUsuario = useCallback(async () => {
-    await cargarUsuario();
+    return await cargarUsuario();
   }, [cargarUsuario]);
 
   const limpiarEstado = useCallback(() => {
@@ -67,7 +77,11 @@ export function AuthProvider({ children }) {
       const refresh = localStorage.getItem("refresh_token");
 
       if (access && refresh) {
-        setTokens({ access_token: access, refresh_token: refresh, token_type: "Bearer" });
+        setTokens({
+          access_token: access,
+          refresh_token: refresh,
+          token_type: "Bearer",
+        });
         setIsAuthenticated(true);
 
         try {
@@ -109,7 +123,7 @@ export function AuthProvider({ children }) {
     setIsAuthenticated(true);
 
     try {
-      await cargarUsuario();
+      return await cargarUsuario();
     } catch (error) {
       // O la sesion queda completa, o no queda sesion. Dejarla a medias es
       // volver al bug de user en null.
@@ -120,7 +134,8 @@ export function AuthProvider({ children }) {
 
   const login = async (email, password) => {
     try {
-      const response = await axiosClient.post("/auth/v1/login/",
+      const response = await axiosClient.post(
+        "/auth/v1/login/",
         new URLSearchParams({
           username: email,
           password: password,
@@ -132,11 +147,20 @@ export function AuthProvider({ children }) {
 
       const { access_token, refresh_token, token_type } = response.data;
 
-      await guardarSesion({ access_token, refresh_token, token_type });
+      const usuario = await guardarSesion({
+        access_token,
+        refresh_token,
+        token_type,
+      });
 
-      return { success: true };
+      // El usuario vuelve en la respuesta, no por el estado: LoginPage lo
+      // necesita en el mismo evento para elegir el destino segun el rol.
+      return { success: true, user: usuario };
     } catch (error) {
-      console.error("Error en el login:", error.response?.data || error.message);
+      console.error(
+        "Error en el login:",
+        error.response?.data || error.message
+      );
       return {
         success: false,
         status: error.response?.status,
@@ -156,11 +180,7 @@ export function AuthProvider({ children }) {
     refrescarUsuario,
   };
 
-  return (
-    <AuthContext.Provider value={value}>
-      {children}
-    </AuthContext.Provider>
-  );
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
 
 export function useAuth() {

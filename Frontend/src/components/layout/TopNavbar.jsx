@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import AvatarUsuarioComponent from "../common/AvatarUsuarioComponent";
+import { esAdmin } from "../../utils/rutas";
 
 const TopNavbar = ({ onOpenMenu, onOpenChat, showChatButton = true }) => {
   const { user, logout } = useAuth();
@@ -125,6 +126,27 @@ const TopNavbar = ({ onOpenMenu, onOpenChat, showChatButton = true }) => {
                   </p>
                 </div>
               )}
+              {/* Unico paso entre las dos areas: el sidebar de jugador ya no
+                  ofrece admin, y el de admin ya no ofrece volver. */}
+              {esAdmin(user) && (
+                <>
+                  <Link
+                    to="/app/admin"
+                    onClick={() => setIsUserMenuOpen(false)}
+                    className="block rounded-lg px-3 py-2 text-xs font-semibold text-ganker-purple-light transition hover:bg-ganker-surface-light"
+                  >
+                    Panel de administración
+                  </Link>
+                  <Link
+                    to="/app"
+                    onClick={() => setIsUserMenuOpen(false)}
+                    className="block rounded-lg px-3 py-2 text-xs font-semibold text-ganker-purple-light transition hover:bg-ganker-surface-light"
+                  >
+                    Panel jugador
+                  </Link>
+                </>
+              )}
+
               {/* US 02 - Modificar mis datos */}
               <Link
                 to="/app/cuenta"

@@ -10,6 +10,7 @@ import AdminHomePage from "../pages/admin/AdminHomePage.jsx";
 import GamesPage from "../pages/admin/GamesPage.jsx";
 import ProtectedRoute from "./ProtectedRoute.jsx";
 import PublicOnlyRoute from "./PublicOnlyRoute.jsx";
+import { ROLES_ADMIN } from "../utils/rutas.js";
 
 /**
  * Definicion central de rutas de la aplicacion.
@@ -48,14 +49,14 @@ function AppRouter() {
         </Route>
 
         {/*
-          Area administrativa.
+          Area administrativa. Solo admin y owner: un jugador que fuerce la URL
+          vuelve a su home. El backend ademas protege sus endpoints con
+          require_admin, asi que esto es la mitad de la defensa, no toda.
 
-          Exige solamente sesion iniciada, igual que el resto. El backend ya
-          tiene roles reales y /me devuelve user.role, pero todavia no se pueden
-          crear cuentas admin desde la app: restringir esto ahora dejaria el
-          area inaccesible para todos. Ver la nota en ProtectedRoute.jsx.
+          Los admin no quedan encerrados aca: pueden usar /app como cualquier
+          jugador y volver al panel desde el menu del avatar.
         */}
-        <Route element={<ProtectedRoute />}>
+        <Route element={<ProtectedRoute rolesPermitidos={ROLES_ADMIN} />}>
           <Route path="/app/admin" element={<AdminLayout />}>
             <Route index element={<AdminHomePage />} />
             <Route path="games" element={<GamesPage />} />

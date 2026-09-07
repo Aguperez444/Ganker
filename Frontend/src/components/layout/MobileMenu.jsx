@@ -71,14 +71,6 @@ const MobileMenu = ({ isOpen, onClose }) => {
 
           <div className="my-2 border-t border-white/10" />
 
-          <NavLink
-            to="/app/admin"
-            onClick={onClose}
-            className="rounded-lg px-4 py-3 text-sm font-semibold text-ganker-muted transition hover:bg-ganker-surface-light hover:text-ganker-text"
-          >
-            Administración
-          </NavLink>
-
           <button
             type="button"
             onClick={handleLogout}

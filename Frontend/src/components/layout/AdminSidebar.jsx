@@ -51,15 +51,6 @@ const AdminSidebar = () => {
             {item.label}
           </NavLink>
         ))}
-
-        <div className="mt-auto">
-          <NavLink
-            to="/app"
-            className="flex flex-col items-center justify-center rounded-xl px-2 py-3 text-center text-[10px] font-semibold tracking-wide text-ganker-muted uppercase transition hover:bg-ganker-surface-light hover:text-ganker-text"
-          >
-            Volver
-          </NavLink>
-        </div>
       </nav>
     </aside>
   );
