@@ -8,3 +8,4 @@ class UpdateUserResponse(BaseModel):
     username: str
     name: str
     mail: Optional[str]
+    icon_url: Optional[str]
