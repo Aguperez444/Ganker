@@ -2,7 +2,7 @@ from typing import cast, Optional, BinaryIO
 
 from app.application.ports.i_storage_service import IStorageService
 from app.application.ports.i_unit_of_work import IUnitOfWork
-from app.domain.exceptions.user.username_already_exist_exception import UsernameAlreadyExistsException
+from app.domain.exceptions.user.username_already_exists_exception import UsernameAlreadyExistsException
 from app.domain.exceptions.mail.email_already_exists_exception import EmailAlreadyExistsException
 from app.domain.exceptions.user.user_not_found_exception import UserNotFoundException
 from app.infrastructure.api.dto.response.update_user_response import UpdateUserResponse

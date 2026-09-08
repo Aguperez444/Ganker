@@ -14,7 +14,7 @@ router = APIRouter(prefix="/api/v1/videogames", tags=["Videogames"])
 def get_storage_service():
     return LocalDiskStorageService()
 @router.post("/", status_code=201, response_model=VideogameObjectResponse, dependencies=[Depends(require_admin)])
-def register_videogame(name: str = Form(..., description="Name of the rank"),
+def register_videogame(name: str = Form(..., description="Name of the videogame"),
     icon: UploadFile = File(..., description="Icon image file"), _player_id: int = Depends(get_current_user_id)):
 
 

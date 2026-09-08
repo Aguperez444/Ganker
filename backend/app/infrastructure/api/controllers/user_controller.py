@@ -4,10 +4,10 @@ from typing import Optional
 
 from app.application.useCases.query_users import QueryUsers
 from app.application.useCases.register_user import RegisterUser
-from app.application.useCases.update_player import UpdateUser
+from app.application.useCases.update_user import UpdateUser
 from app.infrastructure.api.dependencies.auth import get_current_user_id, require_player, require_admin
 from app.infrastructure.api.dto.response.auth_tokens_response import AuthTokensResponse
-from app.infrastructure.api.dto.response.get_player_response import GetUserResponse
+from app.infrastructure.api.dto.response.get_user_response import GetUserResponse
 from app.infrastructure.api.dto.request.register_user_request import RegisterUserRequest
 from app.infrastructure.api.dto.response.register_user_response import RegisterUserResponse
 from app.infrastructure.api.dto.response.update_user_response import UpdateUserResponse

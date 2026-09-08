@@ -9,7 +9,7 @@ from app.domain.exceptions.auth.password_is_not_secure_exception import Password
 from app.domain.exceptions.user.invalid_username_exception import InvalidUsernameException
 from exceptions.auth.unauthorized_exception import UnauthorizedException
 from app.domain.exceptions.user.user_not_found_exception import UserNotFoundException
-from app.domain.exceptions.user.username_already_exist_exception import UsernameAlreadyExistsException
+from app.domain.exceptions.user.username_already_exists_exception import UsernameAlreadyExistsException
 from app.domain.models.user import User
 from app.domain.models.user_role import UserRole
 
