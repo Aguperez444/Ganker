@@ -1,34 +1,68 @@
-from typing import cast
+from typing import cast, Optional
 
+from fastapi import UploadFile
+
+from app.application.ports.i_storage_service import IStorageService
 from app.application.ports.i_unit_of_work import IUnitOfWork
 from app.domain.models.user import User
-from app.infrastructure.api.dto.update_user_request import UpdateUserRequest
 from app.domain.exceptions.user.username_already_exist_exception import UsernameAlreadyExistsException
 from app.domain.exceptions.mail.email_already_exists_exception import EmailAlreadyExistsException
+from app.domain.exceptions.user.user_not_found_exception import UserNotFoundException
 
 
 class UpdateUser:
 
-    def __init__(self, unit_of_work: IUnitOfWork):
+    def __init__(self, unit_of_work: IUnitOfWork, storage_service: IStorageService):
         self.uow: IUnitOfWork = unit_of_work
+        self.storage_service: IStorageService = storage_service
 
-    def execute(self, user_id: int, update_user_request: UpdateUserRequest) -> User:
+    async def execute(self, user_id: int, username: str, name: str, mail: str, icon: Optional[UploadFile]) -> User:
 
         # Valido que el nuevo username y mail no existan en la base de datos para otro jugador
-        self.validate_username_uniqueness(update_user_request.username, user_id)
-        self.validate_mail_uniqueness(update_user_request.mail, user_id)
+        self.validate_username_uniqueness(username, user_id)
+        self.validate_mail_uniqueness(mail, user_id)
 
         # Busco al jugador a actualizar (Doy por hecho que el id existe porque lo tomé de una sesión vigente)
         user = self.uow.user_repo.get_user_by_id(user_id)
 
+        if not user:
+            raise UserNotFoundException(user_id)
+
         # Actualizo los datos del jugador con los nuevos valores
-        user.name = update_user_request.name
-        user.username = update_user_request.username
-        user.mail = update_user_request.mail
+        user.name = name
+        user.username = username
+        user.mail = mail
 
         # Guardo los cambios en la base de datos
         with self.uow as uow:
-            updated_user = uow.user_repo.update_user(cast(User, user))
+            new_icon_url = user.icon_url  # Inicializo con la URL actual del icono
+            if icon and icon.filename:
+                if user.icon_url is not None:
+                    # Elimino la imagen anterior a través del puerto
+                    await self.storage_service.delete_file(cast(str,user.icon_url))
+
+
+                # Guardar la nueva imagen a través del puerto
+                new_icon_url = await self.storage_service.save_file(
+                    file_content=icon.file,
+                    filename=icon.filename,
+                    subfolder=f"users/icons",
+                    preserve_original_name=False
+                )
+
+            user.icon_url = new_icon_url
+
+
+
+            try:
+                updated_user = uow.user_repo.update_user(user)
+            except Exception as e:
+                #borrar la imagen que se subio para no persistir basura
+                await self.storage_service.delete_file(new_icon_url)
+                # Si hay un error al actualizar, se lanza una excepción
+                raise Exception(f"Error inesperado al actualizar los datos del usuario", str(e))
+
+
 
         # Lo devuelvo para que el controlador pueda mandarlo en la respuesta
         return updated_user

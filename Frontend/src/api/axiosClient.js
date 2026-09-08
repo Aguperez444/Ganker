@@ -45,7 +45,7 @@ function limpiarSesion() {
     alExpirarSesion();
   } else {
     // Respaldo por si nadie registro nada todavia (ej. el provider no monto).
-    window.location.assign("/login");
+    window.location.assign("/");
   }
 }
 
@@ -84,7 +84,8 @@ function refrescarTokens() {
         localStorage.setItem(CLAVES_SESION.refresh, refresh_token);
       }
 
-      axiosClient.defaults.headers.common["Authorization"] = `Bearer ${access_token}`;
+      axiosClient.defaults.headers.common["Authorization"] =
+        `Bearer ${access_token}`;
       return access_token;
     })
     .finally(() => {

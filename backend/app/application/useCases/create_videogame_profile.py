@@ -1,7 +1,7 @@
 from typing import TYPE_CHECKING, cast
 
 from app.application.ports.i_unit_of_work import IUnitOfWork
-from app.infrastructure.api.dto.create_videogame_profile_request import CreateGameProfileRequest
+from app.infrastructure.api.dto.response.create_videogame_profile_request import CreateGameProfileRequest
 from app.domain.exceptions.character.character_not_found_exception import CharacterNotFoundException
 from app.domain.exceptions.does_not_belong_to_game_exception import DoesNotBelongToGameException
 from app.domain.exceptions.game_profile.game_profile_already_exist_exception import GameProfileAlreadyExistException
@@ -48,9 +48,9 @@ class CreateVideogameProfile:
             role: Role = self.validate_role_exist(new_role_profile.role_id)
             rank: Rank = self.validate_rank_exist(new_role_profile.rank_id)
 
-            if role.videogame != videogame:
+            if role.videogame.videogame_id != videogame.videogame_id:
                 raise DoesNotBelongToGameException("rol", role.name, videogame.name)
-            if rank.videogame != videogame:
+            if rank.videogame.videogame_id != videogame.videogame_id:
                 raise DoesNotBelongToGameException("rango", rank.name, videogame.name)
 
             role_profile: RoleProfile = RoleProfile(

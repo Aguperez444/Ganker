@@ -1,3 +1,12 @@
+const resolveIconUrl = (url) => {
+  if (!url || url === "Sin icono") return null;
+  if (url.startsWith("http://") || url.startsWith("https://")) {
+    return url;
+  }
+  const baseUrl = import.meta.env.VITE_API_URL || "";
+  return `${baseUrl.replace(/\/$/, "")}${url.startsWith("/") ? "" : "/"}${url}`;
+};
+
 const GameListComponent = ({
   games,
   isLoading,
@@ -44,7 +53,34 @@ const GameListComponent = ({
                 : "bg-ganker-surface-light hover:bg-white/5",
             ].join(" ")}
           >
-            <div className="min-w-0">
+            <div className="flex min-w-0 items-center gap-3">
+              {resolveIconUrl(game.icon_url) ? (
+                <img
+                  src={resolveIconUrl(game.icon_url)}
+                  alt={game.name}
+                  className="h-10 w-10 shrink-0 rounded-lg border border-white/10 bg-ganker-surface object-cover"
+                  onError={(e) => {
+                    e.currentTarget.style.display = "none";
+                  }}
+                />
+              ) : (
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-white/10 bg-white/5 text-ganker-muted">
+                  <svg
+                    className="h-5 w-5"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={1.5}
+                      d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z"
+                    />
+                  </svg>
+                </div>
+              )}
+
               <p className="truncate font-medium text-ganker-text">
                 {game.name}
               </p>

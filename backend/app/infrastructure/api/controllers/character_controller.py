@@ -3,8 +3,8 @@ from fastapi import APIRouter, Depends, UploadFile, HTTPException, status, Form,
 from app.application.useCases.query_characters import QueryCharacters
 from app.application.useCases.register_character import RegisterCharacter
 from app.application.useCases.update_character import UpdateCharacter
-from app.infrastructure.api.dto.character_object_response import CharacterObjectResponse
-from app.infrastructure.api.dto.get_characters_response import GetCharactersResponse
+from app.infrastructure.api.dto.response.base_classes.character_object_response import CharacterObjectResponse
+from app.infrastructure.api.dto.response.get_characters_response import GetCharactersResponse
 from app.infrastructure.api.dependencies.auth import get_current_user_id, require_admin
 
 

@@ -70,5 +70,5 @@ port = 8000
 
 if __name__ == "__main__":
     print("Starting FastAPI server...")
-    print(f"docs: https://{host}:{port}/docs")
+    print(f"docs: http://{host}:{port}/docs")
     uvicorn.run("app.infrastructure.start.main:app", host=host, port=port,reload=True)

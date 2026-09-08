@@ -1,6 +1,8 @@
 import { useState, useRef, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
+import AvatarUsuarioComponent from "../common/AvatarUsuarioComponent";
+import { esAdmin } from "../../utils/rutas";
 
 const TopNavbar = ({ onOpenMenu, onOpenChat, showChatButton = true }) => {
   const { user, logout } = useAuth();
@@ -103,30 +105,67 @@ const TopNavbar = ({ onOpenMenu, onOpenChat, showChatButton = true }) => {
           <button
             type="button"
             onClick={() => setIsUserMenuOpen((prev) => !prev)}
-            aria-label="Abrir cuenta"
-            className="flex h-10 w-10 cursor-pointer items-center justify-center rounded-full border border-ganker-purple/40 bg-ganker-surface-light text-sm font-semibold text-ganker-text transition hover:border-ganker-purple-light"
+            aria-label={
+              user ? `Abrir cuenta de ${user.username}` : "Abrir cuenta"
+            }
+            title={user?.username}
+            className="flex h-10 w-10 cursor-pointer items-center justify-center overflow-hidden rounded-full border border-ganker-purple/40 bg-ganker-surface-light text-sm font-semibold text-ganker-text transition hover:border-ganker-purple-light"
           >
-            {user?.email ? user.email.charAt(0).toUpperCase() : "G"}
+            <AvatarUsuarioComponent user={user} />
           </button>
 
           {isUserMenuOpen && (
-            <div className="absolute right-0 mt-2 w-48 rounded-xl border border-white/10 bg-ganker-surface p-2 shadow-2xl z-50">
-              {user?.email && (
-                <div className="px-3 py-2 border-b border-white/10 text-xs text-ganker-muted truncate">
-                  {user.email}
+            <div className="absolute right-0 z-50 mt-2 w-48 rounded-xl border border-white/10 bg-ganker-surface p-2 shadow-2xl">
+              {user && (
+                <div className="border-b border-white/10 px-3 py-2">
+                  <p className="truncate text-xs font-semibold text-ganker-text">
+                    {user.username}
+                  </p>
+                  <p className="truncate text-xs text-ganker-muted">
+                    {user.mail}
+                  </p>
                 </div>
               )}
+              {/* Unico paso entre las dos areas: el sidebar de jugador ya no
+                  ofrece admin, y el de admin ya no ofrece volver. */}
+              {esAdmin(user) && (
+                <>
+                  <Link
+                    to="/app/admin"
+                    onClick={() => setIsUserMenuOpen(false)}
+                    className="block rounded-lg px-3 py-2 text-xs font-semibold text-ganker-purple-light transition hover:bg-ganker-surface-light"
+                  >
+                    Panel de administración
+                  </Link>
+                  <Link
+                    to="/app"
+                    onClick={() => setIsUserMenuOpen(false)}
+                    className="block rounded-lg px-3 py-2 text-xs font-semibold text-ganker-purple-light transition hover:bg-ganker-surface-light"
+                  >
+                    Panel jugador
+                  </Link>
+                </>
+              )}
+
+              {/* US 02 - Modificar mis datos */}
+              <Link
+                to="/app/cuenta"
+                onClick={() => setIsUserMenuOpen(false)}
+                className="block rounded-lg px-3 py-2 text-xs font-semibold text-ganker-muted transition hover:bg-ganker-surface-light hover:text-ganker-text"
+              >
+                Mi cuenta
+              </Link>
               <Link
                 to="/"
                 onClick={() => setIsUserMenuOpen(false)}
-                className="block rounded-lg px-3 py-2 text-xs font-semibold text-ganker-muted hover:bg-ganker-surface-light hover:text-ganker-text transition"
+                className="block rounded-lg px-3 py-2 text-xs font-semibold text-ganker-muted transition hover:bg-ganker-surface-light hover:text-ganker-text"
               >
                 Página principal
               </Link>
               <button
                 type="button"
                 onClick={handleLogout}
-                className="w-full text-left rounded-lg px-3 py-2 text-xs font-semibold text-ganker-error hover:bg-ganker-surface-light transition cursor-pointer"
+                className="w-full cursor-pointer rounded-lg px-3 py-2 text-left text-xs font-semibold text-ganker-error transition hover:bg-ganker-surface-light"
               >
                 Cerrar sesión
               </button>

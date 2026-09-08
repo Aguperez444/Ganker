@@ -1,7 +1,7 @@
 from app.application.ports.i_unit_of_work import IUnitOfWork
 
-from app.infrastructure.api.dto.character_object_response import CharacterObjectResponse
-from app.infrastructure.api.dto.get_characters_response import GetCharactersResponse
+from app.infrastructure.api.dto.response.base_classes.character_object_response import CharacterObjectResponse
+from app.infrastructure.api.dto.response.get_characters_response import GetCharactersResponse
 
 from typing import cast
 
