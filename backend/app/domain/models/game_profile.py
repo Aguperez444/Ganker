@@ -9,15 +9,15 @@ if TYPE_CHECKING:
 class GameProfile:
     def __init__(self, game_profile_id: Optional[int],
                  player_id: int,
-                 videogame: Videogame,
+                 videogame: 'Videogame',
                  characters_priority: list['CharacterPriority'],
                  role_profiles: list['RoleProfile']
                  ):
 
         self._game_profile_id: Optional[int] = game_profile_id
         self._player_id: int = player_id
-        self._videogame: Videogame = videogame
-        self._characters_priority: list[CharacterPriority] = characters_priority
+        self._videogame: 'Videogame' = videogame
+        self._characters_priority: list['CharacterPriority'] = characters_priority
         self._role_profiles: list['RoleProfile'] = role_profiles
 
     @property
