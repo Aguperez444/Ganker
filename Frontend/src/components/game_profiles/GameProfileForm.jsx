@@ -1,6 +1,7 @@
 import { urlDeMedia } from "../../utils/media";
 
 const GameProfileForm = ({
+  mode = "create",
   games,
   characters,
   roles,
@@ -25,9 +26,20 @@ const GameProfileForm = ({
   onCancel,
   isSaving,
   formError,
-  successMessage,
   onSubmit,
 }) => {
+  const isEditMode = mode === "edit";
+
+  const title = isEditMode ? "Editar perfil de juego" : "Crear perfil de juego";
+
+  const description = isEditMode
+    ? "El videojuego del perfil no se puede cambiar. Actualiza tus personajes y tus roles con rango."
+    : "Selecciona un videojuego y configura cómo juegas.";
+
+  const submitButtonText = isEditMode ? "Guardar cambios" : "Crear perfil";
+
+  const submitLoadingText = isEditMode ? "Guardando..." : "Creando perfil...";
+
   const availableCharacters = characters.filter(
     (character) =>
       !selectedCharacters.some(
@@ -46,12 +58,10 @@ const GameProfileForm = ({
     <div className="mt-6 rounded-2xl border border-white/10 bg-ganker-surface p-5 sm:p-6">
       <div className="mb-6">
         <h2 className="font-heading text-xl font-semibold text-ganker-text sm:text-2xl">
-          Crear perfil de juego
+          {title}
         </h2>
 
-        <p className="mt-1 text-sm text-ganker-muted">
-          Selecciona un videojuego y configura cómo juegas.
-        </p>
+        <p className="mt-1 text-sm text-ganker-muted">{description}</p>
       </div>
 
       {/* Videojuego */}
@@ -67,7 +77,7 @@ const GameProfileForm = ({
           id="videogame"
           value={selectedGameId}
           onChange={(event) => onGameChange(event.target.value)}
-          disabled={isLoadingGames}
+          disabled={isLoadingGames || isEditMode}
           className="w-full rounded-xl border border-white/10 bg-ganker-surface-light px-4 py-3 text-sm text-ganker-text outline-none transition focus:border-ganker-purple-light disabled:cursor-not-allowed disabled:opacity-60"
         >
           <option value="">
@@ -82,6 +92,12 @@ const GameProfileForm = ({
             </option>
           ))}
         </select>
+
+        {isEditMode && (
+          <p className="mt-2 text-xs text-ganker-muted">
+            El videojuego de un perfil no se puede modificar.
+          </p>
+        )}
 
         {gamesError && (
           <p className="mt-2 text-sm text-ganker-error">{gamesError}</p>
@@ -290,12 +306,6 @@ const GameProfileForm = ({
           </div>
         )}
 
-        {successMessage && (
-          <div className="mb-4 rounded-xl border border-ganker-success/30 bg-ganker-success/10 px-4 py-3">
-            <p className="text-sm text-ganker-success">{successMessage}</p>
-          </div>
-        )}
-
         <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
           <button
             type="button"
@@ -312,7 +322,7 @@ const GameProfileForm = ({
             disabled={isSaving || !selectedGameId}
             className="rounded-xl bg-gradient-to-r from-ganker-orange to-ganker-purple px-6 py-3 text-sm font-semibold text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
           >
-            {isSaving ? "Creando perfil..." : "Crear perfil"}
+            {isSaving ? submitLoadingText : submitButtonText}
           </button>
         </div>
       </div>

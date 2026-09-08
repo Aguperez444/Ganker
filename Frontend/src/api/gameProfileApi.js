@@ -26,3 +26,15 @@ export const createGameProfile = async (profileData) => {
 
   return response.data;
 };
+
+// US 08 - Editar perfil de juego.
+// El videojuego no viaja en el body: PUT /api/v1/game_profiles/{id} lo toma
+// del perfil existente y no se puede cambiar (regla de negocio).
+export const updateGameProfile = async (gameProfileId, profileData) => {
+  const response = await axiosClient.put(
+    `/api/v1/game_profiles/${gameProfileId}`,
+    profileData
+  );
+
+  return response.data;
+};
