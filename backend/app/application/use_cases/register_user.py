@@ -7,7 +7,7 @@ from app.infrastructure.api.dto.response.register_user_response import RegisterU
 from app.domain.exceptions.mail.email_already_exists_exception import EmailAlreadyExistsException
 from app.domain.exceptions.auth.password_is_not_secure_exception import PasswordIsNotSecureException
 from app.domain.exceptions.user.invalid_username_exception import InvalidUsernameException
-from exceptions.auth.unauthorized_exception import UnauthorizedException
+from app.domain.exceptions.auth.unauthorized_exception import UnauthorizedException
 from app.domain.exceptions.user.user_not_found_exception import UserNotFoundException
 from app.domain.exceptions.user.username_already_exists_exception import UsernameAlreadyExistsException
 from app.domain.models.user import User

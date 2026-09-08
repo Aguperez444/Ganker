@@ -42,6 +42,7 @@ class UpdateCharacter:
 
             game_folder = SlugService.to_slug(videogame.name)
 
+            new_icon_url = character.icon_url  # Mantener la URL del icono actual si no se proporciona un nuevo icono
             if icon and icon.filename:
                 # Guardar la nueva imagen a través del puerto
                 new_icon_url = self.storage_service.save_image_file(
