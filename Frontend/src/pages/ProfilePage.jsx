@@ -7,8 +7,8 @@ import useGameProfile from "../hooks/useGameProfile";
 const ProfilePage = () => {
   const { user } = useAuth();
 
-  // null = no hay panel abierto. "create" / "edit" = que formulario mostrar
-  // en el panel lateral, igual que GamesPage/RanksPage.
+  // null = se ve la lista de perfiles. "create" / "edit" = se ve el
+  // formulario a pantalla completa (reemplaza la lista, no conviven).
   const [mode, setMode] = useState(null);
   const [successMessage, setSuccessMessage] = useState("");
 
@@ -81,7 +81,7 @@ const ProfilePage = () => {
 
   return (
     <section className="min-h-full bg-ganker-bg px-4 py-6 sm:px-6 lg:px-8">
-      <div className="mx-auto w-full max-w-5xl">
+      <div className="mx-auto w-full max-w-6xl">
         <header className="mb-8">
           <h1 className="font-heading text-3xl font-bold text-ganker-text sm:text-4xl">
             Mi perfil
@@ -99,11 +99,7 @@ const ProfilePage = () => {
           </div>
         )}
 
-        <div
-          className={`grid gap-6 ${
-            mode ? "lg:grid-cols-[minmax(0,1.4fr)_minmax(320px,0.8fr)]" : ""
-          }`}
-        >
+        {!mode && (
           <div className="rounded-2xl border border-white/10 bg-ganker-surface p-5 sm:p-6">
             <div className="mb-6 flex flex-col gap-4 border-b border-white/10 pb-5 sm:flex-row sm:items-center sm:justify-between">
               <div>
@@ -119,8 +115,7 @@ const ProfilePage = () => {
               <button
                 type="button"
                 onClick={handleOpenCreate}
-                disabled={isSaving}
-                className="w-full shrink-0 rounded-xl bg-gradient-to-r from-ganker-orange to-ganker-purple px-5 py-3 text-sm font-semibold text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
+                className="w-full shrink-0 rounded-xl bg-gradient-to-r from-ganker-orange to-ganker-purple px-5 py-3 text-sm font-semibold text-white transition hover:opacity-90 sm:w-auto"
               >
                 + Crear perfil de juego
               </button>
@@ -132,38 +127,38 @@ const ProfilePage = () => {
               onEdit={handleOpenEdit}
             />
           </div>
+        )}
 
-          {mode && (
-            <GameProfileForm
-              key={mode === "edit" ? `edit-${editingProfileId}` : "create"}
-              mode={mode}
-              games={games}
-              characters={characters}
-              roles={roles}
-              ranks={ranks}
-              selectedGameId={selectedGameId}
-              selectedCharacters={selectedCharacters}
-              selectedRoles={selectedRoles}
-              usesRankPerRole={usesRankPerRole}
-              profileRank={profileRank}
-              isLoadingGames={isLoadingGames}
-              isLoadingGameData={isLoadingGameData}
-              gamesError={gamesError}
-              gameDataError={gameDataError}
-              onGameChange={selectGame}
-              onAddCharacter={addCharacter}
-              onRemoveCharacter={removeCharacter}
-              onMoveCharacter={moveCharacter}
-              onToggleRole={toggleRole}
-              onRoleRankChange={selectRoleRank}
-              onProfileRankChange={setProfileRank}
-              onCancel={handleCancel}
-              isSaving={isSaving}
-              formError={formError}
-              onSubmit={handleSubmit}
-            />
-          )}
-        </div>
+        {mode && (
+          <GameProfileForm
+            key={mode === "edit" ? `edit-${editingProfileId}` : "create"}
+            mode={mode}
+            games={games}
+            characters={characters}
+            roles={roles}
+            ranks={ranks}
+            selectedGameId={selectedGameId}
+            selectedCharacters={selectedCharacters}
+            selectedRoles={selectedRoles}
+            usesRankPerRole={usesRankPerRole}
+            profileRank={profileRank}
+            isLoadingGames={isLoadingGames}
+            isLoadingGameData={isLoadingGameData}
+            gamesError={gamesError}
+            gameDataError={gameDataError}
+            onGameChange={selectGame}
+            onAddCharacter={addCharacter}
+            onRemoveCharacter={removeCharacter}
+            onMoveCharacter={moveCharacter}
+            onToggleRole={toggleRole}
+            onRoleRankChange={selectRoleRank}
+            onProfileRankChange={setProfileRank}
+            onCancel={handleCancel}
+            isSaving={isSaving}
+            formError={formError}
+            onSubmit={handleSubmit}
+          />
+        )}
       </div>
     </section>
   );
