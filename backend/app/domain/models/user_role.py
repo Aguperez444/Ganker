@@ -14,3 +14,6 @@ class UserRole(str, Enum):
 
     def is_owner(self) -> bool:
         return self == UserRole.OWNER
+
+    def __repr__(self) -> str:
+        return f"UserRole(role='{self.value}')"

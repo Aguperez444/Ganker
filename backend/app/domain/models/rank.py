@@ -46,3 +46,7 @@ class Rank:
     @icon_url.setter
     def icon_url(self, value: str) -> None:
         self._icon_url = value
+
+    def __repr__(self) -> str:
+        return (f"Rank(rank_id={self.rank_id or 'sin_id'}, name='{self.name}',"
+                f" value={self.value}, videogame={self.videogame}, icon_url='{self.icon_url}')")
