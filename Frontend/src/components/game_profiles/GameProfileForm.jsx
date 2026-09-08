@@ -1,3 +1,4 @@
+import IconSelectComponent from "../common/IconSelectComponent";
 import { urlDeMedia } from "../../utils/media";
 
 const GameProfileForm = ({
@@ -160,25 +161,13 @@ const GameProfileForm = ({
                 </div>
 
                 <div className="max-w-xl">
-                  <select
-                    defaultValue=""
-                    onChange={(event) => {
-                      onAddCharacter(event.target.value);
-                      event.target.value = "";
-                    }}
-                    className="w-full rounded-xl border border-white/10 bg-ganker-surface-light px-4 py-3 text-sm text-ganker-text outline-none transition focus:border-ganker-purple-light"
-                  >
-                    <option value="">Agregar personaje...</option>
-
-                    {availableCharacters.map((character) => (
-                      <option
-                        key={character.character_id}
-                        value={character.character_id}
-                      >
-                        {character.name}
-                      </option>
-                    ))}
-                  </select>
+                  <IconSelectComponent
+                    value=""
+                    onChange={(characterId) => onAddCharacter(characterId)}
+                    options={availableCharacters}
+                    placeholder="Agregar personaje..."
+                    getOptionId={(character) => character.character_id}
+                  />
                 </div>
 
                 {availableCharacters.length > 0 && (
@@ -312,29 +301,17 @@ const GameProfileForm = ({
 
                 {!usesRankPerRole && (
                   <div className="mb-6 max-w-xl">
-                    <label
-                      htmlFor="profile-rank"
-                      className="mb-2 block text-sm font-semibold text-ganker-text"
-                    >
+                    <label className="mb-2 block text-sm font-semibold text-ganker-text">
                       Rango del perfil
                     </label>
 
-                    <select
-                      id="profile-rank"
+                    <IconSelectComponent
                       value={profileRank}
-                      onChange={(event) =>
-                        onProfileRankChange(event.target.value)
-                      }
-                      className="w-full rounded-xl border border-white/10 bg-ganker-surface-light px-4 py-3 text-sm text-ganker-text outline-none transition focus:border-ganker-purple-light"
-                    >
-                      <option value="">Selecciona tu rango</option>
-
-                      {ranks.map((rank) => (
-                        <option key={rank.rank_id} value={rank.rank_id}>
-                          {rank.name}
-                        </option>
-                      ))}
-                    </select>
+                      onChange={onProfileRankChange}
+                      options={ranks}
+                      placeholder="Selecciona tu rango"
+                      getOptionId={(rank) => rank.rank_id}
+                    />
                   </div>
                 )}
 
@@ -373,24 +350,17 @@ const GameProfileForm = ({
                           </label>
 
                           {usesRankPerRole && selected && (
-                            <select
-                              value={getSelectedRank(role.role_id)}
-                              onChange={(event) =>
-                                onRoleRankChange(
-                                  role.role_id,
-                                  event.target.value
-                                )
-                              }
-                              className="w-full rounded-xl border border-white/10 bg-ganker-surface px-4 py-3 text-sm text-ganker-text outline-none transition focus:border-ganker-purple-light sm:w-56"
-                            >
-                              <option value="">Selecciona tu rango</option>
-
-                              {ranks.map((rank) => (
-                                <option key={rank.rank_id} value={rank.rank_id}>
-                                  {rank.name}
-                                </option>
-                              ))}
-                            </select>
+                            <div className="w-full sm:w-56">
+                              <IconSelectComponent
+                                value={getSelectedRank(role.role_id)}
+                                onChange={(rankId) =>
+                                  onRoleRankChange(role.role_id, rankId)
+                                }
+                                options={ranks}
+                                placeholder="Selecciona tu rango"
+                                getOptionId={(rank) => rank.rank_id}
+                              />
+                            </div>
                           )}
                         </div>
                       </div>
