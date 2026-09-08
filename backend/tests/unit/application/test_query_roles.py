@@ -1,7 +1,7 @@
 from unittest.mock import MagicMock
 import pytest
 
-from app.application.useCases.query_roles import QueryRoles
+from app.application.use_cases.query_roles import QueryRoles
 from app.domain.models.role import Role
 from app.domain.models.videogame import Videogame
 

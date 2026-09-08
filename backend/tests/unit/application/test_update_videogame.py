@@ -1,7 +1,7 @@
 from unittest.mock import AsyncMock, MagicMock
 import pytest
 
-from app.application.useCases.update_videogame import UpdateVideogame
+from app.application.use_cases.update_videogame import UpdateVideogame
 from app.application.ports.i_storage_service import IStorageService
 from app.domain.models.videogame import Videogame
 from app.domain.exceptions.videogame.videogame_not_found_exception import VideogameNotFoundException

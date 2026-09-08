@@ -1,7 +1,7 @@
 from unittest.mock import AsyncMock, MagicMock
 import pytest
 
-from app.application.useCases.update_character import UpdateCharacter
+from app.application.use_cases.update_character import UpdateCharacter
 from app.application.ports.i_storage_service import IStorageService
 from app.domain.models.videogame import Videogame
 from app.domain.models.character import Character

@@ -12,7 +12,7 @@ from app.domain.services.slug_service import SlugService
 from app.infrastructure.api.dto.response.base_classes.rank_object_response import RankObjectResponse
 
 
-class CreateRankUseCase:
+class CreateRank:
     def __init__(self, storage_service: IStorageService, uow: IUnitOfWork):
         self.storage_service = storage_service
         self.uow: IUnitOfWork = uow

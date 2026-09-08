@@ -1,8 +1,8 @@
 from fastapi import APIRouter, Depends, HTTPException, status, Form, File, UploadFile
 
-from app.application.useCases.query_videogame import QueryVideogames
-from app.application.useCases.register_videogame import RegisterVideogame
-from app.application.useCases.update_videogame import UpdateVideogame
+from app.application.use_cases.query_videogames import QueryVideogames
+from app.application.use_cases.register_videogame import RegisterVideogame
+from app.application.use_cases.update_videogame import UpdateVideogame
 from app.infrastructure.api.dto.response.get_videogames_response import GetVideogamesResponse
 from app.infrastructure.api.dto.response.base_classes.videogame_object_response import VideogameObjectResponse
 from app.infrastructure.database.unit_of_work.uow_factory import uow_factory

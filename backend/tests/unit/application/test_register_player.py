@@ -2,7 +2,7 @@ from datetime import datetime, timezone
 import pytest
 from unittest.mock import MagicMock
 
-from app.application.useCases.register_player import RegisterPlayer
+from app.application.use_cases.register_player import RegisterPlayer
 from app.application.ports.i_token_service import ITokenService
 from app.application.ports.i_password_hasher import IPasswordHasher
 from app.domain.models.user import User

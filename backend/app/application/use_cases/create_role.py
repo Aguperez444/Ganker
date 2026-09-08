@@ -12,7 +12,7 @@ from app.domain.exceptions.role.invalid_role_name_exception import InvalidRoleNa
 from app.infrastructure.api.dto.response.base_classes.role_object_response import RoleObjectResponse
 
 
-class CreateRoleUseCase:
+class CreateRole:
     def __init__(self, storage_service: IStorageService, uow: IUnitOfWork):
         self.storage_service: IStorageService = storage_service
         self.uow: IUnitOfWork = uow

@@ -1,7 +1,7 @@
 import pytest
 from unittest.mock import MagicMock
 
-from app.application.useCases.user_logout import UserLogout
+from app.application.use_cases.user_logout import UserLogout
 from app.application.ports.i_token_service import ITokenService
 from app.domain.exceptions.auth.invalid_token_exception import InvalidTokenException
 

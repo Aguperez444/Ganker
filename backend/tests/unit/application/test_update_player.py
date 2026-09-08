@@ -1,7 +1,7 @@
 from unittest.mock import AsyncMock, MagicMock
 import pytest
 
-from app.application.useCases.update_user import UpdateUser
+from app.application.use_cases.update_user import UpdateUser
 from app.application.ports.i_storage_service import IStorageService
 from app.domain.models.user import User
 from app.domain.models.user_role import UserRole

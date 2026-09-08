@@ -2,7 +2,7 @@ from datetime import datetime, timezone
 import pytest
 from unittest.mock import MagicMock
 
-from app.application.useCases.refresh_token import RefreshToken
+from app.application.use_cases.refresh_token import RefreshToken
 from app.application.ports.i_token_service import ITokenService
 from app.domain.models.user import User
 from app.domain.models.user_role import UserRole
