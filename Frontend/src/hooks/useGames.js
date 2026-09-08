@@ -26,6 +26,7 @@ const useGames = () => {
           id: game.id ?? game.videogame_id,
           name: game.name,
           icon_url: game.icon_url,
+          rank_per_role: Boolean(game.rank_per_role),
         }))
       );
     } catch (error) {
@@ -47,13 +48,15 @@ const useGames = () => {
 
       let name = nameOrData;
       let iconFile = icon;
+      let rankPerRole = false;
 
       if (typeof nameOrData === "object" && nameOrData !== null) {
         name = nameOrData.name;
         iconFile = nameOrData.icon;
+        rankPerRole = Boolean(nameOrData.rank_per_role);
       }
 
-      const newGame = await createGameRequest(name, iconFile);
+      const newGame = await createGameRequest(name, iconFile, rankPerRole);
 
       setGames((currentGames) => [
         ...currentGames,
@@ -61,6 +64,7 @@ const useGames = () => {
           id: newGame.id ?? newGame.videogame_id,
           name: newGame.name,
           icon_url: newGame.icon_url,
+          rank_per_role: Boolean(newGame.rank_per_role),
         },
       ]);
 
@@ -95,13 +99,15 @@ const useGames = () => {
 
       let name = nameOrData;
       let iconFile = icon;
+      let rankPerRole = false;
 
       if (typeof nameOrData === "object" && nameOrData !== null) {
         name = nameOrData.name;
         iconFile = nameOrData.icon;
+        rankPerRole = Boolean(nameOrData.rank_per_role);
       }
 
-      const updatedGame = await updateGameRequest(id, name, iconFile);
+      const updatedGame = await updateGameRequest(id, name, iconFile, rankPerRole);
 
       setGames((currentGames) =>
         currentGames.map((game) =>
@@ -110,6 +116,7 @@ const useGames = () => {
                 id: updatedGame.id ?? updatedGame.videogame_id,
                 name: updatedGame.name,
                 icon_url: updatedGame.icon_url,
+                rank_per_role: Boolean(updatedGame.rank_per_role),
               }
             : game
         )

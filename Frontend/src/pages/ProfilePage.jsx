@@ -22,6 +22,8 @@ const ProfilePage = () => {
     selectedCharacters,
     selectedRoles,
     editingProfileId,
+    usesRankPerRole,
+    profileRank,
 
     isLoadingGames,
     isLoadingGameData,
@@ -35,6 +37,7 @@ const ProfilePage = () => {
     moveCharacter,
     toggleRole,
     selectRoleRank,
+    setProfileRank,
     resetGameProfileForm,
     startEditProfile,
     isSaving,
@@ -141,6 +144,8 @@ const ProfilePage = () => {
               selectedGameId={selectedGameId}
               selectedCharacters={selectedCharacters}
               selectedRoles={selectedRoles}
+              usesRankPerRole={usesRankPerRole}
+              profileRank={profileRank}
               isLoadingGames={isLoadingGames}
               isLoadingGameData={isLoadingGameData}
               gamesError={gamesError}
@@ -151,6 +156,7 @@ const ProfilePage = () => {
               onMoveCharacter={moveCharacter}
               onToggleRole={toggleRole}
               onRoleRankChange={selectRoleRank}
+              onProfileRankChange={setProfileRank}
               onCancel={handleCancel}
               isSaving={isSaving}
               formError={formError}

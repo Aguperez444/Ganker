@@ -10,6 +10,8 @@ const GameProfileForm = ({
   selectedGameId,
   selectedCharacters,
   selectedRoles,
+  usesRankPerRole,
+  profileRank,
 
   isLoadingGames,
   isLoadingGameData,
@@ -23,6 +25,7 @@ const GameProfileForm = ({
   onMoveCharacter,
   onToggleRole,
   onRoleRankChange,
+  onProfileRankChange,
   onCancel,
   isSaving,
   formError,
@@ -229,10 +232,39 @@ const GameProfileForm = ({
                   </h3>
 
                   <p className="mt-1 text-sm text-ganker-muted">
-                    Selecciona solamente los roles que juegas e indica tu rango
-                    en cada uno.
+                    {usesRankPerRole
+                      ? "Selecciona solamente los roles que juegas e indica tu rango en cada uno."
+                      : "Este videojuego usa un único rango para todo el perfil. Selecciona el rango y despues los roles que juegas."}
                   </p>
                 </div>
+
+                {!usesRankPerRole && (
+                  <div className="mb-6 max-w-xl">
+                    <label
+                      htmlFor="profile-rank"
+                      className="mb-2 block text-sm font-semibold text-ganker-text"
+                    >
+                      Rango del perfil
+                    </label>
+
+                    <select
+                      id="profile-rank"
+                      value={profileRank}
+                      onChange={(event) =>
+                        onProfileRankChange(event.target.value)
+                      }
+                      className="w-full rounded-xl border border-white/10 bg-ganker-surface-light px-4 py-3 text-sm text-ganker-text outline-none transition focus:border-ganker-purple-light"
+                    >
+                      <option value="">Selecciona tu rango</option>
+
+                      {ranks.map((rank) => (
+                        <option key={rank.rank_id} value={rank.rank_id}>
+                          {rank.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                )}
 
                 <div className="space-y-3">
                   {roles.map((role) => {
@@ -268,7 +300,7 @@ const GameProfileForm = ({
                             </span>
                           </label>
 
-                          {selected && (
+                          {usesRankPerRole && selected && (
                             <select
                               value={getSelectedRank(role.role_id)}
                               onChange={(event) =>

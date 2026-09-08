@@ -5,12 +5,14 @@ const GameForm = ({
   mode = "create",
   initialName = "",
   initialIconUrl = "",
+  initialRankPerRole = false,
   isLoading = false,
   error = "",
   onSubmit,
   onCancel,
 }) => {
   const [name, setName] = useState(initialName);
+  const [rankPerRole, setRankPerRole] = useState(initialRankPerRole);
   const [iconFile, setIconFile] = useState(null);
   const [validationError, setValidationError] = useState("");
   const [isDragging, setIsDragging] = useState(false);
@@ -121,6 +123,7 @@ const GameForm = ({
     await onSubmit({
       name: trimmedName,
       icon: iconFile,
+      rank_per_role: rankPerRole,
     });
   };
 
@@ -143,7 +146,8 @@ const GameForm = ({
     mode === "create"
       ? name.trim().length > 0 && iconFile !== null
       : (name.trim().length > 0 && name.trim() !== initialName.trim()) ||
-        iconFile !== null;
+        iconFile !== null ||
+        rankPerRole !== initialRankPerRole;
 
   return (
     <section className="rounded-2xl border border-white/10 bg-ganker-surface p-6 shadow-xl">
@@ -180,6 +184,26 @@ const GameForm = ({
             className="w-full rounded-lg border border-white/10 bg-ganker-surface-light px-4 py-3 text-ganker-text placeholder:text-ganker-muted outline-none transition-all duration-200 focus:border-ganker-purple-light focus:ring-2 focus:ring-ganker-purple/30 disabled:cursor-not-allowed disabled:opacity-50"
           />
         </div>
+
+        <label className="flex cursor-pointer items-start gap-3 rounded-lg border border-white/10 bg-ganker-surface-light px-4 py-3">
+          <input
+            type="checkbox"
+            checked={rankPerRole}
+            onChange={(event) => setRankPerRole(event.target.checked)}
+            disabled={isLoading}
+            className="mt-0.5 h-4 w-4 accent-ganker-purple"
+          />
+          <span>
+            <span className="block text-sm font-medium text-ganker-text">
+              Rango por rol
+            </span>
+            <span className="block text-xs text-ganker-muted">
+              Si está activo, cada rol del perfil tiene su propio rango. Si
+              está desactivado, el perfil usa un único rango para todos los
+              roles seleccionados.
+            </span>
+          </span>
+        </label>
 
         <div>
           <label

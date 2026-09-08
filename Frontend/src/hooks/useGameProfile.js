@@ -21,6 +21,21 @@ const useGameProfile = () => {
   const [selectedCharacters, setSelectedCharacters] = useState([]);
   const [selectedRoles, setSelectedRoles] = useState([]);
 
+  // Rango unico del perfil, para juegos con rank_per_role = false. Se
+  // propaga a todos los selectedRoles (ver setProfileRank), asi que el
+  // payload que se manda al backend no cambia: sigue siendo una lista de
+  // {role_id, rank_id}, solo que todos comparten el mismo rank_id.
+  const [profileRank, setProfileRankState] = useState("");
+
+  // El juego seleccionado decide si el formulario pide un rango por rol o
+  // uno solo para todo el perfil. Mientras el catalogo de juegos no cargo
+  // todavia, o si por algun motivo no se encuentra, se asume rank_per_role
+  // (el comportamiento historico) para no romper el formulario.
+  const selectedGame = games.find(
+    (game) => String(game.id) === String(selectedGameId)
+  );
+  const usesRankPerRole = selectedGame ? Boolean(selectedGame.rank_per_role) : true;
+
   // US 08 - Editar perfil de juego.
   // null = se esta creando un perfil nuevo. Con id = se esta editando ese
   // perfil existente; el videojuego queda bloqueado (ver GameProfileForm).
@@ -105,6 +120,7 @@ const useGameProfile = () => {
 
     setSelectedCharacters([]);
     setSelectedRoles([]);
+    setProfileRankState("");
 
     setGameDataError("");
 
@@ -182,7 +198,9 @@ const useGameProfile = () => {
         ...currentRoles,
         {
           role_id: numericRoleId,
-          rank_id: "",
+          // Si el juego no usa rango por rol, el rol nuevo arranca con el
+          // rango unico del perfil (si ya se eligio uno) en vez de vacio.
+          rank_id: usesRankPerRole ? "" : profileRank,
         },
       ];
     });
@@ -201,6 +219,19 @@ const useGameProfile = () => {
     );
   };
 
+  // Rango unico para juegos con rank_per_role = false. Se propaga a todos
+  // los roles ya seleccionados para que el payload de siempre
+  // (character_ids + roles con {role_id, rank_id}) no necesite cambiar.
+  const setProfileRank = (rankId) => {
+    const numericRankId = rankId ? Number(rankId) : "";
+
+    setProfileRankState(numericRankId);
+
+    setSelectedRoles((currentRoles) =>
+      currentRoles.map((role) => ({ ...role, rank_id: numericRankId }))
+    );
+  };
+
   // US 08 - Editar perfil de juego.
   // Precarga el formulario con un perfil existente. Los personajes y roles
   // salen directo del perfil (ya tienen la forma que necesita el formulario:
@@ -214,11 +245,20 @@ const useGameProfile = () => {
     setSelectedGameId(String(profile.videogame.id));
 
     setSelectedCharacters(profile.characters);
-    setSelectedRoles(
-      profile.role_profiles.map((roleProfile) => ({
-        role_id: roleProfile.role.role_id,
-        rank_id: roleProfile.rank.rank_id,
-      }))
+
+    const roleEntries = profile.role_profiles.map((roleProfile) => ({
+      role_id: roleProfile.role.role_id,
+      rank_id: roleProfile.rank.rank_id,
+    }));
+    setSelectedRoles(roleEntries);
+
+    // Si el perfil ya tiene todos los roles con el mismo rango, lo usamos
+    // para precargar el selector de "rango del perfil" (juegos sin rango
+    // por rol). Si estan mezclados (dato legado o el juego cambio de modo),
+    // se deja vacio para que el jugador elija uno explicitamente.
+    const distinctRanks = new Set(roleEntries.map((role) => role.rank_id));
+    setProfileRankState(
+      distinctRanks.size === 1 ? (roleEntries[0]?.rank_id ?? "") : ""
     );
 
     setGameDataError("");
@@ -236,6 +276,7 @@ const useGameProfile = () => {
 
     setSelectedCharacters([]);
     setSelectedRoles([]);
+    setProfileRankState("");
 
     setGameDataError("");
     setFormError("");
@@ -276,7 +317,11 @@ const useGameProfile = () => {
     const hasRoleWithoutRank = selectedRoles.some((role) => !role.rank_id);
 
     if (hasRoleWithoutRank) {
-      setFormError("Debes seleccionar un rango para cada rol elegido.");
+      setFormError(
+        usesRankPerRole
+          ? "Debes seleccionar un rango para cada rol elegido."
+          : "Debes seleccionar el rango del perfil."
+      );
       return false;
     }
 
@@ -360,7 +405,11 @@ const useGameProfile = () => {
     const hasRoleWithoutRank = selectedRoles.some((role) => !role.rank_id);
 
     if (hasRoleWithoutRank) {
-      setFormError("Debes seleccionar un rango para cada rol elegido.");
+      setFormError(
+        usesRankPerRole
+          ? "Debes seleccionar un rango para cada rol elegido."
+          : "Debes seleccionar el rango del perfil."
+      );
       return false;
     }
 
@@ -424,6 +473,8 @@ const useGameProfile = () => {
     selectedCharacters,
     selectedRoles,
     editingProfileId,
+    usesRankPerRole,
+    profileRank,
 
     isLoadingGames,
     isLoadingGameData,
@@ -440,6 +491,7 @@ const useGameProfile = () => {
     moveCharacter,
     toggleRole,
     selectRoleRank,
+    setProfileRank,
     submitGameProfile,
     resetGameProfileForm,
     startEditProfile,
