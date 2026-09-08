@@ -32,7 +32,7 @@ class TestUpdateVideogameProfileUseCase:
     def test_update_videogame_profile_happy_path(self, mock_uow):
         use_case = UpdateVideogameProfile(unit_of_work=mock_uow)
 
-        vg = Videogame(videogame_id=1, name="LoL", icon_url="/icon.png")
+        vg = Videogame(videogame_id=1, name="LoL", icon_url="/icon.png", rank_per_role=True)
         char1 = Character(10, "Ahri", vg, "/ahri.png")
         role1 = Role(100, "Mid", vg, "/mid.png")
         rank1 = Rank(1000, "Diamond", 3000, vg, "/diamond.png")
@@ -85,7 +85,7 @@ class TestUpdateVideogameProfileUseCase:
     def test_update_videogame_profile_does_not_belong_to_player(self, mock_uow):
         use_case = UpdateVideogameProfile(unit_of_work=mock_uow)
 
-        vg = Videogame(1, "LoL", "/icon.png")
+        vg = Videogame(1, "LoL", "/icon.png", True)
         existing_profile = GameProfile(5, player_id=99, videogame=vg, characters_priority=[], role_profiles=[])
         mock_uow.game_profile_repo.get_game_profile_by_id.return_value = existing_profile
 
@@ -99,7 +99,7 @@ class TestUpdateVideogameProfileUseCase:
     def test_update_videogame_profile_character_not_found(self, mock_uow):
         use_case = UpdateVideogameProfile(unit_of_work=mock_uow)
 
-        vg = Videogame(1, "LoL", "/icon.png")
+        vg = Videogame(1, "LoL", "/icon.png", True)
         existing_profile = GameProfile(5, player_id=42, videogame=vg, characters_priority=[], role_profiles=[])
         mock_uow.game_profile_repo.get_game_profile_by_id.return_value = existing_profile
         mock_uow.character_repo.get_character_by_id.return_value = None
@@ -114,8 +114,8 @@ class TestUpdateVideogameProfileUseCase:
     def test_update_videogame_profile_character_not_belonging_to_game(self, mock_uow):
         use_case = UpdateVideogameProfile(unit_of_work=mock_uow)
 
-        vg_lol = Videogame(1, "LoL", "/icon.png")
-        vg_dota = Videogame(2, "Dota 2", "/icon.png")
+        vg_lol = Videogame(1, "LoL", "/icon.png", True)
+        vg_dota = Videogame(2, "Dota 2", "/icon.png", True)
         existing_profile = GameProfile(5, player_id=42, videogame=vg_lol, characters_priority=[], role_profiles=[])
         dota_char = Character(10, "Pudge", vg_dota, "/pudge.png")
 
@@ -132,7 +132,7 @@ class TestUpdateVideogameProfileUseCase:
     def test_update_videogame_profile_role_not_found(self, mock_uow):
         use_case = UpdateVideogameProfile(unit_of_work=mock_uow)
 
-        vg = Videogame(1, "LoL", "/icon.png")
+        vg = Videogame(1, "LoL", "/icon.png", True)
         existing_profile = GameProfile(5, player_id=42, videogame=vg, characters_priority=[], role_profiles=[])
         mock_uow.game_profile_repo.get_game_profile_by_id.return_value = existing_profile
         mock_uow.role_repo.get_role_by_id.return_value = None
@@ -147,7 +147,7 @@ class TestUpdateVideogameProfileUseCase:
     def test_update_videogame_profile_rank_not_found(self, mock_uow):
         use_case = UpdateVideogameProfile(unit_of_work=mock_uow)
 
-        vg = Videogame(1, "LoL", "/icon.png")
+        vg = Videogame(1, "LoL", "/icon.png", True)
         role = Role(1, "Mid", vg, "/mid.png")
         existing_profile = GameProfile(5, player_id=42, videogame=vg, characters_priority=[], role_profiles=[])
         mock_uow.game_profile_repo.get_game_profile_by_id.return_value = existing_profile
@@ -164,8 +164,8 @@ class TestUpdateVideogameProfileUseCase:
     def test_update_videogame_profile_role_or_rank_not_belonging_to_game(self, mock_uow):
         use_case = UpdateVideogameProfile(unit_of_work=mock_uow)
 
-        vg_lol = Videogame(1, "LoL", "/icon.png")
-        vg_dota = Videogame(2, "Dota 2", "/icon.png")
+        vg_lol = Videogame(1, "LoL", "/icon.png", True)
+        vg_dota = Videogame(2, "Dota 2", "/icon.png", True)
         role_dota = Role(1, "Offlane", vg_dota, "/offlane.png")
         rank_lol = Rank(1, "Gold", 1000, vg_lol, "/gold.png")
 

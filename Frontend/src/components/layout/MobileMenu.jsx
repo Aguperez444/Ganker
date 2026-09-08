@@ -1,4 +1,4 @@
-import { NavLink, useNavigate } from "react-router-dom";
+import { Link, NavLink, useNavigate } from "react-router-dom";
 import { navigationItems } from "./Sidebar.jsx";
 import { useAuth } from "../../context/AuthContext.jsx";
 

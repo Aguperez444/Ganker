@@ -21,7 +21,7 @@ class TestQueryRolesUseCase:
     def test_get_roles_by_game_id_happy_path(self, mock_deps):
         use_case, uow = mock_deps
 
-        vg = Videogame(1, "LoL", "/lol.png")
+        vg = Videogame(1, "LoL", "/lol.png", True)
         roles = [
             Role(role_id=1, name="Mid", videogame=vg, icon_url="/mid.png"),
             Role(role_id=2, name="Top", videogame=vg, icon_url=None),

@@ -10,7 +10,7 @@ class TestVideogameEndpointsIntegration:
 
     def test_register_videogame_success(self, client, admin_auth_headers):
         file = ("game_icon.png", io.BytesIO(b"fake-game-icon-data"), "image/png")
-        data = {"name": "Overwatch 2"}
+        data = {"name": "Overwatch 2", "rank_per_role": True}
 
         response = client.post(
             "/api/v1/videogames/",
@@ -24,6 +24,7 @@ class TestVideogameEndpointsIntegration:
         assert res_data["name"] == "Overwatch 2"
         assert "id" in res_data
         assert res_data["icon_url"].startswith("/media/games/")
+        assert res_data["rank_per_role"] is True
 
     def test_register_videogame_forbidden_for_player(self, client, player_auth_headers):
         file = ("game_icon.png", io.BytesIO(b"data"), "image/png")
@@ -48,7 +49,7 @@ class TestVideogameEndpointsIntegration:
     def test_register_videogame_duplicate_name(self, client, admin_auth_headers, seed_catalog_data):
         file = ("game_icon.png", io.BytesIO(b"data"), "image/png")
         existing_name = seed_catalog_data["videogame"].name
-        data = {"name": existing_name}
+        data = {"name": existing_name, "rank_per_role": True}
 
         response = client.post(
             "/api/v1/videogames/",
@@ -62,7 +63,7 @@ class TestVideogameEndpointsIntegration:
 
     def test_register_videogame_empty_name(self, client, admin_auth_headers):
         file = ("game_icon.png", io.BytesIO(b"data"), "image/png")
-        data = {"name": "   "}
+        data = {"name": "   ", "rank_per_role": True}
 
         response = client.post(
             "/api/v1/videogames/",
@@ -74,7 +75,7 @@ class TestVideogameEndpointsIntegration:
         assert response.status_code == 400
 
     def test_register_videogame_missing_file(self, client, admin_auth_headers):
-        data = {"name": "Game Without Icon"}
+        data = {"name": "Game Without Icon", "rank_per_role": True}
 
         response = client.post(
             "/api/v1/videogames/",
@@ -91,7 +92,7 @@ class TestVideogameEndpointsIntegration:
     def test_update_videogame_success(self, client, admin_auth_headers, seed_catalog_data):
         vg_id = seed_catalog_data["videogame"].videogame_id
         file = ("updated_game_icon.png", io.BytesIO(b"updated-icon-data"), "image/png")
-        data = {"name": "Updated Game Name"}
+        data = {"name": "Updated Game Name", "rank_per_role": False}
 
         response = client.put(
             f"/api/v1/videogames/{vg_id}",
@@ -105,10 +106,11 @@ class TestVideogameEndpointsIntegration:
         assert res_data["id"] == vg_id
         assert res_data["name"] == "Updated Game Name"
         assert res_data["icon_url"].startswith("/media/games/")
+        assert res_data["rank_per_role"] is False
 
     def test_update_videogame_not_found(self, client, admin_auth_headers):
         file = ("icon.png", io.BytesIO(b"data"), "image/png")
-        data = {"name": "Nonexistent"}
+        data = {"name": "Nonexistent", "rank_per_role": False}
 
         response = client.put(
             "/api/v1/videogames/99999",
@@ -154,6 +156,7 @@ class TestVideogameEndpointsIntegration:
         assert len(res_data["videogames"]) >= 1
         vg_names = [v["name"] for v in res_data["videogames"]]
         assert seed_catalog_data["videogame"].name in vg_names
+        assert "rank_per_role" in res_data["videogames"][0]
 
     def test_get_all_videogames_unauthorized(self, client):
         response = client.get("/api/v1/videogames/")

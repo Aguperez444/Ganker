@@ -69,20 +69,25 @@ class TestDomainModels:
         assert owner_role.is_owner() is True
 
     def test_videogame_instantiation_and_properties(self):
-        vg = Videogame(videogame_id=10, name="Dota 2", icon_url="/media/games/dota2/icon.png")
+        vg = Videogame(videogame_id=10, name="Dota 2", icon_url="/media/games/dota2/icon.png", rank_per_role=False)
         assert vg.videogame_id == 10
         assert vg.name == "Dota 2"
         assert vg.icon_url == "/media/games/dota2/icon.png"
+        assert vg.rank_per_role is False
+        assert "rank_per_role=False" in repr(vg)
 
         vg.videogame_id = 20
         vg.name = "Counter Strike"
         vg.icon_url = "/media/games/cs/icon.png"
+        vg.rank_per_role = True
         assert vg.videogame_id == 20
         assert vg.name == "Counter Strike"
         assert vg.icon_url == "/media/games/cs/icon.png"
+        assert vg.rank_per_role is True
+        assert "rank_per_role=True" in repr(vg)
 
     def test_character_instantiation_and_properties(self):
-        vg = Videogame(videogame_id=1, name="LoL", icon_url="/icon.png")
+        vg = Videogame(videogame_id=1, name="LoL", icon_url="/icon.png", rank_per_role=True)
         char = Character(character_id=5, name="Ahri", videogame=vg, icon_url="/ahri.png")
 
         assert char.character_id == 5
@@ -90,7 +95,7 @@ class TestDomainModels:
         assert char.videogame.name == "LoL"
         assert char.icon_url == "/ahri.png"
 
-        vg2 = Videogame(videogame_id=2, name="Valorant", icon_url="/val.png")
+        vg2 = Videogame(videogame_id=2, name="Valorant", icon_url="/val.png", rank_per_role=False)
         char.character_id = 6
         char.name = "Jett"
         char.videogame = vg2
@@ -102,7 +107,7 @@ class TestDomainModels:
         assert char.icon_url == "/jett.png"
 
     def test_role_instantiation_and_properties(self):
-        vg = Videogame(videogame_id=1, name="LoL", icon_url="/icon.png")
+        vg = Videogame(videogame_id=1, name="LoL", icon_url="/icon.png", rank_per_role=True)
         role = Role(role_id=3, name="Support", videogame=vg, icon_url="/support.png")
 
         assert role.role_id == 3
@@ -119,7 +124,7 @@ class TestDomainModels:
         assert role.icon_url == "/jungler.png"
 
     def test_rank_instantiation_and_properties(self):
-        vg = Videogame(videogame_id=1, name="LoL", icon_url="/icon.png")
+        vg = Videogame(videogame_id=1, name="LoL", icon_url="/icon.png", rank_per_role=True)
         rank = Rank(rank_id=1, name="Silver", value=500, videogame=vg, icon_url="/silver.png")
 
         assert rank.rank_id == 1
@@ -132,7 +137,7 @@ class TestDomainModels:
         rank.name = "Gold"
         rank.value = 1000
         rank.icon_url = "/gold.png"
-        vg2 = Videogame(videogame_id=2, name="Valorant", icon_url="/val.png")
+        vg2 = Videogame(videogame_id=2, name="Valorant", icon_url="/val.png", rank_per_role=False)
         rank.videogame = vg2
         assert rank.rank_id == 2
         assert rank.name == "Gold"
@@ -141,7 +146,7 @@ class TestDomainModels:
         assert rank.icon_url == "/gold.png"
 
     def test_character_priority_instantiation_and_properties(self):
-        vg = Videogame(videogame_id=1, name="LoL", icon_url="/icon.png")
+        vg = Videogame(videogame_id=1, name="LoL", icon_url="/icon.png", rank_per_role=True)
         char1 = Character(character_id=1, name="Ahri", videogame=vg, icon_url="/ahri.png")
         char_priority = CharacterPriority(priority_id=10, character=char1, priority=1)
 
@@ -159,7 +164,7 @@ class TestDomainModels:
         assert char_priority.priority == 2
 
     def test_role_profile_instantiation_and_properties(self):
-        vg = Videogame(videogame_id=1, name="LoL", icon_url="/icon.png")
+        vg = Videogame(videogame_id=1, name="LoL", icon_url="/icon.png", rank_per_role=True)
         role = Role(role_id=1, name="Mid", videogame=vg, icon_url="/mid.png")
         rank = Rank(rank_id=1, name="Diamond", value=3000, videogame=vg, icon_url="/diamond.png")
 
@@ -179,7 +184,7 @@ class TestDomainModels:
         assert rp.rank.name == "Master"
 
     def test_game_profile_instantiation_and_properties(self):
-        vg = Videogame(videogame_id=1, name="LoL", icon_url="/icon.png")
+        vg = Videogame(videogame_id=1, name="LoL", icon_url="/icon.png", rank_per_role=True)
         char = Character(character_id=1, name="Ahri", videogame=vg, icon_url="/ahri.png")
         cp = CharacterPriority(priority_id=1, character=char, priority=1)
         role = Role(role_id=1, name="Mid", videogame=vg, icon_url="/mid.png")
@@ -203,7 +208,7 @@ class TestDomainModels:
         # Setters
         gp.game_profile_id = 51
         gp.player_id = 2
-        vg2 = Videogame(videogame_id=2, name="Valorant", icon_url="/val.png")
+        vg2 = Videogame(videogame_id=2, name="Valorant", icon_url="/val.png", rank_per_role=False)
         gp.videogame = vg2
         gp.characters_priority = []
         gp.role_profiles = []

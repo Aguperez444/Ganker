@@ -35,7 +35,7 @@ class TestCreateVideogameProfileUseCase:
     def test_create_game_profile_happy_path(self, mock_uow):
         use_case = CreateVideogameProfile(unit_of_work=mock_uow)
 
-        vg = Videogame(1, "LoL", "/icon.png")
+        vg = Videogame(1, "LoL", "/icon.png", rank_per_role=True)
         char1 = Character(10, "Ahri", vg, "/ahri.png")
         char2 = Character(11, "Yasuo", vg, "/yasuo.png")
         role1 = Role(100, "Mid", vg, "/mid.png")
@@ -57,7 +57,7 @@ class TestCreateVideogameProfileUseCase:
             ],
             role_profiles=[RoleProfile(1, role1, rank1)]
         )
-        mock_uow.game_profile_repo.create_update_game_profile.return_value = created_profile
+        mock_uow.game_profile_repo.create_game_profile.return_value = created_profile
 
         request = CreateGameProfileRequest(
             videogame_id=1,
@@ -69,7 +69,7 @@ class TestCreateVideogameProfileUseCase:
 
         assert result.game_profile_id == 1
         assert result.player_id == 5
-        mock_uow.game_profile_repo.create_update_game_profile.assert_called_once()
+        mock_uow.game_profile_repo.create_game_profile.assert_called_once()
 
     def test_create_game_profile_videogame_not_found(self, mock_uow):
         use_case = CreateVideogameProfile(unit_of_work=mock_uow)
@@ -90,7 +90,7 @@ class TestCreateVideogameProfileUseCase:
     def test_create_game_profile_already_exists(self, mock_uow):
         use_case = CreateVideogameProfile(unit_of_work=mock_uow)
 
-        vg = Videogame(1, "LoL", "/icon.png")
+        vg = Videogame(1, "LoL", "/icon.png", rank_per_role=True)
         mock_uow.videogame_repo.get_videogame_by_id.return_value = vg
         existing_profile = GameProfile(1, 5, vg, [], [])
         mock_uow.game_profile_repo.get_game_profile_by_player_and_videogame.return_value = existing_profile
@@ -109,7 +109,7 @@ class TestCreateVideogameProfileUseCase:
     def test_create_game_profile_character_not_found(self, mock_uow):
         use_case = CreateVideogameProfile(unit_of_work=mock_uow)
 
-        vg = Videogame(1, "LoL", "/icon.png")
+        vg = Videogame(1, "LoL", "/icon.png", rank_per_role=True)
         mock_uow.videogame_repo.get_videogame_by_id.return_value = vg
         mock_uow.game_profile_repo.get_game_profile_by_player_and_videogame.return_value = None
         mock_uow.character_repo.get_character_by_id.return_value = None
@@ -129,8 +129,8 @@ class TestCreateVideogameProfileUseCase:
     def test_create_game_profile_character_does_not_belong_to_game(self, mock_uow):
         use_case = CreateVideogameProfile(unit_of_work=mock_uow)
 
-        vg_lol = Videogame(1, "LoL", "/icon.png")
-        vg_dota = Videogame(2, "Dota 2", "/icon2.png")
+        vg_lol = Videogame(1, "LoL", "/icon.png", rank_per_role=True)
+        vg_dota = Videogame(2, "Dota 2", "/icon2.png", rank_per_role=False)
         char_dota = Character(10, "Pudge", vg_dota, "/pudge.png")
 
         mock_uow.videogame_repo.get_videogame_by_id.return_value = vg_lol
@@ -152,7 +152,7 @@ class TestCreateVideogameProfileUseCase:
     def test_create_game_profile_role_not_found(self, mock_uow):
         use_case = CreateVideogameProfile(unit_of_work=mock_uow)
 
-        vg = Videogame(1, "LoL", "/icon.png")
+        vg = Videogame(1, "LoL", "/icon.png", rank_per_role=True)
         char = Character(1, "Ahri", vg, "/ahri.png")
         mock_uow.videogame_repo.get_videogame_by_id.return_value = vg
         mock_uow.game_profile_repo.get_game_profile_by_player_and_videogame.return_value = None
@@ -174,8 +174,8 @@ class TestCreateVideogameProfileUseCase:
     def test_create_game_profile_role_does_not_belong_to_game(self, mock_uow):
         use_case = CreateVideogameProfile(unit_of_work=mock_uow)
 
-        vg_lol = Videogame(1, "LoL", "/icon.png")
-        vg_dota = Videogame(2, "Dota 2", "/icon2.png")
+        vg_lol = Videogame(1, "LoL", "/icon.png", rank_per_role=True)
+        vg_dota = Videogame(2, "Dota 2", "/icon2.png", rank_per_role=False)
         char = Character(1, "Ahri", vg_lol, "/ahri.png")
         role_dota = Role(1, "Offlane", vg_dota, "/offlane.png")
         rank = Rank(1, "Gold", 1000, vg_lol, "/gold.png")
@@ -201,7 +201,7 @@ class TestCreateVideogameProfileUseCase:
     def test_create_game_profile_rank_not_found(self, mock_uow):
         use_case = CreateVideogameProfile(unit_of_work=mock_uow)
 
-        vg = Videogame(1, "LoL", "/icon.png")
+        vg = Videogame(1, "LoL", "/icon.png", rank_per_role=True)
         char = Character(1, "Ahri", vg, "/ahri.png")
         role = Role(1, "Mid", vg, "/mid.png")
         mock_uow.videogame_repo.get_videogame_by_id.return_value = vg
@@ -225,8 +225,8 @@ class TestCreateVideogameProfileUseCase:
     def test_create_game_profile_rank_does_not_belong_to_game(self, mock_uow):
         use_case = CreateVideogameProfile(unit_of_work=mock_uow)
 
-        vg_lol = Videogame(1, "LoL", "/icon.png")
-        vg_dota = Videogame(2, "Dota 2", "/icon2.png")
+        vg_lol = Videogame(1, "LoL", "/icon.png", rank_per_role=True)
+        vg_dota = Videogame(2, "Dota 2", "/icon2.png", rank_per_role=False)
         char = Character(1, "Ahri", vg_lol, "/ahri.png")
         role = Role(1, "Mid", vg_lol, "/mid.png")
         rank_dota = Rank(1, "Herald", 100, vg_dota, "/herald.png")

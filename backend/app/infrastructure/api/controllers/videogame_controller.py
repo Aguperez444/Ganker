@@ -14,9 +14,11 @@ router = APIRouter(prefix="/api/v1/videogames", tags=["Videogames"])
 def get_storage_service():
     return LocalDiskStorageService()
 @router.post("/", status_code=201, response_model=VideogameObjectResponse, dependencies=[Depends(require_admin)])
-def register_videogame(name: str = Form(..., description="Name of the videogame"),
-    icon: UploadFile = File(..., description="Icon image file"), _player_id: int = Depends(get_current_user_id)):
-
+def register_videogame(
+    name: str = Form(..., description="Name of the videogame"),
+    icon: UploadFile = File(..., description="Icon image file"),
+    rank_per_role: bool = Form(..., description="Whether the videogame ranks players per role"),
+):
 
     # Asegurarse de que la petición incluya un archivo con nombre
     if not icon or not icon.filename:
@@ -28,14 +30,17 @@ def register_videogame(name: str = Form(..., description="Name of the videogame"
     uow = uow_factory()
     storage_service = get_storage_service()
     register_videogame_use_case = RegisterVideogame(storage_service, uow)
-    videogame = register_videogame_use_case.execute(name, icon.file, icon.filename)
+    videogame = register_videogame_use_case.execute(name, icon.file, icon.filename, rank_per_role)
 
     return videogame
 
 @router.put("/{videogame_id}", status_code=200, response_model=VideogameObjectResponse, dependencies=[Depends(require_admin)])
-def update_videogame(videogame_id: int, name: str = Form(..., description="Name of the rank"),
-                           icon: UploadFile = File(..., description="Icon image file"),
-                           _player_id: int = Depends(get_current_user_id)):
+def update_videogame(
+    videogame_id: int,
+    name: str = Form(..., description="Name of the videogame"),
+    icon: UploadFile = File(..., description="Icon image file"),
+    rank_per_role: bool = Form(..., description="Whether the videogame ranks players per role"),
+):
 
     if not icon or not icon.filename:
         raise HTTPException(
@@ -47,14 +52,13 @@ def update_videogame(videogame_id: int, name: str = Form(..., description="Name 
     storage_service = get_storage_service()
     update_videogame_use_case = UpdateVideogame(storage_service, uow)
 
-    updated_videogame = update_videogame_use_case.execute(videogame_id, name, icon)
+    updated_videogame = update_videogame_use_case.execute(videogame_id, name, icon, rank_per_role)
 
     return updated_videogame
 
 
 @router.get("/", response_model=GetVideogamesResponse, status_code=200, dependencies=[Depends(require_player)])
-def get_all_videogames(_player_id: int = Depends(get_current_user_id)):
-    # lo del player_id está para que el endpoint esté protegido, pero no se usa en la lógica de este endpoint
+def get_all_videogames():
     uow = uow_factory()
     query_games_use_case = QueryVideogames(uow)
     return query_games_use_case.get_all_videogames()

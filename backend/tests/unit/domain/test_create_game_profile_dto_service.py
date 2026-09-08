@@ -12,7 +12,7 @@ from app.domain.models.game_profile import GameProfile
 class TestCreateGameProfileDTOService:
 
     def test_create_game_profile_dto_orders_characters_by_priority(self):
-        vg = Videogame(videogame_id=1, name="LoL", icon_url="/icon.png")
+        vg = Videogame(videogame_id=1, name="LoL", icon_url="/icon.png", rank_per_role=True)
         char1 = Character(character_id=10, name="Ahri", videogame=vg, icon_url="/ahri.png")
         char2 = Character(character_id=20, name="Yasuo", videogame=vg, icon_url="/yasuo.png")
         char3 = Character(character_id=30, name="Jinx", videogame=vg, icon_url="/jinx.png")
@@ -40,6 +40,7 @@ class TestCreateGameProfileDTOService:
         assert dto.player_id == 42
         assert dto.videogame.id == 1
         assert dto.videogame.name == "LoL"
+        assert dto.videogame.rank_per_role is True
 
         # Verify characters are ordered by priority 1 (Ahri), 2 (Yasuo), 3 (Jinx)
         assert len(dto.characters) == 3

@@ -6,7 +6,7 @@ class Videogame:
         self._videogame_id = videogame_id
         self._name = name
         self._icon_url: str = icon_url
-        self._rank_per_role: bool = rank_per_role
+        self._rank_per_role: bool = bool(rank_per_role) if rank_per_role is not None else False
 
     @property
     def videogame_id(self) -> Optional[int]:
@@ -42,4 +42,4 @@ class Videogame:
         return False
 
     def __repr__(self) -> str:
-        return f"Videogame(videogame_id={self.videogame_id or 'sin_id'}, name='{self.name}', icon_url='{self.icon_url}')"
+        return f"Videogame(videogame_id={self.videogame_id or 'sin_id'}, name='{self.name}', icon_url='{self.icon_url}', rank_per_role={self.rank_per_role})"

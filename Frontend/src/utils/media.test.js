@@ -6,6 +6,13 @@ describe("urlDeMedia", () => {
     expect(urlDeMedia(null)).toBeNull();
     expect(urlDeMedia(undefined)).toBeNull();
     expect(urlDeMedia("")).toBeNull();
+    expect(urlDeMedia("   ")).toBeNull();
+  });
+
+  it("devuelve null para placeholders como 'Sin icono' y 'sin_icon'", () => {
+    expect(urlDeMedia("Sin icono")).toBeNull();
+    expect(urlDeMedia("sin icono")).toBeNull();
+    expect(urlDeMedia("sin_icon")).toBeNull();
   });
 
   it("convierte la ruta relativa del backend en absoluta", () => {
@@ -24,5 +31,12 @@ describe("urlDeMedia", () => {
   it("deja intacta una URL que ya es absoluta", () => {
     const absoluta = "https://cdn.ganker.com/users/1.png";
     expect(urlDeMedia(absoluta)).toBe(absoluta);
+  });
+
+  it("deja intactas URLs blob y data", () => {
+    const blobUrl = "blob:http://localhost:5173/uuid-fake";
+    const dataUrl = "data:image/png;base64,fake-data";
+    expect(urlDeMedia(blobUrl)).toBe(blobUrl);
+    expect(urlDeMedia(dataUrl)).toBe(dataUrl);
   });
 });

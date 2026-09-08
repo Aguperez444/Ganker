@@ -63,19 +63,21 @@ class TestDatabaseMappers:
         assert domain_converted.profiles == []
 
     def test_videogame_mapper(self):
-        vg_domain = Videogame(videogame_id=5, name="Valorant", icon_url="/media/games/val.png")
+        vg_domain = Videogame(videogame_id=5, name="Valorant", icon_url="/media/games/val.png", rank_per_role=False)
         vg_orm = VideogameMapper.domain_to_orm(vg_domain)
         assert vg_orm.videogame_id == 5
         assert vg_orm.name == "Valorant"
         assert vg_orm.icon_url == "/media/games/val.png"
+        assert vg_orm.rank_per_role is False
 
         domain_converted = VideogameMapper.orm_to_domain(vg_orm)
         assert domain_converted.videogame_id == 5
         assert domain_converted.name == "Valorant"
         assert domain_converted.icon_url == "/media/games/val.png"
+        assert domain_converted.rank_per_role is False
 
     def test_character_mapper(self):
-        vg_orm = VideogameORM(videogame_id=1, name="LoL", icon_url="/lol.png")
+        vg_orm = VideogameORM(videogame_id=1, name="LoL", icon_url="/lol.png", rank_per_role=True)
         char_orm = CharacterORM(character_id=10, name="Ahri", videogame_id=1, videogame=vg_orm, icon_url="/ahri.png")
 
         char_domain = CharacterMapper.orm_to_domain(char_orm)
@@ -91,7 +93,7 @@ class TestDatabaseMappers:
         assert converted_orm.videogame_id == 1
 
     def test_character_priority_mapper(self):
-        vg_orm = VideogameORM(videogame_id=1, name="LoL", icon_url="/lol.png")
+        vg_orm = VideogameORM(videogame_id=1, name="LoL", icon_url="/lol.png", rank_per_role=True)
         char_orm = CharacterORM(character_id=10, name="Ahri", videogame_id=1, videogame=vg_orm, icon_url="/ahri.png")
         cp_orm = CharacterPriorityORM(character_priority_id=1, game_profile_id=50, character_id=10, character=char_orm, priority=1)
 
@@ -107,7 +109,7 @@ class TestDatabaseMappers:
         assert converted_orm.game_profile_id == 50
 
     def test_role_mapper(self):
-        vg_orm = VideogameORM(videogame_id=1, name="LoL", icon_url="/lol.png")
+        vg_orm = VideogameORM(videogame_id=1, name="LoL", icon_url="/lol.png", rank_per_role=True)
         role_orm = RoleORM(role_id=2, name="Support", videogame_id=1, videogame=vg_orm, icon_url="/support.png")
 
         role_domain = RoleMapper.orm_to_domain(role_orm)
@@ -123,7 +125,7 @@ class TestDatabaseMappers:
         assert converted_orm.videogame_id == 1
 
     def test_rank_mapper(self):
-        vg_orm = VideogameORM(videogame_id=1, name="LoL", icon_url="/lol.png")
+        vg_orm = VideogameORM(videogame_id=1, name="LoL", icon_url="/lol.png", rank_per_role=True)
         rank_orm = RankORM(rank_id=3, name="Diamond", value=3000, videogame_id=1, videogame=vg_orm, icon_url="/diamond.png")
 
         rank_domain = RankMapper.orm_to_domain(rank_orm)
@@ -141,7 +143,7 @@ class TestDatabaseMappers:
         assert converted_orm.videogame_id == 1
 
     def test_role_profile_mapper(self):
-        vg_orm = VideogameORM(videogame_id=1, name="LoL", icon_url="/lol.png")
+        vg_orm = VideogameORM(videogame_id=1, name="LoL", icon_url="/lol.png", rank_per_role=True)
         role_orm = RoleORM(role_id=1, name="Mid", videogame_id=1, videogame=vg_orm, icon_url="/mid.png")
         rank_orm = RankORM(rank_id=1, name="Challenger", value=5000, videogame_id=1, videogame=vg_orm, icon_url="/chal.png")
         rp_orm = RoleProfileORM(role_profile_id=10, game_profile_id=100, role_id=1, rank_id=1, role=role_orm, rank=rank_orm)
@@ -158,7 +160,7 @@ class TestDatabaseMappers:
         assert converted_orm.rank_id == 1
 
     def test_game_profile_mapper(self):
-        vg_orm = VideogameORM(videogame_id=1, name="LoL", icon_url="/lol.png")
+        vg_orm = VideogameORM(videogame_id=1, name="LoL", icon_url="/lol.png", rank_per_role=True)
         char_orm = CharacterORM(character_id=10, name="Ahri", videogame_id=1, videogame=vg_orm, icon_url="/ahri.png")
         role_orm = RoleORM(role_id=1, name="Mid", videogame_id=1, videogame=vg_orm, icon_url="/mid.png")
         rank_orm = RankORM(rank_id=1, name="Gold", value=1000, videogame_id=1, videogame=vg_orm, icon_url="/gold.png")

@@ -18,7 +18,7 @@ class RegisterVideogame:
         self.uow: IUnitOfWork = unit_of_work
 
 
-    def execute(self, name: str, icon_file, icon_filename) -> VideogameObjectResponse:
+    def execute(self, name: str, icon_file, icon_filename, rank_per_role: bool) -> VideogameObjectResponse:
 
         cleaned_name = self.validate_videogame_name(name)
         self.validate_name_uniqueness(cleaned_name)
@@ -43,6 +43,7 @@ class RegisterVideogame:
                 videogame_id=None,
                 name=cleaned_name,
                 icon_url=icon_url,
+                rank_per_role=rank_per_role,
             )
 
             try:
@@ -57,6 +58,7 @@ class RegisterVideogame:
             id=cast(int, saved_videogame.videogame_id),
             name=saved_videogame.name,
             icon_url=saved_videogame.icon_url or "Sin icono",
+            rank_per_role=saved_videogame.rank_per_role,
         )
 
     # Validar que el nombre del videojuego no esté vacío

@@ -1,3 +1,5 @@
+import { urlDeMedia } from "../../utils/media";
+
 const GameProfileForm = ({
   games,
   characters,
@@ -146,11 +148,14 @@ const GameProfileForm = ({
                           {index + 1}
                         </div>
 
-                        {character.icon_url && (
+                        {urlDeMedia(character.icon_url) && (
                           <img
-                            src={character.icon_url}
-                            alt=""
+                            src={urlDeMedia(character.icon_url)}
+                            alt={character.name}
                             className="h-10 w-10 rounded-lg object-cover"
+                            onError={(e) => {
+                              e.currentTarget.style.display = "none";
+                            }}
                           />
                         )}
 
@@ -231,11 +236,14 @@ const GameProfileForm = ({
                               className="h-4 w-4 accent-ganker-purple"
                             />
 
-                            {role.icon_url && (
+                            {urlDeMedia(role.icon_url) && (
                               <img
-                                src={role.icon_url}
-                                alt=""
+                                src={urlDeMedia(role.icon_url)}
+                                alt={role.name}
                                 className="h-9 w-9 rounded-lg object-cover"
+                                onError={(e) => {
+                                  e.currentTarget.style.display = "none";
+                                }}
                               />
                             )}
 

@@ -21,7 +21,12 @@ class CreateGameProfileDTOService:
         return UpdateGameProfileResponse(
             game_profile_id=cast(int, domain_game_profile.game_profile_id),
             player_id=domain_game_profile.player_id,
-            videogame=VideogameObjectResponse(id=cast(int, domain_game_profile.videogame.videogame_id), name=domain_game_profile.videogame.name, icon_url=domain_game_profile.videogame.icon_url),
+            videogame=VideogameObjectResponse(
+                id=cast(int, domain_game_profile.videogame.videogame_id),
+                name=domain_game_profile.videogame.name,
+                icon_url=domain_game_profile.videogame.icon_url,
+                rank_per_role=domain_game_profile.videogame.rank_per_role,
+            ),
             characters=[CharacterObjectResponse(character_id=cast(int, character.character_id), name=character.name, icon_url=character.icon_url) for character in ordered_characters],
             role_profiles=[RoleProfileObjectResponse(
                 role_profile_id=cast(int,role_profile.role_profile_id),
@@ -40,7 +45,12 @@ class CreateGameProfileDTOService:
         return GameProfileObjectResponse(
             game_profile_id=cast(int, domain_game_profile.game_profile_id),
             player_id=domain_game_profile.player_id,
-            videogame=VideogameObjectResponse(id=cast(int, domain_game_profile.videogame.videogame_id), name=domain_game_profile.videogame.name, icon_url=domain_game_profile.videogame.icon_url),
+            videogame=VideogameObjectResponse(
+                id=cast(int, domain_game_profile.videogame.videogame_id),
+                name=domain_game_profile.videogame.name,
+                icon_url=domain_game_profile.videogame.icon_url,
+                rank_per_role=domain_game_profile.videogame.rank_per_role,
+            ),
             characters=[CharacterObjectResponse(character_id=cast(int, character.character_id), name=character.name, icon_url=character.icon_url) for character in ordered_characters],
             role_profiles=[RoleProfileObjectResponse(
                 role_profile_id=cast(int,role_profile.role_profile_id),

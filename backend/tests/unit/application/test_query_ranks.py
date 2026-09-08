@@ -21,7 +21,7 @@ class TestQueryRanksUseCase:
     def test_get_ranks_by_game_id_happy_path(self, mock_deps):
         use_case, uow = mock_deps
 
-        vg = Videogame(1, "LoL", "/lol.png")
+        vg = Videogame(1, "LoL", "/lol.png", True)
         ranks = [
             Rank(rank_id=1, name="Gold", value=1000, videogame=vg, icon_url="/gold.png"),
             Rank(rank_id=2, name="Platinum", value=2000, videogame=vg, icon_url=None),

@@ -21,8 +21,8 @@ class TestQueryVideogamesUseCase:
         use_case, uow = mock_deps
 
         games = [
-            Videogame(videogame_id=1, name="LoL", icon_url="/media/lol.png"),
-            Videogame(videogame_id=2, name="Valorant", icon_url=None),
+            Videogame(videogame_id=1, name="LoL", icon_url="/media/lol.png", rank_per_role=True),
+            Videogame(videogame_id=2, name="Valorant", icon_url=None, rank_per_role=False),
         ]
         uow.videogame_repo.get_all_videogames.return_value = games
 
@@ -32,9 +32,11 @@ class TestQueryVideogamesUseCase:
         assert result.videogames[0].id == 1
         assert result.videogames[0].name == "LoL"
         assert result.videogames[0].icon_url == "/media/lol.png"
+        assert result.videogames[0].rank_per_role is True
         assert result.videogames[1].id == 2
         assert result.videogames[1].name == "Valorant"
         assert result.videogames[1].icon_url == "Sin icono"
+        assert result.videogames[1].rank_per_role is False
 
     def test_get_all_videogames_empty(self, mock_deps):
         use_case, uow = mock_deps

@@ -1,17 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-
-const resolveIconUrl = (url) => {
-  if (!url || url === "Sin icono") return null;
-  if (
-    url.startsWith("http://") ||
-    url.startsWith("https://") ||
-    url.startsWith("blob:")
-  ) {
-    return url;
-  }
-  const baseUrl = import.meta.env.VITE_API_URL || "";
-  return `${baseUrl.replace(/\/$/, "")}${url.startsWith("/") ? "" : "/"}${url}`;
-};
+import { resolveIconUrl } from "../../utils/media";
 
 const GameForm = ({
   mode = "create",

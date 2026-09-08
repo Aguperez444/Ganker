@@ -1,4 +1,4 @@
-from unittest.mock import AsyncMock, MagicMock
+from unittest.mock import MagicMock
 import pytest
 
 from app.application.use_cases.update_character import UpdateCharacter
@@ -22,16 +22,15 @@ class TestUpdateCharacterUseCase:
         uow.character_repo = MagicMock()
 
         storage_service = MagicMock(spec=IStorageService)
-        storage_service.save_file = AsyncMock(return_value="/media/games/lol/characters/new_ahri.png")
+        storage_service.save_image_file = MagicMock(return_value="/media/games/lol/characters/new_ahri.png")
 
         use_case = UpdateCharacter(storage_service=storage_service, uow=uow)
         return use_case, uow, storage_service
 
-    @pytest.mark.anyio
-    async def test_update_character_happy_path(self, mock_deps):
+    def test_update_character_happy_path(self, mock_deps):
         use_case, uow, storage_service = mock_deps
 
-        vg = Videogame(videogame_id=1, name="LoL", icon_url="/lol.png")
+        vg = Videogame(videogame_id=1, name="LoL", icon_url="/lol.png", rank_per_role=True)
         uow.videogame_repo.get_videogame_by_id.return_value = vg
         uow.character_repo.get_character_by_name_and_videogame.return_value = None
 
@@ -42,59 +41,55 @@ class TestUpdateCharacterUseCase:
         mock_icon = MagicMock()
         mock_icon.filename = "new_ahri.png"
 
-        result = await use_case.execute(character_id=10, name="Ahri Spirit", videogame_id=1, icon=mock_icon)
+        result = use_case.execute(character_id=10, name="Ahri Spirit", videogame_id=1, icon=mock_icon)
 
         assert result.character_id == 10
         assert result.name == "Ahri Spirit"
         assert result.icon_url == "/media/games/lol/characters/new_ahri.png"
 
-        storage_service.save_file.assert_called_once()
+        storage_service.save_image_file.assert_called_once()
         uow.character_repo.update_character.assert_called_once()
 
-    @pytest.mark.anyio
-    async def test_update_character_empty_name(self, mock_deps):
+    def test_update_character_empty_name(self, mock_deps):
         use_case, _, _ = mock_deps
 
         with pytest.raises(InvalidCharacterNameException) as exc_info:
-            await use_case.execute(character_id=10, name="  ", videogame_id=1, icon=None)
+            use_case.execute(character_id=10, name="  ", videogame_id=1, icon=None)
 
         assert exc_info.value.status_code == 400
 
-    @pytest.mark.anyio
-    async def test_update_character_videogame_not_found(self, mock_deps):
+    def test_update_character_videogame_not_found(self, mock_deps):
         use_case, uow, _ = mock_deps
         uow.videogame_repo.get_videogame_by_id.return_value = None
 
         with pytest.raises(VideogameNotFoundException) as exc_info:
-            await use_case.execute(character_id=10, name="Ahri", videogame_id=999, icon=None)
+            use_case.execute(character_id=10, name="Ahri", videogame_id=999, icon=None)
 
         assert exc_info.value.status_code == 404
 
-    @pytest.mark.anyio
-    async def test_update_character_duplicate_name_with_different_id(self, mock_deps):
+    def test_update_character_duplicate_name_with_different_id(self, mock_deps):
         use_case, uow, _ = mock_deps
 
-        vg = Videogame(videogame_id=1, name="LoL", icon_url="/icon.png")
+        vg = Videogame(videogame_id=1, name="LoL", icon_url="/icon.png", rank_per_role=True)
         uow.videogame_repo.get_videogame_by_id.return_value = vg
 
         other_char = Character(character_id=20, name="Yasuo", videogame=vg, icon_url="/yasuo.png")
         uow.character_repo.get_character_by_name_and_videogame.return_value = other_char
 
         with pytest.raises(DuplicatedCharacterNameException) as exc_info:
-            await use_case.execute(character_id=10, name="Yasuo", videogame_id=1, icon=None)
+            use_case.execute(character_id=10, name="Yasuo", videogame_id=1, icon=None)
 
-        assert exc_info.value.status_code == 400
+        assert exc_info.value.status_code == 409
 
-    @pytest.mark.anyio
-    async def test_update_character_not_found(self, mock_deps):
+    def test_update_character_not_found(self, mock_deps):
         use_case, uow, _ = mock_deps
 
-        vg = Videogame(videogame_id=1, name="LoL", icon_url="/icon.png")
+        vg = Videogame(videogame_id=1, name="LoL", icon_url="/icon.png", rank_per_role=True)
         uow.videogame_repo.get_videogame_by_id.return_value = vg
         uow.character_repo.get_character_by_name_and_videogame.return_value = None
         uow.character_repo.get_character_by_id.return_value = None
 
         with pytest.raises(CharacterNotFoundException) as exc_info:
-            await use_case.execute(character_id=999, name="Unknown", videogame_id=1, icon=None)
+            use_case.execute(character_id=999, name="Unknown", videogame_id=1, icon=None)
 
         assert exc_info.value.status_code == 404

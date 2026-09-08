@@ -93,7 +93,8 @@ def seed_catalog_data(test_db_session):
     """Seeds sample videogames, characters, roles, and ranks for tests."""
     videogame = VideogameORM(
         name="League of Legends",
-        icon_url="/media/games/league_of_legends/icon.png"
+        icon_url="/media/games/league_of_legends/icon.png",
+        rank_per_role=True
     )
     test_db_session.add(videogame)
     test_db_session.flush()

@@ -21,7 +21,7 @@ class TestQueryCharactersUseCase:
     def test_get_characters_by_game_id_happy_path(self, mock_deps):
         use_case, uow = mock_deps
 
-        vg = Videogame(1, "LoL", "/lol.png")
+        vg = Videogame(1, "LoL", "/lol.png", True)
         chars = [
             Character(character_id=1, name="Ahri", videogame=vg, icon_url="/ahri.png"),
             Character(character_id=2, name="Yasuo", videogame=vg, icon_url=None),

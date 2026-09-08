@@ -21,6 +21,7 @@ class TestCatalogRepositoriesIntegration:
         assert found.videogame_id == vg_orm.videogame_id
         assert found.name == "League of Legends"
         assert found.icon_url == "/media/games/league_of_legends/icon.png"
+        assert found.rank_per_role is True
 
         assert repo.get_videogame_by_id(99999) is None
 
@@ -31,19 +32,22 @@ class TestCatalogRepositoriesIntegration:
         assert repo.get_videogame_by_name("nonexistent") is None
 
         # Register new videogame
-        new_vg = Videogame(videogame_id=None, name="Valorant", icon_url="/val.png")
+        new_vg = Videogame(videogame_id=None, name="Valorant", icon_url="/val.png", rank_per_role=False)
         saved = repo.register_videogame(new_vg)
         test_db_session.commit()
         assert saved.videogame_id is not None
         assert saved.name == "Valorant"
+        assert saved.rank_per_role is False
 
         # Update videogame
         saved.name = "Valorant Champions"
         saved.icon_url = "/val_new.png"
+        saved.rank_per_role = True
         updated = repo.update_videogame(saved)
         test_db_session.commit()
         assert updated.name == "Valorant Champions"
         assert updated.icon_url == "/val_new.png"
+        assert updated.rank_per_role is True
 
         # Get all
         all_games = repo.get_all_videogames()
@@ -74,7 +78,7 @@ class TestCatalogRepositoriesIntegration:
         assert repo.get_character_by_name_and_videogame("NonExistent", vg_orm.videogame_id) is None
 
         # Create character
-        vg_domain = Videogame(vg_orm.videogame_id, vg_orm.name, vg_orm.icon_url)
+        vg_domain = Videogame(vg_orm.videogame_id, vg_orm.name, vg_orm.icon_url, vg_orm.rank_per_role)
         new_char = Character(None, "Teemo", vg_domain, "/teemo.png")
         created = repo.create_character(new_char)
         test_db_session.commit()
@@ -108,7 +112,7 @@ class TestCatalogRepositoriesIntegration:
         assert len(roles) == 3
 
         # Save role
-        vg_domain = Videogame(vg_orm.videogame_id, vg_orm.name, vg_orm.icon_url)
+        vg_domain = Videogame(vg_orm.videogame_id, vg_orm.name, vg_orm.icon_url, vg_orm.rank_per_role)
         new_role = Role(None, "Jungler", vg_domain, "/jungle.png")
         saved = repo.save_role(new_role)
         test_db_session.commit()
@@ -135,7 +139,7 @@ class TestCatalogRepositoriesIntegration:
         assert len(ranks) == 3
 
         # Save rank
-        vg_domain = Videogame(vg_orm.videogame_id, vg_orm.name, vg_orm.icon_url)
+        vg_domain = Videogame(vg_orm.videogame_id, vg_orm.name, vg_orm.icon_url, vg_orm.rank_per_role)
         new_rank = Rank(None, "Master", 4000, vg_domain, "/master.png")
         saved = repo.save_rank(new_rank)
         test_db_session.commit()

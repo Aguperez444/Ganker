@@ -1,11 +1,4 @@
-const resolveIconUrl = (url) => {
-  if (!url || url === "Sin icono") return null;
-  if (url.startsWith("http://") || url.startsWith("https://")) {
-    return url;
-  }
-  const baseUrl = import.meta.env.VITE_API_URL || "";
-  return `${baseUrl.replace(/\/$/, "")}${url.startsWith("/") ? "" : "/"}${url}`;
-};
+import { resolveIconUrl } from "../../utils/media";
 
 const RanksListComponent = ({ ranks, isLoading, error }) => {
   if (isLoading) {

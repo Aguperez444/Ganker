@@ -19,7 +19,7 @@ class UpdateVideogame:
         self.storage_service: IStorageService = storage_service
         self.uow: IUnitOfWork = unit_of_work
 
-    def execute(self, videogame_id: int, name: str, icon: UploadFile) -> VideogameObjectResponse:
+    def execute(self, videogame_id: int, name: str, icon: UploadFile, rank_per_role: bool) -> VideogameObjectResponse:
 
         existing_game = self.validate_videogame_exists(videogame_id)
         cleaned_name = name.strip() if name else existing_game.name
@@ -27,6 +27,7 @@ class UpdateVideogame:
 
         #actualizar juego
         existing_game.name = cleaned_name
+        existing_game.rank_per_role = rank_per_role
 
         game_folder = SlugService.to_slug(cleaned_name)
         with self.uow as uow:
@@ -53,6 +54,7 @@ class UpdateVideogame:
             id=cast(int,updated_game.videogame_id),
             name=updated_game.name,
             icon_url=updated_game.icon_url or "Sin icono",
+            rank_per_role=updated_game.rank_per_role,
         )
 
     # Validar existencia del juego
