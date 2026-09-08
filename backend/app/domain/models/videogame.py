@@ -28,7 +28,11 @@ class Videogame:
     def icon_url(self, value: str):
         self._icon_url = value
 
+
     def __eq__(self, other: object) -> bool:
         if isinstance(other, Videogame):
             return self._videogame_id is not None and self._videogame_id == other._videogame_id
         return False
+
+    def __repr__(self) -> str:
+        return f"Videogame(videogame_id={self.videogame_id or 'sin_id'}, name='{self.name}', icon_url='{self.icon_url}')"

@@ -36,3 +36,7 @@ class Role:
     @icon_url.setter
     def icon_url(self, value: str):
         self._icon_url = value
+
+    def __repr__(self) -> str:
+        return (f"Role(role_id={self.role_id or 'sin_id'}, name='{self.name}',"
+                f" videogame={self.videogame}, icon_url='{self.icon_url}')")

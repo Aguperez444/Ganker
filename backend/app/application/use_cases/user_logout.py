@@ -1,11 +1,11 @@
 from app.application.ports.i_token_service import ITokenService
 from app.application.ports.i_unit_of_work import IUnitOfWork
-from app.domain.exceptions.auth.Invalid_token_exception import InvalidTokenException
+from app.domain.exceptions.auth.invalid_token_exception import InvalidTokenException
 
 
 class UserLogout:
-    def __init__(self, ouw: IUnitOfWork, token_service: ITokenService):
-        self.uow: IUnitOfWork = ouw
+    def __init__(self, uow: IUnitOfWork, token_service: ITokenService):
+        self.uow: IUnitOfWork = uow
         self.token_service = token_service
 
     def execute(self, refresh_token: str) -> None:

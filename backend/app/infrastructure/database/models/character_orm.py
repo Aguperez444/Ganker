@@ -1,5 +1,4 @@
-from typing import List
-from sqlalchemy import ForeignKey
+from sqlalchemy import ForeignKey, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.infrastructure.database.base import Base
@@ -22,8 +21,11 @@ class CharacterORM(Base):
     # Relaciones
     videogame: Mapped["VideogameORM"] = relationship(back_populates="characters")
 
-    game_profile_associations: Mapped[List["CharacterPriorityORM"]] = relationship(
+    game_profile_associations: Mapped[list["CharacterPriorityORM"]] = relationship(
         "CharacterPriorityORM",
         back_populates="character",
         cascade="all, delete-orphan"
     )
+
+    # Constraints
+    __table_args__ = (UniqueConstraint("videogame_id", "name", name="uq_videogame_character_name"),)

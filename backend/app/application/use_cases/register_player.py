@@ -1,85 +1,70 @@
 import re
-from typing import cast, TYPE_CHECKING
+
+from typing import TYPE_CHECKING, cast
 
 from app.application.ports.i_password_hasher import IPasswordHasher
 from app.application.ports.i_token_service import ITokenService
 from app.application.ports.i_unit_of_work import IUnitOfWork
-from app.infrastructure.api.dto.response.register_user_response import RegisterUserResponse
 from app.domain.exceptions.mail.email_already_exists_exception import EmailAlreadyExistsException
-from app.domain.exceptions.auth.password_is_not_secure_exception import PasswordIsNotSecureException
 from app.domain.exceptions.user.invalid_username_exception import InvalidUsernameException
-from app.domain.exceptions.user.unauthotized_exception import UnauthorizedException
-from app.domain.exceptions.user.user_not_found_exception import UserNotFoundException
-from app.domain.exceptions.user.username_already_exist_exception import UsernameAlreadyExistsException
+from app.domain.exceptions.auth.password_is_not_secure_exception import PasswordIsNotSecureException
+from app.domain.exceptions.user.username_already_exists_exception import UsernameAlreadyExistsException
 from app.domain.models.user import User
+from app.infrastructure.api.dto.response.auth_tokens_response import AuthTokensResponse
 from app.domain.models.user_role import UserRole
 
 if TYPE_CHECKING:
-    from app.infrastructure.api.dto.request.register_user_request import RegisterUserRequest
+    from app.infrastructure.api.dto.request.register_player_request import RegisterPlayerRequest
 
-class RegisterUser:
+
+
+class RegisterPlayer:
     def __init__(self, unit_of_work: IUnitOfWork, token_service: ITokenService, password_hasher: IPasswordHasher):
         self.uow: IUnitOfWork = unit_of_work
         self.token_service: ITokenService = token_service
         self.pass_hasher: IPasswordHasher = password_hasher
 
-    def execute(self, user_data: 'RegisterUserRequest', current_user_id: int) -> RegisterUserResponse:
+    def execute(self, player_data: 'RegisterPlayerRequest') -> AuthTokensResponse:
         # Se asume que lo que me llega es un mail por la validación de pydantic en el dto.
         # Validar que no exista otra cuenta con ese mail
-        if not self.validate_mail(user_data.mail):
-            raise EmailAlreadyExistsException(user_data.mail)
+        if not self.validate_mail(player_data.mail):
+            raise EmailAlreadyExistsException(player_data.mail)
 
         # Validar que no exista otra cuenta con ese username y que el mismo sea válido
-        if not self.validate_username(user_data.username):
-            raise UsernameAlreadyExistsException(user_data.username)
+        if not self.validate_username(player_data.username):
+            raise UsernameAlreadyExistsException(player_data.username)
 
         # Validar que la contraseña cumpla el criterio de seguridad (mínimo 8 caracteres,
         # al menos una mayúscula, al menos una minúscula y al menos un número)
-        self.validate_password_security(user_data.password)
-
-        # Validar que el rol del usuario sea válido para lo que se está registrando
-
-
-        user = self.uow.user_repo.get_user_by_id(current_user_id)
-        if user is None:
-            raise UserNotFoundException(current_user_id)
-
-
-        if user.role == UserRole.ADMIN and user_data.role == UserRole.OWNER:
-            raise UnauthorizedException(user.user_id, user.role.value, user_data.role)
-
-        # Crear el usuario en el dominio
-        new_user = User(None, user_data.username, user_data.name, user_data.mail, user_data.password, UserRole(user_data.role), [])
-
+        self.validate_password_security(player_data.password)
 
         #hashear la password del usuario antes de persistirlo en la base de datos
-        new_user.password_hash = self.pass_hasher.hash_password(user_data.password)
+        hashed_pass = self.pass_hasher.hash_password(player_data.password)
+
+        # crear el usuario en el dominio
+        new_player = User(None, player_data.username, player_data.name, player_data.mail, hashed_pass, UserRole.PLAYER, [])
 
         # persistir el usuario en la base de datos y obtener el usuario registrado con su id
         with self.uow as uow:
-            registered_user = uow.user_repo.create_user(new_user)
-            user_id = cast(int, registered_user.user_id)
+            registered_player = uow.user_repo.create_user(new_player)
+            player_id = cast(int, registered_player.user_id)
+            role = registered_player.role
             # Generar tokens con ID, rol, jti y fecha de expiración
             access_token, refresh_token, jti, expires_at = self.token_service.generate_tokens(
-                user_id=user_id,
-                role=registered_user.role
+                user_id=player_id,
+                role=role
             )
 
             # Persistir el refresh token asociado
             uow.refresh_token_repo.save(
-                user_id=user_id,
-                role=registered_user.role,
+                user_id=player_id,
+                role=role,
                 jti=jti,
                 expires_at=expires_at
             )
 
-        return RegisterUserResponse(
-            user_id=user_id,
-            username=registered_user.username,
-            name=registered_user.name,
-            mail=registered_user.mail,
-            role=registered_user.role
-        )
+        return AuthTokensResponse(access_token, refresh_token)
+
 
     def validate_username(self, username: str) -> bool:
         if username is None or username.strip() == "":

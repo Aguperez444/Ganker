@@ -16,7 +16,7 @@ class RegisterCharacter:
         self.uow: IUnitOfWork = unit_of_work
         self.storage_service: IStorageService = storage_service
 
-    async def execute(self, name: str, videogame_id: int, icon_file, icon_filename) -> CharacterObjectResponse:
+    def execute(self, name: str, videogame_id: int, icon_file, icon_filename) -> CharacterObjectResponse:
         cleaned_name = self.validate_character_name(name)
 
         # Comprobar que existe el juego
@@ -38,7 +38,7 @@ class RegisterCharacter:
 
         with self.uow as uow:
             # Guardar imagen a través del puerto si se proporciona un archivo
-            icon_url = await self.storage_service.save_file(
+            icon_url = self.storage_service.save_image_file(
                 file_content=icon_file,
                 filename=icon_filename,
                 subfolder=f"games/{game_folder}/characters",
@@ -64,7 +64,7 @@ class RegisterCharacter:
             except Exception as e:
                 # Evitar basura en disco si la BD rechaza la inserción
                 if icon_url:
-                    await self.storage_service.delete_file(icon_url)
+                    self.storage_service.delete_file(icon_url)
                 raise e  # volver a levantar la excepción después de limpiar el archivo para hacer rollback
 
         return CharacterObjectResponse(

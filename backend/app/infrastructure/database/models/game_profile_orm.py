@@ -1,5 +1,5 @@
 from typing import List, Optional
-from sqlalchemy import ForeignKey
+from sqlalchemy import ForeignKey, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.infrastructure.database.base import Base
@@ -31,3 +31,6 @@ class GameProfileORM(Base):
         cascade="all, delete-orphan",
         order_by="CharacterPriorityORM.priority"
     )
+
+    # Constraints
+    __table_args__ = (UniqueConstraint("player_id", "videogame_id", name="uq_profile_x_videogame"),)

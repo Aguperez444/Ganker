@@ -1,7 +1,7 @@
 import pytest
 from unittest.mock import MagicMock
 
-from app.application.useCases.query_users import QueryUsers
+from app.application.use_cases.query_users import QueryUsers
 from app.domain.models.user import User
 from app.domain.models.user_role import UserRole
 from app.domain.exceptions.user.user_not_found_exception import UserNotFoundException

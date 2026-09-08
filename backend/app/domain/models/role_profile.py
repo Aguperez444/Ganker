@@ -32,3 +32,7 @@ class RoleProfile:
     @role_profile_id.setter
     def role_profile_id(self, value: Optional[int]) -> None:
         self._role_profile_id = value
+
+    def __repr__(self) -> str:
+        return (f"RoleProfile(role_profile_id={self.role_profile_id or 'sin_id'},"
+                f" role={self.role}, rank={self.rank})")

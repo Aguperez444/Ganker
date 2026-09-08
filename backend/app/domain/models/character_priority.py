@@ -33,4 +33,5 @@ class CharacterPriority:
         self._priority_id = value
 
 
-
+    def __repr__(self) -> str:
+        return f"CharacterPriority(priority_id={self.priority_id or 'sin_id'}, character={self.character}, priority={self.priority})"

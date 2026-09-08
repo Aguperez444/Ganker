@@ -1,4 +1,4 @@
-from abc import ABC
+from abc import ABC, abstractmethod
 
 from app.application.ports.i_character_repository import ICharacterRepository
 from app.application.ports.i_game_profile_repository import IGameProfileRepository
@@ -18,14 +18,18 @@ class IUnitOfWork(ABC):
     character_repo: 'ICharacterRepository'
     refresh_token_repo: 'IRefreshTokenRepository'
 
+    @abstractmethod
     def __enter__(self) -> 'IUnitOfWork':
         pass
 
+    @abstractmethod
     def __exit__(self, exc_type, exc, tb) -> None:
         pass
 
+    @abstractmethod
     def commit(self) -> None:
         pass
 
+    @abstractmethod
     def rollback(self) -> None:
         pass

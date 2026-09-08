@@ -6,7 +6,7 @@ import jwt
 from typing_extensions import Any
 
 from app.application.ports.i_token_service import ITokenService
-from app.domain.exceptions.auth.Invalid_token_exception import InvalidTokenException
+from app.domain.exceptions.auth.invalid_token_exception import InvalidTokenException
 from app.domain.models.user_role import UserRole
 
 

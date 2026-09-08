@@ -1,7 +1,7 @@
 from unittest.mock import AsyncMock, MagicMock
 import pytest
 
-from app.application.useCases.create_role import CreateRoleUseCase
+from app.application.use_cases.create_role import CreateRole
 from app.application.ports.i_storage_service import IStorageService
 from app.domain.models.videogame import Videogame
 from app.domain.models.role import Role
@@ -26,7 +26,7 @@ class TestCreateRoleUseCase:
         storage_service.save_file = AsyncMock(return_value="/media/games/lol/roles/mid.png")
         storage_service.delete_file = AsyncMock(return_value=True)
 
-        use_case = CreateRoleUseCase(storage_service=storage_service, uow=uow)
+        use_case = CreateRole(storage_service=storage_service, uow=uow)
         return use_case, uow, storage_service
 
     @pytest.mark.anyio

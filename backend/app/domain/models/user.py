@@ -82,3 +82,8 @@ class User:
     @icon_url.setter
     def icon_url(self, value: Optional[str]) -> None:
         self._icon_url = value
+
+    def __repr__(self) -> str:
+        return (f"User(user_id={self.user_id or 'sin_id'}, username='{self.username}',"
+                f" name='{self.name}', mail='{self.mail or 'sin_mail'}', password_hash='{self.password_hash or 'sin_password'}',"
+                f" role={self.role}, profiles={self.profiles}, icon_url='{self.icon_url or 'sin_icon'}')")

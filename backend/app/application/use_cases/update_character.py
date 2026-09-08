@@ -20,7 +20,7 @@ class UpdateCharacter:
         self.storage_service: IStorageService = storage_service
         self.uow: IUnitOfWork = uow
 
-    async def execute(self, character_id: int, name: str, videogame_id: int, icon) -> CharacterObjectResponse:
+    def execute(self, character_id: int, name: str, videogame_id: int, icon) -> CharacterObjectResponse:
 
         # Validar que el nombre no esté vacío
         if not name.strip():
@@ -44,7 +44,7 @@ class UpdateCharacter:
 
             if icon and icon.filename:
                 # Guardar la nueva imagen a través del puerto
-                new_icon_url = await self.storage_service.save_file(
+                new_icon_url = self.storage_service.save_image_file(
                     file_content=icon.file,
                     filename=icon.filename,
                     subfolder=f"games/{game_folder}/characters",
