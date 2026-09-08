@@ -29,8 +29,8 @@ const AdminSidebar = () => {
     <aside className="hidden w-20 shrink-0 flex-col border-r border-white/10 bg-ganker-surface lg:flex">
       <div className="flex h-17 items-center justify-center border-b border-white/10">
         <Link
-          to="/"
-          title="Ir a la página principal"
+          to="/app/admin"
+          title="Panel de administración"
           className="flex h-10 w-10 items-center justify-center transition hover:opacity-90 hover:scale-105"
         >
           <img

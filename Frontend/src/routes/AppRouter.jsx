@@ -12,6 +12,10 @@ import RanksPage from "../pages/admin/RanksPage.jsx";
 import ProtectedRoute from "./ProtectedRoute.jsx";
 import PublicOnlyRoute from "./PublicOnlyRoute.jsx";
 import ProfilePage from "../pages/ProfilePage.jsx";
+import BuscarJugadoresPage from "../pages/BuscarJugadoresPage.jsx";
+import EquiposPage from "../pages/EquiposPage.jsx";
+import CharactersPage from "../pages/admin/CharactersPage.jsx";
+import ModeracionPage from "../pages/admin/ModeracionPage.jsx";
 import { ROLES_ADMIN } from "../utils/rutas.js";
 
 /**
@@ -38,16 +42,13 @@ function AppRouter() {
             <Route path="perfil" element={<ProfilePage />} />
             {/* US 02 - Modificar mis datos. Es el boton "Cuenta" del sidebar. */}
             <Route path="cuenta" element={<CuentaPage />} />
-            {/*
-              Las próximas User Stories se incorporarán acá.
-
-              Ejemplo:
-
-              <Route
-                path="jugadores"
-                element={<BuscarJugadoresPage />}
-              />
-              */}
+            {/* Páginas placeholder para funcionalidades en próximos sprints */}
+            <Route path="jugadores" element={<BuscarJugadoresPage />} />
+            <Route
+              path="buscar"
+              element={<Navigate to="/app/jugadores" replace />}
+            />
+            <Route path="equipos" element={<EquiposPage />} />
           </Route>
         </Route>
 
@@ -64,6 +65,13 @@ function AppRouter() {
             <Route index element={<AdminHomePage />} />
             <Route path="games" element={<GamesPage />} />
             <Route path="ranks" element={<RanksPage />} />
+            {/* Módulos administrativos placeholder */}
+            <Route path="characters" element={<CharactersPage />} />
+            <Route
+              path="personajes"
+              element={<Navigate to="/app/admin/characters" replace />}
+            />
+            <Route path="moderacion" element={<ModeracionPage />} />
           </Route>
         </Route>
 

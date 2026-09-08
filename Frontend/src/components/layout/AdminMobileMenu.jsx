@@ -27,14 +27,26 @@ const AdminMobileMenu = ({ isOpen, onClose }) => {
 
       <aside className="relative flex h-full w-72 max-w-[85vw] flex-col border-r border-white/10 bg-ganker-surface shadow-2xl">
         <header className="flex h-17 items-center justify-between border-b border-white/10 px-5">
-          <Link to="/" onClick={onClose} className="block">
-            <p className="text-xs font-semibold tracking-[0.14em] text-ganker-purple-light uppercase">
-              Ganker
-            </p>
+          <Link
+            to="/app/admin"
+            onClick={onClose}
+            className="flex items-center gap-3 transition hover:opacity-90"
+          >
+            <img
+              src="/images/logo_svg.svg"
+              alt="Logo de Ganker"
+              className="h-9 w-9 object-contain"
+            />
 
-            <p className="font-heading font-semibold text-ganker-text">
-              Administración
-            </p>
+            <div>
+              <p className="text-xs font-semibold tracking-[0.14em] text-ganker-purple-light uppercase">
+                Ganker
+              </p>
+
+              <p className="font-heading font-semibold text-ganker-text">
+                Administración
+              </p>
+            </div>
           </Link>
 
           <button

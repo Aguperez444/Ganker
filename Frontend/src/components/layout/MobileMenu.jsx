@@ -30,7 +30,7 @@ const MobileMenu = ({ isOpen, onClose }) => {
       <aside className="relative flex h-full w-72 max-w-[85vw] flex-col border-r border-white/10 bg-ganker-surface shadow-2xl">
         <header className="flex h-17 items-center justify-between border-b border-white/10 px-5">
           <Link
-            to="/"
+            to="/app"
             onClick={onClose}
             className="flex items-center gap-3 transition hover:opacity-90"
           >
