@@ -38,7 +38,7 @@ def register_videogame(
 def update_videogame(
     videogame_id: int,
     name: str = Form(..., description="Name of the videogame"),
-    icon: UploadFile = File(..., description="Icon image file"),
+    icon: UploadFile | None = File(None, description="Icon image file"),
     rank_per_role: bool = Form(..., description="Whether the videogame ranks players per role"),
 ):
 

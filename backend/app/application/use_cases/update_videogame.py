@@ -30,12 +30,14 @@ class UpdateVideogame:
         existing_game.rank_per_role = rank_per_role
 
         game_folder = SlugService.to_slug(cleaned_name)
+
         with self.uow as uow:
+            # sí me llego una imagen nueva
             if icon and icon.filename:
-                # Eliminar la imagen anterior si existe
+                # Elimino la imagen anterior si la imagen anterior si existe
                 if existing_game.icon_url:
                     self.storage_service.delete_file(existing_game.icon_url)
-                # Guardar la nueva imagen a través del puerto
+                # Guardo la nueva imagen a través del puerto
                 new_icon_url = self.storage_service.save_image_file(
                     file_content=icon.file,
                     filename=icon.filename,
