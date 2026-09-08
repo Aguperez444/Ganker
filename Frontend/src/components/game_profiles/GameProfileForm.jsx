@@ -68,33 +68,58 @@ const GameProfileForm = ({
       </div>
 
       {/* Videojuego */}
-      <div className="max-w-xl">
-        <label
-          htmlFor="videogame"
-          className="mb-2 block text-sm font-semibold text-ganker-text"
-        >
+      <div>
+        <label className="mb-3 block text-sm font-semibold text-ganker-text">
           Videojuego
         </label>
 
-        <select
-          id="videogame"
-          value={selectedGameId}
-          onChange={(event) => onGameChange(event.target.value)}
-          disabled={isLoadingGames || isEditMode}
-          className="w-full rounded-xl border border-white/10 bg-ganker-surface-light px-4 py-3 text-sm text-ganker-text outline-none transition focus:border-ganker-purple-light disabled:cursor-not-allowed disabled:opacity-60"
-        >
-          <option value="">
-            {isLoadingGames
-              ? "Cargando videojuegos..."
-              : "Selecciona un videojuego"}
-          </option>
+        {isLoadingGames ? (
+          <p className="text-sm text-ganker-muted">Cargando videojuegos...</p>
+        ) : (
+          <div className="flex flex-wrap gap-3">
+            {(isEditMode
+              ? games.filter((game) => String(game.id) === String(selectedGameId))
+              : games
+            ).map((game) => {
+              const isSelected = String(game.id) === String(selectedGameId);
+              const iconUrl = urlDeMedia(game.icon_url);
 
-          {games.map((game) => (
-            <option key={game.id} value={game.id}>
-              {game.name}
-            </option>
-          ))}
-        </select>
+              return (
+                <button
+                  key={game.id}
+                  type="button"
+                  onClick={() => onGameChange(String(game.id))}
+                  disabled={isEditMode}
+                  className={`flex w-28 flex-col items-center gap-2 rounded-xl border p-3 text-center transition ${
+                    isSelected
+                      ? "border-ganker-purple-light bg-ganker-purple/20"
+                      : "border-white/10 bg-ganker-surface-light hover:border-ganker-purple-light/50 hover:bg-white/5"
+                  } ${isEditMode ? "cursor-not-allowed opacity-90" : "cursor-pointer"}`}
+                >
+                  <div className="flex h-12 w-12 items-center justify-center overflow-hidden rounded-lg bg-ganker-surface">
+                    {iconUrl ? (
+                      <img
+                        src={iconUrl}
+                        alt={game.name}
+                        className="h-full w-full object-cover"
+                        onError={(e) => {
+                          e.currentTarget.style.display = "none";
+                        }}
+                      />
+                    ) : (
+                      <span className="text-lg font-bold text-ganker-purple-light">
+                        {game.name.charAt(0).toUpperCase()}
+                      </span>
+                    )}
+                  </div>
+                  <span className="line-clamp-2 text-xs font-medium text-ganker-text">
+                    {game.name}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+        )}
 
         {isEditMode && (
           <p className="mt-2 text-xs text-ganker-muted">
@@ -155,6 +180,53 @@ const GameProfileForm = ({
                     ))}
                   </select>
                 </div>
+
+                {availableCharacters.length > 0 && (
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    {availableCharacters.slice(0, 5).map((character) => {
+                      const iconUrl = urlDeMedia(character.icon_url);
+
+                      return (
+                        <button
+                          key={character.character_id}
+                          type="button"
+                          onClick={() =>
+                            onAddCharacter(String(character.character_id))
+                          }
+                          className="flex items-center gap-2 rounded-lg border border-white/10 bg-ganker-surface-light py-1.5 pr-3 pl-1.5 transition hover:border-ganker-purple-light/50 hover:bg-white/5"
+                        >
+                          <div className="flex h-8 w-8 shrink-0 items-center justify-center overflow-hidden rounded-md bg-ganker-surface">
+                            {iconUrl ? (
+                              <img
+                                src={iconUrl}
+                                alt={character.name}
+                                className="h-full w-full object-cover"
+                                onError={(e) => {
+                                  e.currentTarget.style.display = "none";
+                                }}
+                              />
+                            ) : (
+                              <span className="text-xs font-semibold text-ganker-purple-light">
+                                {character.name.charAt(0).toUpperCase()}
+                              </span>
+                            )}
+                          </div>
+
+                          <span className="max-w-20 truncate text-xs font-medium text-ganker-text">
+                            {character.name}
+                          </span>
+
+                          <span
+                            className="text-sm font-bold text-ganker-purple-light"
+                            aria-hidden="true"
+                          >
+                            +
+                          </span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
 
                 {selectedCharacters.length > 0 && (
                   <div className="mt-4 space-y-2">
