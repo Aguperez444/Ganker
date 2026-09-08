@@ -19,7 +19,7 @@ class UpdateVideogame:
         self.storage_service: IStorageService = storage_service
         self.uow: IUnitOfWork = unit_of_work
 
-    async def execute(self, videogame_id: int, name: str, icon: UploadFile) -> VideogameObjectResponse:
+    def execute(self, videogame_id: int, name: str, icon: UploadFile) -> VideogameObjectResponse:
 
         existing_game = self.validate_videogame_exists(videogame_id)
         cleaned_name = name.strip() if name else existing_game.name
@@ -33,9 +33,9 @@ class UpdateVideogame:
             if icon and icon.filename:
                 # Eliminar la imagen anterior si existe
                 if existing_game.icon_url:
-                    await self.storage_service.delete_file(existing_game.icon_url)
+                    self.storage_service.delete_file(existing_game.icon_url)
                 # Guardar la nueva imagen a través del puerto
-                new_icon_url = await self.storage_service.save_image_file(
+                new_icon_url = self.storage_service.save_image_file(
                     file_content=icon.file,
                     filename=icon.filename,
                     subfolder=f"games/{game_folder}",

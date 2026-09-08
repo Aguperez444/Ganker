@@ -1,5 +1,5 @@
 from app.application.ports.i_unit_of_work import IUnitOfWork
-from app.infrastructure.api.dto.response.get_player_response import GetUserResponse
+from app.infrastructure.api.dto.response.get_user_response import GetUserResponse
 from app.domain.exceptions.user.user_not_found_exception import UserNotFoundException
 from app.domain.services.create_game_profile_dto_service import CreateGameProfileDTOService
 

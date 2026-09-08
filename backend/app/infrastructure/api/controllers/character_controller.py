@@ -1,11 +1,11 @@
 from fastapi import APIRouter, Depends, UploadFile, HTTPException, status, Form, File
 
-from app.application.useCases.query_characters import QueryCharacters
-from app.application.useCases.register_character import RegisterCharacter
-from app.application.useCases.update_character import UpdateCharacter
+from app.application.use_cases.query_characters import QueryCharacters
+from app.application.use_cases.register_character import RegisterCharacter
+from app.application.use_cases.update_character import UpdateCharacter
 from app.infrastructure.api.dto.response.base_classes.character_object_response import CharacterObjectResponse
 from app.infrastructure.api.dto.response.get_characters_response import GetCharactersResponse
-from app.infrastructure.api.dependencies.auth import get_current_user_id, require_admin, require_player
+from app.infrastructure.api.dependencies.auth import require_admin, require_player
 
 
 from app.infrastructure.database.unit_of_work.uow_factory import uow_factory
@@ -25,7 +25,7 @@ def get_characters_by_videogame_id(videogame_id: int):
 
 
 @router.post("/", status_code=201, response_model=CharacterObjectResponse, dependencies=[Depends(require_admin)])
-async def register_character(name: str = Form(..., description="Name of the character"),
+def register_character(name: str = Form(..., description="Name of the character"),
                              videogame_id: int = Form(..., description="ID of the videogame"),
                              icon: UploadFile = File(..., description="Icon image file"),
                              ):
@@ -40,12 +40,12 @@ async def register_character(name: str = Form(..., description="Name of the char
     uow = uow_factory()
     storage_service = get_storage_service()
     register_character_use_case = RegisterCharacter(storage_service, uow)
-    character = await register_character_use_case.execute(name, videogame_id, icon.file, icon.filename)
+    character = register_character_use_case.execute(name, videogame_id, icon.file, icon.filename)
 
     return character
 
 @router.put("/{character_id}", status_code=200, response_model=CharacterObjectResponse, dependencies=[Depends(require_admin)])
-async def update_character(character_id: int,
+def update_character(character_id: int,
                            name: str = Form(..., description="Name of the character"),
                            videogame_id: int = Form(..., description="ID of the videogame"),
                            icon: UploadFile = File(description="Icon image file"),
@@ -62,6 +62,6 @@ async def update_character(character_id: int,
     storage_service = get_storage_service()
     update_character_use_case = UpdateCharacter(storage_service, uow)
 
-    updated_character = await update_character_use_case.execute(character_id, name, videogame_id, icon)
+    updated_character = update_character_use_case.execute(character_id, name, videogame_id, icon)
 
     return updated_character

@@ -39,3 +39,7 @@ class Character:
     @icon_url.setter
     def icon_url(self, value: str) -> None:
         self._icon_url = value
+
+
+    def __repr__(self) -> str:
+        return f"Character(character_id={self.character_id or 'sin_id'}, name='{self.name}', videogame={self.videogame}, icon_url='{self.icon_url}')"

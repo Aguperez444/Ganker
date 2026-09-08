@@ -55,3 +55,7 @@ class GameProfile:
     def role_profiles(self, value: list['RoleProfile']) -> None:
         self._role_profiles = value
 
+    def __repr__(self) -> str:
+        return (f"GameProfile(game_profile_id={self.game_profile_id or 'sin_id'},"
+                f" player_id={self.player_id}, videogame={self.videogame},"
+                f" characters_priority={self.characters_priority}, role_profiles={self.role_profiles})")

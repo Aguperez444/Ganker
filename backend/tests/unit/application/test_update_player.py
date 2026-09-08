@@ -1,11 +1,11 @@
 from unittest.mock import AsyncMock, MagicMock
 import pytest
 
-from app.application.useCases.update_player import UpdateUser
+from app.application.use_cases.update_user import UpdateUser
 from app.application.ports.i_storage_service import IStorageService
 from app.domain.models.user import User
 from app.domain.models.user_role import UserRole
-from app.domain.exceptions.user.username_already_exist_exception import UsernameAlreadyExistsException
+from app.domain.exceptions.user.username_already_exists_exception import UsernameAlreadyExistsException
 from app.domain.exceptions.mail.email_already_exists_exception import EmailAlreadyExistsException
 from app.domain.exceptions.user.user_not_found_exception import UserNotFoundException
 

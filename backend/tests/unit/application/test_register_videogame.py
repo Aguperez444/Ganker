@@ -1,7 +1,7 @@
 from unittest.mock import AsyncMock, MagicMock
 import pytest
 
-from app.application.useCases.register_videogame import RegisterVideogame
+from app.application.use_cases.register_videogame import RegisterVideogame
 from app.application.ports.i_storage_service import IStorageService
 from app.domain.models.videogame import Videogame
 from app.domain.exceptions.videogame.invalid_videogame_name_exception import InvalidVideogameNameException

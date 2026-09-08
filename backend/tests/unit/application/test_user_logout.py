@@ -1,9 +1,9 @@
 import pytest
 from unittest.mock import MagicMock
 
-from app.application.useCases.user_logout import UserLogout
+from app.application.use_cases.user_logout import UserLogout
 from app.application.ports.i_token_service import ITokenService
-from app.domain.exceptions.auth.Invalid_token_exception import InvalidTokenException
+from app.domain.exceptions.auth.invalid_token_exception import InvalidTokenException
 
 
 class TestUserLogoutUseCase:
@@ -16,7 +16,7 @@ class TestUserLogoutUseCase:
         uow.refresh_token_repo = MagicMock()
 
         token_service = MagicMock(spec=ITokenService)
-        use_case = UserLogout(ouw=uow, token_service=token_service)
+        use_case = UserLogout(uow=uow, token_service=token_service)
         return use_case, uow, token_service
 
     def test_logout_happy_path(self, mock_deps):

@@ -1,8 +1,8 @@
 from fastapi import APIRouter, Depends, HTTPException, status, Form, File, UploadFile
 
-from app.application.useCases.query_videogame import QueryVideogames
-from app.application.useCases.register_videogame import RegisterVideogame
-from app.application.useCases.update_videogame import UpdateVideogame
+from app.application.use_cases.query_videogames import QueryVideogames
+from app.application.use_cases.register_videogame import RegisterVideogame
+from app.application.use_cases.update_videogame import UpdateVideogame
 from app.infrastructure.api.dto.response.get_videogames_response import GetVideogamesResponse
 from app.infrastructure.api.dto.response.base_classes.videogame_object_response import VideogameObjectResponse
 from app.infrastructure.database.unit_of_work.uow_factory import uow_factory
@@ -14,7 +14,7 @@ router = APIRouter(prefix="/api/v1/videogames", tags=["Videogames"])
 def get_storage_service():
     return LocalDiskStorageService()
 @router.post("/", status_code=201, response_model=VideogameObjectResponse, dependencies=[Depends(require_admin)])
-async def register_videogame(name: str = Form(..., description="Name of the rank"),
+def register_videogame(name: str = Form(..., description="Name of the videogame"),
     icon: UploadFile = File(..., description="Icon image file"), _player_id: int = Depends(get_current_user_id)):
 
 
@@ -28,12 +28,12 @@ async def register_videogame(name: str = Form(..., description="Name of the rank
     uow = uow_factory()
     storage_service = get_storage_service()
     register_videogame_use_case = RegisterVideogame(storage_service, uow)
-    videogame = await register_videogame_use_case.execute(name, icon.file, icon.filename)
+    videogame = register_videogame_use_case.execute(name, icon.file, icon.filename)
 
     return videogame
 
 @router.put("/{videogame_id}", status_code=200, response_model=VideogameObjectResponse, dependencies=[Depends(require_admin)])
-async def update_videogame(videogame_id: int, name: str = Form(..., description="Name of the rank"),
+def update_videogame(videogame_id: int, name: str = Form(..., description="Name of the rank"),
                            icon: UploadFile = File(..., description="Icon image file"),
                            _player_id: int = Depends(get_current_user_id)):
 
@@ -47,7 +47,7 @@ async def update_videogame(videogame_id: int, name: str = Form(..., description=
     storage_service = get_storage_service()
     update_videogame_use_case = UpdateVideogame(storage_service, uow)
 
-    updated_videogame = await update_videogame_use_case.execute(videogame_id, name, icon)
+    updated_videogame = update_videogame_use_case.execute(videogame_id, name, icon)
 
     return updated_videogame
 

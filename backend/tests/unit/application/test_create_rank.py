@@ -1,7 +1,7 @@
 from unittest.mock import AsyncMock, MagicMock
 import pytest
 
-from app.application.useCases.create_rank import CreateRankUseCase
+from app.application.use_cases.create_rank import CreateRank
 from app.application.ports.i_storage_service import IStorageService
 from app.domain.models.videogame import Videogame
 from app.domain.models.rank import Rank
@@ -26,7 +26,7 @@ class TestCreateRankUseCase:
         storage_service.save_file = AsyncMock(return_value="/media/league_of_legends/ranks/gold.png")
         storage_service.delete_file = AsyncMock(return_value=True)
 
-        use_case = CreateRankUseCase(storage_service=storage_service, uow=uow)
+        use_case = CreateRank(storage_service=storage_service, uow=uow)
         return use_case, uow, storage_service
 
     @pytest.mark.anyio

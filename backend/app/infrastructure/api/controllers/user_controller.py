@@ -2,12 +2,12 @@ from fastapi import APIRouter, Depends, UploadFile, File, HTTPException, status,
 from typing import Optional
 
 
-from app.application.useCases.query_users import QueryUsers
-from app.application.useCases.register_user import RegisterUser
-from app.application.useCases.update_player import UpdateUser
+from app.application.use_cases.query_users import QueryUsers
+from app.application.use_cases.register_user import RegisterUser
+from app.application.use_cases.update_user import UpdateUser
 from app.infrastructure.api.dependencies.auth import get_current_user_id, require_player, require_admin
 from app.infrastructure.api.dto.response.auth_tokens_response import AuthTokensResponse
-from app.infrastructure.api.dto.response.get_player_response import GetUserResponse
+from app.infrastructure.api.dto.response.get_user_response import GetUserResponse
 from app.infrastructure.api.dto.request.register_user_request import RegisterUserRequest
 from app.infrastructure.api.dto.response.register_user_response import RegisterUserResponse
 from app.infrastructure.api.dto.response.update_user_response import UpdateUserResponse
@@ -16,7 +16,7 @@ from app.infrastructure.config.settings import settings
 from app.infrastructure.api.dto.request.register_player_request import RegisterPlayerRequest
 from app.infrastructure.api.auth.jwt_token_service import JwtTokenService
 from app.infrastructure.api.auth.password_hash_service import PasswordHashService
-from app.application.useCases.register_player import RegisterPlayer
+from app.application.use_cases.register_player import RegisterPlayer
 from app.infrastructure.database.unit_of_work.uow_factory import uow_factory
 from app.infrastructure.storage.local_disk_storage_service import LocalDiskStorageService
 
@@ -54,7 +54,7 @@ def register_user(request: RegisterUserRequest, _user_id: int = Depends(get_curr
 
 
 @router.put("/", response_model=UpdateUserResponse, status_code=200, dependencies=[Depends(require_player)])
-async def update_user(username: str = Form(...),name: str = Form(...),mail: str = Form(...),
+def update_user(username: str = Form(...),name: str = Form(...),mail: str = Form(...),
                       icon: Optional[UploadFile] = File(None, description="Icon image file"),
                       user_id: int = Depends(get_current_user_id)
                       ) -> UpdateUserResponse:
@@ -65,11 +65,14 @@ async def update_user(username: str = Form(...),name: str = Form(...),mail: str 
             detail="El archivo debe tener un nombre válido."
         )
 
+    file_obj = icon.file if icon else None
+    filename = icon.filename if icon else None
+
     uow = uow_factory()
     storage_service = get_storage_service()
 
     update_user_use_case = UpdateUser(uow, storage_service)
-    return await update_user_use_case.execute(user_id, username, name, mail, icon)
+    return update_user_use_case.execute(user_id, username, name, mail, file_obj, filename)
 
 @router.get("/me", response_model=GetUserResponse, status_code=200, dependencies=[Depends(require_player)])
 def get_user(user_id: int = Depends(get_current_user_id)) -> GetUserResponse:

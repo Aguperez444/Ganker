@@ -2,7 +2,7 @@ from datetime import datetime, timezone
 import pytest
 from unittest.mock import MagicMock
 
-from app.application.useCases.register_user import RegisterUser
+from app.application.use_cases.register_user import RegisterUser
 from app.application.ports.i_token_service import ITokenService
 from app.application.ports.i_password_hasher import IPasswordHasher
 from app.domain.models.user import User
@@ -10,7 +10,7 @@ from app.domain.models.user_role import UserRole
 from app.domain.exceptions.mail.email_already_exists_exception import EmailAlreadyExistsException
 from app.domain.exceptions.user.invalid_username_exception import InvalidUsernameException
 from app.domain.exceptions.auth.password_is_not_secure_exception import PasswordIsNotSecureException
-from app.domain.exceptions.user.username_already_exist_exception import UsernameAlreadyExistsException
+from app.domain.exceptions.user.username_already_exists_exception import UsernameAlreadyExistsException
 from app.domain.exceptions.user.user_not_found_exception import UserNotFoundException
 from app.domain.exceptions.user.unauthotized_exception import UnauthorizedException
 from app.infrastructure.api.dto.request.register_user_request import RegisterUserRequest

@@ -1,7 +1,7 @@
 from unittest.mock import MagicMock
 import pytest
 
-from app.application.useCases.query_ranks import QueryRanks
+from app.application.use_cases.query_ranks import QueryRanks
 from app.domain.models.rank import Rank
 from app.domain.models.videogame import Videogame
 

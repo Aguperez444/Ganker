@@ -1,5 +1,5 @@
 from app.domain.exceptions.domain_exception import DomainException
-from app.domain.exceptions.auth.Invalid_token_exception import InvalidTokenException
+from app.domain.exceptions.auth.invalid_token_exception import InvalidTokenException
 from app.domain.exceptions.auth.password_is_not_secure_exception import PasswordIsNotSecureException
 from app.domain.exceptions.auth.wrong_password_exception import WrongPasswordException
 from app.domain.exceptions.does_not_belong_to_game_exception import DoesNotBelongToGameException
@@ -31,8 +31,8 @@ from app.domain.exceptions.role.invalid_role_name_exception import InvalidRoleNa
 from app.domain.exceptions.user.user_not_found_exception import UserNotFoundException
 from app.domain.exceptions.user.player_not_found_exception import PlayerNotFoundException
 from app.domain.exceptions.user.invalid_username_exception import InvalidUsernameException
-from app.domain.exceptions.user.username_already_exist_exception import UsernameAlreadyExistsException
-from app.domain.exceptions.user.unauthotized_exception import UnauthorizedException
+from app.domain.exceptions.user.username_already_exists_exception import UsernameAlreadyExistsException
+from app.domain.exceptions.user.unauthorized_exception import UnauthorizedException
 
 from app.domain.exceptions.videogame.videogame_not_found_exception import VideogameNotFoundException
 from app.domain.exceptions.videogame.videogame_already_exists_exception import VideogameAlreadyExistsException

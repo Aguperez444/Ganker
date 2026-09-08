@@ -1,7 +1,7 @@
 import pytest
 from unittest.mock import MagicMock
 
-from app.application.useCases.update_videogame_profile import UpdateVideogameProfile
+from app.application.use_cases.update_videogame_profile import UpdateVideogameProfile
 from app.domain.models.videogame import Videogame
 from app.domain.models.character import Character
 from app.domain.models.role import Role

@@ -8,7 +8,7 @@ from app.application.ports.i_unit_of_work import IUnitOfWork
 from app.domain.exceptions.mail.email_already_exists_exception import EmailAlreadyExistsException
 from app.domain.exceptions.user.invalid_username_exception import InvalidUsernameException
 from app.domain.exceptions.auth.password_is_not_secure_exception import PasswordIsNotSecureException
-from app.domain.exceptions.user.username_already_exist_exception import UsernameAlreadyExistsException
+from app.domain.exceptions.user.username_already_exists_exception import UsernameAlreadyExistsException
 from app.domain.models.user import User
 from app.infrastructure.api.dto.response.auth_tokens_response import AuthTokensResponse
 from app.domain.models.user_role import UserRole
@@ -38,11 +38,11 @@ class RegisterPlayer:
         # al menos una mayúscula, al menos una minúscula y al menos un número)
         self.validate_password_security(player_data.password)
 
-        # crear el usuario en el dominio
-        new_player = User(None, player_data.username, player_data.name, player_data.mail, player_data.password, UserRole.PLAYER, [])
-
         #hashear la password del usuario antes de persistirlo en la base de datos
-        new_player.password_hash = self.pass_hasher.hash_password(player_data.password)
+        hashed_pass = self.pass_hasher.hash_password(player_data.password)
+
+        # crear el usuario en el dominio
+        new_player = User(None, player_data.username, player_data.name, player_data.mail, hashed_pass, UserRole.PLAYER, [])
 
         # persistir el usuario en la base de datos y obtener el usuario registrado con su id
         with self.uow as uow:

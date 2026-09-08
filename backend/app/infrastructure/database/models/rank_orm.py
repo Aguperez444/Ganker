@@ -1,5 +1,4 @@
-from typing import List
-from sqlalchemy import ForeignKey, String
+from sqlalchemy import ForeignKey, String, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.infrastructure.database.base import Base
@@ -22,4 +21,10 @@ class RankORM(Base):
 
     # Relaciones
     videogame: Mapped["VideogameORM"] = relationship(back_populates="ranks")
-    role_profiles: Mapped[List["RoleProfileORM"]] = relationship(back_populates="rank")
+    role_profiles: Mapped[list["RoleProfileORM"]] = relationship(back_populates="rank")
+
+    # Constraints
+    __table_args__ = (
+        UniqueConstraint("videogame_id", "name", name="uq_videogame_rank_name"),
+        UniqueConstraint("videogame_id", "value", name="uq_videogame_rank_value"),
+    )

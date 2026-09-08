@@ -12,12 +12,12 @@ from app.domain.exceptions.role.invalid_role_name_exception import InvalidRoleNa
 from app.infrastructure.api.dto.response.base_classes.role_object_response import RoleObjectResponse
 
 
-class CreateRoleUseCase:
+class CreateRole:
     def __init__(self, storage_service: IStorageService, uow: IUnitOfWork):
         self.storage_service: IStorageService = storage_service
         self.uow: IUnitOfWork = uow
 
-    async def execute(self, game_id: int, name: str, icon_stream: BinaryIO, filename: str) -> RoleObjectResponse:
+    def execute(self, game_id: int, name: str, icon_stream: BinaryIO, filename: str) -> RoleObjectResponse:
         # Comprobar que el nombre no está vacío
         if not name.strip():
             raise InvalidRoleNameException(name)
@@ -44,7 +44,7 @@ class CreateRoleUseCase:
             game_folder = SlugService.to_slug(game.name)
 
             # Guardar imagen a través del puerto
-            icon_url = await self.storage_service.save_image_file(
+            icon_url = self.storage_service.save_image_file(
                 file_content=icon_stream,
                 filename=filename,
                 subfolder=f"games/{game_folder}/roles",
@@ -60,7 +60,7 @@ class CreateRoleUseCase:
                 saved_role = uow.role_repo.save_role(new_role)
             except Exception as e:
                 # Evitar basura en disco si la BD rechaza la inserción
-                await self.storage_service.delete_file(icon_url)
+                self.storage_service.delete_file(icon_url)
                 raise e # volver a levantar la excepción después de limpiar el archivo para hacer rollback
 
         return RoleObjectResponse(
