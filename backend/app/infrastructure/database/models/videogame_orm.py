@@ -18,6 +18,7 @@ class VideogameORM(Base):
     videogame_id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     name: Mapped[str] = mapped_column(String, unique=True, nullable=False)
     icon_url: Mapped[str] = mapped_column(String, nullable=False)
+    rank_per_role: Mapped[bool] = mapped_column(nullable=True)
 
     # Relaciones
     characters: Mapped[List["CharacterORM"]] = relationship(back_populates="videogame")

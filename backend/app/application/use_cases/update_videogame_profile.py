@@ -71,7 +71,7 @@ class UpdateVideogameProfile:
 
         # crear el response object correspondiente #TODO REVISAR, ESTO PUEDE QUE SE REPLIQUE EN VARIOS LADOS Y TOQUE HACERLO UN SERVICE PARA NO DUPLICAR CODIGO
 
-        response = CreateGameProfileDTOService.create_game_profile(updated_game_profile)
+        response = CreateGameProfileDTOService.create_update_game_profile(updated_game_profile)
         return response
 
 

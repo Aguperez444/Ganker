@@ -8,7 +8,8 @@ class VideogameMapper:
         return Videogame(
             videogame_id = videogame_orm.videogame_id,
             name = videogame_orm.name,
-            icon_url = videogame_orm.icon_url
+            icon_url = videogame_orm.icon_url,
+            rank_per_role = videogame_orm.rank_per_role
         )
 
     @staticmethod
@@ -16,5 +17,6 @@ class VideogameMapper:
         return VideogameORM(
             videogame_id = videogame.videogame_id,
             name = videogame.name,
-            icon_url = videogame.icon_url
+            icon_url = videogame.icon_url,
+            rank_per_role = videogame.rank_per_role
         )

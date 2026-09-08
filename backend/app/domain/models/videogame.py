@@ -2,10 +2,11 @@ from typing import Optional
 
 
 class Videogame:
-    def __init__(self, videogame_id: Optional[int], name: str, icon_url:str):
+    def __init__(self, videogame_id: Optional[int], name: str, icon_url:str, rank_per_role: bool):
         self._videogame_id = videogame_id
         self._name = name
         self._icon_url: str = icon_url
+        self._rank_per_role: bool = rank_per_role
 
     @property
     def videogame_id(self) -> Optional[int]:
@@ -28,6 +29,12 @@ class Videogame:
     def icon_url(self, value: str):
         self._icon_url = value
 
+    @property
+    def rank_per_role(self) -> bool:
+        return self._rank_per_role
+    @rank_per_role.setter
+    def rank_per_role(self, value: bool):
+        self._rank_per_role = value
 
     def __eq__(self, other: object) -> bool:
         if isinstance(other, Videogame):

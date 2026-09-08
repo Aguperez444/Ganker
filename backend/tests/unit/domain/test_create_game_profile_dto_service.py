@@ -34,7 +34,7 @@ class TestCreateGameProfileDTOService:
             role_profiles=[rp]
         )
 
-        dto = CreateGameProfileDTOService.create_game_profile(gp)
+        dto = CreateGameProfileDTOService.create_update_game_profile(gp)
 
         assert dto.game_profile_id == 5
         assert dto.player_id == 42

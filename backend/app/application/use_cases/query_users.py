@@ -20,7 +20,7 @@ class QueryUsers:
                 username=user.username,
                 name=user.name,
                 mail=user.mail,
-                profiles=[CreateGameProfileDTOService.create_game_profile(profile) for profile in user.profiles],
+                profiles=[CreateGameProfileDTOService.create_game_profile_response(profile) for profile in user.profiles],
                 role=user.role,
                 icon_url=user.icon_url or "/media/users/icons/icon_example_1.png"
             )

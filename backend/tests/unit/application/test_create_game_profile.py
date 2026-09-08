@@ -57,7 +57,7 @@ class TestCreateVideogameProfileUseCase:
             ],
             role_profiles=[RoleProfile(1, role1, rank1)]
         )
-        mock_uow.game_profile_repo.create_game_profile.return_value = created_profile
+        mock_uow.game_profile_repo.create_update_game_profile.return_value = created_profile
 
         request = CreateGameProfileRequest(
             videogame_id=1,
@@ -69,7 +69,7 @@ class TestCreateVideogameProfileUseCase:
 
         assert result.game_profile_id == 1
         assert result.player_id == 5
-        mock_uow.game_profile_repo.create_game_profile.assert_called_once()
+        mock_uow.game_profile_repo.create_update_game_profile.assert_called_once()
 
     def test_create_game_profile_videogame_not_found(self, mock_uow):
         use_case = CreateVideogameProfile(unit_of_work=mock_uow)
