@@ -29,7 +29,7 @@ class SlugService:
         Limpia y normaliza un nombre de archivo.
         Separa un nombre de archivo en (nombre_base_seguro, extension).
         """
-        allowed_extensions = {"png", "jpg", "jpeg", "webp"}
+        allowed_extensions = {"png", "jpg", "jpeg", "webp", "svg"}
         path = Path(filename)
         stem = cls.to_slug(path.stem)
         ext = path.suffix.lower().lstrip(".")

@@ -48,7 +48,7 @@ class CreateRank:
             icon_url = self.storage_service.save_image_file(
                 file_content=icon_stream,
                 filename=filename,
-                subfolder=f"{game_folder}/ranks",
+                subfolder=f"games/{game_folder}/ranks",
                 preserve_original_name=True
             )
 
