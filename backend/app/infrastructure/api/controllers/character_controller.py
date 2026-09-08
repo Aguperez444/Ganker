@@ -5,7 +5,7 @@ from app.application.use_cases.register_character import RegisterCharacter
 from app.application.use_cases.update_character import UpdateCharacter
 from app.infrastructure.api.dto.response.base_classes.character_object_response import CharacterObjectResponse
 from app.infrastructure.api.dto.response.get_characters_response import GetCharactersResponse
-from app.infrastructure.api.dependencies.auth import get_current_user_id, require_admin, require_player
+from app.infrastructure.api.dependencies.auth import require_admin, require_player
 
 
 from app.infrastructure.database.unit_of_work.uow_factory import uow_factory
