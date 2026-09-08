@@ -12,8 +12,8 @@ from app.domain.exceptions.videogame.videogame_not_found_exception import Videog
 from app.domain.models.role_profile import RoleProfile
 from app.domain.models.game_profile import GameProfile
 from app.domain.models.character_priority import CharacterPriority
-from exceptions.character.duplicated_character_in_request import DuplicatedCharacterInRequest
-from exceptions.role.duplicated_role_in_request import DuplicatedRoleInRequest
+from app.domain.exceptions.character.duplicated_character_in_request import DuplicatedCharacterInRequest
+from app.domain.exceptions.role.duplicated_role_in_request import DuplicatedRoleInRequest
 
 if TYPE_CHECKING:
     from app.domain.models.role import Role
