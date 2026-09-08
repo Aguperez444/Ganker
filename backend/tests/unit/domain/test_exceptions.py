@@ -32,7 +32,7 @@ from app.domain.exceptions.user.user_not_found_exception import UserNotFoundExce
 from app.domain.exceptions.user.player_not_found_exception import PlayerNotFoundException
 from app.domain.exceptions.user.invalid_username_exception import InvalidUsernameException
 from app.domain.exceptions.user.username_already_exist_exception import UsernameAlreadyExistsException
-from app.domain.exceptions.user.unauthotized_exception import UnauthorizedException
+from app.domain.exceptions.user.unauthorized_exception import UnauthorizedException
 
 from app.domain.exceptions.videogame.videogame_not_found_exception import VideogameNotFoundException
 from app.domain.exceptions.videogame.videogame_already_exists_exception import VideogameAlreadyExistsException

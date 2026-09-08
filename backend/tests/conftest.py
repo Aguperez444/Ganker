@@ -7,7 +7,6 @@ from fastapi.testclient import TestClient
 
 from app.infrastructure.database.base import Base
 # Import all ORM models to ensure they are registered with Base.metadata
-import app.infrastructure.database.models.associations
 import app.infrastructure.database.models.user_orm
 import app.infrastructure.database.models.videogame_orm
 import app.infrastructure.database.models.character_orm

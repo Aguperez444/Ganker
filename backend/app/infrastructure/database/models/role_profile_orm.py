@@ -1,4 +1,4 @@
-from sqlalchemy import ForeignKey
+from sqlalchemy import ForeignKey, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.infrastructure.database.base import Base
@@ -23,3 +23,7 @@ class RoleProfileORM(Base):
     game_profile: Mapped["GameProfileORM"] = relationship(back_populates="role_profiles")
     role: Mapped["RoleORM"] = relationship(back_populates="role_profiles")
     rank: Mapped["RankORM"] = relationship(back_populates="role_profiles")
+
+
+    # Constraints
+    __table_args__ = (UniqueConstraint("game_profile_id", "role_id", name="uq_profile_role"),)
