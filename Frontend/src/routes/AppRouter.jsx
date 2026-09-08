@@ -11,6 +11,7 @@ import GamesPage from "../pages/admin/GamesPage.jsx";
 import RanksPage from "../pages/admin/RanksPage.jsx";
 import ProtectedRoute from "./ProtectedRoute.jsx";
 import PublicOnlyRoute from "./PublicOnlyRoute.jsx";
+import ProfilePage from "../pages/ProfilePage.jsx";
 import { ROLES_ADMIN } from "../utils/rutas.js";
 
 /**
@@ -34,6 +35,7 @@ function AppRouter() {
         <Route element={<ProtectedRoute />}>
           <Route path="/app" element={<AppLayout />}>
             <Route index element={<HomePage />} />
+            <Route path="perfil" element={<ProfilePage />} />
             {/* US 02 - Modificar mis datos. Es el boton "Cuenta" del sidebar. */}
             <Route path="cuenta" element={<CuentaPage />} />
             {/*
