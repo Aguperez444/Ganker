@@ -37,13 +37,13 @@ def register_player(request: RegisterPlayerRequest) -> AuthTokensResponse:
     return tokens
 
 @router.post("/register_user", response_model=RegisterUserResponse, status_code=201, dependencies=[Depends(require_admin)])
-def register_user(request: RegisterUserRequest, _user_id: int = Depends(get_current_user_id)) -> RegisterUserResponse:
+def register_user(request: RegisterUserRequest, user_id: int = Depends(get_current_user_id)) -> RegisterUserResponse:
     uow = uow_factory()
 
     password_hasher_service = PasswordHashService()
     register_user_use_case = RegisterUser(uow, password_hasher_service)
 
-    tokens = register_user_use_case.execute(request, _user_id)
+    tokens = register_user_use_case.execute(request, user_id)
     return RegisterUserResponse(
         user_id=tokens.user_id,
         username=tokens.username,

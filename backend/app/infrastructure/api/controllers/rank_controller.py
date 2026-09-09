@@ -3,7 +3,7 @@ from fastapi import APIRouter, Depends, File, UploadFile, Form, HTTPException, s
 
 from app.application.use_cases.create_rank import CreateRank
 from app.application.use_cases.query_ranks import QueryRanks
-from app.infrastructure.api.dependencies.auth import get_current_user_id, require_admin
+from app.infrastructure.api.dependencies.auth import require_admin, require_player
 from app.infrastructure.api.dto.response.get_ranks_response import GetRanksResponse
 from app.infrastructure.api.dto.response.base_classes.rank_object_response import RankObjectResponse
 
@@ -16,8 +16,8 @@ router = APIRouter(prefix="/api/v1/ranks", tags=["Ranks"])
 def get_storage_service():
     return LocalDiskStorageService()
 
-@router.get("/{videogame_id}", response_model=GetRanksResponse, status_code=200)
-def get_ranks_by_videogame_id(videogame_id: int, _player_id: int = Depends(get_current_user_id)):
+@router.get("/{videogame_id}", response_model=GetRanksResponse, status_code=200, dependencies=[Depends(require_player)])
+def get_ranks_by_videogame_id(videogame_id: int):
     # lo del player_id está para que el endpoint esté protegido, pero no se usa en la lógica de este endpoint
     uow = uow_factory()
     query_ranks_use_case = QueryRanks(uow)
@@ -30,7 +30,6 @@ def create_game_rank(
     name: str = Form(..., description="Name of the rank"),
     value: int = Form(..., description="Value of the rank"),
     icon: UploadFile = File(..., description="Icon image file"),
-    _player_id: int = Depends(get_current_user_id)
 ):
     # Asegurarse de que la petición incluya un archivo con nombre
     if not icon.filename:

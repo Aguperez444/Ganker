@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, Form, UploadFile, File, HTTPException, s
 
 from app.application.use_cases.create_role import CreateRole
 from app.application.use_cases.query_roles import QueryRoles
-from app.infrastructure.api.dependencies.auth import get_current_user_id, require_admin, require_player
+from app.infrastructure.api.dependencies.auth import require_admin, require_player
 
 from app.infrastructure.api.dto.response.get_roles_response import GetRolesResponse
 from app.infrastructure.api.dto.response.base_classes.role_object_response import RoleObjectResponse
@@ -18,7 +18,7 @@ def get_storage_service():
 
 
 @router.get("/{videogame_id}", response_model=GetRolesResponse, status_code=200, dependencies=[Depends(require_player)])
-def get_roles_by_videogame_id(videogame_id: int, _player_id: int = Depends(get_current_user_id)):
+def get_roles_by_videogame_id(videogame_id: int):
     # lo del player_id está para que el endpoint esté protegido, pero no se usa en la lógica de este endpoint
     uow = uow_factory()
     query_roles_use_case = QueryRoles(uow)
@@ -30,7 +30,6 @@ def create_game_role(
     videogame_id: int = Form(..., description="ID of the videogame"),
     name: str = Form(..., description="Name of the role"),
     icon: UploadFile = File(..., description="Icon image file"),
-    _player_id: int = Depends(get_current_user_id)
 ):
     # Asegurarse de que la petición incluya un archivo con nombre
     if not icon.filename:
