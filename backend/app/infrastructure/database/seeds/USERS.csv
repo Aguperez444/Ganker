@@ -1,0 +1,4 @@
+﻿name,username,mail,password_hash,role,icon_url
+No name,testuser,testmail@test.com,"$argon2id$v=19$m=65536,t=3,p=4$wzvq/x9Pd4JLGh4yRHYLKQ$vGYt+8Bm5nyb/Yf/sHP0WCV64k7LochlJleb+pMjjaw",player,NULL
+owner,owner_user,owner@owner.com,"$argon2id$v=19$m=65536,t=3,p=4$wP5/EAiPWmJwAw8VXfcGww$0Xjx5dQFCQUBHYhXyYOVJAGVax5Ct0BBjL9VfL8Tw4Q",owner,/media/users/icons/ed3cdc1621d745e28422123f7e2e64c6.png
+admin1,admin_user,admin@admin.com,"$argon2id$v=19$m=65536,t=3,p=4$X+t8ZBUkteBPNouiCGlFhg$L1m/T+rult+vBQUt9PRYsFfQvN0fa6VmLWq376yw4Tg",admin,/media/users/icons/d523a6702e5c42e5beb27441bc93fea9.png

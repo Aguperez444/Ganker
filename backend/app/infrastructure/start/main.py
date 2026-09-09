@@ -1,14 +1,22 @@
+import os
+from contextlib import asynccontextmanager
+
+import uvicorn
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
-from app.infrastructure.config.settings import settings
-import os
-import uvicorn
-
 from fastapi.staticfiles import StaticFiles
-
 from fastapi.middleware.cors import CORSMiddleware
 
+from sqlalchemy.orm import Session
+from app.infrastructure.database.seed_data import seed_database
+
 from app.domain.exceptions.domain_exception import DomainException
+from app.infrastructure.config.settings import settings
+from app.infrastructure.database.base import Base
+
+import app.infrastructure.database.models
+
+from app.infrastructure.database.unit_of_work.uow_factory import engine
 
 from app.infrastructure.api.controllers.user_controller import router as player_router
 from app.infrastructure.api.controllers.auth_controller import router as auth_router
@@ -18,7 +26,19 @@ from app.infrastructure.api.controllers.role_controller import router as role_ro
 from app.infrastructure.api.controllers.rank_controller import router as rank_router
 from app.infrastructure.api.controllers.character_controller import router as character_router
 
-app = FastAPI(title="Ganker", version="1.0.0")
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Crea tablas en Postgres (Docker) o SQLite (Local)
+    Base.metadata.create_all(bind=engine)
+    # 2. Poblar datos iniciales si las tablas están vacías
+    with Session(engine) as session:
+        seed_database(session)
+
+    yield
+    # Cierra adecuadamente el pool de conexiones de la aplicación
+    engine.dispose()
+
+app = FastAPI(title="Ganker", version="1.0.0", lifespan=lifespan)
 
 # CORS
 app.add_middleware(
