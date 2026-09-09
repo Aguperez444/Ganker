@@ -146,6 +146,7 @@ const GamesPage = () => {
               mode="edit"
               initialName={selectedGame.name}
               initialIconUrl={selectedGame.icon_url}
+              initialRankPerRole={selectedGame.rank_per_role}
               isLoading={isSaving}
               error={actionError}
               onSubmit={handleEdit}
