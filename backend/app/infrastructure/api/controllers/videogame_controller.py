@@ -42,10 +42,10 @@ def update_videogame(
     rank_per_role: bool = Form(..., description="Whether the videogame ranks players per role"),
 ):
 
-    if not icon or not icon.filename:
+    if icon and not icon.filename:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="El archivo es obligatorio y debe tener un nombre válido."
+            detail="El archivo debe tener un nombre válido."
         )
 
     uow = uow_factory()
