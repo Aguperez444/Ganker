@@ -7,9 +7,16 @@ from pathlib import Path
 CONFIG_DIR = Path(__file__).resolve().parent
 # Sube 4 niveles: config -> infrastructure -> app -> raíz del proyecto
 BASE_DIR = CONFIG_DIR.parent.parent.parent
+DB_DIR = BASE_DIR / "app" / "infrastructure" / "database"
 
 class Settings(BaseSettings):
     jwt_secret_key: str
+
+    # Si se define DATABASE_URL en el entorno o Docker, usa esa; si no, apunta al sqlite local
+    database_url: str = Field(
+        default_factory=lambda: f"sqlite:///{DB_DIR / 'db.db'}",
+        validation_alias="DATABASE_URL",
+    )
 
     # Si se define UPLOAD_DIR en el entorno/Docker, toma esa ruta; si no, usa la carpeta media local
     media_dir: Path = Field(default_factory=lambda: BASE_DIR / "media", validation_alias="UPLOAD_DIR")
