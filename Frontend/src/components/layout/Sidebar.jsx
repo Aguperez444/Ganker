@@ -27,10 +27,15 @@ const Sidebar = () => {
     <aside className="hidden w-20 shrink-0 flex-col border-r border-white/10 bg-ganker-surface lg:flex">
       <div className="flex h-17 items-center justify-center border-b border-white/10">
         <Link
-          to="/"
-          className="flex items-center justify-center transition hover:opacity-90"
+          to="/app"
+          title="Inicio"
+          className="flex h-10 w-10 items-center justify-center transition hover:opacity-90 hover:scale-105"
         >
-          <img src="/images/favicon.svg" alt="Ganker" className="h-12 w-12" />
+          <img
+            src="/images/logo_svg.svg"
+            alt="Logo de Ganker"
+            className="h-10 w-10 object-contain"
+          />
         </Link>
       </div>
 

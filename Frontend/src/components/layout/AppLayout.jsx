@@ -36,7 +36,7 @@ const AppLayout = () => {
 
             <div className="flex flex-1 items-center justify-center px-6 text-center">
               <p className="text-sm text-ganker-muted">
-                El chat se integrará en las próximas User Stories.
+                El chat se implementará en un próximo sprint...
               </p>
             </div>
           </aside>
