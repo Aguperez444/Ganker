@@ -17,7 +17,7 @@ if TYPE_CHECKING:
 class GameProfileORM(Base):
     __tablename__ = "game_profile"
 
-    game_profile_id: Mapped[Optional[int]] = mapped_column(primary_key=True, autoincrement=True)
+    game_profile_id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     player_id: Mapped[int] = mapped_column(ForeignKey("user.user_id"), nullable=False)
     videogame_id: Mapped[int] = mapped_column(ForeignKey("videogame.videogame_id"), nullable=False)
 

@@ -16,9 +16,10 @@ class RefreshTokenORM(Base):
     user_id: Mapped[int] = mapped_column(ForeignKey("user.user_id"), nullable=False, index=True)
     user_role: Mapped[str] = mapped_column(String(20), nullable=False)
     jti: Mapped[str] = mapped_column(String(64), nullable=False, unique=True, index=True)
-    expires_at: Mapped[datetime] = mapped_column(DateTime, nullable=False)
+
+    expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
     revoked: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
-    created_at: Mapped[datetime] = mapped_column(DateTime, nullable=False, default=lambda: datetime.now(timezone.utc))
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, default=lambda: datetime.now(timezone.utc))
 
     # Relaciones
     user: Mapped["UserORM"] = relationship("UserORM", back_populates="refresh_tokens")

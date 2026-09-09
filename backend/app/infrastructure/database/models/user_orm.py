@@ -6,16 +6,16 @@ from app.infrastructure.database.base import Base
 
 from typing import TYPE_CHECKING
 
-from app.infrastructure.database.models.refresh_token_orm import RefreshTokenORM
 
 if TYPE_CHECKING:
     from app.infrastructure.database.models.game_profile_orm import GameProfileORM
+    from app.infrastructure.database.models.refresh_token_orm import RefreshTokenORM
 
 
 class UserORM(Base):
     __tablename__ = "user"
 
-    user_id: Mapped[Optional[int]] = mapped_column(primary_key=True, autoincrement=True)
+    user_id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     name: Mapped[str] = mapped_column(String, nullable=False)
     username: Mapped[str] = mapped_column(String, unique=True, nullable=False)
     mail: Mapped[Optional[str]] = mapped_column(String, unique=True, nullable=True)
