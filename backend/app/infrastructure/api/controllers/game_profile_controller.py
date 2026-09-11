@@ -4,7 +4,7 @@ from fastapi import APIRouter, Depends
 from app.application.use_cases.create_videogame_profile import CreateVideogameProfile
 from app.application.use_cases.update_videogame_profile import UpdateVideogameProfile
 from app.infrastructure.api.dependencies.auth import get_current_user_id, require_player
-from app.infrastructure.api.dto.response.create_videogame_profile_request import CreateGameProfileRequest
+from app.infrastructure.api.dto.request.create_videogame_profile_request import CreateGameProfileRequest
 from app.infrastructure.api.dto.response.create_videogame_profile_response import CreateGameProfileResponse
 from app.infrastructure.api.dto.request.update_videogame_profile_request import UpdateGameProfileRequest
 from app.infrastructure.api.dto.response.update_videogame_profile_response import UpdateGameProfileResponse

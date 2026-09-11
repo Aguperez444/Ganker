@@ -7,42 +7,52 @@
 ```
 Ganker/
 ├── backend/                               # Backend del proyecto
-│   └── app/                               # Codigo fuente
-│       ├── application/                   # Puertos y adaptadores necesarios y los useCases del
-│       │     ├── ports/                   # Puertos (interfaces necesarias)
-│       │     └── useCases/                # Casos de uso
-│       ├── domain/                        # Clases del dominio del problema
-│       │   ├── models/                    # Modelos para las clases
-│       │   └── services/                  # Funciones que pueden/deben ser reutilizadas desde multiples puntos
-│       └── infrastructure/                # Clases técnicas de dependencias externas
-│           ├── Api/                       # Api para comunicarse con el frontend
-│           │     ├── controllers/         # distintos controllers para cada ruta
-│           │     └── dto/                 # data transfer objects (para enviar/recibir json)
-│           ├── Database/                  # infrastructura de la base de datos, todas las clases de soporte necesarias
-│           │     ├── models/              # models del ORM
-│           │     ├── repositories/        # repositorios
-│           │     ├── unit_of_work/        # implementacion y factory del unit of work de sqlAlchemy
-│           │     └── mappers/             # mappers para los models
-│           └── start/                     # starters para arrancar el backend de distintas formas
-│
+│   ├── app/                               # Codigo fuente
+│   │    ├── application/                  # Puertos y adaptadores necesarios y los useCases del
+│   │    │     ├── ports/                  # Puertos (interfaces necesarias)
+│   │    │     └── use_cases/              # Casos de uso
+│   │    ├── domain/                       # Clases del dominio del problema
+│   │    │   ├── models/                   # Modelos para las clases
+│   │    │   ├── exceptions/               # Excepciones propias del dominio, subdivididas en carpetas de acuerdo a la entidad que provoca la extensión
+│   │    │   └── services/                 # Funciones que pueden/deben ser reutilizadas desde multiples puntos
+│   │    └── infrastructure/               # Clases técnicas de dependencias externas
+│   │       ├── api/                       # Api para comunicarse con el frontend
+│   │       │     ├── auth/                # Implementacion de los puertos de seguridad/authenticación de usuarios
+│   │       │     ├── dependencies/        # Dependencias comunes para varios endpoints, declaraciones de permisos, etc.
+│   │       │     ├── controllers/         # Distintos controllers para cada ruta
+│   │       │     └── dto/                 # Data transfer objects (para enviar/recibir json)
+│   │       │         ├── request          # Para las request que llegan del frontend
+│   │       │         └── response/        # Para las respuestas que entrega el backend
+│   │       ├── config/                    # Archivos de configuración de entorno
+│   │       ├── database/                  # Infrastructura de la base de datos, todas las clases de soporte necesarias
+│   │       │     ├── models/              # Models del ORM
+│   │       │     ├── repositories/        # Repositorios
+│   │       │     ├── unit_of_work/        # Implementacion y factory del unit of work de sqlAlchemy
+│   │       │     └── mappers/             # Mappers para los models
+│   │       ├── start/                     # Starters para arrancar el backend de distintas formas
+│   │       └── storage/                   # Implementación de los puertos para persistencia de archivos
+│   ├── migrations/                        # Configuración de alembic para migraciones de la bdd 
+│   └── tests/                             # Suite de tests con pytest
+│       ├── integration/ 
+│       └── unit/
 ├── Frontend/                              # Frontend del proyecto
-    ├── Public/                            # Archivos estaticos,fuentes,logo,etc
-    │   └── images/                        # Imagenes del proyecto
-    └── src/                               # Codigo fuente
-        ├── api/                           # Axios y conexión con el backend
-        ├── hooks/                         # Lógica de aplicación (estado + orquestación de datos)
-        ├── context/                       # Estado global (sesión, chat)
-        ├── components/                    # Componentes genericos reutilizables
-        │   ├── common/                    # botones, inputs, modales, spinners,etc
-        │   ├── jugadores/                 # JugadorCard, JugadorForm, JugadorList
-        │   ├── equipos/
-        │   └── chat/                      # ChatWindow, MessageBubble, MessageInput
-        ├── pages/                         # Vistas completas (arman hooks + components)
-        ├── routes/                        # Definición y protección de rutas
-        ├── utils/                         # Funciones puras (validaciones, formateo, constantes)
-        ├── App.jsx
-        └── main.jsx
-
+│    ├── Public/                           # Archivos estaticos,fuentes,logo,etc
+│    │   └── images/                       # Imagenes del proyecto
+│    └── src/                              # Codigo fuente
+│       ├── api/                           # Axios y conexión con el backend
+│       ├── hooks/                         # Lógica de aplicación (estado + orquestación de datos)
+│       ├── context/                       # Estado global (sesión, chat)
+│       ├── components/                    # Componentes genericos reutilizables
+│       │   ├── common/                    # botones, inputs, modales, spinners,etc
+│       │   ├── jugadores/                 # JugadorCard, JugadorForm, JugadorList
+│       │   ├── equipos/
+│       │   └── chat/                      # ChatWindow, MessageBubble, MessageInput
+│       ├── pages/                         # Vistas completas (arman hooks + components)
+│       ├── routes/                        # Definición y protección de rutas
+│       ├── utils/                         # Funciones puras (validaciones, formateo, constantes)
+│       ├── App.jsx
+│       └── main.jsx
+└── nginx                                  # configuración del nginx como reverse proxy para servir las imagenes desde el backend
 
 ```
 
@@ -55,12 +65,12 @@ Ganker/
 | Ítem de configuración        | Regla de nombrado                |
 | ---------------------------- | -------------------------------- |
 | Archivos de python generales | `nombre_del_archivo.py`          |
-| Interfaces                   | `Inombre_de_la_interfaz.py`      |
+| Interfaces                   | `i_nombre_de_la_interfaz.py`     |
 | Implementaciones de interfaz | `nombre_de_la_interfaz_impl.py`  |
 | Mappers de orm               | `nombre_entidad_mapper.py`       |
 | models del orm               | `nombre_entidad_orm.py`          |
-| Dto de solicitud             | `request_nombre_recurso.py`      |
-| Dto de respuesta             | `response_nombre_recurso.py`     |
+| Dto de solicitud             | `nombre_recurso_request.py`      |
+| Dto de respuesta             | `nombre_recurso_response.py`     |
 | Archivos de JS generales     | `nombreDelArchivo.js`            |
 | Páginas                      | `nombreDePaginaPage.js`          |
 | Components                   | `nombreDeComponenteComponent.js` |

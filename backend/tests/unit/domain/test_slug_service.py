@@ -1,4 +1,5 @@
 import pytest
+from app.domain.exceptions.file.invalid_file_extension_error import InvalidFileExtensionError
 from app.domain.services.slug_service import SlugService
 
 
@@ -21,17 +22,19 @@ class TestSlugService:
             SlugService.to_slug(None)
         assert "no puede estar vacío" in str(exc_info.value)
 
-    def test_sanitize_filename_happy_path(self):
-        stem, ext = SlugService.sanitize_filename("my_cool_icon.PNG")
+    def test_sanitize_image_filename_happy_path(self):
+        stem, ext = SlugService.sanitize_image_filename("my_cool_icon.PNG")
         assert stem == "my_cool_icon"
         assert ext == "png"
 
-    def test_sanitize_filename_with_spaces_and_special_chars(self):
-        stem, ext = SlugService.sanitize_filename("Super Character Image! (1).JPEG")
+    def test_sanitize_image_filename_with_spaces_and_special_chars(self):
+        stem, ext = SlugService.sanitize_image_filename("Super Character Image! (1).JPEG")
         assert stem == "super_character_image___1"
         assert ext == "jpeg"
 
-    def test_sanitize_filename_no_extension_defaults_to_png(self):
-        stem, ext = SlugService.sanitize_filename("no_extension_file")
-        assert stem == "no_extension_file"
-        assert ext == "png"
+    def test_sanitize_image_filename_invalid_or_no_extension_raises(self):
+        with pytest.raises(InvalidFileExtensionError):
+            SlugService.sanitize_image_filename("no_extension_file")
+
+        with pytest.raises(InvalidFileExtensionError):
+            SlugService.sanitize_image_filename("dangerous.exe")

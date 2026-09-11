@@ -62,7 +62,7 @@ class TestDomainExceptions:
         assert "42" in nf.message
 
         dup = DuplicatedCharacterNameException(name="Ahri", videogame_id=1)
-        assert dup.status_code == 400
+        assert dup.status_code == 409
         assert "Ahri" in dup.message
 
         inv = InvalidCharacterNameException(name="")
@@ -112,7 +112,7 @@ class TestDomainExceptions:
         assert "existing_user" in dup_user.message
 
         unauth = UnauthorizedException(user_id=1, user_role="admin", attempted_role="owner")
-        assert unauth.status_code == 401
+        assert unauth.status_code == 403
         assert "admin" in unauth.message
 
     def test_password_exceptions(self):

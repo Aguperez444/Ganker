@@ -1,4 +1,4 @@
-from unittest.mock import AsyncMock, MagicMock
+from unittest.mock import MagicMock
 import pytest
 
 from app.application.use_cases.update_user import UpdateUser
@@ -20,14 +20,13 @@ class TestUpdateUserUseCase:
         uow.user_repo = MagicMock()
 
         storage_service = MagicMock(spec=IStorageService)
-        storage_service.delete_file = AsyncMock(return_value=True)
-        storage_service.save_file = AsyncMock(return_value="/media/users/icons/new_icon.png")
+        storage_service.delete_file.return_value = True
+        storage_service.save_image_file.return_value = "/media/users/icons/new_icon.png"
 
         use_case = UpdateUser(unit_of_work=uow, storage_service=storage_service)
         return use_case, uow, storage_service
 
-    @pytest.mark.anyio
-    async def test_update_user_happy_path_with_new_icon(self, mock_deps):
+    def test_update_user_happy_path_with_new_icon(self, mock_deps):
         use_case, uow, storage_service = mock_deps
 
         existing_user = User(
@@ -49,12 +48,13 @@ class TestUpdateUserUseCase:
         mock_icon.filename = "new_avatar.png"
         mock_icon.file = MagicMock()
 
-        updated = await use_case.execute(
+        updated = use_case.execute(
             user_id=1,
             username="newuser",
             name="New Name",
             mail="new@example.com",
-            icon=mock_icon
+            icon_file=mock_icon.file,
+            icon_filename=mock_icon.filename
         )
 
         assert updated.username == "newuser"
@@ -64,24 +64,27 @@ class TestUpdateUserUseCase:
 
         # Deleted old icon and saved new icon
         storage_service.delete_file.assert_called_once_with("/media/users/icons/old_icon.png")
-        storage_service.save_file.assert_called_once()
+        storage_service.save_image_file.assert_called_once_with(
+            file_content=mock_icon.file,
+            filename=mock_icon.filename,
+            subfolder="users/icons",
+            preserve_original_name=False
+        )
         uow.user_repo.update_user.assert_called_once()
 
-    @pytest.mark.anyio
-    async def test_update_user_username_taken_by_another_user(self, mock_deps):
+    def test_update_user_username_taken_by_another_user(self, mock_deps):
         use_case, uow, _ = mock_deps
 
         another_user = User(user_id=99, username="taken_name", name="Other", mail="other@example.com", password_hash="hash", role=UserRole.PLAYER, profiles=[])
         uow.user_repo.get_user_by_username.return_value = another_user
 
         with pytest.raises(UsernameAlreadyExistsException) as exc_info:
-            await use_case.execute(user_id=1, username="taken_name", name="Name", mail="mail@example.com", icon=MagicMock())
+            use_case.execute(user_id=1, username="taken_name", name="Name", mail="mail@example.com")
 
         assert exc_info.value.status_code == 409
         assert "taken_name" in exc_info.value.message
 
-    @pytest.mark.anyio
-    async def test_update_user_mail_taken_by_another_user(self, mock_deps):
+    def test_update_user_mail_taken_by_another_user(self, mock_deps):
         use_case, uow, _ = mock_deps
 
         uow.user_repo.get_user_by_username.return_value = None
@@ -89,13 +92,12 @@ class TestUpdateUserUseCase:
         uow.user_repo.get_user_by_mail.return_value = another_user
 
         with pytest.raises(EmailAlreadyExistsException) as exc_info:
-            await use_case.execute(user_id=1, username="newname", name="Name", mail="taken@example.com", icon=MagicMock())
+            use_case.execute(user_id=1, username="newname", name="Name", mail="taken@example.com")
 
         assert exc_info.value.status_code == 409
         assert "taken@example.com" in exc_info.value.message
 
-    @pytest.mark.anyio
-    async def test_update_user_not_found(self, mock_deps):
+    def test_update_user_not_found(self, mock_deps):
         use_case, uow, _ = mock_deps
 
         uow.user_repo.get_user_by_username.return_value = None
@@ -103,12 +105,11 @@ class TestUpdateUserUseCase:
         uow.user_repo.get_user_by_id.return_value = None
 
         with pytest.raises(UserNotFoundException) as exc_info:
-            await use_case.execute(user_id=404, username="user", name="Name", mail="mail@example.com", icon=MagicMock())
+            use_case.execute(user_id=404, username="user", name="Name", mail="mail@example.com")
 
         assert exc_info.value.status_code == 404
 
-    @pytest.mark.anyio
-    async def test_update_user_db_error_cleans_up_uploaded_file(self, mock_deps):
+    def test_update_user_db_error_cleans_up_uploaded_file(self, mock_deps):
         use_case, uow, storage_service = mock_deps
 
         existing_user = User(
@@ -131,12 +132,13 @@ class TestUpdateUserUseCase:
         mock_icon.file = MagicMock()
 
         with pytest.raises(Exception):
-            await use_case.execute(
+            use_case.execute(
                 user_id=1,
                 username="newuser",
                 name="New Name",
                 mail="new@example.com",
-                icon=mock_icon
+                icon_file=mock_icon.file,
+                icon_filename=mock_icon.filename
             )
 
         # File was uploaded then cleaned up on DB failure
