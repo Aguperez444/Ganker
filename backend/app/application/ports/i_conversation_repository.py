@@ -3,7 +3,7 @@ from abc import ABC, abstractmethod
 from typing import TYPE_CHECKING, Optional
 
 if TYPE_CHECKING:
-    from models.conversation import Conversation
+    from app.domain.models.conversation import Conversation
 
 
 class IConversationRepository(ABC):

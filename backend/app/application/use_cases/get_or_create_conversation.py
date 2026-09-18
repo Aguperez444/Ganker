@@ -1,7 +1,7 @@
 from typing import TYPE_CHECKING
 
 from app.domain.models.conversation import Conversation
-from exceptions.user.user_not_found_exception import UserNotFoundException
+from app.domain.exceptions.user.user_not_found_exception import UserNotFoundException
 
 if TYPE_CHECKING:
     from app.application.ports.i_unit_of_work import IUnitOfWork

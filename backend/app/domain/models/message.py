@@ -2,7 +2,7 @@
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from models.user import User
+    from app.domain.models.user import User
     from datetime import datetime
 
 

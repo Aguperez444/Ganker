@@ -3,7 +3,7 @@ from typing import Optional
 from app.application.ports.i_conversation_repository import IConversationRepository
 from app.infrastructure.database.mappers.conversation_mapper import ConversationMapper
 from app.infrastructure.database.models.conversation_orm import ConversationORM
-from models.conversation import Conversation
+from app.domain.models.conversation import Conversation
 
 
 class ConversationRepositoryImpl(IConversationRepository):
@@ -16,7 +16,7 @@ class ConversationRepositoryImpl(IConversationRepository):
         merged = self.session.merge(new_conversation_orm)
         self.session.flush()
         self.session.refresh(merged)
-        return ConversationMapper.orm_to_domain(new_conversation_orm)
+        return ConversationMapper.orm_to_domain(merged)
 
     def list_by_user_id(self, user_id: int) -> list[Conversation]:
         found_conversations: list[ConversationORM] = self.session.query(ConversationORM).filter(
@@ -24,8 +24,10 @@ class ConversationRepositoryImpl(IConversationRepository):
         ).all()
 
         for conversation in found_conversations:
-            conversation.messages = [conversation.messages[-1]]  # para este mét_odo no necesitamos levantar toda la lista de mensajes, solo el último
-
+            if conversation.messages:
+                conversation.messages = [conversation.messages[-1]]
+            else:
+                conversation.messages = []
 
         return [ConversationMapper.orm_to_domain(conversation) for conversation in found_conversations]
 

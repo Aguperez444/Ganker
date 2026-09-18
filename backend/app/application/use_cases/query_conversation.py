@@ -21,7 +21,7 @@ class QueryConversations:
             # de cada conversación del usuario
             for conversation in conversations:
                 # obtengo el último mensaje de la conversación
-                message: Message = conversation.messages[0]
+                message: Message | None = conversation.messages[0] if conversation.messages else None
                 last_message = LastMessageResponse(content=message.content,
                                                    timestamp=message.timestamp,
                                                    sender_id=cast(int, message.sender.user_id)) if message else None

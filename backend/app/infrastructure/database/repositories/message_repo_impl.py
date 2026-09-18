@@ -9,7 +9,6 @@ class MessageRepoImpl(IMessageRepository):
     def save_message(self, message: Message) -> Message:
         orm_message = MessageMapper.domain_to_orm(message)
         self._session.add(orm_message)
-        merged_orm = self._session.merge(orm_message)
         self._session.flush()
-        self._session.refresh(merged_orm)
-        return MessageMapper.orm_to_domain(merged_orm)
+        self._session.refresh(orm_message)
+        return MessageMapper.orm_to_domain(orm_message)

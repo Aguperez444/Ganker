@@ -5,7 +5,7 @@ from app.infrastructure.api.dto.response.message_response import MessageResponse
 from typing import cast
 
 from app.domain.models.message import Message
-from exceptions.user.user_not_found_exception import UserNotFoundException
+from app.domain.exceptions.user.user_not_found_exception import UserNotFoundException
 
 
 class SaveMessageUseCase:

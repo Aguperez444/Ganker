@@ -20,7 +20,6 @@ class MessageMapper:
             message_id=message.message_id,
             conversation_id=message.conversation_id,
             sender_id=message.sender.user_id,
-            sender=UserMapper.domain_to_orm(message.sender),
             content=message.content,
             timestamp=message.timestamp
         )
