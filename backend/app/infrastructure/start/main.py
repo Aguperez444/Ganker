@@ -25,6 +25,9 @@ from app.infrastructure.api.controllers.videogame_controller import router as vi
 from app.infrastructure.api.controllers.role_controller import router as role_router
 from app.infrastructure.api.controllers.rank_controller import router as rank_router
 from app.infrastructure.api.controllers.character_controller import router as character_router
+from app.infrastructure.api.controllers.chat_controller import router as chat_router
+
+from app.infrastructure.api.controllers.chat_websocket import router as chat_websocket
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -83,7 +86,8 @@ app.include_router(videogame_router)
 app.include_router(role_router)
 app.include_router(rank_router)
 app.include_router(character_router)
-
+app.include_router(chat_websocket)
+app.include_router(chat_router)
 
 host = "127.0.0.1"
 port = 8000
