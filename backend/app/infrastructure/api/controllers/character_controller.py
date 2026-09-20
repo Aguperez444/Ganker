@@ -1,8 +1,8 @@
 from fastapi import APIRouter, Depends, UploadFile, HTTPException, status, Form, File
 
-from app.application.use_cases.query_characters import QueryCharacters
-from app.application.use_cases.register_character import RegisterCharacter
-from app.application.use_cases.update_character import UpdateCharacter
+from app.application.useCase.query_characters import QueryCharacters
+from app.application.useCase.register_character import RegisterCharacter
+from app.application.useCase.update_character import UpdateCharacter
 from app.infrastructure.api.dto.response.base_classes.character_object_response import CharacterObjectResponse
 from app.infrastructure.api.dto.response.get_characters_response import GetCharactersResponse
 from app.infrastructure.api.dependencies.auth import require_admin, require_player

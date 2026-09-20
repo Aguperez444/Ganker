@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, Form, UploadFile, File, HTTPException, status
 
-from app.application.use_cases.create_role import CreateRole
-from app.application.use_cases.query_roles import QueryRoles
+from app.application.useCase.create_role import CreateRole
+from app.application.useCase.query_roles import QueryRoles
 from app.infrastructure.api.dependencies.auth import require_admin, require_player
 
 from app.infrastructure.api.dto.response.get_roles_response import GetRolesResponse

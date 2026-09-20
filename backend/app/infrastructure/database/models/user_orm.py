@@ -1,5 +1,6 @@
+from datetime import datetime
 from typing import List, Optional
-from sqlalchemy import String
+from sqlalchemy import String, DateTime
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.infrastructure.database.base import Base
@@ -22,6 +23,7 @@ class UserORM(Base):
     password_hash: Mapped[Optional[str]] = mapped_column(String, nullable=True)
     role: Mapped[str] = mapped_column(String, nullable=False, default="player")
     icon_url: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+
 
     # Relaciones
     game_profiles: Mapped[List["GameProfileORM"]] = relationship(back_populates="user")

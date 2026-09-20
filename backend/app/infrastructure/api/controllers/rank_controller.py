@@ -1,8 +1,8 @@
 from fastapi import APIRouter, Depends, File, UploadFile, Form, HTTPException, status
 
 
-from app.application.use_cases.create_rank import CreateRank
-from app.application.use_cases.query_ranks import QueryRanks
+from app.application.useCase.create_rank import CreateRank
+from app.application.useCase.query_ranks import QueryRanks
 from app.infrastructure.api.dependencies.auth import require_admin, require_player
 from app.infrastructure.api.dto.response.get_ranks_response import GetRanksResponse
 from app.infrastructure.api.dto.response.base_classes.rank_object_response import RankObjectResponse

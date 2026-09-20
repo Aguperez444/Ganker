@@ -1,7 +1,7 @@
 from unittest.mock import AsyncMock, MagicMock
 import pytest
 
-from app.application.use_cases.create_rank import CreateRank
+from app.application.useCase.create_rank import CreateRank
 from app.application.ports.i_storage_service import IStorageService
 from app.domain.models.videogame import Videogame
 from app.domain.models.rank import Rank
