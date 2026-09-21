@@ -63,7 +63,9 @@ class SqlAlchemyUnitOfWork(IUnitOfWork):
             else:
                 self.session.rollback()
         finally:
-            self.session.close()
+            if hasattr(self, "session") and self.session:
+                self.session.close()
+                self.session = None  # Evita que quede apuntando a una sesión cerrada
 
     def commit(self) -> None:
         assert self.session is not None, "UoW sin session (¿usaste 'with uow:'?)"

@@ -2,13 +2,15 @@ from fastapi import APIRouter, WebSocket, WebSocketDisconnect, Depends, status
 from pydantic import ValidationError
 from starlette.concurrency import run_in_threadpool
 
+from app.infrastructure.api.chat.user_notification_manager import notification_manager
+from app.infrastructure.api.dto.response.notification_type_enum import NotificationType
 from app.infrastructure.database.unit_of_work.uow_factory import uow_factory
 
 from app.application.use_cases.check_conversation_access import CheckConversationAccessUseCase
 from app.application.use_cases.save_message import SaveMessageUseCase
 from app.infrastructure.api.dto.request.send_message_request import SendMessageRequest
 from app.infrastructure.api.dto.response.message_response import MessageResponse
-
+from app.infrastructure.api.dto.response.notification_response import NotificationResponse
 
 from app.infrastructure.api.chat.connection_manager import chat_manager
 from app.infrastructure.api.dependencies.web_socket_auth import get_current_user_id_ws
@@ -26,11 +28,15 @@ async def websocket_chat_endpoint(
     save_message_use_case = SaveMessageUseCase(uow)
 
     # 1. Validación de seguridad previa: ¿El usuario es player_1 o player_2?
-    has_access = await run_in_threadpool(access_use_case.execute, conversation_id, user_id)
+    has_access, recipient_id = await run_in_threadpool(access_use_case.execute, conversation_id, user_id)
     if not has_access:
         # 1008 = Policy Violation (cierra la conexión de inmediato)
+        recipient_id = None
         await websocket.close(code=status.WS_1008_POLICY_VIOLATION)
         return
+
+    if not recipient_id:
+        raise ValueError("No se pudo determinar el ID del destinatario.")
 
     # 2. Conexión aceptada
     await chat_manager.connect(conversation_id, websocket)
@@ -56,6 +62,14 @@ async def websocket_chat_endpoint(
 
             # 5. Broadcast a ambos participantes
             await chat_manager.broadcast_to_conversation(conversation_id, saved_message)
+            notification = NotificationResponse(
+                type=NotificationType.NEW_MESSAGE,
+                conversation_id=conversation_id,
+                remitent_id=user_id,
+                content=saved_message.content,
+                timestamp=saved_message.timestamp.isoformat())
+
+            await notification_manager.send_to_user(recipient_id, notification.model_dump())
 
     except WebSocketDisconnect:
         chat_manager.disconnect(conversation_id, websocket)

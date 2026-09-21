@@ -8,7 +8,7 @@ if TYPE_CHECKING:
 
 class IConversationRepository(ABC):
     @abstractmethod
-    def is_participant(self, conversation_id: int, user_id: int) -> bool:
+    def get_by_conversation_id(self, conversation_id: int) -> Optional['Conversation']:
         """Verifica si el usuario es uno de los dos que pertenece a la conversación."""
         raise NotImplementedError("Este método debe ser implementado por la clase hija.")
 

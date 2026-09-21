@@ -18,7 +18,7 @@ class ConversationRepositoryImpl(IConversationRepository):
         self.session.refresh(merged)
         return ConversationMapper.orm_to_domain(merged)
 
-    def list_by_user_id(self, user_id: int) -> list[Conversation]:
+    def list_by_user_id(self, user_id: int) -> list['Conversation']:
         found_conversations: list[ConversationORM] = self.session.query(ConversationORM).filter(
             (ConversationORM.user_1_id == user_id) | (ConversationORM.user_2_id == user_id)
         ).all()
@@ -45,9 +45,10 @@ class ConversationRepositoryImpl(IConversationRepository):
 
 
 
-    def is_participant(self, conversation_id: int, user_id: int) -> bool:
+    def get_by_conversation_id(self, conversation_id: int) -> Optional['Conversation']:
         conversation = self.session.query(ConversationORM).filter(ConversationORM.conversation_id == conversation_id).first()
         if not conversation:
-            return False
-        return user_id == conversation.user_1_id or user_id == conversation.user_2_id
+            return None
+        conversation.messages = []  # para este mét_odo no necesitamos levantar toda la lista de mensajes
+        return ConversationMapper.orm_to_domain(conversation)
 
