@@ -44,7 +44,7 @@ class SearchVideogameProfilePlayer:
         #Reviso si tengo más filtros
         if filters.roles:
             for role in filters.roles:
-                self.get_and_validate_exist_videogame(role, filters.videogame_id, uow=self.uow)
+                self.get_and_validate_exist_videogame(role, uow=self.uow)
             specs.append(ByRolesSpecification(filters.roles))
         if filters.ranks:
             for rank in filters.ranks:
