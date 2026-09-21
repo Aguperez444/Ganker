@@ -1,6 +1,5 @@
 from typing import cast
 
-from app.application.ports.i_find_by_specifications_service import IFindBySpecificationRepository
 from app.application.ports.i_unit_of_work import IUnitOfWork
 from app.infrastructure.api.dto.request.Search_videogame_profiles_request import SearchVideogameProfilesRequest
 from app.infrastructure.api.dto.response.base_classes.character_object_response import CharacterObjectResponse
@@ -17,6 +16,10 @@ from app.domain.specifications.videogame_profiles.name_player_specification impo
 from app.domain.specifications.videogame_profiles.ranks_specification import ByRanksSpecification
 from app.domain.specifications.videogame_profiles.roles_specification import ByRolesSpecification
 from app.domain.specifications.videogame_profiles.videogame_specification import ByVideogameSpecification
+from app.domain.exceptions.rank.rank_not_found_exception import RankNotFoundException
+from app.domain.exceptions.role.role_not_found_exception import RoleNotFoundException
+from app.domain.exceptions.videogame.videogame_not_found_exception import VideogameNotFoundException
+from exceptions.character.character_not_found_exception import CharacterNotFoundException
 
 
 class SearchVideogameProfilePlayer:
@@ -33,19 +36,25 @@ class SearchVideogameProfilePlayer:
 
     def execute(self, filters: SearchVideogameProfilesRequest) -> GetVideogameProfilesResponse:
 
+        self.get_and_validate_exist_videogame(filters.videogame_id, uow=self.uow)
+
         # Siempre tengo que filtrar por un juego y tiempo de conexión
         specs: list[Specification] = [ByVideogameSpecification(filters.videogame_id)]
         # TODO CUANDO EXISTA EL ATRIBUTO AGREGAR A LA LISTA ByLastConnectionSpecification(filters.last_connection)
         #Reviso si tengo más filtros
         if filters.roles:
+            for role in filters.roles:
+                self.get_and_validate_exist_videogame(role, filters.videogame_id, uow=self.uow)
             specs.append(ByRolesSpecification(filters.roles))
         if filters.ranks:
+            for rank in filters.ranks:
+                self.get_and_validate_exist_videogame(rank, uow=self.uow)
             specs.append(ByRanksSpecification(filters.ranks))
         if filters.characters:
+            for character in filters.characters:
+                self.get_character_and_validate_exist(character, uow=self.uow)
             specs.append(ByCharactersSpecification(filters.characters))
-        if filters.name:
-            specs.append(ByNamePlayerSpecification(filters.name))
-        if filters.name:
+        if filters.name and filters.name.strip() != "":
             specs.append(ByNamePlayerSpecification(filters.name))
 
         # Combino los filtros
@@ -103,3 +112,36 @@ class SearchVideogameProfilePlayer:
 
             return GetVideogameProfilesResponse(videogame_profiles= videogame_profiles_response)
 
+    @staticmethod
+    def get_and_validate_exist_videogame(videogame_id: int, uow: IUnitOfWork):
+        """
+        busca el videojuego en la base de datos y válida que exista. Si no existe, lanza una excepción VideogameNotFoundException.
+        """
+        # 1. Validar que el videojuego exista
+        videogame = uow.videogame_repo.get_videogame_by_id(videogame_id)
+        if not videogame:
+            raise VideogameNotFoundException(videogame_id)
+
+    @staticmethod
+    def get_role_and_validate_exist(role_id: int, uow: IUnitOfWork):
+        """
+        busca el rol en la base de datos y válida que exista. Si no existe, lanza una excepción RoleNotFoundException.
+        """
+        role = uow.role_repo.get_role_by_id(role_id)
+        if not role:
+            raise RoleNotFoundException(role_id)
+
+    @staticmethod
+    def get_rank_and_validate_exist(rank_id: int, uow: IUnitOfWork):
+        """
+        busca el rango en la base de datos y válida que exista. Si no existe, lanza una excepción RankNotFoundException.
+        """
+        rank = uow.rank_repo.get_rank_by_id(rank_id)
+        if not rank:
+            raise RankNotFoundException(rank_id)
+
+    @staticmethod
+    def get_character_and_validate_exist(character_id: int, uow: IUnitOfWork):
+        character = uow.character_repo.get_character_by_id(character_id)
+        if not character:
+            raise CharacterNotFoundException(character_id)
