@@ -15,7 +15,7 @@ from app.infrastructure.api.dto.response.notification_response import Notificati
 from app.infrastructure.api.chat.connection_manager import chat_manager
 from app.infrastructure.api.dependencies.web_socket_auth import get_current_user_id_ws
 
-router = APIRouter(prefix="/api/v1/ws", tags=["Websocket Chat"])
+router = APIRouter(prefix="/api/v1/ws/chat", tags=["Websocket Chat"])
 
 @router.websocket("/conversations/{conversation_id}")
 async def websocket_chat_endpoint(
@@ -65,7 +65,7 @@ async def websocket_chat_endpoint(
             notification = NotificationResponse(
                 type=NotificationType.NEW_MESSAGE,
                 conversation_id=conversation_id,
-                remitent_id=user_id,
+                sender_id=user_id,
                 content=saved_message.content,
                 timestamp=saved_message.timestamp.isoformat())
 

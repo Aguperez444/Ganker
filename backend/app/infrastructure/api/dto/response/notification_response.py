@@ -6,7 +6,7 @@ from app.infrastructure.api.dto.response.notification_type_enum import Notificat
 class NotificationResponse(BaseModel):
     type: NotificationType
     conversation_id: int
-    remitent_id: int
+    sender_id: int
     content: str
     timestamp: str
 

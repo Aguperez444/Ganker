@@ -2,7 +2,7 @@ from fastapi import APIRouter, WebSocket, WebSocketDisconnect, Depends
 from app.infrastructure.api.dependencies.web_socket_auth import get_current_user_id_ws
 from app.infrastructure.api.chat.user_notification_manager import notification_manager
 
-router = APIRouter(prefix="/ws/notifications", tags=["notifications"])
+router = APIRouter(prefix="/api/v1/ws/notifications", tags=["notifications"])
 
 @router.websocket('')
 async def user_notifications_endpoint(websocket: WebSocket,user_id: int = Depends(get_current_user_id_ws)):
