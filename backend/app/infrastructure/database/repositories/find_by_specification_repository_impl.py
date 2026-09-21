@@ -39,11 +39,9 @@ class FindBySpecificationRepositoryImpl(IFindBySpecificationRepository):
         if isinstance(spec, ByRanksSpecification):
             return query.filter(GameProfileORM.role_profiles.any(RoleProfileORM.rank_id.in_(spec.to_expression())))
 
-        # Deberíamos hacer un índice para que esta no destruya el rendimiento recorriendo todos los registros
+        # TODO Deberíamos hacer un índice para que esta no destruya el rendimiento recorriendo todos los registros
         if isinstance(spec, ByLastConnectionSpecification):
             return query.join(GameProfileORM.user).filter(UserORM.last_connection >= spec.to_expression())
-        # TODO FALTA HORARIO HABITUAL
-        #if isinstance(spec, ByRegularRoutineSpecification):
 
         return query
 
