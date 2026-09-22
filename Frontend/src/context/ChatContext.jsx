@@ -266,7 +266,12 @@ export function ChatProvider({ children }) {
   const seleccionarConversacion = useCallback(
     (conversationId) => {
       setConversacionActivaId(conversationId);
+      // Hay que abrir los dos flags (no solo el que aplica segun esDesktop
+      // en este momento): si el usuario habia cerrado el panel/drawer, la
+      // conversacion quedaba "activa" pero invisible (ver estaViendo mas
+      // arriba), como si no hubiera pasado nada.
       setChatAbierto(true);
+      setPanelDesktopVisible(true);
       marcarConversacionComoVista(conversationId);
     },
     [marcarConversacionComoVista]

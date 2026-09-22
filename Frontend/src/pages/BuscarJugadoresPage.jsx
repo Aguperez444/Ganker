@@ -35,6 +35,18 @@ const BuscarJugadoresPage = () => {
     hayFiltrosOpcionales,
 
     resultados,
+    isLoadingResultados,
+    resultadosError,
+
+    orden,
+    setOrden,
+
+    pagina,
+    totalPaginas,
+    hayPaginaSiguiente,
+    hayPaginaAnterior,
+    paginaSiguiente,
+    paginaAnterior,
   } = useBuscarJugadores();
 
   // US 10 - Al iniciar (o retomar) una conversacion, ChatContext ya deja
@@ -180,39 +192,104 @@ const BuscarJugadoresPage = () => {
           </div>
         )}
 
-        {selectedGameId &&
-          !isLoadingGameData &&
-          !gameDataError &&
-          resultados.length === 0 && (
-            <div className="rounded-2xl border border-white/10 bg-ganker-surface p-10 text-center">
-              <p className="text-sm text-ganker-muted">
-                No se encontraron jugadores con esos filtros. Probá cambiándolos
-                o limpiándolos.
-              </p>
-            </div>
-          )}
+        {selectedGameId && !isLoadingGameData && !gameDataError && (
+          <>
+            {isLoadingResultados && (
+              <div className="rounded-2xl border border-white/10 bg-ganker-surface p-10 text-center">
+                <p className="text-sm text-ganker-muted">
+                  Buscando jugadores...
+                </p>
+              </div>
+            )}
 
-        {selectedGameId &&
-          !isLoadingGameData &&
-          !gameDataError &&
-          resultados.length > 0 && (
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-              {resultados.map((jugador) => (
-                <JugadorCardComponent
-                  key={jugador.user_id}
-                  jugador={jugador}
-                  currentUserId={currentUserId}
-                  onEnviarMensaje={handleEnviarMensaje}
-                  enviando={enviandoAId === jugador.user_id}
-                  perfilJuego={{
-                    rank: jugador.rank,
-                    role: jugador.role,
-                    character: jugador.character,
-                  }}
-                />
-              ))}
-            </div>
-          )}
+            {!isLoadingResultados && resultadosError && (
+              <div className="rounded-2xl border border-ganker-error/20 bg-ganker-error/10 p-10 text-center">
+                <p className="text-sm text-ganker-error">{resultadosError}</p>
+              </div>
+            )}
+
+            {!isLoadingResultados &&
+              !resultadosError &&
+              resultados.length === 0 && (
+                <div className="rounded-2xl border border-white/10 bg-ganker-surface p-10 text-center">
+                  <p className="text-sm text-ganker-muted">
+                    No se encontraron jugadores con esos filtros. Probá
+                    cambiándolos o limpiándolos.
+                  </p>
+                </div>
+              )}
+
+            {!isLoadingResultados &&
+              !resultadosError &&
+              resultados.length > 0 && (
+                <>
+                  <div className="flex items-center justify-end gap-2">
+                    <label
+                      htmlFor="orden-resultados"
+                      className="text-xs font-semibold text-ganker-muted uppercase"
+                    >
+                      Ordenar por
+                    </label>
+                    <select
+                      id="orden-resultados"
+                      value={orden}
+                      onChange={(e) => setOrden(e.target.value)}
+                      className="rounded-lg border border-white/10 bg-ganker-surface-light px-3 py-2 text-sm text-ganker-text outline-none transition focus:border-ganker-purple-light"
+                    >
+                      <option value="">Sin ordenar</option>
+                      <option value="reciente">
+                        Última conexión: más reciente primero
+                      </option>
+                      <option value="antiguo">
+                        Última conexión: más antigua primero
+                      </option>
+                    </select>
+                  </div>
+
+                  <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                    {resultados.map((jugador) => (
+                      <JugadorCardComponent
+                        key={jugador.user_id}
+                        jugador={jugador}
+                        currentUserId={currentUserId}
+                        onEnviarMensaje={handleEnviarMensaje}
+                        enviando={enviandoAId === jugador.user_id}
+                        perfilJuego={{
+                          characters: jugador.characters,
+                          role_profiles: jugador.role_profiles,
+                          characterIdFiltrado: characterId,
+                        }}
+                      />
+                    ))}
+                  </div>
+
+                  <div className="flex items-center justify-center gap-4">
+                    <button
+                      type="button"
+                      onClick={paginaAnterior}
+                      disabled={!hayPaginaAnterior}
+                      className="rounded-xl border border-white/10 bg-ganker-surface px-4 py-2 text-sm font-semibold text-ganker-text transition hover:border-ganker-purple/40 disabled:cursor-not-allowed disabled:opacity-40"
+                    >
+                      Anterior
+                    </button>
+
+                    <span className="text-sm text-ganker-muted">
+                      Página {pagina} de {totalPaginas}
+                    </span>
+
+                    <button
+                      type="button"
+                      onClick={paginaSiguiente}
+                      disabled={!hayPaginaSiguiente}
+                      className="rounded-xl border border-white/10 bg-ganker-surface px-4 py-2 text-sm font-semibold text-ganker-text transition hover:border-ganker-purple/40 disabled:cursor-not-allowed disabled:opacity-40"
+                    >
+                      Siguiente
+                    </button>
+                  </div>
+                </>
+              )}
+          </>
+        )}
       </div>
     </section>
   );

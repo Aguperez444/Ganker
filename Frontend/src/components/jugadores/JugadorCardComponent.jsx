@@ -1,5 +1,39 @@
 import AvatarUsuarioComponent from "../common/AvatarUsuarioComponent";
 import { urlDeMedia } from "../../utils/media";
+import { formatearConexionReciente } from "../../utils/tiempo";
+
+// Un perfil puede tener muchos personajes cargados (hasta el catalogo
+// entero del juego); mostrarlos todos como insignias satura la tarjeta.
+// Se muestran los primeros LIMITE_PERSONAJES_VISIBLES (en el orden de
+// prioridad que ya viene del backend) y el resto se resume en un "+N". Si
+// hay un filtro de personaje activo en la busqueda, ese personaje se
+// garantiza visible aunque no este entre los primeros — total, es el motivo
+// por el que esta tarjeta aparecio en el resultado.
+const LIMITE_PERSONAJES_VISIBLES = 5;
+
+function seleccionarPersonajesVisibles(characters, characterIdFiltrado) {
+  if (!characters) return { visibles: [], ocultos: 0 };
+  if (characters.length <= LIMITE_PERSONAJES_VISIBLES) {
+    return { visibles: characters, ocultos: 0 };
+  }
+
+  let ordenados = characters;
+  if (characterIdFiltrado) {
+    const indice = characters.findIndex(
+      (c) => String(c.character_id) === String(characterIdFiltrado)
+    );
+    if (indice >= LIMITE_PERSONAJES_VISIBLES) {
+      ordenados = [
+        characters[indice],
+        ...characters.slice(0, indice),
+        ...characters.slice(indice + 1),
+      ];
+    }
+  }
+
+  const visibles = ordenados.slice(0, LIMITE_PERSONAJES_VISIBLES);
+  return { visibles, ocultos: characters.length - visibles.length };
+}
 
 function InsigniaPerfil({ icon_url, name }) {
   const iconUrl = urlDeMedia(icon_url);
@@ -29,8 +63,13 @@ function InsigniaPerfil({ icon_url, name }) {
  * y utils/jwt.js sobre por que hace falta decodificar el token para esto).
  *
  * `perfilJuego` es opcional: cuando viene (US 03 - Buscar jugadores, con
- * un videojuego seleccionado), muestra el rango/rol/personaje de esa
- * coincidencia como insignias debajo del nombre.
+ * un videojuego seleccionado), muestra los personajes y los pares rol/rango
+ * de esa coincidencia como insignias debajo del nombre. Son listas porque un
+ * mismo perfil de juego puede tener varios personajes y varios roles (cada
+ * uno con su propio rango) — ver GetGameProfileResponse en el backend.
+ * `perfilJuego.characterIdFiltrado` (opcional): el id del personaje por el
+ * que se esta filtrando la busqueda, si hay uno — ver
+ * seleccionarPersonajesVisibles mas arriba.
  */
 const JugadorCardComponent = ({
   jugador,
@@ -40,6 +79,12 @@ const JugadorCardComponent = ({
   perfilJuego,
 }) => {
   const esUnoMismo = jugador.user_id === currentUserId;
+  const conexionReciente = formatearConexionReciente(jugador.last_connection);
+  const { visibles: personajesVisibles, ocultos: personajesOcultos } =
+    seleccionarPersonajesVisibles(
+      perfilJuego?.characters,
+      perfilJuego?.characterIdFiltrado
+    );
 
   return (
     <div className="flex flex-col items-center gap-3 rounded-2xl border border-white/10 bg-ganker-surface p-6 text-center transition hover:border-ganker-purple/40">
@@ -54,13 +99,32 @@ const JugadorCardComponent = ({
         <p className="truncate text-sm text-ganker-muted">
           @{jugador.username}
         </p>
+        {conexionReciente && (
+          <p className="mt-0.5 truncate text-xs text-ganker-muted/80">
+            {conexionReciente}
+          </p>
+        )}
       </div>
 
       {perfilJuego && (
         <div className="flex flex-wrap items-center justify-center gap-1.5">
-          <InsigniaPerfil {...perfilJuego.rank} />
-          <InsigniaPerfil {...perfilJuego.role} />
-          <InsigniaPerfil {...perfilJuego.character} />
+          {perfilJuego.role_profiles?.map((roleProfile) => (
+            <span
+              key={roleProfile.role_profile_id}
+              className="flex items-center gap-1.5"
+            >
+              <InsigniaPerfil {...roleProfile.role} />
+              <InsigniaPerfil {...roleProfile.rank} />
+            </span>
+          ))}
+          {personajesVisibles.map((character) => (
+            <InsigniaPerfil key={character.character_id} {...character} />
+          ))}
+          {personajesOcultos > 0 && (
+            <span className="inline-flex items-center rounded-full border border-white/10 bg-ganker-surface-light px-2.5 py-1 text-xs text-ganker-muted">
+              +{personajesOcultos}
+            </span>
+          )}
         </div>
       )}
 
@@ -69,7 +133,7 @@ const JugadorCardComponent = ({
           type="button"
           onClick={() => onEnviarMensaje(jugador)}
           disabled={enviando}
-          className="mt-2 w-full rounded-xl border border-white/10 bg-ganker-surface-light px-4 py-2 text-sm font-semibold text-ganker-text transition hover:border-ganker-purple/40 hover:bg-ganker-purple/20 disabled:cursor-not-allowed disabled:opacity-60"
+          className="mt-auto w-full rounded-xl border border-white/10 bg-ganker-surface-light px-4 py-2 text-sm font-semibold text-ganker-text transition hover:border-ganker-purple/40 hover:bg-ganker-purple/20 disabled:cursor-not-allowed disabled:opacity-60"
         >
           {enviando ? "Abriendo chat..." : "Enviar mensaje"}
         </button>

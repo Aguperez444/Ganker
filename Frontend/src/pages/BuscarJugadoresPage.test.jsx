@@ -12,6 +12,7 @@ import {
   getRanksByGame,
   getRolesByGame,
   getCharactersByGame,
+  searchGameProfiles,
 } from "../api/gameProfileApi";
 
 vi.mock("../api/jugadoresApi", () => ({
@@ -38,6 +39,7 @@ vi.mock("../api/gameProfileApi", () => ({
   getCharactersByGame: vi.fn(),
   createGameProfile: vi.fn(),
   updateGameProfile: vi.fn(),
+  searchGameProfiles: vi.fn(),
 }));
 
 vi.mock("../api/axiosClient", () => ({
@@ -102,6 +104,55 @@ const PERSONAJES = [
   { character_id: 2, name: "Lux", icon_url: null },
 ];
 
+// Simula POST /api/v1/game_profiles/search: 3 jugadores de prueba que ciclan
+// entre los rangos/roles/personajes de arriba (mismo esquema que usaba antes
+// el mock del hook), pero ya en la forma real que devuelve el backend
+// (player anidado + listas de characters/role_profiles).
+const JUGADORES_BASE = [
+  { player_id: 2, username: "testuser" },
+  { player_id: 3, username: "owner_user" },
+  { player_id: 4, username: "admin_user" },
+];
+
+function perfilesDePrueba({ ranks, roles, characters, name } = {}) {
+  return JUGADORES_BASE.map((jugador, indice) => ({
+    player: {
+      player_id: jugador.player_id,
+      player_name: jugador.username,
+      icon_url: null,
+      last_connection: null,
+    },
+    characters: [PERSONAJES[indice % PERSONAJES.length]],
+    role_profiles: [
+      {
+        role_profile_id: indice + 1,
+        role: ROLES[indice % ROLES.length],
+        rank: RANGOS[indice % RANGOS.length],
+      },
+    ],
+  })).filter((perfil) => {
+    if (ranks && !ranks.includes(perfil.role_profiles[0].rank.rank_id)) {
+      return false;
+    }
+    if (roles && !roles.includes(perfil.role_profiles[0].role.role_id)) {
+      return false;
+    }
+    if (
+      characters &&
+      !characters.includes(perfil.characters[0].character_id)
+    ) {
+      return false;
+    }
+    if (
+      name &&
+      !perfil.player.player_name.toLowerCase().includes(name.toLowerCase())
+    ) {
+      return false;
+    }
+    return true;
+  });
+}
+
 function ConSesion({ children }) {
   const { loading, user } = useAuth();
   if (loading || !user) return <p>cargando</p>;
@@ -156,6 +207,9 @@ beforeEach(() => {
   getRanksByGame.mockResolvedValue(RANGOS);
   getRolesByGame.mockResolvedValue(ROLES);
   getCharactersByGame.mockResolvedValue(PERSONAJES);
+  searchGameProfiles.mockImplementation((filters) =>
+    Promise.resolve(perfilesDePrueba(filters))
+  );
 });
 
 describe("US 03 - Buscar jugadores", () => {
