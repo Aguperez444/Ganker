@@ -80,10 +80,13 @@ class User:
         self._profiles = value
 
     @property
-    def icon_url(self) -> Optional[str]:
-        return self._icon_url
+    def icon_url(self) -> str:
+        if self._icon_url:
+            return self._icon_url
+        else:
+            return 'media/users/icons/default_icon.png'
     @icon_url.setter
-    def icon_url(self, value: Optional[str]) -> None:
+    def icon_url(self, value: str) -> None:
         self._icon_url = value
 
     @property

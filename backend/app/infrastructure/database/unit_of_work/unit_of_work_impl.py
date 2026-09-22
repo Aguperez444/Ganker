@@ -2,8 +2,10 @@ from typing import Callable
 from sqlalchemy.orm import Session
 
 from app.application.ports.i_character_repository import ICharacterRepository
+from app.application.ports.i_conversation_repository import IConversationRepository
 from app.application.ports.i_find_by_specifications_service import IFindBySpecificationRepository
 from app.application.ports.i_game_profile_repository import IGameProfileRepository
+from app.application.ports.i_message_repository import IMessageRepository
 from app.application.ports.i_user_repository import IUserRepository
 from app.application.ports.i_rank_repository import IRankRepository
 from app.application.ports.i_refresh_token_repository import IRefreshTokenRepository
@@ -11,9 +13,10 @@ from app.application.ports.i_role_repository import IRoleRepository
 from app.application.ports.i_unit_of_work import IUnitOfWork
 from app.application.ports.i_videogame_repository import IVideogameRepository
 from app.infrastructure.database.repositories.character_repository_impl import CharacterRepositoryImpl
-from app.infrastructure.database.repositories.find_by_specification_repository_impl import \
-    FindBySpecificationRepositoryImpl
+from app.infrastructure.database.repositories.conversation_repo_impl import ConversationRepositoryImpl
+from app.infrastructure.database.repositories.find_by_specification_repository_impl import FindBySpecificationRepositoryImpl
 from app.infrastructure.database.repositories.game_profile_repository_impl import GameProfileRepositoryImpl
+from app.infrastructure.database.repositories.message_repo_impl import MessageRepoImpl
 from app.infrastructure.database.repositories.user_repository_impl import UserRepositoryImpl
 from app.infrastructure.database.repositories.rank_repository_impl import RankRepositoryImpl
 from app.infrastructure.database.repositories.refresh_token_repository_impl import RefreshTokenRepositoryImpl
@@ -39,6 +42,8 @@ class SqlAlchemyUnitOfWork(IUnitOfWork):
         self.rank_repo: IRankRepository
         self.character_repo: ICharacterRepository
         self.refresh_token_repo: IRefreshTokenRepository
+        self.conversation_repo: IConversationRepository
+        self.message_repo: IMessageRepository
         self.find_by_specification_repo: 'IFindBySpecificationRepository'
     # Context manager
     def __enter__(self) -> 'SqlAlchemyUnitOfWork':
@@ -50,6 +55,8 @@ class SqlAlchemyUnitOfWork(IUnitOfWork):
         self.rank_repo: IRankRepository = RankRepositoryImpl(self.session)
         self.character_repo: ICharacterRepository = CharacterRepositoryImpl(self.session)
         self.refresh_token_repo: IRefreshTokenRepository = RefreshTokenRepositoryImpl(self.session)
+        self.conversation_repo: IConversationRepository = ConversationRepositoryImpl(self.session)
+        self.message_repo: IMessageRepository = MessageRepoImpl(self.session)
         self.find_by_specification_repo: 'IFindBySpecificationRepository' = FindBySpecificationRepositoryImpl(self.session)
         return self
 
@@ -60,7 +67,9 @@ class SqlAlchemyUnitOfWork(IUnitOfWork):
             else:
                 self.session.rollback()
         finally:
-            self.session.close()
+            if hasattr(self, "session") and self.session:
+                self.session.close()
+                self.session = None  # Evita que quede apuntando a una sesión cerrada
 
     def commit(self) -> None:
         assert self.session is not None, "UoW sin session (¿usaste 'with uow:'?)"

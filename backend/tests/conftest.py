@@ -221,6 +221,13 @@ def client(monkeypatch, test_session_factory, jwt_service, tmp_path):
     monkeypatch.setattr(role_ctrl_module, "uow_factory", test_uow_factory)
     monkeypatch.setattr(rank_ctrl_module, "uow_factory", test_uow_factory)
 
+    import app.infrastructure.api.controllers.chat_controller as chat_ctrl_module
+    import app.infrastructure.api.controllers.chat_websocket as chat_ws_module
+    import app.infrastructure.api.dependencies.web_socket_auth as ws_auth_dep
+    monkeypatch.setattr(chat_ctrl_module, "uow_factory", test_uow_factory)
+    monkeypatch.setattr(chat_ws_module, "uow_factory", test_uow_factory)
+    monkeypatch.setattr(ws_auth_dep, "token_service", jwt_service)
+
     # Isolated temp directory for media uploads during tests
     temp_media = tmp_path / "media"
     temp_media.mkdir(parents=True, exist_ok=True)
