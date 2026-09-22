@@ -25,6 +25,7 @@ class UserORM(Base):
     role: Mapped[str] = mapped_column(String, nullable=False, default="player")
     icon_url: Mapped[Optional[str]] = mapped_column(String, nullable=True)
 
+
     # Relaciones
     game_profiles: Mapped[List["GameProfileORM"]] = relationship(back_populates="user")
     refresh_tokens: Mapped[List["RefreshTokenORM"]] = relationship(back_populates="user")

@@ -3,6 +3,7 @@ from sqlalchemy.orm import Session
 
 from app.application.ports.i_character_repository import ICharacterRepository
 from app.application.ports.i_conversation_repository import IConversationRepository
+from app.application.ports.i_find_by_specifications_service import IFindBySpecificationRepository
 from app.application.ports.i_game_profile_repository import IGameProfileRepository
 from app.application.ports.i_message_repository import IMessageRepository
 from app.application.ports.i_user_repository import IUserRepository
@@ -13,6 +14,7 @@ from app.application.ports.i_unit_of_work import IUnitOfWork
 from app.application.ports.i_videogame_repository import IVideogameRepository
 from app.infrastructure.database.repositories.character_repository_impl import CharacterRepositoryImpl
 from app.infrastructure.database.repositories.conversation_repo_impl import ConversationRepositoryImpl
+from app.infrastructure.database.repositories.find_by_specification_repository_impl import FindBySpecificationRepositoryImpl
 from app.infrastructure.database.repositories.game_profile_repository_impl import GameProfileRepositoryImpl
 from app.infrastructure.database.repositories.message_repo_impl import MessageRepoImpl
 from app.infrastructure.database.repositories.user_repository_impl import UserRepositoryImpl
@@ -42,6 +44,7 @@ class SqlAlchemyUnitOfWork(IUnitOfWork):
         self.refresh_token_repo: IRefreshTokenRepository
         self.conversation_repo: IConversationRepository
         self.message_repo: IMessageRepository
+        self.find_by_specification_repo: 'IFindBySpecificationRepository'
     # Context manager
     def __enter__(self) -> 'SqlAlchemyUnitOfWork':
         self.session: Session = self._sf()  # nueva Session por acción
@@ -54,6 +57,7 @@ class SqlAlchemyUnitOfWork(IUnitOfWork):
         self.refresh_token_repo: IRefreshTokenRepository = RefreshTokenRepositoryImpl(self.session)
         self.conversation_repo: IConversationRepository = ConversationRepositoryImpl(self.session)
         self.message_repo: IMessageRepository = MessageRepoImpl(self.session)
+        self.find_by_specification_repo: 'IFindBySpecificationRepository' = FindBySpecificationRepositoryImpl(self.session)
         return self
 
     def __exit__(self, exc_type, exc, tb) -> None:
