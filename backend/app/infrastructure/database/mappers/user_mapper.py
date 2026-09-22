@@ -16,6 +16,7 @@ class UserMapper:
             role=UserRole(user_orm.role),
             profiles = [GameProfileMapper.orm_to_domain(game_profile) for game_profile in user_orm.game_profiles],
             icon_url=user_orm.icon_url,
+            last_connection=user_orm.last_connection
         )
 
     @staticmethod
@@ -28,4 +29,5 @@ class UserMapper:
             role=user_domain.role.value,
             password_hash=user_domain.password_hash,
             icon_url=user_domain.icon_url,
+            last_connection=user_domain.last_connection
         )

@@ -22,7 +22,8 @@ class QueryUsers:
                 mail=user.mail,
                 profiles=[CreateGameProfileDTOService.create_game_profile_response(profile) for profile in user.profiles],
                 role=user.role,
-                icon_url=user.icon_url or "/media/users/icons/icon_example_1.png"
+                icon_url=user.icon_url or "/media/users/icons/icon_example_1.png",
+                last_connection=user.last_connection
             )
 
 

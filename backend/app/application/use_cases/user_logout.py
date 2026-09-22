@@ -1,3 +1,4 @@
+from datetime import datetime
 from app.application.ports.i_token_service import ITokenService
 from app.application.ports.i_unit_of_work import IUnitOfWork
 from app.domain.exceptions.auth.invalid_token_exception import InvalidTokenException
@@ -11,8 +12,14 @@ class UserLogout:
     def execute(self, refresh_token: str) -> None:
         token_data = self.token_service.verify_refresh_token(refresh_token)
         jti = token_data.get("jti")
+        user_id = token_data.get("sub")
 
         with self.uow:
             revoked = self.uow.refresh_token_repo.revoke_by_jti(jti)
             if not revoked:
                 raise InvalidTokenException("Token revoked")
+
+            user = self.uow.user_repo.get_user_by_id(int(user_id))
+            if user:
+                user.last_connection = datetime.now()
+                self.uow.user_repo.update_user(user)

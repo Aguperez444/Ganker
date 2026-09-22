@@ -1,5 +1,3 @@
-from typing import cast
-
 from app.application.ports.i_unit_of_work import IUnitOfWork
 from app.infrastructure.api.dto.request.Search_videogame_profiles_request import SearchVideogameProfilesRequest
 from app.infrastructure.api.dto.response.get_videogame_profiles_response import GetVideogameProfilesResponse
@@ -13,8 +11,8 @@ from app.domain.exceptions.rank.rank_not_found_exception import RankNotFoundExce
 from app.domain.exceptions.role.role_not_found_exception import RoleNotFoundException
 from app.domain.exceptions.videogame.videogame_not_found_exception import VideogameNotFoundException
 from app.domain.exceptions.character.character_not_found_exception import CharacterNotFoundException
-from app.domain.services.create_game_profile_dto_service import CreateGameProfileDTOService
 from app.domain.specifications.videogame_profiles.different_player_id_specification import ByDifferentPlayerIDSpecification
+from app.domain.specifications.videogame_profiles.last_connection_specification import ByLastConnectionSpecification
 
 
 class SearchVideogameProfilePlayer:
@@ -35,8 +33,8 @@ class SearchVideogameProfilePlayer:
             self.get_and_validate_exist_videogame(filters.videogame_id, uow=uow)
 
             # Siempre tengo que filtrar por un juego y tiempo de conexión
-            specs: list[Specification] = [ ByDifferentPlayerIDSpecification(player_id),ByVideogameSpecification(filters.videogame_id)]
-            # TODO CUANDO EXISTA EL ATRIBUTO AGREGAR A LA LISTA ByLastConnectionSpecification(filters.last_connection)
+            specs: list[Specification] = [ByDifferentPlayerIDSpecification(player_id), ByVideogameSpecification(filters.videogame_id), ByLastConnectionSpecification(
+                4)]
             # Reviso si tengo más filtros
             if filters.roles:
                 for role in filters.roles:
@@ -67,12 +65,8 @@ class SearchVideogameProfilePlayer:
         # Buscamos
         with self.uow as uow:
             videogame_profiles = uow.find_by_specification_repo.get_videogame_profiles(combined_spec, skip,limit)
-            videogame_profiles_response= [
-                CreateGameProfileDTOService.create_game_profile_response(videogame_profile)
-                for videogame_profile in videogame_profiles
-            ]
 
-            return GetVideogameProfilesResponse(videogame_profiles= videogame_profiles_response)
+            return GetVideogameProfilesResponse(videogame_profiles= videogame_profiles)
 
     @staticmethod
     def get_and_validate_exist_videogame(videogame_id: int, uow: IUnitOfWork):
