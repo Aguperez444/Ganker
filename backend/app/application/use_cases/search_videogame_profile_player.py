@@ -1,5 +1,3 @@
-import datetime
-
 from app.application.ports.i_unit_of_work import IUnitOfWork
 from app.infrastructure.api.dto.request.Search_videogame_profiles_request import SearchVideogameProfilesRequest
 from app.infrastructure.api.dto.response.get_videogame_profiles_response import GetVideogameProfilesResponse
