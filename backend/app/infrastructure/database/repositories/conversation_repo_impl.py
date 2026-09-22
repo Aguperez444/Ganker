@@ -23,13 +23,10 @@ class ConversationRepositoryImpl(IConversationRepository):
             (ConversationORM.user_1_id == user_id) | (ConversationORM.user_2_id == user_id)
         ).all()
 
-        for conversation in found_conversations:
-            if conversation.messages:
-                conversation.messages = [conversation.messages[-1]]
-            else:
-                conversation.messages = []
 
-        return [ConversationMapper.orm_to_domain(conversation) for conversation in found_conversations]
+        return [ConversationMapper.orm_to_domain_last_message_only(conversation) if conversation.messages else ConversationMapper.orm_to_domain_no_messages(conversation) for conversation in found_conversations]
+
+
 
     def find_by_participants_ids(self, user_1_id: int, user_2_id: int) -> Optional['Conversation']:
         # Como normalizamos en el use case, alcanza con comparar exactamente las columnas
@@ -40,8 +37,7 @@ class ConversationRepositoryImpl(IConversationRepository):
 
         if not found_conversation:
             return None
-        found_conversation.messages = [] # para este mét_odo no necesitamos levantar toda la lista de mensajes
-        return ConversationMapper.orm_to_domain(found_conversation)
+        return ConversationMapper.orm_to_domain_no_messages(found_conversation)
 
 
 
@@ -49,6 +45,5 @@ class ConversationRepositoryImpl(IConversationRepository):
         conversation = self.session.query(ConversationORM).filter(ConversationORM.conversation_id == conversation_id).first()
         if not conversation:
             return None
-        conversation.messages = []  # para este mét_odo no necesitamos levantar toda la lista de mensajes
-        return ConversationMapper.orm_to_domain(conversation)
+        return ConversationMapper.orm_to_domain_no_messages(conversation)
 

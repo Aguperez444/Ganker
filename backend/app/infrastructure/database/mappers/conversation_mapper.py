@@ -22,3 +22,21 @@ class ConversationMapper:
             user_2=UserMapper.domain_to_orm(conversation.user_2),
             messages=[MessageMapper.domain_to_orm(message) for message in conversation.messages]
         )
+
+    @staticmethod
+    def orm_to_domain_no_messages(conversation_orm: ConversationORM) -> Conversation:
+        return Conversation(
+            conversation_id=conversation_orm.conversation_id,
+            user_1=UserMapper.orm_to_domain(conversation_orm.user_1),
+            user_2=UserMapper.orm_to_domain(conversation_orm.user_2),
+            messages=[]
+        )
+
+    @staticmethod
+    def orm_to_domain_last_message_only(conversation_orm: ConversationORM) -> Conversation:
+        return Conversation(
+            conversation_id=conversation_orm.conversation_id,
+            user_1=UserMapper.orm_to_domain(conversation_orm.user_1),
+            user_2=UserMapper.orm_to_domain(conversation_orm.user_2),
+            messages=[MessageMapper.orm_to_domain(conversation_orm.messages[-1])]
+        )
