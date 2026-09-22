@@ -51,7 +51,7 @@ class UserLogin:
             )
 
             # Actualizar la fecha de último login del usuario
-            user.last_connection = datetime.datetime.now()
+            user.last_connection = datetime.now()
             self.uow.user_repo.update_user(user)
 
 
