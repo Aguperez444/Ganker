@@ -1,5 +1,5 @@
 from typing import List, Optional
-from sqlalchemy import String, DateTime
+from sqlalchemy import String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.infrastructure.database.base import Base
