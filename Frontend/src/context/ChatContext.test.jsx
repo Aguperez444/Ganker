@@ -5,7 +5,11 @@ import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import { AuthProvider } from "./AuthContext";
 import { ChatProvider, useChat } from "./ChatContext";
 import { obtenerJugadorActual } from "../api/jugadoresApi";
-import { iniciarConversacion, obtenerConversaciones } from "../api/chatApi";
+import {
+  iniciarConversacion,
+  obtenerConversaciones,
+  marcarConversacionComoLeida,
+} from "../api/chatApi";
 
 vi.mock("../api/jugadoresApi", () => ({
   registrarJugador: vi.fn(),
@@ -16,6 +20,7 @@ vi.mock("../api/jugadoresApi", () => ({
 vi.mock("../api/chatApi", () => ({
   iniciarConversacion: vi.fn(),
   obtenerConversaciones: vi.fn(),
+  marcarConversacionComoLeida: vi.fn(),
 }));
 
 vi.mock("../api/axiosClient", () => ({
@@ -112,6 +117,10 @@ async function renderConSesion() {
   localStorage.setItem("refresh_token", "refresco");
   obtenerJugadorActual.mockResolvedValue(JUGADOR);
   obtenerConversaciones.mockResolvedValue(CONVERSACIONES);
+  marcarConversacionComoLeida.mockResolvedValue({
+    status: "ok",
+    messages_marked: 0,
+  });
 
   render(
     <AuthProvider>

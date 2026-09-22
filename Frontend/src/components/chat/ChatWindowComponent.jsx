@@ -1,7 +1,8 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import AvatarUsuarioComponent from "../common/AvatarUsuarioComponent";
 import { useChatSocket } from "../../hooks/useChatSocket";
 import { useChat } from "../../context/ChatContext";
+import { obtenerHistorialMensajes } from "../../api/chatApi";
 import MessageBubbleComponent from "./MessageBubbleComponent";
 import MessageInputComponent from "./MessageInputComponent";
 
@@ -12,33 +13,26 @@ const TEXTO_ESTADO = {
   ERROR: "Error de conexión",
 };
 
-function semillaDesdeUltimoMensaje(conversacion) {
-  if (!conversacion.last_message) return [];
+const TAMANO_PAGINA_HISTORIAL = 50;
 
-  return [
-    {
-      message_id: null,
-      conversation_id: conversacion.conversation_id,
-      sender_id: conversacion.last_message.sender_id,
-      content: conversacion.last_message.content,
-      timestamp: conversacion.last_message.timestamp,
-    },
-  ];
+function mismoMinuto(a, b) {
+  if (!a || !b) return false;
+  const fechaA = new Date(a);
+  const fechaB = new Date(b);
+  if (Number.isNaN(fechaA.getTime()) || Number.isNaN(fechaB.getTime())) {
+    return false;
+  }
+  return (
+    fechaA.getFullYear() === fechaB.getFullYear() &&
+    fechaA.getMonth() === fechaB.getMonth() &&
+    fechaA.getDate() === fechaB.getDate() &&
+    fechaA.getHours() === fechaB.getHours() &&
+    fechaA.getMinutes() === fechaB.getMinutes()
+  );
 }
 
-/**
- * US 10 - Ventana de una conversacion activa.
- *
- * A diferencia del resto de los componentes "tontos" del proyecto, este SI
- * abre su propia conexion (useChatSocket): es el mismo criterio que ya usa
- * TopNavbar con useAuth, adaptado a un hook en vez de un context. Que
- * conversacion mostrar se lo decide ChatSidebarComponent por props;
- * conectarse al socket de ESA conversacion es un detalle de esta pantalla.
- *
- * `onMensaje` avisa a ChatContext de cada mensaje que llega (propio o
- * ajeno) para que la lista de conversaciones actualice su ultimo mensaje
- * sin esperar a que el jugador cierre este chat.
- */
+// Carga el historial antes de montar ChatWindowInterna: useChatSocket solo
+// lee mensajesIniciales una vez, al montarse.
 const ChatWindowComponent = ({
   conversacion,
   currentUserId,
@@ -46,72 +40,183 @@ const ChatWindowComponent = ({
   onCerrar,
   onMensaje,
 }) => {
-  const {
-    obtenerMensajesDeConversacion,
-    sembrarMensajesDeConversacion,
-    marcarConversacionComoVista,
-  } = useChat();
+  const { obtenerMensajesDeConversacion, sembrarMensajesDeConversacion } =
+    useChat();
+
+  // Lectura pura del cache: si ya se cargo esta conversacion en la sesion
+  // actual, no hace falta pedirla de nuevo.
+  const mensajesCacheados = obtenerMensajesDeConversacion(
+    conversacion.conversation_id
+  );
+
+  const [mensajesDelFetch, setMensajesDelFetch] = useState(null);
+  const [errorHistorial, setErrorHistorial] = useState(null);
+
+  useEffect(() => {
+    if (mensajesCacheados) return;
+
+    let cancelado = false;
+
+    obtenerHistorialMensajes(conversacion.conversation_id, {
+      page: 1,
+      size: TAMANO_PAGINA_HISTORIAL,
+    })
+      .then((mensajes) => {
+        if (cancelado) return;
+        // El backend los devuelve del mas nuevo al mas viejo.
+        const ordenados = [...mensajes].reverse();
+        sembrarMensajesDeConversacion(
+          conversacion.conversation_id,
+          ordenados
+        );
+        setMensajesDelFetch(ordenados);
+      })
+      .catch((err) => {
+        if (cancelado) return;
+        console.error("Error al cargar el historial de mensajes:", err);
+        setErrorHistorial("No se pudo cargar el historial de mensajes.");
+        setMensajesDelFetch([]);
+      });
+
+    return () => {
+      cancelado = true;
+    };
+    // Solo debe correr al montar (el componente se remonta por conversacion).
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [conversacion.conversation_id]);
+
+  const mensajesIniciales = mensajesCacheados ?? mensajesDelFetch;
+
+  if (mensajesIniciales === null) {
+    return (
+      <div className="flex h-full min-h-0 flex-col items-center justify-center bg-ganker-bg">
+        <p className="text-sm text-ganker-muted">Cargando mensajes...</p>
+      </div>
+    );
+  }
+
+  return (
+    <ChatWindowInterna
+      conversacion={conversacion}
+      currentUserId={currentUserId}
+      onVolver={onVolver}
+      onCerrar={onCerrar}
+      onMensaje={onMensaje}
+      mensajesIniciales={mensajesIniciales}
+      errorHistorial={errorHistorial}
+    />
+  );
+};
+
+// A diferencia del resto de componentes del proyecto, este abre su propia
+// conexion (useChatSocket). `onMensaje` avisa a ChatContext de cada mensaje
+// para actualizar el ultimo mensaje de la lista de conversaciones.
+const ChatWindowInterna = ({
+  conversacion,
+  currentUserId,
+  onVolver,
+  onCerrar,
+  onMensaje,
+  mensajesIniciales,
+  errorHistorial,
+}) => {
+  const { actualizarMensajesDeConversacion, marcarConversacionComoVista } =
+    useChat();
   const mensajesRef = useRef(null);
+  const [cargandoAnteriores, setCargandoAnteriores] = useState(false);
+  const [errorAnteriores, setErrorAnteriores] = useState(null);
+  const [hayMasAnteriores, setHayMasAnteriores] = useState(
+    mensajesIniciales.length >= TAMANO_PAGINA_HISTORIAL
+  );
+  const paginaRef = useRef(1);
 
   const otroParticipante = conversacion.other_participant;
   const nombreOtro =
     otroParticipante?.name || otroParticipante?.username || "Jugador";
 
-  // No existe todavia un endpoint de historial completo (ver guia.md), asi
-  // que la unica fuente de "mensajes anteriores" es lo que ya se vio en
-  // esta sesion del navegador (ChatContext los va acumulando por
-  // conversacion). Si el jugador nunca abrio este chat en la sesion actual,
-  // arranca con el ultimo mensaje conocido de la lista; si ya lo abrio y
-  // cerro, retoma la charla completa donde quedo en vez de volver a mostrar
-  // solo el ultimo mensaje.
-  //
-  // Esta lectura es pura (no mutuar el cache durante el render, ver
-  // ChatContext): el useState de useChatSocket solo mira el valor inicial en
-  // el primer render de este componente (se vuelve a montar entero cada vez
-  // que se abre una conversacion distinta, ver comentario de useChatSocket),
-  // asi que necesitamos el valor ya resuelto ACA, sincronicamente. Sembrar el
-  // cache para la proxima vez que se abra esta conversacion es un efecto
-  // secundario aparte, hecho en el useEffect de abajo.
-  const mensajesIniciales =
-    obtenerMensajesDeConversacion(conversacion.conversation_id) ??
-    semillaDesdeUltimoMensaje(conversacion);
-
-  useEffect(() => {
-    sembrarMensajesDeConversacion(
-      conversacion.conversation_id,
-      mensajesIniciales
-    );
-  }, [
-    conversacion.conversation_id,
-    mensajesIniciales,
-    sembrarMensajesDeConversacion,
-  ]);
-
-  // El panel fijo de desktop y el drawer mobile desmontan este componente
-  // entero cuando se ocultan (ver AppLayout/AdminLayout/ChatDrawer), asi que
-  // "volver a abrir el chat" con una conversacion que ya estaba activa lo
-  // remonta directamente aca, sin pasar por seleccionarConversacion (eso
-  // solo ocurre al elegir la conversacion desde la lista). Este efecto cubre
-  // ese caso: cualquier no leido que se haya sumado mientras el panel estaba
-  // oculto se limpia apenas la conversacion vuelve a estar en pantalla.
+  // Cubre el caso de reabrir el panel/drawer con una conversacion ya
+  // activa: eso remonta este componente sin pasar por seleccionarConversacion.
   useEffect(() => {
     marcarConversacionComoVista(conversacion.conversation_id);
   }, [conversacion.conversation_id, marcarConversacionComoVista]);
 
-  const { mensajes, estado, error, enviarMensaje } = useChatSocket(
-    conversacion.conversation_id,
-    mensajesIniciales,
-    (mensaje) => onMensaje?.(conversacion.conversation_id, mensaje)
-  );
+  const { mensajes, setMensajes, estado, error, enviarMensaje } =
+    useChatSocket(
+      conversacion.conversation_id,
+      mensajesIniciales,
+      (mensaje) => onMensaje?.(conversacion.conversation_id, mensaje)
+    );
 
-  // Se hace scroll del CONTENEDOR de mensajes directamente (no
-  // scrollIntoView sobre un sentinel) para no depender de que el navegador
-  // adivine cual es el ancestro scrolleable mas cercano: con muchos
-  // mensajes seguidos eso podia terminar scrolleando la pagina entera en
-  // vez de esta lista.
+  // El check de "leido" se muestra en cascada: solo en el ultimo mensaje propio.
+  const indiceUltimoMensajePropio = useMemo(() => {
+    for (let i = mensajes.length - 1; i >= 0; i--) {
+      if (mensajes[i].sender_id === currentUserId) return i;
+    }
+    return -1;
+  }, [mensajes, currentUserId]);
+
+  // Mantiene el cache de ChatContext al dia con lo que se ve en pantalla.
+  useEffect(() => {
+    actualizarMensajesDeConversacion(conversacion.conversation_id, mensajes);
+  }, [conversacion.conversation_id, mensajes, actualizarMensajesDeConversacion]);
+
+  // Guarda la altura/scroll previos para restaurar la posicion al
+  // prepender mensajes viejos (el navegador no lo hace solo).
+  const restaurarScrollRef = useRef(null);
+
+  const cargarMensajesAnteriores = async () => {
+    if (cargandoAnteriores || !hayMasAnteriores) return;
+
+    setCargandoAnteriores(true);
+    setErrorAnteriores(null);
+    const siguientePagina = paginaRef.current + 1;
+
+    try {
+      const mensajesAnteriores = await obtenerHistorialMensajes(
+        conversacion.conversation_id,
+        { page: siguientePagina, size: TAMANO_PAGINA_HISTORIAL }
+      );
+
+      paginaRef.current = siguientePagina;
+      setHayMasAnteriores(mensajesAnteriores.length >= TAMANO_PAGINA_HISTORIAL);
+
+      if (mensajesAnteriores.length > 0) {
+        const ordenados = [...mensajesAnteriores].reverse();
+        const contenedor = mensajesRef.current;
+        restaurarScrollRef.current = contenedor
+          ? { alturaPrevia: contenedor.scrollHeight, scrollPrevio: contenedor.scrollTop }
+          : null;
+
+        setMensajes((actuales) => {
+          const idsExistentes = new Set(
+            actuales.map((m) => m.message_id).filter((id) => id != null)
+          );
+          const nuevos = ordenados.filter(
+            (m) => !idsExistentes.has(m.message_id)
+          );
+          return [...nuevos, ...actuales];
+        });
+      }
+    } catch (err) {
+      console.error("Error al cargar mensajes anteriores:", err);
+      setErrorAnteriores("No se pudieron cargar mensajes anteriores.");
+    } finally {
+      setCargandoAnteriores(false);
+    }
+  };
+
   useEffect(() => {
     const contenedor = mensajesRef.current;
     if (!contenedor) return;
+
+    if (restaurarScrollRef.current) {
+      const { alturaPrevia, scrollPrevio } = restaurarScrollRef.current;
+      restaurarScrollRef.current = null;
+      contenedor.scrollTop =
+        contenedor.scrollHeight - alturaPrevia + scrollPrevio;
+      return;
+    }
+
     contenedor.scrollTop = contenedor.scrollHeight;
   }, [mensajes]);
 
@@ -156,9 +261,11 @@ const ChatWindowComponent = ({
         )}
       </header>
 
-      {error && (
+      {(error || errorHistorial || errorAnteriores) && (
         <div className="border-b border-ganker-error/20 bg-ganker-error/10 px-4 py-2">
-          <p className="text-xs text-ganker-error">{error}</p>
+          <p className="text-xs text-ganker-error">
+            {error || errorHistorial || errorAnteriores}
+          </p>
         </div>
       )}
 
@@ -166,18 +273,44 @@ const ChatWindowComponent = ({
         ref={mensajesRef}
         className="flex-1 space-y-3 overflow-y-auto px-4 py-4"
       >
+        {hayMasAnteriores && mensajes.length > 0 && (
+          <div className="flex justify-center pb-1">
+            <button
+              type="button"
+              onClick={cargarMensajesAnteriores}
+              disabled={cargandoAnteriores}
+              className="rounded-full border border-white/10 bg-ganker-surface-light px-3 py-1 text-xs text-ganker-muted transition hover:text-ganker-text disabled:opacity-50"
+            >
+              {cargandoAnteriores
+                ? "Cargando..."
+                : "Cargar mensajes anteriores"}
+            </button>
+          </div>
+        )}
+
         {mensajes.length === 0 ? (
           <p className="mt-8 text-center text-sm text-ganker-muted">
             Todavía no hay mensajes. ¡Escribí el primero!
           </p>
         ) : (
-          mensajes.map((mensaje, indice) => (
-            <MessageBubbleComponent
-              key={mensaje.message_id ?? indice}
-              mensaje={mensaje}
-              esPropio={mensaje.sender_id === currentUserId}
-            />
-          ))
+          mensajes.map((mensaje, indice) => {
+            const siguiente = mensajes[indice + 1];
+            // Agrupa la hora solo dentro de una tanda del mismo remitente.
+            const mostrarHora =
+              !siguiente ||
+              siguiente.sender_id !== mensaje.sender_id ||
+              !mismoMinuto(mensaje.timestamp, siguiente.timestamp);
+
+            return (
+              <MessageBubbleComponent
+                key={mensaje.message_id ?? indice}
+                mensaje={mensaje}
+                esPropio={mensaje.sender_id === currentUserId}
+                mostrarHora={mostrarHora}
+                mostrarIndicadorLeido={indice === indiceUltimoMensajePropio}
+              />
+            );
+          })
         )}
       </div>
 

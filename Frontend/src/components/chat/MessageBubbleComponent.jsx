@@ -22,10 +22,28 @@ function formatearFechaMensaje(timestamp) {
   return `${fechaCorta} ${hora}`;
 }
 
-// US 10 - Los mensajes propios van a la derecha, los del otro jugador a la
-// izquierda. `esPropio` lo decide quien use este componente comparando
-// mensaje.sender_id contra el id del usuario logueado.
-const MessageBubbleComponent = ({ mensaje, esPropio }) => {
+// Check gris = enviado, doble check violeta = leido.
+const IndicadorLeido = ({ leido }) => (
+  <span
+    aria-label={leido ? "Leído" : "Enviado"}
+    title={leido ? "Leído" : "Enviado"}
+    className={`text-xs leading-none ${leido ? "text-ganker-purple" : "text-ganker-muted"}`}
+  >
+    {leido ? "✓✓" : "✓"}
+  </span>
+);
+
+// mostrarHora/mostrarIndicadorLeido los calcula ChatWindowComponent, que es
+// quien conoce el resto de la lista (agrupar por minuto y el check en
+// cascada necesitan saber que viene antes/despues de este mensaje).
+const MessageBubbleComponent = ({
+  mensaje,
+  esPropio,
+  mostrarHora = true,
+  mostrarIndicadorLeido = esPropio,
+}) => {
+  const indicadorLeido = esPropio && mostrarIndicadorLeido;
+
   return (
     <div className={`flex flex-col ${esPropio ? "items-end" : "items-start"}`}>
       <div
@@ -37,9 +55,12 @@ const MessageBubbleComponent = ({ mensaje, esPropio }) => {
       >
         {mensaje.content}
       </div>
-      <span className="mt-1 text-[11px] text-ganker-muted">
-        {formatearFechaMensaje(mensaje.timestamp)}
-      </span>
+      {(mostrarHora || indicadorLeido) && (
+        <span className="mt-1 flex items-center gap-1 text-[11px] text-ganker-muted">
+          {mostrarHora && formatearFechaMensaje(mensaje.timestamp)}
+          {indicadorLeido && <IndicadorLeido leido={mensaje.is_read} />}
+        </span>
+      )}
     </div>
   );
 };

@@ -7,7 +7,11 @@ import {
   useRef,
   useState,
 } from "react";
-import { iniciarConversacion, obtenerConversaciones } from "../api/chatApi";
+import {
+  iniciarConversacion,
+  obtenerConversaciones,
+  marcarConversacionComoLeida,
+} from "../api/chatApi";
 import { useAuth } from "./AuthContext";
 import { obtenerIdUsuarioDesdeToken } from "../utils/jwt";
 import { reproducirSonidoNotificacion } from "../utils/sonido";
@@ -16,13 +20,8 @@ import { useIsDesktop } from "../hooks/useIsDesktop";
 
 const ChatContext = createContext(null);
 
-// AppLayout y AdminLayout montan cada uno su propio ChatProvider (son
-// arboles de rutas distintos), asi que "mostrar/ocultar el chat" no puede
-// vivir solo en el estado de React: cambiar de panel jugador a admin (o
-// viceversa) desmonta un provider y monta el otro de cero, y un refresh
-// reinicia igual. Por eso esta preferencia se lee/guarda en localStorage:
-// cualquier ChatProvider que se monte despues sigue mostrando lo mismo que
-// el jugador dejo la ultima vez, sin importar de donde venga.
+// AppLayout y AdminLayout montan cada uno su propio ChatProvider, asi que
+// esta preferencia se guarda en localStorage para sobrevivir el remount.
 const CLAVE_CHAT_ABIERTO = "ganker_chat_abierto";
 const CLAVE_PANEL_DESKTOP_VISIBLE = "ganker_chat_panel_desktop_visible";
 
@@ -31,7 +30,6 @@ function leerPreferenciaBooleana(clave, valorPorDefecto) {
     const guardado = localStorage.getItem(clave);
     return guardado === null ? valorPorDefecto : guardado === "true";
   } catch {
-    // localStorage puede no estar disponible (modo privado, SSR, etc.).
     return valorPorDefecto;
   }
 }
@@ -40,18 +38,11 @@ function guardarPreferenciaBooleana(clave, valor) {
   try {
     localStorage.setItem(clave, String(valor));
   } catch {
-    // No es critico si no se pudo persistir: la sesion actual sigue
-    // funcionando igual, solo no se recuerda para la proxima.
+    // No es critico: solo se pierde la preferencia, no la sesion.
   }
 }
 
-// Logica de fetch aparte del componente (no un useCallback de
-// ChatProvider) por el mismo motivo que useGames.js: llamar desde un efecto
-// a una funcion memoizada del propio componente que hace setState dispara
-// la regla set-state-in-effect. `cargandoRef` evita ademas que varias
-// notificaciones seguidas de una conversacion todavia no conocida (ver
-// actualizarUltimoMensaje mas abajo) disparen pedidos GET concurrentes: si
-// ya hay uno en vuelo, los siguientes llamados no hacen nada.
+// `cargandoRef` evita pedidos GET concurrentes si ya hay uno en vuelo.
 async function cargarYSetearConversaciones({
   isAuthenticated,
   setConversaciones,
@@ -81,20 +72,9 @@ async function cargarYSetearConversaciones({
   }
 }
 
-/**
- * US 10 - Iniciar conversacion privada.
- *
- * Estado global del chat: la lista de conversaciones, cual esta activa y la
- * conexion de notificaciones en vivo (/api/v1/ws/notifications), que tiene
- * que quedar abierta mientras el jugador tenga sesion, sin importar en que
- * pantalla de la app este. Por eso vive en un Context (como AuthContext) y
- * no en un hook de pantalla: AppLayout monta el provider una sola vez para
- * toda el area autenticada.
- *
- * El chat en si (la ventana de mensajes de UNA conversacion) sigue el mismo
- * patron que el resto de la app: ese socket puntual lo abre useChatSocket
- * dentro de ChatWindowComponent, no este contexto.
- */
+// Estado global del chat: conversaciones, cual esta activa, y la conexion
+// de notificaciones en vivo. El socket de UNA conversacion puntual lo abre
+// useChatSocket dentro de ChatWindowComponent, no este contexto.
 export function ChatProvider({ children }) {
   const { isAuthenticated, tokens } = useAuth();
 
@@ -103,10 +83,6 @@ export function ChatProvider({ children }) {
   const [chatAbierto, setChatAbierto] = useState(() =>
     leerPreferenciaBooleana(CLAVE_CHAT_ABIERTO, false)
   );
-  // Panel fijo de desktop (AppLayout/AdminLayout): por defecto visible (es
-  // el comportamiento de siempre para quien nunca lo toco), pero el boton
-  // de "Enviar mensaje" del navbar lo puede ocultar/mostrar, y esa eleccion
-  // se recuerda (ver CLAVE_PANEL_DESKTOP_VISIBLE mas arriba).
   const [panelDesktopVisible, setPanelDesktopVisible] = useState(() =>
     leerPreferenciaBooleana(CLAVE_PANEL_DESKTOP_VISIBLE, true)
   );
@@ -114,11 +90,6 @@ export function ChatProvider({ children }) {
   const [error, setError] = useState(null);
   const cargandoConversacionesRef = useRef(false);
 
-  // Misma deteccion reactiva (matchMedia) que usan AppLayout/AdminLayout
-  // para elegir panel fijo vs. drawer: antes esta condicion la recalculaba
-  // a mano con un window.innerWidth leido en el momento del evento, una
-  // segunda fuente de verdad que podia desincronizarse de la que realmente
-  // decide que se renderiza.
   const esDesktop = useIsDesktop();
 
   useEffect(() => {
@@ -138,20 +109,12 @@ export function ChatProvider({ children }) {
     [token]
   );
 
-  // US 10 - Todavia no existe un endpoint de historial completo (ver
-  // guia.md). Mientras tanto, guardamos ACA los mensajes que ya se vieron
-  // en esta sesion del navegador, por conversacion: asi cerrar el chat y
-  // volver a abrirlo no pierde lo que ya se cargo. Es un Map en un ref (no
-  // state) porque solo lo lee/actualiza ChatWindowComponent al montar/recibir
-  // mensajes; no hace falta re-renderizar el resto del arbol por esto.
+  // Cache de mensajes ya vistos por conversacion, para no perderlos al
+  // cerrar y reabrir el chat en la misma sesion. Ref (no state): solo lo
+  // lee/actualiza ChatWindowComponent, no hace falta re-renderizar por esto.
   const mensajesPorConversacionRef = useRef(new Map());
 
-  // Solo LEE el cache: no lo toca. `obtenerMensajesDeConversacion` vivia
-  // mezclada con un cache.set() de "sembrar si no existe" y se llamaba
-  // desde el cuerpo de render de ChatWindowComponent, es decir mutaba un
-  // Map compartido como efecto secundario de renderizar. Ahora esa mutacion
-  // vive aparte, en sembrarMensajesDeConversacion, para llamarla desde un
-  // efecto (ver ChatWindowComponent).
+  // Solo LEE el cache; sembrarMensajesDeConversacion es quien lo mutua.
   const obtenerMensajesDeConversacion = useCallback((conversationId) => {
     return mensajesPorConversacionRef.current.get(conversationId);
   }, []);
@@ -162,6 +125,15 @@ export function ChatProvider({ children }) {
       if (!cache.has(conversationId)) {
         cache.set(conversationId, semilla ?? []);
       }
+    },
+    []
+  );
+
+  // A diferencia de sembrarMensajesDeConversacion, esta SIEMPRE reemplaza
+  // la entrada (hace falta para prependear mensajes viejos ya cargados).
+  const actualizarMensajesDeConversacion = useCallback(
+    (conversationId, mensajes) => {
+      mensajesPorConversacionRef.current.set(conversationId, mensajes);
     },
     []
   );
@@ -182,14 +154,8 @@ export function ChatProvider({ children }) {
     cargarConversaciones();
   }, [cargarConversaciones]);
 
-  // Se ve la conversacion si el panel fijo de desktop esta visible (el
-  // jugador no lo oculto con el boton de "Enviar mensaje") o, en
-  // mobile/tablet, si el drawer esta abierto. Son mutuamente excluyentes
-  // segun en que layout estemos: antes esto era un OR entre ambos, asi que
-  // si el jugador abria una conversacion en el drawer mobile y despues
-  // pasaba a desktop y ocultaba el panel fijo, `chatAbierto` (que nadie
-  // resetea desde el panel fijo) seguia en true y la conversacion quedaba
-  // marcada como "vista" aunque no hubiera ningun chat en pantalla.
+  // Se ve la conversacion si el panel fijo de desktop esta visible, o en
+  // mobile/tablet si el drawer esta abierto (mutuamente excluyentes).
   const estaViendo = useCallback(
     (conversationId) => {
       const chatVisible = esDesktop ? panelDesktopVisible : chatAbierto;
@@ -209,7 +175,6 @@ export function ChatProvider({ children }) {
         );
 
         if (indice === -1) {
-          // Conversacion nueva que todavia no teniamos en la lista local.
           cargarConversaciones();
           return actuales;
         }
@@ -229,8 +194,7 @@ export function ChatProvider({ children }) {
     [cargarConversaciones]
   );
 
-  // Notificacion global (/api/v1/ws/notifications): llega para CUALQUIER
-  // conversacion, este el jugador viendola o no.
+  // Notificacion global: llega para cualquier conversacion, la este viendo o no.
   const manejarNotificacion = useCallback(
     (notificacion) => {
       const esVista = estaViendo(notificacion.conversation_id);
@@ -254,15 +218,8 @@ export function ChatProvider({ children }) {
 
   useNotificacionesSocket(isAuthenticated ? token : null, manejarNotificacion);
 
-  // Mensaje recibido por el socket de la sala activa (ChatWindowComponent).
-  // A diferencia de la notificacion global, esto solo llega mientras esa
-  // conversacion puntual esta abierta, asi que nunca suma no leidos: el
-  // jugador la esta viendo en ese mismo momento.
-  //
-  // Tambien lo agregamos al cache de mensajes de la conversacion (ver
-  // obtenerMensajesDeConversacion): es lo que permite que, al cerrar y
-  // volver a abrir el chat dentro de la misma sesion, se seleccione con
-  // toda la charla ya vista y no solo con el ultimo mensaje.
+  // Mensaje de la sala activa: a diferencia de la notificacion global, solo
+  // llega mientras esa conversacion esta abierta, asi que nunca suma no leidos.
   const manejarMensajeDeSalaActiva = useCallback(
     (conversationId, mensaje) => {
       const cache = mensajesPorConversacionRef.current;
@@ -288,21 +245,22 @@ export function ChatProvider({ children }) {
     [actualizarUltimoMensaje]
   );
 
-  // Aparte de seleccionarConversacion para que ChatWindowComponent tambien
-  // pueda llamarla al montar (ver su useEffect): el panel fijo de desktop y
-  // el drawer mobile desmontan el arbol del chat entero cuando se ocultan
-  // (ver AppLayout/AdminLayout/ChatDrawer), asi que volver a mostrarlos con
-  // una conversacion que ya estaba activa remonta ChatWindowComponent
-  // directamente, sin pasar de nuevo por seleccionarConversacion. Sin este
-  // llamado aparte, los no leidos que se sumaron mientras el panel estaba
-  // oculto quedaban pegados hasta salir de la conversacion y volver a
-  // entrar (que si pasa por seleccionarConversacion).
+  // Separada de seleccionarConversacion para que ChatWindowComponent
+  // tambien la llame al montar (reabrir un panel/drawer con la conversacion
+  // ya activa no pasa por seleccionarConversacion).
   const marcarConversacionComoVista = useCallback((conversationId) => {
     setConversaciones((actuales) =>
       actuales.map((c) =>
         c.conversation_id === conversationId ? { ...c, unread_count: 0 } : c
       )
     );
+
+    // Fire and forget: si no avisamos al backend, is_read queda en false
+    // en la base y un refresh de pagina vuelve a mostrar estos mensajes
+    // como no leidos.
+    marcarConversacionComoLeida(conversationId).catch((err) => {
+      console.error("Error al marcar la conversación como leída:", err);
+    });
   }, []);
 
   const seleccionarConversacion = useCallback(
@@ -325,11 +283,8 @@ export function ChatProvider({ children }) {
     setConversacionActivaId(null);
   }, []);
 
-  // Boton "Enviar mensaje" del navbar: en mobile/admin abre o cierra el
-  // drawer; en el panel fijo de desktop (AppLayout) lo oculta o lo vuelve a
-  // mostrar. Cada layout usa el que le corresponde segun tenga o no panel
-  // fijo (ver AppLayout.jsx / AdminLayout.jsx). No resetea la conversacion
-  // activa: si el jugador lo vuelve a abrir, retoma donde estaba.
+  // Boton "Enviar mensaje" del navbar: abre/cierra el drawer en mobile, o
+  // el panel fijo en desktop segun el layout.
   const alternarChat = useCallback(() => {
     setChatAbierto((abierto) => !abierto);
   }, []);
@@ -338,8 +293,6 @@ export function ChatProvider({ children }) {
     setPanelDesktopVisible((visible) => !visible);
   }, []);
 
-  // US 10 - Iniciar conversacion privada desde la tarjeta de un jugador.
-  // Idempotente: si ya existía, el backend devuelve la misma conversación.
   const iniciarChat = useCallback(
     async (targetUserId) => {
       setError(null);
@@ -418,6 +371,7 @@ export function ChatProvider({ children }) {
     manejarMensajeDeSalaActiva,
     obtenerMensajesDeConversacion,
     sembrarMensajesDeConversacion,
+    actualizarMensajesDeConversacion,
   };
 
   return <ChatContext.Provider value={value}>{children}</ChatContext.Provider>;

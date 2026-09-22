@@ -4,30 +4,10 @@ import { urlWebSocket } from "../utils/websocket";
 
 const MAX_INTENTOS_RECONEXION = 5;
 
-/**
- * US 10 - Interfaz de chat en tiempo real.
- *
- * Maneja la conexion websocket de UNA conversacion puntual
- * (/api/v1/ws/chat/conversations/{id}). Sigue el mismo criterio que el resto
- * de los hooks del proyecto: guarda su propio estado y no le habla a axios
- * directamente (aca ni siquiera aplica, es un socket nativo del navegador),
- * pero el componente que lo usa solo recibe datos y funciones.
- *
- * El token se lee de localStorage en cada intento de conexion (misma fuente
- * que usa el interceptor de axiosClient) en vez de recibirlo por parametro
- * ya resuelto, para no reconectar con un access_token viejo si el usuario
- * tuvo un refresh silencioso mientras el componente seguia montado.
- *
- * `mensajesIniciales` sirve para precargar el ultimo mensaje conocido de la
- * conversacion (lo que ya devuelve GET /api/v1/chat/conversations). Todavia
- * no existe un endpoint de historial completo (ver guia.md, seccion
- * "Proximos pasos"); cuando exista, alcanza con pasarle la lista completa.
- *
- * El componente que llama a este hook (ChatWindowComponent) se monta de
- * nuevo cada vez que el jugador abre una conversacion distinta (queda
- * "keyeado" por conversationId en ChatSidebarComponent), asi que
- * `mensajesIniciales` solo se usa como valor inicial.
- */
+// Por este socket llegan mensajes nuevos y avisos de lectura mezclados;
+// esto distingue el segundo caso (ver notification_type_enum.py backend).
+const TIPO_MENSAJES_LEIDOS = "MESSAGES_READ_NOTIFICATION";
+
 export function useChatSocket(
   conversationId,
   mensajesIniciales = [],
@@ -94,6 +74,17 @@ export function useChatSocket(
       // Mensaje invalido: el backend lo rechaza pero deja el socket abierto.
       if (data.error) {
         setError(data.error);
+        return;
+      }
+
+      // El otro participante leyo mis mensajes: no es un mensaje nuevo,
+      // solo actualiza is_read en los que ya estan en pantalla.
+      if (data.type === TIPO_MENSAJES_LEIDOS) {
+        setMensajes((actuales) =>
+          actuales.map((m) =>
+            m.sender_id !== data.read_by ? { ...m, is_read: true } : m
+          )
+        );
         return;
       }
 
@@ -189,7 +180,7 @@ export function useChatSocket(
     return true;
   }, []);
 
-  return { mensajes, estado, error, enviarMensaje };
+  return { mensajes, setMensajes, estado, error, enviarMensaje };
 }
 
 export default useChatSocket;

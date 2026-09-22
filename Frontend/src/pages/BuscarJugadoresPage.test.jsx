@@ -23,6 +23,7 @@ vi.mock("../api/jugadoresApi", () => ({
 vi.mock("../api/chatApi", () => ({
   iniciarConversacion: vi.fn(),
   obtenerConversaciones: vi.fn(),
+  marcarConversacionComoLeida: vi.fn().mockResolvedValue({}),
 }));
 
 vi.mock("../api/gameApi", () => ({
