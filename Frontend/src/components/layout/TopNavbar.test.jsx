@@ -4,8 +4,10 @@ import { MemoryRouter } from "react-router-dom";
 import { describe, it, expect, beforeEach, vi } from "vitest";
 
 import { AuthProvider, useAuth } from "../../context/AuthContext";
+import { ChatProvider } from "../../context/ChatContext";
 import TopNavbar from "./TopNavbar";
 import { obtenerJugadorActual } from "../../api/jugadoresApi";
+import { obtenerConversaciones } from "../../api/chatApi";
 
 vi.mock("../../api/jugadoresApi", () => ({
   registrarJugador: vi.fn(),
@@ -13,10 +15,32 @@ vi.mock("../../api/jugadoresApi", () => ({
   actualizarJugador: vi.fn(),
 }));
 
+vi.mock("../../api/chatApi", () => ({
+  iniciarConversacion: vi.fn(),
+  obtenerConversaciones: vi.fn(),
+}));
+
 vi.mock("../../api/axiosClient", () => ({
   default: { post: vi.fn(), get: vi.fn(), put: vi.fn() },
   registrarOnSesionExpirada: vi.fn(),
+  registrarOnTokensRenovados: vi.fn(),
+  CLAVES_SESION: {
+    access: "access_token",
+    refresh: "refresh_token",
+    user: "user",
+  },
 }));
+
+// TopNavbar lee useChat(), que abre un websocket de notificaciones en
+// segundo plano en cuanto hay sesion. jsdom no trae WebSocket: lo stubeamos
+// para que ChatProvider pueda montar sin explotar (igual que en
+// BuscarJugadoresPage.test.jsx).
+class MockWebSocket {
+  constructor() {
+    this.readyState = 0;
+    this.close = vi.fn();
+  }
+}
 
 const base = {
   name: "Alguien",
@@ -43,7 +67,9 @@ async function abrirMenuComo(usuario) {
     <MemoryRouter>
       <AuthProvider>
         <ConSesion>
-          <TopNavbar />
+          <ChatProvider>
+            <TopNavbar />
+          </ChatProvider>
         </ConSesion>
       </AuthProvider>
     </MemoryRouter>
@@ -58,6 +84,8 @@ async function abrirMenuComo(usuario) {
 beforeEach(() => {
   localStorage.clear();
   vi.clearAllMocks();
+  globalThis.WebSocket = MockWebSocket;
+  obtenerConversaciones.mockResolvedValue([]);
 });
 
 describe("menu del avatar", () => {

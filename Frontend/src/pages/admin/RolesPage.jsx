@@ -1,94 +1,59 @@
 import { useEffect, useState } from "react";
-import CharacterForm from "../../components/characters/CharacterFormComponent";
-import CharactersListComponent from "../../components/characters/CharactersListComponent";
+import RoleForm from "../../components/roles/RoleFormComponent";
+import RolesListComponent from "../../components/roles/RolesListComponent";
 import useGames from "../../hooks/useGames";
-import useCharacters from "../../hooks/useCharacters";
+import useRoles from "../../hooks/useRoles";
 
-const CharactersPage = () => {
+const RolesPage = () => {
   const [selectedGameId, setSelectedGameId] = useState("");
-  const [mode, setMode] = useState(null);
-  const [selectedCharacter, setSelectedCharacter] = useState(null);
+  const [isFormOpen, setIsFormOpen] = useState(false);
   const [successMessage, setSuccessMessage] = useState("");
 
   const { games, isLoading: isLoadingGames } = useGames();
 
   const {
-    characters,
-    isLoading: isLoadingCharacters,
+    roles,
+    isLoading: isLoadingRoles,
     isSaving,
-    error: charactersError,
+    error: rolesError,
     actionError,
-    loadCharacters,
-    registerCharacter,
-    editCharacter,
+    loadRoles,
+    registerRole,
     clearActionError,
-  } = useCharacters();
+  } = useRoles();
 
   useEffect(() => {
     if (selectedGameId) {
-      loadCharacters(selectedGameId);
+      loadRoles(selectedGameId);
     }
-  }, [selectedGameId, loadCharacters]);
+  }, [selectedGameId, loadRoles]);
 
   const handleOpenRegister = () => {
     clearActionError();
     setSuccessMessage("");
-    setSelectedCharacter(null);
-    setMode("create");
-  };
-
-  const handleOpenEdit = (character) => {
-    clearActionError();
-    setSuccessMessage("");
-    setSelectedCharacter(character);
-    setMode("edit");
+    setIsFormOpen(true);
   };
 
   const handleCancel = () => {
     clearActionError();
-    setMode(null);
-    setSelectedCharacter(null);
+    setIsFormOpen(false);
   };
 
-  const handleRegister = async (characterData) => {
-    const success = await registerCharacter(characterData);
+  const handleRegister = async (roleData) => {
+    const success = await registerRole(roleData);
 
     if (!success) {
       return;
     }
 
-    setSuccessMessage(
-      `Personaje "${characterData.name}" registrado correctamente.`
-    );
-    setMode(null);
+    setSuccessMessage(`Rol "${roleData.name}" registrado correctamente.`);
+    setIsFormOpen(false);
 
-    // Si el personaje se registró para el juego que se está viendo, ya se
-    // refrescó la lista dentro de registerCharacter. Si fue para otro
-    // juego, cambiamos la vista a ese juego para mostrar el resultado.
-    if (String(characterData.videogame_id) !== String(selectedGameId)) {
-      setSelectedGameId(String(characterData.videogame_id));
-    }
-  };
-
-  const handleEdit = async (characterData) => {
-    if (!selectedCharacter) {
-      return;
-    }
-
-    const success = await editCharacter(selectedCharacter.id, characterData);
-
-    if (!success) {
-      return;
-    }
-
-    setSuccessMessage(
-      `Personaje "${characterData.name}" modificado correctamente.`
-    );
-    setMode(null);
-    setSelectedCharacter(null);
-
-    if (String(characterData.videogame_id) !== String(selectedGameId)) {
-      setSelectedGameId(String(characterData.videogame_id));
+    // Si el rol se registró para el juego que se está viendo, ya se
+    // refrescó la lista dentro de registerRole. Si fue para otro juego,
+    // cambiamos la vista a ese juego para mostrar el resultado.
+    if (String(roleData.videogame_id) !== String(selectedGameId)) {
+      setSelectedGameId(String(roleData.videogame_id));
     }
   };
 
@@ -101,11 +66,11 @@ const CharactersPage = () => {
           </p>
 
           <h1 className="mt-2 font-heading text-3xl font-bold text-ganker-text">
-            Personajes
+            Roles
           </h1>
 
           <p className="mt-2 max-w-2xl text-sm text-ganker-muted">
-            Gestioná los personajes disponibles para cada videojuego de Ganker.
+            Gestioná los roles disponibles para cada videojuego de Ganker.
           </p>
         </header>
 
@@ -117,31 +82,30 @@ const CharactersPage = () => {
 
         <div
           className={`mt-8 grid gap-6 ${
-            mode ? "lg:grid-cols-[minmax(0,1.4fr)_minmax(320px,0.8fr)]" : ""
+            isFormOpen
+              ? "lg:grid-cols-[minmax(0,1.4fr)_minmax(320px,0.8fr)]"
+              : ""
           }`}
         >
           <section className="min-w-0 rounded-2xl border border-white/10 bg-ganker-surface p-6 shadow-xl">
             <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
               <div className="min-w-0 flex-1">
                 <h2 className="font-heading text-xl font-semibold text-ganker-text">
-                  Personajes por videojuego
+                  Roles por videojuego
                 </h2>
 
                 <div className="mt-3">
-                  <label
-                    htmlFor="characters-videogame-filter"
-                    className="sr-only"
-                  >
-                    Ver personajes de
+                  <label htmlFor="roles-videogame-filter" className="sr-only">
+                    Ver roles de
                   </label>
                   <select
-                    id="characters-videogame-filter"
+                    id="roles-videogame-filter"
                     value={selectedGameId}
                     onChange={(event) => setSelectedGameId(event.target.value)}
                     disabled={isLoadingGames}
                     className="w-full max-w-xs rounded-lg border border-white/10 bg-ganker-surface-light px-4 py-2.5 text-sm text-ganker-text outline-none transition-all duration-200 focus:border-ganker-purple-light focus:ring-2 focus:ring-ganker-purple/30 disabled:cursor-not-allowed disabled:opacity-50"
                   >
-                    <option value="">Ver personajes de...</option>
+                    <option value="">Ver roles de...</option>
                     {games.map((game) => (
                       <option key={game.id} value={game.id}>
                         {game.name}
@@ -157,51 +121,32 @@ const CharactersPage = () => {
                 disabled={isSaving}
                 className="cursor-pointer self-start rounded-lg bg-gradient-to-r from-ganker-orange via-ganker-orange-light to-ganker-purple px-4 py-2.5 text-sm font-semibold text-white shadow-lg transition-all duration-200 hover:-translate-y-0.5 hover:shadow-ganker-purple/30 disabled:cursor-not-allowed disabled:opacity-50"
               >
-                + Registrar personaje
+                + Registrar rol
               </button>
             </div>
 
             {selectedGameId ? (
-              <CharactersListComponent
-                characters={characters}
-                isLoading={isLoadingCharacters}
-                error={charactersError}
-                selectedCharacterId={selectedCharacter?.id}
-                onEdit={handleOpenEdit}
+              <RolesListComponent
+                roles={roles}
+                isLoading={isLoadingRoles}
+                error={rolesError}
               />
             ) : (
               <div className="rounded-xl border border-white/10 bg-ganker-surface-light p-6">
                 <p className="text-sm text-ganker-muted">
-                  Seleccioná un videojuego para ver sus personajes.
+                  Seleccioná un videojuego para ver sus roles.
                 </p>
               </div>
             )}
           </section>
 
-          {mode === "create" && (
-            <CharacterForm
-              key="create"
-              mode="create"
+          {isFormOpen && (
+            <RoleForm
               games={games}
               initialVideogameId={selectedGameId}
               isLoading={isSaving}
               error={actionError}
               onSubmit={handleRegister}
-              onCancel={handleCancel}
-            />
-          )}
-
-          {mode === "edit" && selectedCharacter && (
-            <CharacterForm
-              key={`edit-${selectedCharacter.id}`}
-              mode="edit"
-              games={games}
-              initialVideogameId={selectedGameId}
-              initialName={selectedCharacter.name}
-              initialIconUrl={selectedCharacter.icon_url}
-              isLoading={isSaving}
-              error={actionError}
-              onSubmit={handleEdit}
               onCancel={handleCancel}
             />
           )}
@@ -211,4 +156,4 @@ const CharactersPage = () => {
   );
 };
 
-export default CharactersPage;
+export default RolesPage;

@@ -16,6 +16,7 @@ vi.mock("../api/jugadoresApi", () => ({
 vi.mock("../api/axiosClient", () => ({
   default: { post: vi.fn(), get: vi.fn(), put: vi.fn() },
   registrarOnSesionExpirada: vi.fn(),
+  registrarOnTokensRenovados: vi.fn(),
 }));
 
 // jsdom no implementa canvas, asi que el recorte real no puede ejecutarse aca.

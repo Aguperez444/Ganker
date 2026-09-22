@@ -35,6 +35,19 @@ export function registrarOnSesionExpirada(callback) {
   alExpirarSesion = callback;
 }
 
+// Mismo motivo que alExpirarSesion: el refresh silencioso de abajo pisa el
+// access_token en localStorage/defaults, pero eso no actualiza el estado
+// `tokens` de AuthContext (vive en React, esto vive afuera). Sin este aviso,
+// cualquier lector de `tokens` (ej. el token que usa el socket de
+// notificaciones en ChatContext) se queda con el valor viejo hasta que el
+// jugador recargue la pagina, y si ese socket se reconecta mientras tanto lo
+// hace con un token ya vencido.
+let alRenovarTokens = null;
+
+export function registrarOnTokensRenovados(callback) {
+  alRenovarTokens = callback;
+}
+
 function limpiarSesion() {
   localStorage.removeItem(CLAVES_SESION.access);
   localStorage.removeItem(CLAVES_SESION.refresh);
@@ -86,6 +99,11 @@ function refrescarTokens() {
 
       axiosClient.defaults.headers.common["Authorization"] =
         `Bearer ${access_token}`;
+
+      if (alRenovarTokens) {
+        alRenovarTokens({ access_token, refresh_token });
+      }
+
       return access_token;
     })
     .finally(() => {

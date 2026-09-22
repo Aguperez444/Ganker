@@ -8,29 +8,28 @@
 @theme {
   /* Colores Ganker */
 
-  --color-ganker-purple-dark: #2A004B; 
+  --color-ganker-purple-dark: #2a004b;
   --color-ganker-purple-main: #630094;
-  --color-ganker-purple-light: #855F9E;
-  --color-ganker-purple-accent: #6F119B;
-  --color-ganker-text: #FFFFFF;    /* Texto principal */
-   /* Fondos Claros */
-   --color-ganker-bg-light: #E2E2E2;
-   --color-ganker-bg-light2: #F7F5F0;
+  --color-ganker-purple-light: #855f9e;
+  --color-ganker-purple-accent: #6f119b;
+  --color-ganker-text: #ffffff; /* Texto principal */
+  /* Fondos Claros */
+  --color-ganker-bg-light: #e2e2e2;
+  --color-ganker-bg-light2: #f7f5f0;
   /* Fondos y Estructura */
-  --color-ganker-bg2: #05020D;
-  --color-ganker-card2: #0B0718;
+  --color-ganker-bg2: #05020d;
+  --color-ganker-card2: #0b0718;
   --color-ganker-input: #070412;
-  --color-ganker-border2: #1C1535;
+  --color-ganker-border2: #1c1535;
 
   /* Colores de Marca y Accent */
-  --color-ganker-orange2: #FF6B00;
-  --color-ganker-pink2: #EC4899;
-  --color-ganker-purple2: #8B5CF6;
-  --color-ganker-purple-neon: #A855F7;
+  --color-ganker-orange2: #ff6b00;
+  --color-ganker-pink2: #ec4899;
+  --color-ganker-purple2: #8b5cf6;
+  --color-ganker-purple-neon: #a855f7;
 
   /* Texto */
-  --color-ganker-muted: #6B7280;
-
+  --color-ganker-muted: #6b7280;
 
   /* Colores Ganker */
 
@@ -51,12 +50,9 @@
   --font-heading: "Space Grotesk", sans-serif;
   --font-body: "Inter", sans-serif;
 
-
-
   --color-ganker-bg: #08061f;
   --color-ganker-surface: #100d2b;
   --color-ganker-surface-light: #171238;
-
 
   --color-ganker-purple: #6d28d9;
   --color-ganker-purple-light: #8b5cf6;
@@ -71,15 +67,48 @@
   --color-ganker-success: #4ade80;
 
   /* Tipografías */
-
- 
 }
 body {
   font-family: var(--font-body);
 }
 
+/* Scrollbar a tono con la paleta de Ganker en vez del blanco por defecto
+   del navegador. El selector "*" lo aplica tanto al scroll de la pagina
+   como al de cualquier contenedor interno (lista de mensajes, panel de
+   conversaciones, paneles de admin, etc.), sin repetirlo por componente. */
+/* Fondo del scroll = ganker-bg (el fondo de pagina, ej. BuscarJugadoresPage).
+   Parte que se arrastra = ganker-surface (el mismo color que las tarjetas de
+   jugador en Buscar jugadores), asi el thumb se lee como "una tarjeta mas"
+   en vez de un color nuevo. Al hover sube a ganker-surface-light, el tono
+   que ya se usa para los estados hover de esas mismas tarjetas. */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-ganker-surface) var(--color-ganker-bg);
+}
+
+*::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+*::-webkit-scrollbar-track {
+  background: var(--color-ganker-bg);
+}
+
+*::-webkit-scrollbar-thumb {
+  background-color: var(--color-ganker-surface);
+  border-radius: 9999px;
+  border: 2px solid var(--color-ganker-bg);
+  background-clip: padding-box;
+}
+
+*::-webkit-scrollbar-thumb:hover {
+  background-color: var(--color-ganker-surface-light);
+}
+
 @keyframes gaming-pulse {
-  0%, 100% {
+  0%,
+  100% {
     filter: brightness(1) drop-shadow(0 0 6px currentColor);
   }
   50% {

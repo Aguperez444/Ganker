@@ -5,6 +5,35 @@ import {
   updateGame as updateGameRequest,
 } from "../api/gameApi";
 
+// Modulo aparte (no un useCallback del componente) a proposito: llamar desde
+// el cuerpo de un efecto a una funcion memoizada del propio componente que
+// hace setState dispara la regla set-state-in-effect, y antes eso llevaba a
+// duplicar entero este cuerpo entre loadGames y el efecto de montaje. Una
+// funcion de modulo que solo recibe los setters no cuenta como "del
+// componente" para esa regla, asi que ambos pueden llamar a la misma.
+async function cargarVideojuegos({ setGames, setIsLoading, setError }) {
+  try {
+    setIsLoading(true);
+    setError("");
+
+    const videogames = await getGames();
+
+    setGames(
+      (videogames || []).map((game) => ({
+        id: game.id ?? game.videogame_id,
+        name: game.name,
+        icon_url: game.icon_url,
+        rank_per_role: Boolean(game.rank_per_role),
+      }))
+    );
+  } catch (error) {
+    console.error("Error al cargar videojuegos:", error);
+    setError("No se pudieron cargar los videojuegos.");
+  } finally {
+    setIsLoading(false);
+  }
+}
+
 const useGames = () => {
   const [games, setGames] = useState([]);
 
@@ -14,28 +43,10 @@ const useGames = () => {
   const [error, setError] = useState("");
   const [actionError, setActionError] = useState("");
 
-  const loadGames = useCallback(async () => {
-    try {
-      setIsLoading(true);
-      setError("");
-
-      const videogames = await getGames();
-
-      setGames(
-        (videogames || []).map((game) => ({
-          id: game.id ?? game.videogame_id,
-          name: game.name,
-          icon_url: game.icon_url,
-          rank_per_role: Boolean(game.rank_per_role),
-        }))
-      );
-    } catch (error) {
-      console.error("Error al cargar videojuegos:", error);
-      setError("No se pudieron cargar los videojuegos.");
-    } finally {
-      setIsLoading(false);
-    }
-  }, []);
+  const loadGames = useCallback(
+    () => cargarVideojuegos({ setGames, setIsLoading, setError }),
+    []
+  );
 
   useEffect(() => {
     loadGames();
@@ -107,7 +118,12 @@ const useGames = () => {
         rankPerRole = Boolean(nameOrData.rank_per_role);
       }
 
-      const updatedGame = await updateGameRequest(id, name, iconFile, rankPerRole);
+      const updatedGame = await updateGameRequest(
+        id,
+        name,
+        iconFile,
+        rankPerRole
+      );
 
       setGames((currentGames) =>
         currentGames.map((game) =>

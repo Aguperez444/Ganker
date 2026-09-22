@@ -2,29 +2,14 @@ import { render, screen } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import { describe, it, expect } from "vitest";
 
-import BuscarJugadoresPage from "./BuscarJugadoresPage";
 import EquiposPage from "./EquiposPage";
-import CharactersPage from "./admin/CharactersPage";
 import ModeracionPage from "./admin/ModeracionPage";
 import HomePage from "./HomePage";
 import AdminHomePage from "./admin/AdminHomePage";
 
 describe("Páginas placeholder para funcionalidades en desarrollo", () => {
-  it("BuscarJugadoresPage muestra el mensaje de funcionalidad en próximo sprint", () => {
-    render(
-      <MemoryRouter>
-        <BuscarJugadoresPage />
-      </MemoryRouter>
-    );
-
-    expect(
-      screen.getByRole("heading", { level: 1, name: "Buscar jugadores" })
-    ).toBeInTheDocument();
-
-    expect(
-      screen.getByText(/\[Buscar\] se implementará en un próximo sprint\.\.\./i)
-    ).toBeInTheDocument();
-  });
+  // BuscarJugadoresPage dejo de ser un placeholder (US 10 - Iniciar
+  // conversacion privada). Su propio test vive en BuscarJugadoresPage.test.jsx.
 
   it("EquiposPage muestra el mensaje de funcionalidad en próximo sprint", () => {
     render(
@@ -44,23 +29,9 @@ describe("Páginas placeholder para funcionalidades en desarrollo", () => {
     ).toBeInTheDocument();
   });
 
-  it("CharactersPage muestra el mensaje de funcionalidad en próximo sprint", () => {
-    render(
-      <MemoryRouter>
-        <CharactersPage />
-      </MemoryRouter>
-    );
-
-    expect(
-      screen.getByRole("heading", { level: 1, name: "Personajes" })
-    ).toBeInTheDocument();
-
-    expect(
-      screen.getByText(
-        /\[Personajes\] se implementará en un próximo sprint\.\.\./i
-      )
-    ).toBeInTheDocument();
-  });
+  // CharactersPage dejo de ser un placeholder (Registrar/Modificar
+  // personaje). Su propio test viviria en CharactersPage.test.jsx si se
+  // agrega cobertura (mismo criterio que Ranks/Roles, sin tests propios).
 
   it("ModeracionPage muestra el mensaje de funcionalidad en próximo sprint", () => {
     render(

@@ -19,6 +19,7 @@ vi.mock("../api/jugadoresApi", () => ({
 vi.mock("../api/axiosClient", () => ({
   default: { post: vi.fn(), get: vi.fn(), put: vi.fn() },
   registrarOnSesionExpirada: vi.fn(),
+  registrarOnTokensRenovados: vi.fn(),
 }));
 
 const TOKENS = {

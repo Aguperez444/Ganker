@@ -4,42 +4,51 @@ import ChatDrawer from "./ChatDrawer.jsx";
 import MobileMenu from "./MobileMenu.jsx";
 import Sidebar from "./Sidebar.jsx";
 import TopNavbar from "./TopNavbar.jsx";
+import ChatSidebarComponent from "../chat/ChatSidebarComponent.jsx";
+import { ChatProvider, useChat } from "../../context/ChatContext.jsx";
+import { useIsDesktop } from "../../hooks/useIsDesktop.js";
 
-const AppLayout = () => {
+const AppLayoutContenido = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [isChatOpen, setIsChatOpen] = useState(false);
+  const {
+    chatAbierto,
+    cerrarChat,
+    panelDesktopVisible,
+    alternarChat,
+    alternarPanelDesktop,
+  } = useChat();
+  const esDesktop = useIsDesktop();
+
+  // En desktop el boton de "Enviar mensaje" oculta/muestra el panel fijo;
+  // en mobile/tablet abre/cierra el drawer superpuesto (no hay panel fijo
+  // que ocultar ahi).
+  const onOpenChat = esDesktop ? alternarPanelDesktop : alternarChat;
 
   return (
-    <div className="flex min-h-screen bg-ganker-bg font-body text-ganker-text">
+    <div className="flex h-screen overflow-hidden bg-ganker-bg font-body text-ganker-text">
       {/* Navegación desktop/tablet */}
       <Sidebar />
 
-      <div className="flex min-w-0 flex-1 flex-col">
+      <div className="flex h-full min-w-0 flex-1 flex-col overflow-hidden">
         <TopNavbar
           onOpenMenu={() => setIsMobileMenuOpen(true)}
-          onOpenChat={() => setIsChatOpen(true)}
+          onOpenChat={onOpenChat}
+          chatVisible={esDesktop ? panelDesktopVisible : chatAbierto}
         />
 
-        <div className="flex min-h-0 flex-1">
+        <div className="flex min-h-0 flex-1 overflow-hidden">
           {/* Contenido dinámico */}
           <main className="min-w-0 flex-1 overflow-y-auto">
             <Outlet />
           </main>
 
-          {/* Chat permanente únicamente en desktop grande */}
-          <aside className="hidden w-80 shrink-0 border-l border-white/10 bg-ganker-surface xl:flex xl:flex-col">
-            <div className="border-b border-white/10 px-6 py-5">
-              <h2 className="font-heading text-lg font-semibold text-ganker-text">
-                Conversaciones
-              </h2>
-            </div>
-
-            <div className="flex flex-1 items-center justify-center px-6 text-center">
-              <p className="text-sm text-ganker-muted">
-                El chat se implementará en un próximo sprint...
-              </p>
-            </div>
-          </aside>
+          {/* Chat permanente en desktop grande, salvo que el jugador lo
+              haya ocultado con el boton de "Enviar mensaje". */}
+          {esDesktop && panelDesktopVisible && (
+            <aside className="flex h-full w-96 shrink-0 flex-col overflow-hidden border-l border-white/10 bg-ganker-surface">
+              <ChatSidebarComponent />
+            </aside>
+          )}
         </div>
       </div>
 
@@ -50,8 +59,16 @@ const AppLayout = () => {
       />
 
       {/* Chat tablet/mobile */}
-      <ChatDrawer isOpen={isChatOpen} onClose={() => setIsChatOpen(false)} />
+      {!esDesktop && <ChatDrawer isOpen={chatAbierto} onClose={cerrarChat} />}
     </div>
+  );
+};
+
+const AppLayout = () => {
+  return (
+    <ChatProvider>
+      <AppLayoutContenido />
+    </ChatProvider>
   );
 };
 

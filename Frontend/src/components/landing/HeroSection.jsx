@@ -10,30 +10,42 @@ const WORDS = [
 function HeroSection() {
   const fullText = WORDS.map((w) => w.text).join(" ");
   const [charCount, setCharCount] = useState(0);
-  const [isDone, setIsDone] = useState(false);
+  // Derivado de charCount en vez de un segundo estado + efecto: evita el
+  // render en cascada de llamar setIsDone(true) desde dentro de un efecto.
+  const isDone = charCount >= fullText.length;
 
   useEffect(() => {
-    if (charCount < fullText.length) {
-      const timer = setTimeout(() => {
-        setCharCount((prev) => prev + 1);
-      }, 55);
-      return () => clearTimeout(timer);
-    } else {
-      setIsDone(true);
-    }
-  }, [charCount, fullText.length]);
+    if (isDone) return;
 
-  // Calcula qué porción de cada palabra está visible
-  let remaining = charCount;
-  const renderedWords = WORDS.map((word) => {
-    if (remaining <= 0) {
-      return { ...word, visibleText: "" };
-    }
-    const charsToTake = Math.min(remaining, word.text.length);
-    const visibleText = word.text.slice(0, charsToTake);
-    remaining -= word.text.length + 1; // descuenta la palabra y el espacio
-    return { ...word, visibleText };
-  });
+    const timer = setTimeout(() => {
+      setCharCount((prev) => prev + 1);
+    }, 55);
+    return () => clearTimeout(timer);
+  }, [charCount, isDone]);
+
+  // Calcula qué porción de cada palabra está visible. Se arma con reduce en
+  // vez de reasignar una variable `remaining` capturada por closure en cada
+  // vuelta del .map: el acumulador es un valor nuevo por render, no una
+  // variable mutada desde afuera del callback.
+  const { renderedWords } = WORDS.reduce(
+    (acc, word) => {
+      if (acc.remaining <= 0) {
+        acc.renderedWords.push({ ...word, visibleText: "" });
+        return acc;
+      }
+
+      const charsToTake = Math.min(acc.remaining, word.text.length);
+      const visibleText = word.text.slice(0, charsToTake);
+
+      acc.renderedWords.push({ ...word, visibleText });
+      // descuenta la palabra y el espacio
+      return {
+        renderedWords: acc.renderedWords,
+        remaining: acc.remaining - (word.text.length + 1),
+      };
+    },
+    { renderedWords: [], remaining: charCount }
+  );
 
   return (
     <section className="relative w-full pt-16 pb-20 md:pt-24 md:pb-28 overflow-hidden bg-[#0a0718]">
