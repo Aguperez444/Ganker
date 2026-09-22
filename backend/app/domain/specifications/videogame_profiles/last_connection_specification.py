@@ -7,4 +7,4 @@ class ByLastConnectionSpecification(Specification):
         self.days = days
 
     def to_expression(self):
-        return datetime.now() - datetime.timedelta(days=self.days)  # Filtra jugadores que se conectaron en los últimos self.days días
+        return datetime.now() - timedelta(days=self.days)  # Filtra jugadores que se conectaron en los últimos self.days días
