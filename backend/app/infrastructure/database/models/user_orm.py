@@ -22,6 +22,7 @@ class UserORM(Base):
     password_hash: Mapped[Optional[str]] = mapped_column(String, nullable=True)
     role: Mapped[str] = mapped_column(String, nullable=False, default="player")
     icon_url: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+    last_connection: Mapped[Optional[DateTime]] = mapped_column(DateTime, nullable=True)
 
 
     # Relaciones

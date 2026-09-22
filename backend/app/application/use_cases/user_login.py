@@ -1,3 +1,5 @@
+import datetime
+
 from app.application.ports.i_password_hasher import IPasswordHasher
 from app.application.ports.i_token_service import ITokenService
 from app.application.ports.i_unit_of_work import IUnitOfWork
@@ -47,6 +49,10 @@ class UserLogin:
                 jti=jti,
                 expires_at=expires_at
             )
+
+            # Actualizar la fecha de último login del usuario
+            user.last_connection = datetime.datetime.now()
+            self.uow.user_repo.update_user(user)
 
 
         return AuthTokensResponse(access_token, refresh_token)

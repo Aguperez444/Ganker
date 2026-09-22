@@ -1,3 +1,4 @@
+import datetime
 import re
 
 from typing import TYPE_CHECKING, cast
@@ -42,7 +43,7 @@ class RegisterPlayer:
         hashed_pass = self.pass_hasher.hash_password(player_data.password)
 
         # crear el usuario en el dominio
-        new_player = User(None, player_data.username, player_data.name, player_data.mail, hashed_pass, UserRole.PLAYER, [])
+        new_player = User(None, player_data.username, player_data.name, player_data.mail, hashed_pass, UserRole.PLAYER, [], None, datetime.datetime.now())
 
         # persistir el usuario en la base de datos y obtener el usuario registrado con su id
         with self.uow as uow:

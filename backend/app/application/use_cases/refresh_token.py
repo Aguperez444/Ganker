@@ -1,3 +1,5 @@
+import datetime
+
 from app.application.ports.i_token_service import ITokenService
 from app.application.ports.i_unit_of_work import IUnitOfWork
 from app.infrastructure.api.dto.response.auth_tokens_response import AuthTokensResponse
@@ -45,6 +47,10 @@ class RefreshToken:
                 jti=new_jti,
                 expires_at=new_expires_at
             )
+
+            # 7. Actualizar la última conexión del usuario
+            user.last_connection = datetime.datetime.now()
+            self.uow.user_repo.update_user(user)
 
         return AuthTokensResponse(
             access_token=new_access_token,
