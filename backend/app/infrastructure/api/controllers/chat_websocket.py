@@ -14,6 +14,7 @@ from app.infrastructure.api.dto.response.notification_response import Notificati
 
 from app.infrastructure.api.chat.connection_manager import chat_manager
 from app.infrastructure.api.dependencies.web_socket_auth import get_current_user_id_ws
+from app.domain.exceptions.chat.recipient_not_found_exception import RecipientNotFoundException
 
 router = APIRouter(prefix="/api/v1/ws/chat", tags=["Websocket Chat"])
 
@@ -36,7 +37,7 @@ async def websocket_chat_endpoint(
         return
 
     if not recipient_id:
-        raise ValueError("No se pudo determinar el ID del destinatario.") # TODO crear domain exception
+        raise RecipientNotFoundException(conversation_id)
 
     # 2. Conexión aceptada
     await chat_manager.connect(conversation_id, user_id, websocket)
