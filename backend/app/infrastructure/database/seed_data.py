@@ -50,6 +50,7 @@ def seed_database(session: Session) -> None:
                     password_hash=row["password_hash"] if row["password_hash"] else None,
                     role=row["role"],
                     icon_url=row["icon_url"] if row["icon_url"] else None,
+                    last_connection=row["last_connection"] if row["last_connection"] else None,
                 )
             )
         session.commit()

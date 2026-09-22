@@ -1,3 +1,4 @@
+from datetime import datetime
 from typing import TYPE_CHECKING, Optional
 
 from app.domain.models.user_role import UserRole
@@ -16,7 +17,8 @@ class User:
                  password_hash: Optional[str],
                  role: UserRole,
                  profiles: list['GameProfile'],
-                 icon_url: Optional[str] = None
+                 icon_url: Optional[str] = None,
+                 last_connection: Optional[datetime] = None
                  ):
         self._user_id: Optional[int] = user_id
         self._username: str = username
@@ -26,6 +28,7 @@ class User:
         self._role: UserRole = role
         self._profiles: list['GameProfile'] = profiles
         self._icon_url: Optional[str] = icon_url
+        self._last_connection: Optional[datetime] = last_connection
 
     @property
     def user_id(self) -> Optional[int]:
@@ -86,7 +89,14 @@ class User:
     def icon_url(self, value: str) -> None:
         self._icon_url = value
 
+    @property
+    def last_connection(self) -> Optional[datetime]:
+        return self._last_connection
+    @last_connection.setter
+    def last_connection(self, value: Optional[datetime]) -> None:
+        self._last_connection = value
+
     def __repr__(self) -> str:
         return (f"User(user_id={self.user_id or 'sin_id'}, username='{self.username}',"
                 f" name='{self.name}', mail='{self.mail or 'sin_mail'}', password_hash='{self.password_hash or 'sin_password'}',"
-                f" role={self.role}, profiles={self.profiles}, icon_url='{self.icon_url or 'sin_icon'}')")
+                f" role={self.role}, profiles={self.profiles}, icon_url='{self.icon_url or 'sin_icon'}', last_connection='{self.last_connection or 'sin_last_connection'}')")

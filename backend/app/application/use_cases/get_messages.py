@@ -5,6 +5,7 @@ from app.infrastructure.api.dto.response.base_classes.message_object_response im
 from typing import cast
 
 from app.infrastructure.api.dto.response.get_messages_response import GetMessagesResponse
+from app.domain.exceptions.chat.user_does_not_belong_to_conversation_exception import UserDoesNotBelongToConversationException
 
 
 class GetMessages:
@@ -22,7 +23,7 @@ class GetMessages:
 
             # verificar que el usuario sea parte de la conversación
             if not conversation.belongs_user_id(user_id):
-                raise PermissionError(f"El usuario {user_id} no pertenece a esta conversación")  # TODO CREAR UN EXCEPTION CUSTOM
+                raise UserDoesNotBelongToConversationException(conversation_id, user_id)
 
             # asegurarse de estar levantando un minimo de mensajes
             limit = size if size > 0 else 30

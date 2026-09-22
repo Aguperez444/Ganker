@@ -1,5 +1,6 @@
 from app.application.ports.i_unit_of_work import IUnitOfWork
 from app.domain.exceptions.chat.conversation_not_found_exception import ConversationNotFoundException
+from app.domain.exceptions.chat.user_does_not_belong_to_conversation_exception import UserDoesNotBelongToConversationException
 
 
 class MarkAsRead:
@@ -14,7 +15,7 @@ class MarkAsRead:
                 raise ConversationNotFoundException(conversation_id)
 
             if not conversation.belongs_user_id(user_id):
-                raise PermissionError("User does not belong to this conversation") #TODO CREAR EXCEPTIONS DE DOMINIO
+                raise UserDoesNotBelongToConversationException(conversation_id, user_id)
 
             # Marcamos como leídos solo los mensajes que envió el OTRO jugador
             # (no tiene sentido marcar como leídos los que mandó uno mismo)

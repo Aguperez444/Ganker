@@ -6,6 +6,9 @@ from typing import cast
 
 from app.domain.models.message import Message
 from app.domain.exceptions.user.user_not_found_exception import UserNotFoundException
+from app.domain.exceptions.chat.message_is_empty_exception import MessageIsEmptyException
+from app.domain.exceptions.chat.conversation_id_is_not_provided_exception import ConversationIdIsNotProvidedException
+from app.domain.exceptions.chat.sender_id_is_not_provided_exception import SenderIdIsNotProvidedException
 
 
 class SaveMessageUseCase:
@@ -15,9 +18,11 @@ class SaveMessageUseCase:
     def execute(self, conversation_id: int, sender_id: int, content: str, is_read: bool = False) -> MessageResponse:
         clean_content = content.strip()
         if not clean_content:
-            raise ValueError("El mensaje no puede estar vacío") #TODO CREAR EXCEPCIONES CUSTOM
-        if not conversation_id or not sender_id:
-            raise ValueError("El ID de la conversación y el ID del remitente son obligatorios") #TODO CREAR EXCEPCIONES CUSTOM
+            raise MessageIsEmptyException()
+        if not conversation_id:
+            raise ConversationIdIsNotProvidedException()
+        if not sender_id:
+            raise SenderIdIsNotProvidedException()
 
         with self._uow as uow:
             # busco al usuario que envió el mensaje

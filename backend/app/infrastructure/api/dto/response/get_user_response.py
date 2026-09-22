@@ -1,3 +1,4 @@
+from datetime import datetime
 from typing import List
 
 from pydantic import BaseModel, Field
@@ -12,3 +13,4 @@ class GetUserResponse(BaseModel):
     profiles: List[GameProfileObjectResponse] = Field(..., description="Perfiles de juego del jugador")
     role: str = Field(..., description="Rol del jugador")
     icon_url: str = "/media/users/icons/icon_example_1.png"
+    last_connection: datetime | None = Field(..., description="Última conexión del jugador")
