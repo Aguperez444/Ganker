@@ -2,6 +2,7 @@ from typing import Callable
 from sqlalchemy.orm import Session
 
 from app.application.ports.i_character_repository import ICharacterRepository
+from app.application.ports.i_find_by_specifications_service import IFindBySpecificationRepository
 from app.application.ports.i_game_profile_repository import IGameProfileRepository
 from app.application.ports.i_user_repository import IUserRepository
 from app.application.ports.i_rank_repository import IRankRepository
@@ -10,6 +11,8 @@ from app.application.ports.i_role_repository import IRoleRepository
 from app.application.ports.i_unit_of_work import IUnitOfWork
 from app.application.ports.i_videogame_repository import IVideogameRepository
 from app.infrastructure.database.repositories.character_repository_impl import CharacterRepositoryImpl
+from app.infrastructure.database.repositories.find_by_specification_repository_impl import \
+    FindBySpecificationRepositoryImpl
 from app.infrastructure.database.repositories.game_profile_repository_impl import GameProfileRepositoryImpl
 from app.infrastructure.database.repositories.user_repository_impl import UserRepositoryImpl
 from app.infrastructure.database.repositories.rank_repository_impl import RankRepositoryImpl
@@ -36,6 +39,7 @@ class SqlAlchemyUnitOfWork(IUnitOfWork):
         self.rank_repo: IRankRepository
         self.character_repo: ICharacterRepository
         self.refresh_token_repo: IRefreshTokenRepository
+        self.find_by_specification_repo: 'IFindBySpecificationRepository'
     # Context manager
     def __enter__(self) -> 'SqlAlchemyUnitOfWork':
         self.session: Session = self._sf()  # nueva Session por acción
@@ -46,6 +50,7 @@ class SqlAlchemyUnitOfWork(IUnitOfWork):
         self.rank_repo: IRankRepository = RankRepositoryImpl(self.session)
         self.character_repo: ICharacterRepository = CharacterRepositoryImpl(self.session)
         self.refresh_token_repo: IRefreshTokenRepository = RefreshTokenRepositoryImpl(self.session)
+        self.find_by_specification_repo: 'IFindBySpecificationRepository' = FindBySpecificationRepositoryImpl(self.session)
         return self
 
     def __exit__(self, exc_type, exc, tb) -> None:

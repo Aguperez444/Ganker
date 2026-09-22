@@ -1,6 +1,7 @@
 from abc import ABC, abstractmethod
 
 from app.application.ports.i_character_repository import ICharacterRepository
+from app.application.ports.i_find_by_specifications_service import IFindBySpecificationRepository
 from app.application.ports.i_game_profile_repository import IGameProfileRepository
 from app.application.ports.i_user_repository import IUserRepository
 from app.application.ports.i_rank_repository import IRankRepository
@@ -17,6 +18,8 @@ class IUnitOfWork(ABC):
     rank_repo: 'IRankRepository'
     character_repo: 'ICharacterRepository'
     refresh_token_repo: 'IRefreshTokenRepository'
+    find_by_specification_repo: 'IFindBySpecificationRepository'
+
 
     @abstractmethod
     def __enter__(self) -> 'IUnitOfWork':

@@ -2,11 +2,14 @@ from typing import cast
 from fastapi import APIRouter, Depends
 
 from app.application.use_cases.create_videogame_profile import CreateVideogameProfile
+from app.application.use_cases.search_videogame_profile_player import SearchVideogameProfilePlayer
 from app.application.use_cases.update_videogame_profile import UpdateVideogameProfile
 from app.infrastructure.api.dependencies.auth import get_current_user_id, require_player
+from app.infrastructure.api.dto.request.Search_videogame_profiles_request import SearchVideogameProfilesRequest
 from app.infrastructure.api.dto.request.create_videogame_profile_request import CreateGameProfileRequest
 from app.infrastructure.api.dto.response.create_videogame_profile_response import CreateGameProfileResponse
 from app.infrastructure.api.dto.request.update_videogame_profile_request import UpdateGameProfileRequest
+from app.infrastructure.api.dto.response.get_videogame_profiles_response import GetVideogameProfilesResponse
 from app.infrastructure.api.dto.response.update_videogame_profile_response import UpdateGameProfileResponse
 from app.infrastructure.database.unit_of_work.uow_factory import uow_factory
 
@@ -28,4 +31,13 @@ def update_game_profile(game_profile_id: int, request: UpdateGameProfileRequest,
     updated_game_profile = update_game_profile_use_case.execute(player_id, game_profile_id, request)
 
     response = updated_game_profile
+    return response
+
+@router.post("/search", response_model=GetVideogameProfilesResponse, dependencies=[Depends(require_player)])
+def search_game_profile(request: SearchVideogameProfilesRequest, player_id: int = Depends(get_current_user_id)):
+    uow = uow_factory()
+    search_game_profiles_use_case = SearchVideogameProfilePlayer(uow)
+    game_profiles = search_game_profiles_use_case.execute(request, player_id)
+
+    response = game_profiles
     return response

@@ -1,5 +1,4 @@
 from typing import TYPE_CHECKING, Optional
-
 from app.domain.models.user_role import UserRole
 
 if TYPE_CHECKING:
@@ -82,6 +81,7 @@ class User:
     @icon_url.setter
     def icon_url(self, value: Optional[str]) -> None:
         self._icon_url = value
+
 
     def __repr__(self) -> str:
         return (f"User(user_id={self.user_id or 'sin_id'}, username='{self.username}',"
