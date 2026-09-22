@@ -1,5 +1,4 @@
-import datetime
-
+from datetime import datetime
 from pydantic import BaseModel, Field
 from typing import List
 
@@ -11,7 +10,7 @@ class PlayerObjectResponse(BaseModel):
     player_id: int = Field(..., description="ID único del jugador")
     player_name: str = Field(..., description="Nombre del jugador")
     icon_url: str | None = "/media/users/icons/icon_example_1.png"
-    last_connection: datetime.datetime | None = Field(..., description="Última conexión del jugador")
+    last_connection: datetime | None = Field(..., description="Última conexión del jugador")
 
 class GetGameProfileResponse(BaseModel):
     game_profile_id: int = Field(..., description="ID único del perfil de juego actualizado")
