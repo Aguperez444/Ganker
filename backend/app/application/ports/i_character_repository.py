@@ -2,7 +2,7 @@ from abc import ABC, abstractmethod
 from typing import TYPE_CHECKING, Optional
 
 if TYPE_CHECKING:
-    from models.character import Character
+    from app.domain.models.character import Character
 
 class ICharacterRepository(ABC):
 

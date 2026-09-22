@@ -69,8 +69,6 @@ class UpdateVideogameProfile:
         with self.uow as uow:
             updated_game_profile = uow.game_profile_repo.update_game_profile(game_profile)
 
-        # crear el response object correspondiente #TODO REVISAR, ESTO PUEDE QUE SE REPLIQUE EN VARIOS LADOS Y TOQUE HACERLO UN SERVICE PARA NO DUPLICAR CODIGO
-
         response = CreateGameProfileDTOService.create_update_game_profile(updated_game_profile)
         return response
 

@@ -1,0 +1,18 @@
+from datetime import datetime
+from pydantic import BaseModel
+
+from app.infrastructure.api.dto.response.notification_type_enum import NotificationType
+
+
+class MessageResponse(BaseModel):
+    type: str = NotificationType.NEW_MESSAGE
+    message_id: int
+    conversation_id: int
+    sender_id: int
+    content: str
+    timestamp: datetime
+    is_read: bool
+
+    class Config:
+        from_attributes = True
+
