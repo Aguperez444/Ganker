@@ -6,7 +6,7 @@ if TYPE_CHECKING:
 
 
 class Conversation:
-    def __init__(self, conversation_id: int|None, user_1: User, user_2: User, messages: list['Message']):
+    def __init__(self, conversation_id: int|None, user_1: 'User', user_2: 'User', messages: list['Message']):
         self._conversation_id: int|None = conversation_id
         self._user_1: 'User' = user_1
         self._user_2: 'User' = user_2
@@ -40,3 +40,13 @@ class Conversation:
     @messages.setter
     def messages(self, value: list):
         self._messages = value
+
+    def belongs_user_id(self, user_id: int):
+        if user_id != self.user_1.user_id and user_id != self.user_2.user_id:
+            return False
+        return True
+
+    def belongs_user(self, user: 'User'):
+        if user.user_id != self.user_1.user_id and user.user_id != self.user_2.user_id:
+            return False
+        return True

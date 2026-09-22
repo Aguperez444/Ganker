@@ -11,11 +11,13 @@ class LastMessageResponse(BaseModel):
     content: str
     timestamp: datetime
     sender_id: int
+    is_read: bool
 
-class ConversationItemResponse(BaseModel):
+class ConversationSummaryItemResponse(BaseModel):
     conversation_id: int
     other_participant: ParticipantSummaryResponse
     last_message: LastMessageResponse | None = None
+    unread_count: int
 
 class ConversationSummaryResponse(BaseModel):
-    conversations: list[ConversationItemResponse]
+    conversations: list[ConversationSummaryItemResponse]

@@ -1,5 +1,5 @@
 from app.application.ports.i_unit_of_work import IUnitOfWork
-from app.infrastructure.api.dto.response.conversation_summary_response import ConversationSummaryResponse, ConversationItemResponse, LastMessageResponse, ParticipantSummaryResponse
+from app.infrastructure.api.dto.response.conversation_summary_response import ConversationSummaryResponse, ConversationSummaryItemResponse, LastMessageResponse, ParticipantSummaryResponse
 
 from typing import cast
 
@@ -24,7 +24,9 @@ class QueryConversations:
                 message: Message | None = conversation.messages[0] if conversation.messages else None
                 last_message = LastMessageResponse(content=message.content,
                                                    timestamp=message.timestamp,
-                                                   sender_id=cast(int, message.sender.user_id)) if message else None
+                                                   sender_id=cast(int, message.sender.user_id),
+                                                   is_read=message.is_read) if message else None
+                unread_count = uow.message_repo.get_unread_count_by_conversation_id(conversation.conversation_id)
 
                 # obtengo el otro participante de la conversación
                 other_user_id = conversation.user_1.user_id if conversation.user_1.user_id != user_id else conversation.user_2.user_id
@@ -41,8 +43,9 @@ class QueryConversations:
                 )
 
                 # armo el objeto con el último mensaje y el otro participante
-                summary = ConversationItemResponse(conversation_id=cast(int, conversation.conversation_id),
-                                         other_participant=other_participant,last_message=last_message)
+                summary = ConversationSummaryItemResponse(conversation_id=cast(int, conversation.conversation_id),
+                                                          other_participant=other_participant, last_message=last_message,
+                                                          unread_count=unread_count)
 
                 # añado el resumen de la conversación a la lista
                 conversations_summary_objects.append(summary)

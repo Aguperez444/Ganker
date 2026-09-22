@@ -12,7 +12,7 @@ class SaveMessageUseCase:
     def __init__(self, uow: IUnitOfWork):
         self._uow = uow
 
-    def execute(self, conversation_id: int, sender_id: int, content: str) -> MessageResponse:
+    def execute(self, conversation_id: int, sender_id: int, content: str, is_read: bool = False) -> MessageResponse:
         clean_content = content.strip()
         if not clean_content:
             raise ValueError("El mensaje no puede estar vacío") #TODO CREAR EXCEPCIONES CUSTOM
@@ -27,9 +27,9 @@ class SaveMessageUseCase:
 
             # no se válida la seguridad en cada mensaje, el websocket se encarga de validar la seguridad durante la conexión inicial
 
-            new_message = Message(None, content, sender, conversation_id, datetime.now())
+            new_message = Message(None, content, sender, conversation_id, datetime.now(), is_read)
             message = uow.message_repo.save_message(new_message)
 
             return MessageResponse(message_id=cast(int, message.message_id), conversation_id=message.conversation_id,
                                    sender_id=cast(int, message.sender.user_id), content=message.content,
-                                   timestamp=message.timestamp)
+                                   timestamp=message.timestamp, is_read=message.is_read)

@@ -36,7 +36,7 @@ async def websocket_chat_endpoint(
         return
 
     if not recipient_id:
-        raise ValueError("No se pudo determinar el ID del destinatario.")
+        raise ValueError("No se pudo determinar el ID del destinatario.") # TODO crear domain exception
 
     # 2. Conexión aceptada
     await chat_manager.connect(conversation_id, websocket)
@@ -52,16 +52,22 @@ async def websocket_chat_endpoint(
                 await websocket.send_json({"error": "Payload inválido", "details": err.errors()})
                 continue
 
-            # 4. Guardar mensaje de forma síncrona en hilo separado
+            # 4. Comprobamos en RAM si el destinatario está con el chat abierto para marcar el mensaje como leído o no
+            is_recipient_present = chat_manager.is_user_in_conversation(conversation_id, recipient_id)
+
+            # 5. Guardar mensaje de forma síncrona en hilo separado
             saved_message: MessageResponse = await run_in_threadpool(
                 save_message_use_case.execute,
-                conversation_id,
-                user_id,
-                request_dto.content
+                conversation_id = conversation_id,
+                sender_id = user_id,
+                content = request_dto.content,
+                is_read = is_recipient_present
             )
 
-            # 5. Broadcast a ambos participantes
+            # 6. Broadcast a ambos participantes
             await chat_manager.broadcast_to_conversation(conversation_id, saved_message)
+
+            # 7. Crear notificación para el destinatario
             notification = NotificationResponse(
                 type=NotificationType.NEW_MESSAGE,
                 conversation_id=conversation_id,
@@ -69,6 +75,7 @@ async def websocket_chat_endpoint(
                 content=saved_message.content,
                 timestamp=saved_message.timestamp.isoformat())
 
+            # 8. Enviar notificación al destinatario
             await notification_manager.send_to_user(recipient_id, notification.model_dump())
 
     except WebSocketDisconnect:

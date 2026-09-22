@@ -11,7 +11,8 @@ class MessageMapper:
             conversation_id=message_orm.conversation_id,
             sender=UserMapper.orm_to_domain(message_orm.sender),
             content=message_orm.content,
-            timestamp=message_orm.timestamp
+            timestamp=message_orm.timestamp,
+            is_read=message_orm.is_read
         )
 
     @staticmethod
@@ -21,5 +22,6 @@ class MessageMapper:
             conversation_id=message.conversation_id,
             sender_id=message.sender.user_id,
             content=message.content,
-            timestamp=message.timestamp
+            timestamp=message.timestamp,
+            is_read=message.is_read
         )

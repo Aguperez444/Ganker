@@ -18,6 +18,7 @@ class MessageORM(Base):
     sender_id: Mapped[int] = mapped_column(ForeignKey("user.user_id"), nullable=False)
     content: Mapped[str] = mapped_column(Text, nullable=False)
     timestamp: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, default=lambda: datetime.now(timezone.utc))
+    is_read: Mapped[bool] = mapped_column(nullable=False, default=False)
 
 
 
