@@ -1,4 +1,3 @@
-from datetime import datetime
 from typing import List, Optional
 from sqlalchemy import String, DateTime
 from sqlalchemy.orm import Mapped, mapped_column, relationship

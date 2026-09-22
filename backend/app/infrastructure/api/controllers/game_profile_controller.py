@@ -1,9 +1,9 @@
 from typing import cast
 from fastapi import APIRouter, Depends
 
-from app.application.useCase.create_videogame_profile import CreateVideogameProfile
-from app.application.useCase.search_videogame_profile_player import SearchVideogameProfilePlayer
-from app.application.useCase.update_videogame_profile import UpdateVideogameProfile
+from app.application.use_cases.create_videogame_profile import CreateVideogameProfile
+from app.application.use_cases.search_videogame_profile_player import SearchVideogameProfilePlayer
+from app.application.use_cases.update_videogame_profile import UpdateVideogameProfile
 from app.infrastructure.api.dependencies.auth import get_current_user_id, require_player
 from app.infrastructure.api.dto.request.Search_videogame_profiles_request import SearchVideogameProfilesRequest
 from app.infrastructure.api.dto.request.create_videogame_profile_request import CreateGameProfileRequest
@@ -34,10 +34,10 @@ def update_game_profile(game_profile_id: int, request: UpdateGameProfileRequest,
     return response
 
 @router.post("/search", response_model=GetVideogameProfilesResponse, dependencies=[Depends(require_player)])
-def search_game_profile(request: SearchVideogameProfilesRequest):
+def search_game_profile(request: SearchVideogameProfilesRequest, player_id: int = Depends(get_current_user_id)):
     uow = uow_factory()
     search_game_profiles_use_case = SearchVideogameProfilePlayer(uow)
-    game_profiles = search_game_profiles_use_case.execute(request)
+    game_profiles = search_game_profiles_use_case.execute(request, player_id)
 
     response = game_profiles
     return response

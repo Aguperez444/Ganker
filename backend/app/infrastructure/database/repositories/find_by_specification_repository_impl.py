@@ -8,9 +8,9 @@ from app.domain.specifications.base import Specification, AndSpecification
 from app.domain.specifications.videogame_profiles.characters_specification import ByCharactersSpecification
 from app.domain.specifications.videogame_profiles.last_connection_specification import ByLastConnectionSpecification
 from app.domain.specifications.videogame_profiles.ranks_specification import ByRanksSpecification
-from app.domain.specifications.videogame_profiles.regular_routine_specification import ByRegularRoutineSpecification
 from app.domain.specifications.videogame_profiles.roles_specification import ByRolesSpecification
 from app.domain.specifications.videogame_profiles.videogame_specification import ByVideogameSpecification
+from app.domain.specifications.videogame_profiles.different_player_id_specification import ByDifferentPlayerIDSpecification
 
 
 class FindBySpecificationRepositoryImpl(IFindBySpecificationRepository):
@@ -25,6 +25,9 @@ class FindBySpecificationRepositoryImpl(IFindBySpecificationRepository):
             query = self._apply_spec(query, spec.left)
             query = self._apply_spec(query, spec.right)
             return query
+
+        if isinstance(spec, ByDifferentPlayerIDSpecification):
+            return query.filter(GameProfileORM.player_id != spec.to_expression())
 
         if isinstance(spec, ByVideogameSpecification):
             return query.filter(GameProfileORM.videogame_id == spec.to_expression())

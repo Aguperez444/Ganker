@@ -14,6 +14,7 @@ from app.domain.exceptions.role.role_not_found_exception import RoleNotFoundExce
 from app.domain.exceptions.videogame.videogame_not_found_exception import VideogameNotFoundException
 from app.domain.exceptions.character.character_not_found_exception import CharacterNotFoundException
 from app.domain.services.create_game_profile_dto_service import CreateGameProfileDTOService
+from app.domain.specifications.videogame_profiles.different_player_id_specification import ByDifferentPlayerIDSpecification
 
 
 class SearchVideogameProfilePlayer:
@@ -28,13 +29,13 @@ class SearchVideogameProfilePlayer:
     # 2 - Los transformo a specs para armar el árbol/cascada de consultas
     # 3 - Hago la consulta
 
-    def execute(self, filters: SearchVideogameProfilesRequest) -> GetVideogameProfilesResponse:
+    def execute(self, filters: SearchVideogameProfilesRequest, player_id: int) -> GetVideogameProfilesResponse:
 
         with self.uow as uow:
             self.get_and_validate_exist_videogame(filters.videogame_id, uow=uow)
 
             # Siempre tengo que filtrar por un juego y tiempo de conexión
-            specs: list[Specification] = [ByVideogameSpecification(filters.videogame_id)]
+            specs: list[Specification] = [ ByDifferentPlayerIDSpecification(player_id),ByVideogameSpecification(filters.videogame_id)]
             # TODO CUANDO EXISTA EL ATRIBUTO AGREGAR A LA LISTA ByLastConnectionSpecification(filters.last_connection)
             # Reviso si tengo más filtros
             if filters.roles:

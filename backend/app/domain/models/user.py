@@ -1,6 +1,4 @@
-from datetime import datetime
 from typing import TYPE_CHECKING, Optional
-
 from app.domain.models.user_role import UserRole
 
 if TYPE_CHECKING:

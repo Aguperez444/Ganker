@@ -1,7 +1,7 @@
 from unittest.mock import MagicMock
 import pytest
 
-from app.application.useCase.query_characters import QueryCharacters
+from app.application.use_cases.query_characters import QueryCharacters
 from app.domain.models.character import Character
 from app.domain.models.videogame import Videogame
 

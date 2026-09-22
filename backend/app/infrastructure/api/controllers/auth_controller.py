@@ -2,9 +2,9 @@ from fastapi import APIRouter, Depends, status
 from fastapi.security import OAuth2PasswordRequestForm
 
 
-from app.application.useCase.user_login import UserLogin
-from app.application.useCase.refresh_token import RefreshToken
-from app.application.useCase.user_logout import UserLogout
+from app.application.use_cases.user_login import UserLogin
+from app.application.use_cases.refresh_token import RefreshToken
+from app.application.use_cases.user_logout import UserLogout
 
 from app.infrastructure.api.auth.jwt_token_service import JwtTokenService
 from app.infrastructure.api.auth.password_hash_service import PasswordHashService
