@@ -26,7 +26,7 @@ class QueryConversations:
                                                    timestamp=message.timestamp,
                                                    sender_id=cast(int, message.sender.user_id),
                                                    is_read=message.is_read) if message else None
-                unread_count = uow.message_repo.get_unread_count_by_conversation_id(conversation.conversation_id)
+                unread_count = uow.message_repo.get_unread_count_by_conversation_id(conversation.conversation_id, user_id)
 
                 # obtengo el otro participante de la conversación
                 other_user_id = conversation.user_1.user_id if conversation.user_1.user_id != user_id else conversation.user_2.user_id

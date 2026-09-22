@@ -20,8 +20,13 @@ class MessageRepoImpl(IMessageRepository):
         orm_messages = (self._session.query(MessageORM).filter_by(conversation_id=conversation_id).order_by(MessageORM.timestamp.desc(), MessageORM.message_id.desc()).offset(skip).limit(limit).all())
         return [MessageMapper.orm_to_domain(orm_message) for orm_message in orm_messages]
 
-    def get_unread_count_by_conversation_id(self, conversation_id: int):
-        unread_count = self._session.query(MessageORM).filter_by(conversation_id=conversation_id, is_read=False).count()
+    def get_unread_count_by_conversation_id(self, conversation_id: int, user_id: int) -> int:
+        unread_count = self._session.query(MessageORM).filter(
+            MessageORM.conversation_id == conversation_id,
+            MessageORM.sender_id != user_id,
+            MessageORM.is_read == False
+        ).count()
+
         return unread_count
 
     def mark_as_read(self, conversation_id: int, reader_user_id: int):

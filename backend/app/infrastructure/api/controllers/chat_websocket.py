@@ -39,7 +39,7 @@ async def websocket_chat_endpoint(
         raise ValueError("No se pudo determinar el ID del destinatario.") # TODO crear domain exception
 
     # 2. Conexión aceptada
-    await chat_manager.connect(conversation_id, websocket)
+    await chat_manager.connect(conversation_id, user_id, websocket)
 
     try:
         while True:
@@ -53,7 +53,7 @@ async def websocket_chat_endpoint(
                 continue
 
             # 4. Comprobamos en RAM si el destinatario está con el chat abierto para marcar el mensaje como leído o no
-            is_recipient_present = chat_manager.is_user_in_conversation(conversation_id, recipient_id)
+            is_recipient_present = chat_manager.is_user_online_in_conversation(conversation_id, recipient_id)
 
             # 5. Guardar mensaje de forma síncrona en hilo separado
             saved_message: MessageResponse = await run_in_threadpool(
@@ -79,4 +79,4 @@ async def websocket_chat_endpoint(
             await notification_manager.send_to_user(recipient_id, notification.model_dump())
 
     except WebSocketDisconnect:
-        chat_manager.disconnect(conversation_id, websocket)
+        chat_manager.disconnect(conversation_id, user_id, websocket)

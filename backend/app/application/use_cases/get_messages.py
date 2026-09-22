@@ -26,7 +26,7 @@ class GetMessages:
 
             # asegurarse de estar levantando un minimo de mensajes
             limit = size if size > 0 else 30
-            skip = page-1  * limit if page >= 1 else 0
+            skip = (page-1)  * limit if page >= 1 else 0
 
 
             # obtener los mensajes de la conversación

@@ -12,6 +12,7 @@ from app.infrastructure.api.dto.request.start_conversation_request import StartC
 from app.infrastructure.api.dto.response.conversation_summary_response import ConversationSummaryResponse
 from app.infrastructure.api.dto.response.create_conversation_summary_response import CreateconversationSummaryResponse
 from app.infrastructure.api.dto.response.get_messages_response import GetMessagesResponse
+from app.infrastructure.api.dto.response.messages_read_notification_response import MessagesReadNotificationResponse
 from app.infrastructure.api.dto.response.notification_type_enum import NotificationType
 from app.infrastructure.database.unit_of_work.uow_factory import uow_factory
 from app.infrastructure.api.chat.connection_manager import chat_manager
@@ -44,7 +45,7 @@ def get_my_conversations(current_user_id: int = Depends(get_current_user_id)):
 
 
 @router.get("/conversations/messages/{conversation_id}", response_model=GetMessagesResponse, dependencies=[Depends(require_player)])
-def get_messages(conversation_id: int, size: int = 30, page: int = 0, current_user_id: int = Depends(get_current_user_id)):
+def get_messages(conversation_id: int, size: int = 30, page: int = 1, current_user_id: int = Depends(get_current_user_id)):
     uow = uow_factory()
     get_messages_use_case = GetMessages(uow)
     return get_messages_use_case.execute(conversation_id, current_user_id, page, size)
@@ -54,15 +55,10 @@ def get_messages(conversation_id: int, size: int = 30, page: int = 0, current_us
 async def mark_conversation_as_read(conversation_id: int, current_user_id: int = Depends(get_current_user_id)):
     uow = uow_factory()
     mark_as_read_use_case = MarkAsRead(uow)
-    updated_count = run_in_threadpool(mark_as_read_use_case.execute,conversation_id, current_user_id)
+    updated_count = await run_in_threadpool(mark_as_read_use_case.execute,conversation_id, current_user_id)
 
     if updated_count > 0:
-        await chat_manager.broadcast_to_conversation(
-            conversation_id, {
-                "type": NotificationType.MESSAGES_READ,
-                "conversation_id": conversation_id,
-                "read_by": current_user_id
-            }
-        )
+        notification = MessagesReadNotificationResponse(type=NotificationType.MESSAGES_READ, conversation_id=conversation_id, read_by=current_user_id)
+        await chat_manager.broadcast_to_conversation(conversation_id, notification)
 
     return {"status": "ok", "messages_marked": updated_count}

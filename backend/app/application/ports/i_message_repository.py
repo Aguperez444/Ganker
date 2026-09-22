@@ -17,7 +17,7 @@ class IMessageRepository(ABC):
         pass
 
     @abstractmethod
-    def get_unread_count_by_conversation_id(self, conversation_id):
+    def get_unread_count_by_conversation_id(self, conversation_id, user_id: int) -> int:
         """Obtiene la cantidad de mensajes no leídos de una conversación."""
         pass
 
