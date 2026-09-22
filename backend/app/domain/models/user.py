@@ -1,4 +1,4 @@
-import datetime
+from datetime import datetime
 from typing import TYPE_CHECKING, Optional
 
 from app.domain.models.user_role import UserRole
@@ -18,7 +18,7 @@ class User:
                  role: UserRole,
                  profiles: list['GameProfile'],
                  icon_url: Optional[str] = None,
-                 last_connection: Optional[datetime.datetime] = None
+                 last_connection: Optional[datetime] = None
                  ):
         self._user_id: Optional[int] = user_id
         self._username: str = username
@@ -28,7 +28,7 @@ class User:
         self._role: UserRole = role
         self._profiles: list['GameProfile'] = profiles
         self._icon_url: Optional[str] = icon_url
-        self._last_connection: Optional[datetime.datetime] = last_connection
+        self._last_connection: Optional[datetime] = last_connection
 
     @property
     def user_id(self) -> Optional[int]:
@@ -90,10 +90,10 @@ class User:
         self._icon_url = value
 
     @property
-    def last_connection(self) -> Optional[datetime.datetime]:
+    def last_connection(self) -> Optional[datetime]:
         return self._last_connection
     @last_connection.setter
-    def last_connection(self, value: Optional[datetime.datetime]) -> None:
+    def last_connection(self, value: Optional[datetime]) -> None:
         self._last_connection = value
 
     def __repr__(self) -> str:
