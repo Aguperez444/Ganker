@@ -1,5 +1,4 @@
-import datetime
-
+from datetime import datetime
 from app.application.ports.i_token_service import ITokenService
 from app.application.ports.i_unit_of_work import IUnitOfWork
 from app.domain.exceptions.auth.invalid_token_exception import InvalidTokenException
@@ -22,5 +21,5 @@ class UserLogout:
 
             user = self.uow.user_repo.get_user_by_id(int(user_id))
             if user:
-                user.last_connection = datetime.datetime.now()
+                user.last_connection = datetime.now()
                 self.uow.user_repo.update_user(user)
