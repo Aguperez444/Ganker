@@ -12,7 +12,7 @@ class UserLogout:
     def execute(self, refresh_token: str) -> None:
         token_data = self.token_service.verify_refresh_token(refresh_token)
         jti = token_data.get("jti")
-        user_id = token_data.get("sub")
+        user_id = token_data["user_id"]
 
         with self.uow:
             revoked = self.uow.refresh_token_repo.revoke_by_jti(jti)
