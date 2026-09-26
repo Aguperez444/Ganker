@@ -7,6 +7,8 @@ from app.infrastructure.database.repositories.videogame_repository_impl import V
 from app.infrastructure.database.repositories.character_repository_impl import CharacterRepositoryImpl
 from app.infrastructure.database.repositories.role_repository_impl import RoleRepositoryImpl
 from app.infrastructure.database.repositories.rank_repository_impl import RankRepositoryImpl
+from app.infrastructure.database.models.game_profile_orm import GameProfileORM
+from app.infrastructure.database.models.role_profile_orm import RoleProfileORM
 
 
 class TestCatalogRepositoriesIntegration:
@@ -119,7 +121,7 @@ class TestCatalogRepositoriesIntegration:
         assert saved.role_id is not None
         assert saved.name == "Jungler"
 
-    def test_rank_repository_crud(self, test_db_session, seed_catalog_data):
+    def test_rank_repository_crud(self, test_db_session, seed_catalog_data, seed_player):
         repo = RankRepositoryImpl(test_db_session)
         vg_orm = seed_catalog_data["videogame"]
         rank_orm = seed_catalog_data["ranks"][0]
@@ -163,3 +165,35 @@ class TestCatalogRepositoriesIntegration:
         assert refetched.name == "Grandmaster"
         assert refetched.value == 4500
         assert refetched.icon_url == "/grandmaster.png"
+
+        # Count associated profiles before any association
+        assert repo.count_associated_profiles(saved.rank_id) == 0
+
+        # Create an associated role_profile
+        gp = GameProfileORM(player_id=seed_player.user_id, videogame_id=vg_orm.videogame_id)
+        test_db_session.add(gp)
+        test_db_session.flush()
+
+        rp = RoleProfileORM(
+            game_profile_id=gp.game_profile_id,
+            role_id=seed_catalog_data["roles"][0].role_id,
+            rank_id=saved.rank_id
+        )
+        test_db_session.add(rp)
+        test_db_session.commit()
+
+        # Count associated profiles now
+        assert repo.count_associated_profiles(saved.rank_id) == 1
+
+        # Reassign associated profiles
+        reassigned_count = repo.reassign_associated_profiles(saved.rank_id, rank_orm.rank_id)
+        test_db_session.commit()
+        assert reassigned_count == 1
+        assert repo.count_associated_profiles(saved.rank_id) == 0
+        assert repo.count_associated_profiles(rank_orm.rank_id) == 1
+
+        # Delete rank
+        deleted = repo.delete_rank(saved.rank_id)
+        test_db_session.commit()
+        assert deleted is True
+        assert repo.get_rank_by_id(saved.rank_id) is None

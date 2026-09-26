@@ -1,5 +1,7 @@
 import io
 import pytest
+from app.infrastructure.database.models.game_profile_orm import GameProfileORM
+from app.infrastructure.database.models.role_profile_orm import RoleProfileORM
 
 
 class TestRankEndpointsIntegration:
@@ -383,4 +385,82 @@ class TestRankEndpointsIntegration:
 
         response = client.put(f"/api/v1/ranks/{rank.rank_id}", data=data)
         assert response.status_code == 401
+
+    # ---------------------------------------------------------
+    # DELETE /api/v1/ranks/{rank_id}
+    # ---------------------------------------------------------
+
+    def test_delete_rank_without_dependencies_success(self, client, admin_auth_headers, seed_catalog_data):
+        # Probar eliminar un rango existente sin registros o usuarios asociados y confirmar la acción (pasa)
+        rank3 = seed_catalog_data["ranks"][2]
+
+        response = client.delete(
+            f"/api/v1/ranks/{rank3.rank_id}",
+            headers=admin_auth_headers
+        )
+
+        assert response.status_code == 200
+        assert "exitosamente" in response.json().get("message", "").lower()
+
+        # Probar eliminar un rango previamente eliminado (falla)
+        second_response = client.delete(
+            f"/api/v1/ranks/{rank3.rank_id}",
+            headers=admin_auth_headers
+        )
+        assert second_response.status_code == 404
+
+    def test_delete_rank_with_associated_player_profile(self, client, admin_auth_headers, seed_catalog_data, seed_player, test_db_session):
+        # Probar eliminar un rango que se encuentra asignado a uno o más jugadores, y actualiza sus perfiles (pasa)
+        rank1 = seed_catalog_data["ranks"][0]  # Gold (1000)
+        rank2 = seed_catalog_data["ranks"][1]  # Platinum (2000)
+        vg = seed_catalog_data["videogame"]
+        role = seed_catalog_data["roles"][0]
+
+        # Crear perfil asociado a rank2 (Platinum)
+        gp = GameProfileORM(player_id=seed_player.user_id, videogame_id=vg.videogame_id)
+        test_db_session.add(gp)
+        test_db_session.flush()
+
+        rp = RoleProfileORM(
+            game_profile_id=gp.game_profile_id,
+            role_id=role.role_id,
+            rank_id=rank2.rank_id
+        )
+        test_db_session.add(rp)
+        test_db_session.commit()
+
+        # Eliminar rank2 (Platinum). Debe actualizar el perfil para que apunte al inmediatamente inferior (Gold)
+        response = client.delete(
+            f"/api/v1/ranks/{rank2.rank_id}",
+            headers=admin_auth_headers
+        )
+
+        assert response.status_code == 200
+        assert "exitosamente" in response.json().get("message", "").lower()
+
+        # Verificar en BD que el rol del perfil fue actualizado al rango inferior (Gold)
+        test_db_session.refresh(rp)
+        assert rp.rank_id == rank1.rank_id
+
+    def test_delete_rank_not_found(self, client, admin_auth_headers):
+        # Probar eliminar un rango inexistente (falla)
+        response = client.delete(
+            "/api/v1/ranks/99999",
+            headers=admin_auth_headers
+        )
+        assert response.status_code == 404
+
+    def test_delete_rank_forbidden_for_player(self, client, player_auth_headers, seed_catalog_data):
+        rank = seed_catalog_data["ranks"][0]
+        response = client.delete(
+            f"/api/v1/ranks/{rank.rank_id}",
+            headers=player_auth_headers
+        )
+        assert response.status_code == 403
+
+    def test_delete_rank_unauthorized(self, client, seed_catalog_data):
+        rank = seed_catalog_data["ranks"][0]
+        response = client.delete(f"/api/v1/ranks/{rank.rank_id}")
+        assert response.status_code == 401
+
 
