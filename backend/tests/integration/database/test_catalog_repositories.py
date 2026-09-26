@@ -146,3 +146,20 @@ class TestCatalogRepositoriesIntegration:
         assert saved.rank_id is not None
         assert saved.name == "Master"
         assert saved.value == 4000
+
+        # Update rank
+        saved.name = "Grandmaster"
+        saved.value = 4500
+        saved.icon_url = "/grandmaster.png"
+        updated = repo.update_rank(saved)
+        test_db_session.commit()
+        assert updated.name == "Grandmaster"
+        assert updated.value == 4500
+        assert updated.icon_url == "/grandmaster.png"
+
+        # Verify from database
+        refetched = repo.get_rank_by_id(saved.rank_id)
+        assert refetched is not None
+        assert refetched.name == "Grandmaster"
+        assert refetched.value == 4500
+        assert refetched.icon_url == "/grandmaster.png"
