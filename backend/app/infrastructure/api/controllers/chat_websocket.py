@@ -3,14 +3,14 @@ from pydantic import ValidationError
 from starlette.concurrency import run_in_threadpool
 
 from app.infrastructure.api.chat.user_notification_manager import notification_manager
-from app.infrastructure.api.dto.response.notification_type_enum import NotificationType
+from app.infrastructure.api.dto.response.notification.notification_type_enum import NotificationType
 from app.infrastructure.database.unit_of_work.uow_factory import uow_factory
 
 from app.application.use_cases.check_conversation_access import CheckConversationAccess
 from app.application.use_cases.save_message import SaveMessage
 from app.infrastructure.api.dto.request.send_message_request import SendMessageRequest
 from app.infrastructure.api.dto.response.message_response import MessageResponse
-from app.infrastructure.api.dto.response.notification_response import NotificationResponse
+from app.infrastructure.api.dto.response.notification.notification_response import NotificationResponse
 
 from app.infrastructure.api.chat.connection_manager import chat_manager
 from app.infrastructure.api.dependencies.web_socket_auth import get_current_user_id_ws

@@ -1,7 +1,7 @@
 from app.application.ports.i_storage_service import IStorageService
 from app.application.ports.i_unit_of_work import IUnitOfWork
 from app.domain.exceptions.character.character_not_found_exception import CharacterNotFoundException
-from app.infrastructure.api.dto.response.delete_character_response import DeleteCharacterResponse
+from app.infrastructure.api.dto.response.delete.delete_character_response import DeleteCharacterResponse
 
 
 class DeleteCharacter:

@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 
 from app.domain.specifications.base import Specification
-from app.infrastructure.api.dto.response.get_game_profile_response import GetGameProfileResponse
+from app.infrastructure.api.dto.response.get.get_game_profile_response import GetGameProfileResponse
 
 
 class IFindBySpecificationRepository(ABC):

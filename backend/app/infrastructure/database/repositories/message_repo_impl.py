@@ -16,7 +16,7 @@ class MessageRepoImpl(IMessageRepository):
         return MessageMapper.orm_to_domain(orm_message)
 
     def get_by_conversation_id(self, conversation_id: int, skip: int, limit: int) -> list[Message]:
-        #obtiene los mensajes paginados ordenados por fecha de creación descendente y por id descendente
+        #obtiene los mensajes paginados ordenados por fecha de creación descendente y por ID descendente
         orm_messages = (self._session.query(MessageORM).filter_by(conversation_id=conversation_id).order_by(MessageORM.timestamp.desc(), MessageORM.message_id.desc()).offset(skip).limit(limit).all())
         return [MessageMapper.orm_to_domain(orm_message) for orm_message in orm_messages]
 

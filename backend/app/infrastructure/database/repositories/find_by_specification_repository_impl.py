@@ -7,7 +7,7 @@ from app.infrastructure.api.dto.response.base_classes.rank_object_response impor
 from app.infrastructure.api.dto.response.base_classes.role_object_response import RoleObjectResponse
 from app.infrastructure.api.dto.response.base_classes.role_profile_object_response import RoleProfileObjectResponse
 from app.infrastructure.api.dto.response.base_classes.videogame_object_response import VideogameObjectResponse
-from app.infrastructure.api.dto.response.get_game_profile_response import GetGameProfileResponse, PlayerObjectResponse
+from app.infrastructure.api.dto.response.get.get_game_profile_response import GetGameProfileResponse, PlayerObjectResponse
 from app.infrastructure.database.mappers.game_profile_mapper import GameProfileMapper
 from app.infrastructure.database.models import GameProfileORM, CharacterPriorityORM, RoleProfileORM, UserORM
 from app.domain.specifications.base import Specification, AndSpecification

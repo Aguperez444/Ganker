@@ -4,7 +4,7 @@ from app.infrastructure.api.dto.response.base_classes.message_object_response im
 
 from typing import cast
 
-from app.infrastructure.api.dto.response.get_messages_response import GetMessagesResponse
+from app.infrastructure.api.dto.response.get.get_messages_response import GetMessagesResponse
 from app.domain.exceptions.chat.user_does_not_belong_to_conversation_exception import UserDoesNotBelongToConversationException
 
 

@@ -7,9 +7,9 @@ from app.application.use_cases.update_videogame_profile import UpdateVideogamePr
 from app.infrastructure.api.dependencies.auth import get_current_user_id, require_player
 from app.infrastructure.api.dto.request.Search_videogame_profiles_request import SearchVideogameProfilesRequest
 from app.infrastructure.api.dto.request.create_videogame_profile_request import CreateGameProfileRequest
-from app.infrastructure.api.dto.response.create_videogame_profile_response import CreateGameProfileResponse
+from app.infrastructure.api.dto.response.create_register.create_videogame_profile_response import CreateGameProfileResponse
 from app.infrastructure.api.dto.request.update_videogame_profile_request import UpdateGameProfileRequest
-from app.infrastructure.api.dto.response.get_videogame_profiles_response import GetVideogameProfilesResponse
+from app.infrastructure.api.dto.response.get.get_videogame_profiles_response import GetVideogameProfilesResponse
 from app.infrastructure.api.dto.response.update_videogame_profile_response import UpdateGameProfileResponse
 from app.infrastructure.database.unit_of_work.uow_factory import uow_factory
 

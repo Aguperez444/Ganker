@@ -1,7 +1,7 @@
 from datetime import datetime
 from pydantic import BaseModel, ConfigDict
 
-from app.infrastructure.api.dto.response.notification_type_enum import NotificationType
+from app.infrastructure.api.dto.response.notification.notification_type_enum import NotificationType
 
 
 class MessageResponse(BaseModel):

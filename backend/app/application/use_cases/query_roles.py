@@ -1,7 +1,7 @@
 from typing import cast
 
 from app.application.ports.i_unit_of_work import IUnitOfWork
-from app.infrastructure.api.dto.response.get_roles_response import GetRolesResponse
+from app.infrastructure.api.dto.response.get.get_roles_response import GetRolesResponse
 from app.infrastructure.api.dto.response.base_classes.role_object_response import RoleObjectResponse
 
 

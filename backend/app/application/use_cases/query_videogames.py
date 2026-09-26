@@ -2,7 +2,7 @@ from typing import cast
 
 from app.application.ports.i_unit_of_work import IUnitOfWork
 
-from app.infrastructure.api.dto.response.get_videogames_response import GetVideogamesResponse
+from app.infrastructure.api.dto.response.get.get_videogames_response import GetVideogamesResponse
 from app.infrastructure.api.dto.response.base_classes.videogame_object_response import VideogameObjectResponse
 
 

@@ -5,7 +5,7 @@ from app.application.ports.i_unit_of_work import IUnitOfWork
 
 from app.domain.exceptions.user.user_not_found_exception import UserNotFoundException
 from app.domain.services.catalog_validation_service import CatalogValidationService
-from app.infrastructure.api.dto.response.update_user_response import UpdateUserResponse
+from app.infrastructure.api.dto.response.update.update_user_response import UpdateUserResponse
 
 
 class UpdateUser:
@@ -34,7 +34,7 @@ class UpdateUser:
             user.mail = mail
 
             new_icon_url = user.icon_url  # por defecto persisto la url anterior
-            # si me llegó una imagen nueva
+            # compruebo si me llegó una imagen nueva
             if icon_file and icon_filename:
                 try:
                     # actualizo la bandera de cambio de icono
@@ -58,7 +58,7 @@ class UpdateUser:
                 # Guardo los cambios en la base de datos
                 updated_user = uow.user_repo.update_user(user)
             except Exception as e:
-                # si se había guardado un icono nuevo
+                # compruebo si se había guardado un icono nuevo
                 if cambio_icono:
                     if new_icon_url is not None:
                         #borrar la imagen que se subio para no persistir basura

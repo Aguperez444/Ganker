@@ -7,10 +7,10 @@ from app.application.use_cases.register_user import RegisterUser
 from app.application.use_cases.update_user import UpdateUser
 from app.infrastructure.api.dependencies.auth import get_current_user_id, require_player, require_admin
 from app.infrastructure.api.dto.response.auth_tokens_response import AuthTokensResponse
-from app.infrastructure.api.dto.response.get_user_response import GetUserResponse
+from app.infrastructure.api.dto.response.get.get_user_response import GetUserResponse
 from app.infrastructure.api.dto.request.register_user_request import RegisterUserRequest
-from app.infrastructure.api.dto.response.register_user_response import RegisterUserResponse
-from app.infrastructure.api.dto.response.update_user_response import UpdateUserResponse
+from app.infrastructure.api.dto.response.create_register.register_user_response import RegisterUserResponse
+from app.infrastructure.api.dto.response.update.update_user_response import UpdateUserResponse
 from app.infrastructure.config.settings import settings
 
 from app.infrastructure.api.dto.request.register_player_request import RegisterPlayerRequest

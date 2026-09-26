@@ -3,7 +3,7 @@ from typing import cast
 from app.application.ports.i_storage_service import IStorageService
 from app.application.ports.i_unit_of_work import IUnitOfWork
 from app.domain.exceptions.rank.rank_not_found_exception import RankNotFoundException
-from app.infrastructure.api.dto.response.delete_rank_response import DeleteRankResponse
+from app.infrastructure.api.dto.response.delete.delete_rank_response import DeleteRankResponse
 from app.domain.exceptions.rank.cannot_delete_rank_exception import CannotDeleteRankException
 
 

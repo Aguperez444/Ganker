@@ -5,8 +5,8 @@ from app.application.use_cases.create_character import CreateCharacter
 from app.application.use_cases.update_character import UpdateCharacter
 from app.application.use_cases.delete_character import DeleteCharacter
 from app.infrastructure.api.dto.response.base_classes.character_object_response import CharacterObjectResponse
-from app.infrastructure.api.dto.response.get_characters_response import GetCharactersResponse
-from app.infrastructure.api.dto.response.delete_character_response import DeleteCharacterResponse
+from app.infrastructure.api.dto.response.get.get_characters_response import GetCharactersResponse
+from app.infrastructure.api.dto.response.delete.delete_character_response import DeleteCharacterResponse
 from app.infrastructure.api.dependencies.auth import require_admin, require_player
 
 

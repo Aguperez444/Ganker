@@ -5,7 +5,7 @@ from app.application.use_cases.query_roles import QueryRoles
 from app.application.use_cases.update_role import UpdateRole
 from app.infrastructure.api.dependencies.auth import require_admin, require_player
 
-from app.infrastructure.api.dto.response.get_roles_response import GetRolesResponse
+from app.infrastructure.api.dto.response.get.get_roles_response import GetRolesResponse
 from app.infrastructure.api.dto.response.base_classes.role_object_response import RoleObjectResponse
 from app.infrastructure.database.unit_of_work.uow_factory import uow_factory
 from app.infrastructure.storage.local_disk_storage_service import LocalDiskStorageService

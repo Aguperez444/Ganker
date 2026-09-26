@@ -21,7 +21,7 @@ class CharacterPriorityRepositoryImpl(ICharacterPriorityRepository):
         if not associations:
             return
 
-        # Guardamos los IDs de los perfiles de juego afectados
+        # Guardamos los ID de los perfiles de juego afectados
         affected_profile_ids = {assoc.game_profile_id for assoc in associations}
 
         # 2. Eliminar las filas del personaje seleccionado
