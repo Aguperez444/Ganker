@@ -4,7 +4,7 @@ from app.application.ports.i_unit_of_work import IUnitOfWork
 from app.domain.exceptions.file.file_name_not_null_exception import FileNameNotNullException
 from app.domain.exceptions.file.file_not_null_exception import FileNotNullException
 
-from app.domain.exceptions.videogame.videogame_not_found_exception import VideogameNotFoundException
+from app.domain.services.catalog_validation_service import CatalogValidationService
 from app.domain.services.slug_service import SlugService
 from app.domain.models.role import Role
 from app.domain.exceptions.role.duplicated_role_name_exception import DuplicateRoleNameException
@@ -24,15 +24,12 @@ class CreateRole:
 
         # Comprobar que existe el juego
         with self.uow as uow:
-            game = uow.videogame_repo.get_videogame_by_id(game_id)
-            if not game:
-                raise VideogameNotFoundException(game_id)
+            game = CatalogValidationService.get_and_validate_exist_videogame(game_id, uow)
 
-            # obtener los rangos de ese juego y comprobar que no hay otro rango con el mismo valor o nombre
-            existing_roles = uow.role_repo.get_roles_by_game_id(game_id)
-            for role in existing_roles:
-                if role.name == name:
-                    raise DuplicateRoleNameException(name)
+            # comprobar que no hay otro rol con el mismo nombre en el juego vía SQL
+            existing_role = uow.role_repo.get_role_by_name_and_videogame(name, game_id)
+            if existing_role:
+                raise DuplicateRoleNameException(name)
 
             if not icon_stream:
                 raise FileNotNullException()

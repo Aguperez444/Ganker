@@ -4,7 +4,7 @@ from fastapi import APIRouter, Depends, status
 from starlette.concurrency import run_in_threadpool
 
 from app.application.use_cases.get_messages import GetMessages
-from app.application.use_cases.get_or_create_conversation import GetOrCreateConversationUseCase
+from app.application.use_cases.get_or_create_conversation import GetOrCreateConversation
 from app.application.use_cases.mark_as_read import MarkAsRead
 from app.application.use_cases.query_conversation import QueryConversations
 from app.infrastructure.api.dependencies.auth import get_current_user_id, require_player
@@ -23,7 +23,7 @@ router = APIRouter(prefix="/api/v1/chat", tags=["Chat"])
 def start_or_get_conversation(payload: StartConversationRequest, current_user_id: int = Depends(get_current_user_id)):
 
     uow = uow_factory()
-    use_case = GetOrCreateConversationUseCase(uow)
+    use_case = GetOrCreateConversation(uow)
     conversation = use_case.execute(
         current_user_id=current_user_id,
         target_user_id=payload.target_user_id

@@ -1,5 +1,6 @@
 from typing import TYPE_CHECKING, Optional
 
+from sqlalchemy import func
 from app.application.ports.i_character_repository import ICharacterRepository
 from app.infrastructure.database.mappers.character_mapper import CharacterMapper
 from app.infrastructure.database.models.character_orm import CharacterORM
@@ -22,7 +23,10 @@ class CharacterRepositoryImpl(ICharacterRepository):
         return domain_found
 
     def get_character_by_name_and_videogame(self, name: str, videogame_id: int) -> Optional['Character']:
-        found = self.session.query(CharacterORM).filter(CharacterORM.name == name, CharacterORM.videogame_id == videogame_id).first()
+        found = self.session.query(CharacterORM).filter(
+            func.lower(CharacterORM.name) == func.lower(name.strip()),
+            CharacterORM.videogame_id == videogame_id
+        ).first()
         domain_found = CharacterMapper.orm_to_domain(found) if found else None
         return domain_found
 

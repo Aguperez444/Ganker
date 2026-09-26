@@ -7,7 +7,7 @@ from app.domain.exceptions.rank.duplicated_rank_name_exception import Duplicated
 from app.domain.exceptions.rank.duplicated_rank_value_exception import DuplicatedRankValueException
 from app.domain.exceptions.rank.invalid_rank_name_exception import InvalidRankNameException
 from app.domain.exceptions.rank.invalid_rank_value_exception import InvalidRankValueException
-from app.domain.exceptions.rank.rank_not_found_exception import RankNotFoundException
+from app.domain.services.catalog_validation_service import CatalogValidationService
 from app.domain.services.slug_service import SlugService
 from app.infrastructure.api.dto.response.base_classes.rank_object_response import RankObjectResponse
 
@@ -35,19 +35,17 @@ class UpdateRank:
         cleaned_name = name.strip()
 
         with self.uow as uow:
-            existing_rank = uow.rank_repo.get_rank_by_id(rank_id)
-            if not existing_rank:
-                raise RankNotFoundException(rank_id)
+            existing_rank = CatalogValidationService.get_rank_and_validate_exist(rank_id, uow)
 
-            # Comprobar que no hay otro rango en el mismo videojuego con el mismo nombre o valor
+            # Comprobar que no hay otro rango en el mismo videojuego con el mismo nombre o valor vía SQL
             game_id = existing_rank.videogame.videogame_id
-            existing_ranks = uow.rank_repo.get_ranks_by_game_id(cast(int,game_id))
-            for other_rank in existing_ranks:
-                if other_rank.rank_id != rank_id:
-                    if other_rank.name == cleaned_name:
-                        raise DuplicatedRankNameException(cleaned_name)
-                    if other_rank.value == value:
-                        raise DuplicatedRankValueException(value)
+            rank_by_name = uow.rank_repo.get_rank_by_name_and_videogame(cleaned_name, cast(int, game_id))
+            if rank_by_name and rank_by_name.rank_id != rank_id:
+                raise DuplicatedRankNameException(cleaned_name)
+
+            rank_by_val = uow.rank_repo.get_rank_by_value_and_videogame(value, cast(int, game_id))
+            if rank_by_val and rank_by_val.rank_id != rank_id:
+                raise DuplicatedRankValueException(value)
 
             new_icon_url = None
             if icon and icon.filename:

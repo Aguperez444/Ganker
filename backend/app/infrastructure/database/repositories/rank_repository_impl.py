@@ -1,5 +1,6 @@
 from typing import TYPE_CHECKING, Optional
 
+from sqlalchemy import func
 from app.infrastructure.database.models.rank_orm import RankORM
 from app.infrastructure.database.models.role_profile_orm import RoleProfileORM
 from app.infrastructure.database.mappers.rank_mapper import RankMapper
@@ -22,6 +23,20 @@ class RankRepositoryImpl(IRankRepository):
         found = self.session.query(RankORM).filter(RankORM.videogame_id == game_id).all()
         domain_found = [RankMapper.orm_to_domain(rank) for rank in found]
         return domain_found
+
+    def get_rank_by_name_and_videogame(self, name: str, videogame_id: int) -> Optional['Rank']:
+        found = self.session.query(RankORM).filter(
+            func.lower(RankORM.name) == func.lower(name.strip()),
+            RankORM.videogame_id == videogame_id
+        ).first()
+        return RankMapper.orm_to_domain(found) if found else None
+
+    def get_rank_by_value_and_videogame(self, value: int, videogame_id: int) -> Optional['Rank']:
+        found = self.session.query(RankORM).filter(
+            RankORM.value == value,
+            RankORM.videogame_id == videogame_id
+        ).first()
+        return RankMapper.orm_to_domain(found) if found else None
 
     def save_rank(self, rank: 'Rank') -> 'Rank':
         orm_rank = RankMapper.domain_to_orm(rank)

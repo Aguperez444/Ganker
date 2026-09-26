@@ -18,6 +18,7 @@ class TestUpdateRoleUseCase:
         uow.__enter__.return_value = uow
         uow.__exit__.return_value = None
         uow.role_repo = MagicMock()
+        uow.role_repo.get_role_by_name_and_videogame.return_value = None
 
         storage_service = MagicMock(spec=IStorageService)
         storage_service.save_image_file = MagicMock(return_value="/media/games/league_of_legends/roles/mid_new.png")
@@ -119,7 +120,7 @@ class TestUpdateRoleUseCase:
         role2 = Role(role_id=2, name="Top", videogame=vg, icon_url="/top.png")
 
         uow.role_repo.get_role_by_id.return_value = role1
-        uow.role_repo.get_roles_by_game_id.return_value = [role1, role2]
+        uow.role_repo.get_role_by_name_and_videogame.return_value = role2
 
         with pytest.raises(DuplicateRoleNameException) as exc_info:
             use_case.execute(role_id=1, name="Top", icon=None)

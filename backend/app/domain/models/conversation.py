@@ -50,3 +50,10 @@ class Conversation:
         if user.user_id != self.user_1.user_id and user.user_id != self.user_2.user_id:
             return False
         return True
+
+    def get_other_user(self, user_id: int) -> 'User':
+        if user_id == self.user_1.user_id:
+            return self.user_2
+        elif user_id == self.user_2.user_id:
+            return self.user_1
+        raise ValueError(f"User with id {user_id} is not part of this conversation.")

@@ -5,39 +5,31 @@ from app.domain.exceptions.character.invalid_character_name_exception import Inv
 from app.domain.exceptions.file.file_name_not_null_exception import FileNameNotNullException
 from app.domain.models.character import Character
 from app.domain.exceptions.file.file_not_null_exception import FileNotNullException
-from app.domain.exceptions.videogame.videogame_not_found_exception import VideogameNotFoundException
+from app.domain.services.catalog_validation_service import CatalogValidationService
 from app.domain.services.slug_service import SlugService
 from app.infrastructure.api.dto.response.base_classes.character_object_response import CharacterObjectResponse
 
 from typing import cast
 
-class RegisterCharacter:
-    def __init__(self,storage_service: IStorageService, unit_of_work: IUnitOfWork):
+class CreateCharacter:
+    def __init__(self, storage_service: IStorageService, unit_of_work: IUnitOfWork):
         self.uow: IUnitOfWork = unit_of_work
         self.storage_service: IStorageService = storage_service
 
     def execute(self, name: str, videogame_id: int, icon_file, icon_filename) -> CharacterObjectResponse:
         cleaned_name = self.validate_character_name(name)
 
-        # Comprobar que existe el juego
         with self.uow as uow:
-            game = uow.videogame_repo.get_videogame_by_id(videogame_id)
-            if not game:
-                raise VideogameNotFoundException(videogame_id)
-        # valido que no exista otro personaje con el mismo nombre en el mismo juego
-        self.validate_name_uniqueness(cleaned_name, videogame_id)
+            game = CatalogValidationService.get_and_validate_exist_videogame(videogame_id, uow)
+            self.validate_name_uniqueness(cleaned_name, videogame_id, uow=uow)
 
-        # confirmado que este personaje es nuevo y único para ese juego, se puede crear y persistir
-        # Sanitizar el nombre del juego para la sub carpeta (ej: "League of Legends" -> "league_of_legends")
-        game_folder = SlugService.to_slug(game.name)
+            if not icon_file:
+                raise FileNotNullException()
+            if icon_file and not icon_filename:
+                raise FileNameNotNullException()
 
-        if not icon_file:
-            raise FileNotNullException()
-        if icon_file and not icon_filename:
-            raise FileNameNotNullException()
+            game_folder = SlugService.to_slug(game.name)
 
-        with self.uow as uow:
-            # Guardar imagen a través del puerto si se proporciona un archivo
             icon_url = self.storage_service.save_image_file(
                 file_content=icon_file,
                 filename=icon_filename,
@@ -45,27 +37,19 @@ class RegisterCharacter:
                 preserve_original_name=True
             )
 
-            videogame = uow.videogame_repo.get_videogame_by_id(videogame_id)
-            if not videogame:
-                raise VideogameNotFoundException(videogame_id)
-
-            # Crear el nuevo personaje
             new_character = Character(
                 character_id=None,
                 name=cleaned_name,
-                videogame=videogame,
+                videogame=game,
                 icon_url=icon_url
             )
 
             try:
-                # Persistir el nuevo personaje en la base de datos
                 saved_character = uow.character_repo.create_character(new_character)
-
             except Exception as e:
-                # Evitar basura en disco si la BD rechaza la inserción
                 if icon_url:
                     self.storage_service.delete_file(icon_url)
-                raise e  # volver a levantar la excepción después de limpiar el archivo para hacer rollback
+                raise e
 
         return CharacterObjectResponse(
             character_id=cast(int, saved_character.character_id),
@@ -79,9 +63,9 @@ class RegisterCharacter:
             raise InvalidCharacterNameException(name)
         return name.strip()
 
-    def validate_name_uniqueness(self, name: str, videogame_id: int):
-        with self.uow as uow:
-            existing_character = uow.character_repo.get_character_by_name_and_videogame(name, videogame_id)
-            if existing_character:
-                raise DuplicatedCharacterNameException(name, videogame_id)
-            return True
+    @staticmethod
+    def validate_name_uniqueness(name: str, videogame_id: int, uow: 'IUnitOfWork'):
+        existing_character = uow.character_repo.get_character_by_name_and_videogame(name, videogame_id)
+        if existing_character:
+            raise DuplicatedCharacterNameException(name, videogame_id)
+        return True

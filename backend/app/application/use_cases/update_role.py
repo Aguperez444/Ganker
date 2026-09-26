@@ -5,7 +5,7 @@ from app.application.ports.i_storage_service import IStorageService
 from app.application.ports.i_unit_of_work import IUnitOfWork
 from app.domain.exceptions.role.duplicated_role_name_exception import DuplicateRoleNameException
 from app.domain.exceptions.role.invalid_role_name_exception import InvalidRoleNameException
-from app.domain.exceptions.role.role_not_found_exception import RoleNotFoundException
+from app.domain.services.catalog_validation_service import CatalogValidationService
 from app.domain.services.slug_service import SlugService
 from app.infrastructure.api.dto.response.base_classes.role_object_response import RoleObjectResponse
 
@@ -28,17 +28,13 @@ class UpdateRole:
         cleaned_name = name.strip()
 
         with self.uow as uow:
-            existing_role = uow.role_repo.get_role_by_id(role_id)
-            if not existing_role:
-                raise RoleNotFoundException(role_id)
+            existing_role = CatalogValidationService.get_role_and_validate_exist(role_id, uow)
 
             # Comprobar que no hay otro rol en el mismo videojuego con el mismo nombre
             game_id = existing_role.videogame.videogame_id
-            existing_roles = uow.role_repo.get_roles_by_game_id(cast(int, game_id))
-            for other_role in existing_roles:
-                if other_role.role_id != role_id:
-                    if other_role.name == cleaned_name:
-                        raise DuplicateRoleNameException(cleaned_name)
+            role_with_same_name = uow.role_repo.get_role_by_name_and_videogame(cleaned_name, cast(int, game_id))
+            if role_with_same_name and role_with_same_name.role_id != role_id:
+                raise DuplicateRoleNameException(cleaned_name)
 
             new_icon_url = None
             if icon and icon.filename:

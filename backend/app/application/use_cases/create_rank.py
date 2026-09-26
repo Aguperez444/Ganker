@@ -7,7 +7,7 @@ from app.domain.exceptions.rank.duplicated_rank_name_exception import Duplicated
 from app.domain.exceptions.rank.duplicated_rank_value_exception import DuplicatedRankValueException
 from app.domain.exceptions.rank.invalid_rank_name_exception import InvalidRankNameException
 from app.domain.exceptions.rank.invalid_rank_value_exception import InvalidRankValueException
-from app.domain.exceptions.videogame.videogame_not_found_exception import VideogameNotFoundException
+from app.domain.services.catalog_validation_service import CatalogValidationService
 from app.domain.services.slug_service import SlugService
 from app.infrastructure.api.dto.response.base_classes.rank_object_response import RankObjectResponse
 
@@ -28,17 +28,13 @@ class CreateRank:
 
         # Comprobar que existe el juego
         with self.uow as uow:
-            game = uow.videogame_repo.get_videogame_by_id(game_id)
-            if not game:
-                raise VideogameNotFoundException(game_id)
+            game = CatalogValidationService.get_and_validate_exist_videogame(game_id, uow)
 
-            # obtener los rangos de ese juego y comprobar que no hay otro rango con el mismo valor o nombre
-            existing_ranks = uow.rank_repo.get_ranks_by_game_id(game_id)
-            for rank in existing_ranks:
-                if rank.name == name:
-                    raise DuplicatedRankNameException(name)
-                if rank.value == value:
-                    raise DuplicatedRankValueException(value)
+            # comprobar que no hay otro rango con el mismo valor o nombre vía SQL
+            if uow.rank_repo.get_rank_by_name_and_videogame(name, game_id):
+                raise DuplicatedRankNameException(name)
+            if uow.rank_repo.get_rank_by_value_and_videogame(value, game_id):
+                raise DuplicatedRankValueException(value)
 
             # confirmado que este rango es nuevo y único para ese juego, se puede crear y persistir
             # Sanitizar el nombre del juego para la sub carpeta (ej: "League of Legends" -> "league_of_legends")

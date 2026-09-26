@@ -20,6 +20,8 @@ class TestUpdateRankUseCase:
         uow.__enter__.return_value = uow
         uow.__exit__.return_value = None
         uow.rank_repo = MagicMock()
+        uow.rank_repo.get_rank_by_name_and_videogame.return_value = None
+        uow.rank_repo.get_rank_by_value_and_videogame.return_value = None
 
         storage_service = MagicMock(spec=IStorageService)
         storage_service.save_image_file = MagicMock(return_value="/media/games/league_of_legends/ranks/gold_new.png")
@@ -149,7 +151,7 @@ class TestUpdateRankUseCase:
         rank2 = Rank(rank_id=2, name="Platinum", value=2000, videogame=vg, icon_url="/plat.png")
 
         uow.rank_repo.get_rank_by_id.return_value = rank1
-        uow.rank_repo.get_ranks_by_game_id.return_value = [rank1, rank2]
+        uow.rank_repo.get_rank_by_name_and_videogame.return_value = rank2
 
         with pytest.raises(DuplicatedRankNameException) as exc_info:
             use_case.execute(rank_id=1, name="Platinum", value=1500, icon=None)
@@ -164,7 +166,7 @@ class TestUpdateRankUseCase:
         rank2 = Rank(rank_id=2, name="Platinum", value=2000, videogame=vg, icon_url="/plat.png")
 
         uow.rank_repo.get_rank_by_id.return_value = rank1
-        uow.rank_repo.get_ranks_by_game_id.return_value = [rank1, rank2]
+        uow.rank_repo.get_rank_by_value_and_videogame.return_value = rank2
 
         with pytest.raises(DuplicatedRankValueException) as exc_info:
             use_case.execute(rank_id=1, name="Gold Updated", value=2000, icon=None)

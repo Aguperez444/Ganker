@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, UploadFile, HTTPException, status, Form, File
 
 from app.application.use_cases.query_characters import QueryCharacters
-from app.application.use_cases.register_character import RegisterCharacter
+from app.application.use_cases.create_character import CreateCharacter
 from app.application.use_cases.update_character import UpdateCharacter
 from app.infrastructure.api.dto.response.base_classes.character_object_response import CharacterObjectResponse
 from app.infrastructure.api.dto.response.get_characters_response import GetCharactersResponse
@@ -39,7 +39,7 @@ def register_character(name: str = Form(..., description="Name of the character"
 
     uow = uow_factory()
     storage_service = get_storage_service()
-    register_character_use_case = RegisterCharacter(storage_service, uow)
+    register_character_use_case = CreateCharacter(storage_service, uow)
     character = register_character_use_case.execute(name, videogame_id, icon.file, icon.filename)
 
     return character

@@ -1,11 +1,9 @@
-import re
 from typing import cast, TYPE_CHECKING
 
 from app.application.ports.i_password_hasher import IPasswordHasher
 from app.application.ports.i_unit_of_work import IUnitOfWork
 from app.infrastructure.api.dto.response.register_user_response import RegisterUserResponse
 from app.domain.exceptions.mail.email_already_exists_exception import EmailAlreadyExistsException
-from app.domain.exceptions.auth.password_is_not_secure_exception import PasswordIsNotSecureException
 from app.domain.exceptions.user.invalid_username_exception import InvalidUsernameException
 from app.domain.exceptions.auth.unauthorized_exception import UnauthorizedException
 from app.domain.exceptions.user.user_not_found_exception import UserNotFoundException
@@ -15,6 +13,9 @@ from app.domain.models.user_role import UserRole
 
 if TYPE_CHECKING:
     from app.infrastructure.api.dto.request.register_user_request import RegisterUserRequest
+
+from app.domain.services.password_security_service import PasswordSecurityService
+
 
 class RegisterUser:
     def __init__(self, unit_of_work: IUnitOfWork,password_hasher: IPasswordHasher):
@@ -29,7 +30,7 @@ class RegisterUser:
 
         # Validar que la contraseña cumpla el criterio de seguridad (mínimo 8 caracteres,
         # al menos una mayúscula, al menos una minúscula y al menos un número)
-        self.validate_password_security(user_data.password)
+        PasswordSecurityService.validate(user_data.password)
 
         # el formato de userRole ya viene validado por pydantic en el dto., así que no hace falta validar eso acá
         # el formato del mail ya viene validado por pydantic en el dto., así que no hace falta validar eso acá tampoco
@@ -84,20 +85,6 @@ class RegisterUser:
         usuario_con_ese_mail = uow.user_repo.get_user_by_mail(mail)
         return usuario_con_ese_mail is not None
 
-
-    @staticmethod
-    def validate_password_security(password: str):
-        if len(password) < 8:
-            raise PasswordIsNotSecureException("Debe tener al menos 8 caracteres")
-
-        if not re.search(r"[A-Z]", password):  # Mayúscula
-            raise PasswordIsNotSecureException("Debe contener al menos una letra mayúscula")
-
-        if not re.search(r"[a-z]", password):  # Minúscula
-            raise PasswordIsNotSecureException("Debe contener al menos una letra minúscula")
-
-        if not re.search(r"\d", password):  # Número
-            raise PasswordIsNotSecureException("Debe contener al menos un número")
 
     @staticmethod
     def validate_is_authorized_to_register(authenticated_user: User, new_user_role: str):

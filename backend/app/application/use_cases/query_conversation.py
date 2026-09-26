@@ -4,7 +4,6 @@ from app.infrastructure.api.dto.response.conversation_summary_response import Co
 from typing import cast
 
 from app.domain.models.message import Message
-from app.domain.exceptions.user.user_not_found_exception import UserNotFoundException
 
 
 class QueryConversations:
@@ -29,11 +28,7 @@ class QueryConversations:
                 unread_count = uow.message_repo.get_unread_count_by_conversation_id(conversation.conversation_id, user_id)
 
                 # obtengo el otro participante de la conversación
-                other_user_id = conversation.user_1.user_id if conversation.user_1.user_id != user_id else conversation.user_2.user_id
-                other_user = uow.user_repo.get_user_by_id(cast(int,other_user_id))
-
-                if not other_user:
-                    raise UserNotFoundException(other_user_id)
+                other_user = conversation.get_other_user(user_id)
 
                 other_participant = ParticipantSummaryResponse(
                     user_id=cast(int, other_user.user_id),
@@ -41,6 +36,7 @@ class QueryConversations:
                     name=other_user.name,
                     icon_url=other_user.icon_url
                 )
+
 
                 # armo el objeto con el último mensaje y el otro participante
                 summary = ConversationSummaryItemResponse(conversation_id=cast(int, conversation.conversation_id),

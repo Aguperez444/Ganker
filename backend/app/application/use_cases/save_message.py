@@ -11,7 +11,7 @@ from app.domain.exceptions.chat.conversation_id_is_not_provided_exception import
 from app.domain.exceptions.chat.sender_id_is_not_provided_exception import SenderIdIsNotProvidedException
 
 
-class SaveMessageUseCase:
+class SaveMessage:
     def __init__(self, uow: IUnitOfWork):
         self._uow = uow
 

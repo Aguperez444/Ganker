@@ -6,8 +6,8 @@ from app.infrastructure.api.chat.user_notification_manager import notification_m
 from app.infrastructure.api.dto.response.notification_type_enum import NotificationType
 from app.infrastructure.database.unit_of_work.uow_factory import uow_factory
 
-from app.application.use_cases.check_conversation_access import CheckConversationAccessUseCase
-from app.application.use_cases.save_message import SaveMessageUseCase
+from app.application.use_cases.check_conversation_access import CheckConversationAccess
+from app.application.use_cases.save_message import SaveMessage
 from app.infrastructure.api.dto.request.send_message_request import SendMessageRequest
 from app.infrastructure.api.dto.response.message_response import MessageResponse
 from app.infrastructure.api.dto.response.notification_response import NotificationResponse
@@ -25,8 +25,8 @@ async def websocket_chat_endpoint(
         user_id: int = Depends(get_current_user_id_ws)):
 
     uow = uow_factory()
-    access_use_case = CheckConversationAccessUseCase(uow)
-    save_message_use_case = SaveMessageUseCase(uow)
+    access_use_case = CheckConversationAccess(uow)
+    save_message_use_case = SaveMessage(uow)
 
     # 1. Validación de seguridad previa: ¿El usuario es player_1 o player_2?
     has_access, recipient_id = await run_in_threadpool(access_use_case.execute, conversation_id, user_id)
