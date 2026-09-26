@@ -1,5 +1,8 @@
 from typing import TYPE_CHECKING, Optional
 
+from app.domain.exceptions.entity_not_persited_exception import EntityNotPersistedException
+from app.domain.exceptions.invalid_id_exception import InvalidIdException
+
 if TYPE_CHECKING:
     from app.domain.models.character_priority import CharacterPriority
     from app.domain.models.role_profile import RoleProfile
@@ -15,16 +18,20 @@ class GameProfile:
                  ):
 
         self._game_profile_id: Optional[int] = game_profile_id
-        self._player_id: int = player_id
+        self.player_id: int = player_id
         self._videogame: 'Videogame' = videogame
         self._characters_priority: list['CharacterPriority'] = characters_priority
         self._role_profiles: list['RoleProfile'] = role_profiles
 
     @property
-    def game_profile_id(self) -> Optional[int]:
+    def game_profile_id(self) -> int:
+        if self._game_profile_id is None:
+            raise EntityNotPersistedException("GameProfile")
         return self._game_profile_id
     @game_profile_id.setter
-    def game_profile_id(self, value: Optional[int]) -> None:
+    def game_profile_id(self, value: int) -> None:
+        if isinstance(value, bool) or not isinstance(value, int):
+            raise InvalidIdException(value)
         self._game_profile_id = value
 
     @property
@@ -32,6 +39,8 @@ class GameProfile:
         return self._player_id
     @player_id.setter
     def player_id(self, value: int) -> None:
+        if isinstance(value, bool) or not isinstance(value, int):
+            raise InvalidIdException(value)
         self._player_id = value
 
     @property
@@ -54,6 +63,9 @@ class GameProfile:
     @role_profiles.setter
     def role_profiles(self, value: list['RoleProfile']) -> None:
         self._role_profiles = value
+
+    def is_persisted(self) -> bool:
+        return self._game_profile_id is not None
 
     def __repr__(self) -> str:
         return (f"GameProfile(game_profile_id={self.game_profile_id or 'sin_id'},"

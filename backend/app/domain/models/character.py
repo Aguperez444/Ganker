@@ -1,22 +1,29 @@
 from typing import TYPE_CHECKING, Optional
 
+from app.domain.exceptions.entity_not_persited_exception import EntityNotPersistedException
+from app.domain.exceptions.invalid_id_exception import InvalidIdException
+
 if TYPE_CHECKING:
     from app.domain.models.videogame import Videogame
 
 
 
 class Character:
-    def __init__(self, character_id: int|None, name: str, videogame: 'Videogame', icon_url: str):
+    def __init__(self, character_id: Optional[int], name: str, videogame: 'Videogame', icon_url: str):
         self._character_id: Optional[int] = character_id
         self._name: str = name
         self._videogame: 'Videogame' = videogame
         self.icon_url: str = icon_url
 
     @property
-    def character_id(self) -> Optional[int]:
+    def character_id(self) -> int:
+        if self._character_id is None:
+            raise EntityNotPersistedException("Character")
         return self._character_id
     @character_id.setter
     def character_id(self, value: int) -> None:
+        if isinstance(value, bool) or not isinstance(value, int):
+            raise InvalidIdException(value)
         self._character_id = value
 
     @property
@@ -39,6 +46,9 @@ class Character:
     @icon_url.setter
     def icon_url(self, value: str) -> None:
         self._icon_url = value
+
+    def is_persisted(self) -> bool:
+        return self._character_id is not None
 
 
     def __repr__(self) -> str:

@@ -1,5 +1,8 @@
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Optional
+
+from app.domain.exceptions.entity_not_persited_exception import EntityNotPersistedException
+from app.domain.exceptions.invalid_id_exception import InvalidIdException
 
 if TYPE_CHECKING:
     from app.domain.models.user import User
@@ -7,20 +10,24 @@ if TYPE_CHECKING:
 
 
 class Message:
-    def __init__(self, message_id: int|None, content: str, sender: 'User',
+    def __init__(self, message_id: Optional[int], content: str, sender: 'User',
                  conversation_id: int, timestamp: 'datetime', is_read: bool = False):
-        self._message_id: int|None = message_id
+        self._message_id: Optional[int] = message_id
         self._content: str = content
         self._sender: 'User' = sender
-        self._conversation_id: int = conversation_id
+        self.conversation_id: int = conversation_id
         self._timestamp: 'datetime' = timestamp
         self._is_read: bool = is_read
 
     @property
-    def message_id(self) -> int|None:
+    def message_id(self) -> int:
+        if self._message_id is None:
+            raise EntityNotPersistedException("Message")
         return self._message_id
     @message_id.setter
-    def message_id(self, value: int|None):
+    def message_id(self, value: int):
+        if isinstance(value, bool) or not isinstance(value, int):
+            raise InvalidIdException(value)
         self._message_id = value
 
     @property
@@ -42,6 +49,8 @@ class Message:
         return self._conversation_id
     @conversation_id.setter
     def conversation_id(self, value: int):
+        if isinstance(value, bool) or not isinstance(value, int):
+            raise InvalidIdException(value)
         self._conversation_id = value
 
     @property
@@ -57,3 +66,6 @@ class Message:
     @is_read.setter
     def is_read(self, value: bool):
         self._is_read = value
+
+    def is_persisted(self):
+        return self._message_id is not None

@@ -1,4 +1,7 @@
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Optional
+
+from app.domain.exceptions.entity_not_persited_exception import EntityNotPersistedException
+from app.domain.exceptions.invalid_id_exception import InvalidIdException
 
 if TYPE_CHECKING:
     from app.domain.models.user import User
@@ -6,18 +9,23 @@ if TYPE_CHECKING:
 
 
 class Conversation:
-    def __init__(self, conversation_id: int|None, user_1: 'User', user_2: 'User', messages: list['Message']):
-        self._conversation_id: int|None = conversation_id
+    def __init__(self, conversation_id: Optional[int], user_1: 'User', user_2: 'User', messages: list['Message']):
+        self._conversation_id: Optional[int] = conversation_id
         self._user_1: 'User' = user_1
         self._user_2: 'User' = user_2
         self._messages: list['Message'] = messages
 
 
     @property
-    def conversation_id(self) -> int|None:
+    def conversation_id(self) -> int:
+        if self._conversation_id is None:
+            raise EntityNotPersistedException("Conversation")
         return self._conversation_id
+
     @conversation_id.setter
     def conversation_id(self, value: int):
+        if isinstance(value, bool) or not isinstance(value, int):
+            raise InvalidIdException(value)
         self._conversation_id = value
 
     @property
@@ -40,6 +48,9 @@ class Conversation:
     @messages.setter
     def messages(self, value: list):
         self._messages = value
+
+    def is_persisted(self) -> bool:
+        return self._conversation_id is not None
 
     def belongs_user_id(self, user_id: int):
         if user_id != self.user_1.user_id and user_id != self.user_2.user_id:
