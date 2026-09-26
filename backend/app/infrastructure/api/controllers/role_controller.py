@@ -2,6 +2,7 @@ from fastapi import APIRouter, Depends, Form, UploadFile, File, HTTPException, s
 
 from app.application.use_cases.create_role import CreateRole
 from app.application.use_cases.query_roles import QueryRoles
+from app.application.use_cases.update_role import UpdateRole
 from app.infrastructure.api.dependencies.auth import require_admin, require_player
 
 from app.infrastructure.api.dto.response.get_roles_response import GetRolesResponse
@@ -49,4 +50,28 @@ def create_game_role(
         filename=icon.filename,
     )
 
+    return result
+
+
+@router.put("/{role_id}", status_code=200, response_model=RoleObjectResponse, dependencies=[Depends(require_admin)])
+def update_game_role(
+    role_id: int,
+    name: str = Form(..., description="Name of the role"),
+    icon: UploadFile | None = File(None, description="Icon image file"),
+):
+    if icon and not icon.filename:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="El archivo debe tener un nombre válido."
+        )
+
+    uow = uow_factory()
+    storage_service = get_storage_service()
+    use_case = UpdateRole(storage_service=storage_service, uow=uow)
+
+    result = use_case.execute(
+        role_id=role_id,
+        name=name,
+        icon=icon
+    )
     return result
