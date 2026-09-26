@@ -2,7 +2,6 @@ from typing import TYPE_CHECKING, Optional
 
 from sqlalchemy import func
 from app.infrastructure.database.models.rank_orm import RankORM
-from app.infrastructure.database.models.role_profile_orm import RoleProfileORM
 from app.infrastructure.database.mappers.rank_mapper import RankMapper
 from app.application.ports.i_rank_repository import IRankRepository
 

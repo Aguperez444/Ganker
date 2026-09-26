@@ -28,7 +28,7 @@ class UpdateRole:
         cleaned_name = name.strip()
 
         with self.uow as uow:
-            existing_role = CatalogValidationService.get_role_and_validate_exist(role_id, uow)
+            existing_role = CatalogValidationService.get_and_validate_exist_role(role_id, uow)
 
             # Comprobar que no hay otro rol en el mismo videojuego con el mismo nombre
             game_id = existing_role.videogame.videogame_id
@@ -63,8 +63,11 @@ class UpdateRole:
             if old_icon_url:
                 try:
                     self.storage_service.delete_file(old_icon_url)
-                except Exception as e:
-                    print(f'Error al borrar la imagen {old_icon_url}')
+                except Exception:
+                    # Si hay un error al borrar la imagen anterior, se informa por consola, pero no se lanza una excepción
+                    # porque el usuario ya fue actualizado correctamente y no quiero que eso afecte la respuesta al cliente
+                    from colorama import Fore, Style
+                    print(Fore.RED + "-" * 70 + "\n" + f"Error inesperado al borrar la imagen anterior del usuario: {old_icon_url} \n" + "-" * 70 + "\n" + Style.RESET_ALL)
 
         return RoleObjectResponse(
             role_id=cast(int, updated_role.role_id),

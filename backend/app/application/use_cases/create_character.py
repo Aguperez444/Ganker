@@ -1,15 +1,17 @@
 from app.application.ports.i_storage_service import IStorageService
 from app.application.ports.i_unit_of_work import IUnitOfWork
-from app.domain.exceptions.character.duplicated_character_name_exception import DuplicatedCharacterNameException
-from app.domain.exceptions.character.invalid_character_name_exception import InvalidCharacterNameException
 from app.domain.exceptions.file.file_name_not_null_exception import FileNameNotNullException
 from app.domain.models.character import Character
 from app.domain.exceptions.file.file_not_null_exception import FileNotNullException
 from app.domain.services.catalog_validation_service import CatalogValidationService
+from app.domain.services.static_validation_service import StaticValidationService
 from app.domain.services.slug_service import SlugService
 from app.infrastructure.api.dto.response.base_classes.character_object_response import CharacterObjectResponse
 
 from typing import cast
+
+
+
 
 class CreateCharacter:
     def __init__(self, storage_service: IStorageService, unit_of_work: IUnitOfWork):
@@ -17,11 +19,11 @@ class CreateCharacter:
         self.storage_service: IStorageService = storage_service
 
     def execute(self, name: str, videogame_id: int, icon_file, icon_filename) -> CharacterObjectResponse:
-        cleaned_name = self.validate_character_name(name)
+        cleaned_name = StaticValidationService.validate_character_name_format(name)
 
         with self.uow as uow:
             game = CatalogValidationService.get_and_validate_exist_videogame(videogame_id, uow)
-            self.validate_name_uniqueness(cleaned_name, videogame_id, uow=uow)
+            CatalogValidationService.validate_new_character_name_uniqueness(cleaned_name, videogame_id, uow=uow)
 
             if not icon_file:
                 raise FileNotNullException()
@@ -57,15 +59,5 @@ class CreateCharacter:
             icon_url=saved_character.icon_url or "Sin icono"
         )
 
-    @staticmethod
-    def validate_character_name(name: str) -> str:
-        if not name or not name.strip():
-            raise InvalidCharacterNameException(name)
-        return name.strip()
 
-    @staticmethod
-    def validate_name_uniqueness(name: str, videogame_id: int, uow: 'IUnitOfWork'):
-        existing_character = uow.character_repo.get_character_by_name_and_videogame(name, videogame_id)
-        if existing_character:
-            raise DuplicatedCharacterNameException(name, videogame_id)
-        return True
+

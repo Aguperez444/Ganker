@@ -5,12 +5,13 @@ from app.application.ports.i_password_hasher import IPasswordHasher
 from app.application.ports.i_token_service import ITokenService
 from app.application.ports.i_unit_of_work import IUnitOfWork
 from app.domain.exceptions.mail.email_already_exists_exception import EmailAlreadyExistsException
-from app.domain.exceptions.user.invalid_username_exception import InvalidUsernameException
 from app.domain.exceptions.user.username_already_exists_exception import UsernameAlreadyExistsException
 from app.domain.models.user import User
 from app.domain.services.password_security_service import PasswordSecurityService
 from app.infrastructure.api.dto.response.auth_tokens_response import AuthTokensResponse
 from app.domain.models.user_role import UserRole
+from app.domain.services.static_validation_service import StaticValidationService
+from app.domain.services.catalog_validation_service import CatalogValidationService
 
 if TYPE_CHECKING:
     from app.infrastructure.api.dto.request.register_player_request import RegisterPlayerRequest
@@ -25,12 +26,13 @@ class RegisterPlayer:
 
     def execute(self, player_data: 'RegisterPlayerRequest') -> AuthTokensResponse:
         PasswordSecurityService.validate(player_data.password)
+        StaticValidationService.validate_username_format(player_data.username)
 
         with self.uow as uow:
-            if not self.validate_mail(player_data.mail, uow=uow):
+            if CatalogValidationService.is_duplicated_mail(player_data.mail, uow=uow):
                 raise EmailAlreadyExistsException(player_data.mail)
 
-            if not self.validate_username(player_data.username, uow=uow):
+            if CatalogValidationService.is_duplicated_username(player_data.username, uow=uow):
                 raise UsernameAlreadyExistsException(player_data.username)
 
             hashed_pass = self.pass_hasher.hash_password(player_data.password)
@@ -53,17 +55,3 @@ class RegisterPlayer:
             )
 
         return AuthTokensResponse(access_token, refresh_token)
-
-    @staticmethod
-    def validate_username(username: str, uow: 'IUnitOfWork') -> bool:
-        if username is None or username.strip() == "":
-            raise InvalidUsernameException(username)
-        usuario_con_ese_username = uow.user_repo.get_user_by_username(username)
-        return usuario_con_ese_username is None
-
-
-    @staticmethod
-    def validate_mail(mail: str, uow: IUnitOfWork) -> bool:
-        usuario_con_ese_mail = uow.user_repo.get_user_by_mail(mail)
-        return usuario_con_ese_mail is None
-

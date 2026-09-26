@@ -1,9 +1,7 @@
-from typing import TYPE_CHECKING, cast, Optional
+from typing import TYPE_CHECKING, cast
 
 from app.application.ports.i_unit_of_work import IUnitOfWork
 from app.infrastructure.api.dto.request.create_videogame_profile_request import CreateGameProfileRequest
-from app.domain.exceptions.game_profile.game_profile_already_exist_exception import GameProfileAlreadyExistException
-
 
 from app.domain.services.catalog_validation_service import CatalogValidationService
 from app.domain.services.game_profile_validation_service import GameProfileValidationService
@@ -40,12 +38,12 @@ class CreateVideogameProfile:
         with self.uow as uow:
             # Buscar el videojuego en la base de datos
             videogame: 'Videogame' = CatalogValidationService.get_and_validate_exist_videogame(create_videogame_profile_request.videogame_id, uow)
-            self.validate_not_duplicated_game_profile(player_id, cast(int, videogame.videogame_id), uow)
+            CatalogValidationService.validate_not_duplicated_game_profile(player_id, cast(int, videogame.videogame_id), uow)
 
             # Buscar los personajes en la base de datos
             characters: list['Character'] = []
             for character_id in create_videogame_profile_request.character_ids:
-                character = CatalogValidationService.get_character_and_validate_exist(character_id, uow)
+                character = CatalogValidationService.get_and_validate_exist_character(character_id, uow)
                 GameProfileValidationService.validate_character_belongs_to_game(character, cast(int, videogame.videogame_id), videogame.name)
                 characters.append(character)
 
@@ -53,8 +51,8 @@ class CreateVideogameProfile:
             new_role_profiles: list[RoleProfile] = []
             for new_role_profile in create_videogame_profile_request.roles:
                 # Busco el rol y el rango en la base de datos y válido que existan
-                role: 'Role' = CatalogValidationService.get_role_and_validate_exist(new_role_profile.role_id, uow)
-                rank: 'Rank' = CatalogValidationService.get_rank_and_validate_exist(new_role_profile.rank_id, uow)
+                role: 'Role' = CatalogValidationService.get_and_validate_exist_role(new_role_profile.role_id, uow)
+                rank: 'Rank' = CatalogValidationService.get_and_validate_exist_rank(new_role_profile.rank_id, uow)
 
                 # válido que el rol y el rango pertenezcan al videojuego
                 GameProfileValidationService.validate_role_belongs_to_game(role, cast(int, videogame.videogame_id), videogame.name)
@@ -85,8 +83,3 @@ class CreateVideogameProfile:
         return new_game_profile
 
 
-    @staticmethod
-    def validate_not_duplicated_game_profile(player_id: int, videogame_id: int, uow: IUnitOfWork):
-        existing_profile = uow.game_profile_repo.get_game_profile_by_player_and_videogame(player_id, videogame_id)
-        if existing_profile:
-            raise GameProfileAlreadyExistException(player_id, videogame_id)

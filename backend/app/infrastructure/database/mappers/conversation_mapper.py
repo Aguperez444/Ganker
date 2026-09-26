@@ -23,6 +23,7 @@ class ConversationMapper:
             messages=[MessageMapper.domain_to_orm(message) for message in conversation.messages]
         )
 
+
     @staticmethod
     def orm_to_domain_no_messages(conversation_orm: ConversationORM) -> Conversation:
         return Conversation(

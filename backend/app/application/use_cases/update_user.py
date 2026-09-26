@@ -2,9 +2,9 @@ from typing import cast, Optional, BinaryIO
 
 from app.application.ports.i_storage_service import IStorageService
 from app.application.ports.i_unit_of_work import IUnitOfWork
-from app.domain.exceptions.user.username_already_exists_exception import UsernameAlreadyExistsException
-from app.domain.exceptions.mail.email_already_exists_exception import EmailAlreadyExistsException
+
 from app.domain.exceptions.user.user_not_found_exception import UserNotFoundException
+from app.domain.services.catalog_validation_service import CatalogValidationService
 from app.infrastructure.api.dto.response.update_user_response import UpdateUserResponse
 
 
@@ -20,8 +20,8 @@ class UpdateUser:
         old_icon_url: str | None = None
         with self.uow as uow:
             # Valido que el nuevo username y mail no existan en la base de datos para otro jugador
-            self.validate_username_uniqueness(username, user_id, uow)
-            self.validate_mail_uniqueness(mail, user_id, uow)
+            CatalogValidationService.validate_username_uniqueness(username, user_id, uow)
+            CatalogValidationService.validate_mail_uniqueness(mail, user_id, uow)
             # Busco al jugador a actualizar (Doy por hecho que el id existe porque lo tomé de una sesión vigente)
             user = uow.user_repo.get_user_by_id(user_id)
 
@@ -75,7 +75,7 @@ class UpdateUser:
                 # Si hay un error al borrar la imagen anterior, se informa por consola, pero no se lanza una excepción
                 # porque el usuario ya fue actualizado correctamente y no quiero que eso afecte la respuesta al cliente
                 from colorama import Fore, Style
-                print(Fore.RED + "-"*70 + "\n" + "Error inesperado al borrar la imagen anterior del usuario" + "-"*70 + "\n" + Style.RESET_ALL)
+                print(Fore.RED + "-" * 70 + "\n" + f"Error inesperado al borrar la imagen anterior del usuario: {old_icon_url} \n" + "-" * 70 + "\n" + Style.RESET_ALL)
 
 
         # Lo devuelvo para que el controlador pueda mandarlo en la respuesta
@@ -87,17 +87,3 @@ class UpdateUser:
             icon_url=updated_user.icon_url
         )
 
-    # Funciones de validación para asegurar que el username y mail sean únicos en la base de datos
-    @staticmethod
-    def validate_username_uniqueness(username: str, current_user_id: int, uow: IUnitOfWork) -> bool:
-        found_user = uow.user_repo.get_user_by_username(username)
-        if found_user and found_user.user_id != current_user_id:
-            raise UsernameAlreadyExistsException(username)
-        return True
-
-    @staticmethod
-    def validate_mail_uniqueness(mail: str, current_user_id: int, uow: IUnitOfWork) -> bool:
-        found_user = uow.user_repo.get_user_by_mail(mail)
-        if found_user and found_user.user_id != current_user_id:
-            raise EmailAlreadyExistsException(mail)
-        return True

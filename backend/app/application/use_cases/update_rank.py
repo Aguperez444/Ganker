@@ -35,7 +35,7 @@ class UpdateRank:
         cleaned_name = name.strip()
 
         with self.uow as uow:
-            existing_rank = CatalogValidationService.get_rank_and_validate_exist(rank_id, uow)
+            existing_rank = CatalogValidationService.get_and_validate_exist_rank(rank_id, uow)
 
             # Comprobar que no hay otro rango en el mismo videojuego con el mismo nombre o valor vía SQL
             game_id = existing_rank.videogame.videogame_id
@@ -75,8 +75,11 @@ class UpdateRank:
             if old_icon_url:
                 try:
                     self.storage_service.delete_file(old_icon_url)
-                except Exception as e:
-                    print(f'Error al borrar la imagen {old_icon_url}')
+                except Exception:
+                    # Si hay un error al borrar la imagen anterior, se informa por consola, pero no se lanza una excepción
+                    # porque el usuario ya fue actualizado correctamente y no quiero que eso afecte la respuesta al cliente
+                    from colorama import Fore, Style
+                    print(Fore.RED + "-" * 70 + "\n" + f"Error inesperado al borrar la imagen anterior del usuario: {old_icon_url} \n" + "-" * 70 + "\n" + Style.RESET_ALL)
 
         return RankObjectResponse(
             rank_id=cast(int, updated_rank.rank_id),

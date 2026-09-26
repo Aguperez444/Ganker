@@ -21,22 +21,22 @@ class UpdateVideogameProfile:
     def execute(self, player_id: int, game_profile_id: int, update_videogame_profile_request: UpdateGameProfileRequest) -> UpdateGameProfileResponse:
         with self.uow as uow:
             # Buscar el perfil en la BD y validar que pertenezca al jugador
-            game_profile = CatalogValidationService.validate_and_get_game_profile(game_profile_id, player_id, uow)
+            game_profile = CatalogValidationService.get_and_validate_exists_game_profile(game_profile_id, player_id, uow)
             vg_id = cast(int, game_profile.videogame.videogame_id)
             vg_name = game_profile.videogame.name
 
             # Buscar y validar los personajes en la base de datos
             characters_priority = []
             for index, character_id in enumerate(update_videogame_profile_request.character_ids, start=1):
-                character = CatalogValidationService.get_character_and_validate_exist(character_id, uow)
+                character = CatalogValidationService.get_and_validate_exist_character(character_id, uow)
                 GameProfileValidationService.validate_character_belongs_to_game(character, vg_id, vg_name)
                 characters_priority.append(CharacterPriority(priority_id=None, character=character, priority=index))
 
             # Buscar roles/rangos y crear las nuevas relaciones role_profile
             new_role_profiles: list[RoleProfile] = []
             for role_rank in update_videogame_profile_request.roles_ranks:
-                role: Role = CatalogValidationService.get_role_and_validate_exist(role_rank.role_id, uow)
-                rank: Rank = CatalogValidationService.get_rank_and_validate_exist(role_rank.rank_id, uow)
+                role: Role = CatalogValidationService.get_and_validate_exist_role(role_rank.role_id, uow)
+                rank: Rank = CatalogValidationService.get_and_validate_exist_rank(role_rank.rank_id, uow)
 
                 # Validar que correspondan al videojuego por ID (Criterio de aceptación)
                 GameProfileValidationService.validate_role_belongs_to_game(role, vg_id, vg_name)

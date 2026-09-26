@@ -4,12 +4,13 @@ from app.application.ports.i_password_hasher import IPasswordHasher
 from app.application.ports.i_unit_of_work import IUnitOfWork
 from app.infrastructure.api.dto.response.register_user_response import RegisterUserResponse
 from app.domain.exceptions.mail.email_already_exists_exception import EmailAlreadyExistsException
-from app.domain.exceptions.user.invalid_username_exception import InvalidUsernameException
 from app.domain.exceptions.auth.unauthorized_exception import UnauthorizedException
 from app.domain.exceptions.user.user_not_found_exception import UserNotFoundException
 from app.domain.exceptions.user.username_already_exists_exception import UsernameAlreadyExistsException
 from app.domain.models.user import User
 from app.domain.models.user_role import UserRole
+from app.domain.services.static_validation_service import StaticValidationService
+from app.domain.services.catalog_validation_service import CatalogValidationService
 
 if TYPE_CHECKING:
     from app.infrastructure.api.dto.request.register_user_request import RegisterUserRequest
@@ -26,7 +27,7 @@ class RegisterUser:
 
         # hacer las validaciones que se puedan antes de abrir sesión contra la bdd:
         # Validar que el username no sea nulo o vacío
-        self.validate_username(user_data.username)
+        StaticValidationService.validate_username_format(user_data.username)
 
         # Validar que la contraseña cumpla el criterio de seguridad (mínimo 8 caracteres,
         # al menos una mayúscula, al menos una minúscula y al menos un número)
@@ -46,11 +47,11 @@ class RegisterUser:
 
             # Verificar que no existan duplicaciones de datos importantes
             # Se asume que lo que me llega es un mail por la validación de pydantic en el dto.
-            if self.email_is_duplicated(user_data.mail, uow):
+            if CatalogValidationService.is_duplicated_mail(user_data.mail, uow):
                 raise EmailAlreadyExistsException(user_data.mail)
 
             # Validar que no exista otra cuenta con ese username y que el mismo sea válido
-            if self.username_is_duplicated(user_data.username, uow):
+            if CatalogValidationService.is_duplicated_username(user_data.username, uow):
                 raise UsernameAlreadyExistsException(user_data.username)
 
             #hashear la password del usuario antes de crearlo en la base de datos
@@ -70,20 +71,6 @@ class RegisterUser:
             mail=registered_user.mail,
             role=registered_user.role
         )
-    @staticmethod
-    def validate_username(username: str):
-        if username is None or username.strip() == "":
-            raise InvalidUsernameException(username)
-
-    @staticmethod
-    def username_is_duplicated(username: str, uow: IUnitOfWork) -> bool:
-        usuario_con_ese_username = uow.user_repo.get_user_by_username(username)
-        return usuario_con_ese_username is not None
-
-    @staticmethod
-    def email_is_duplicated(mail: str, uow: IUnitOfWork) -> bool:
-        usuario_con_ese_mail = uow.user_repo.get_user_by_mail(mail)
-        return usuario_con_ese_mail is not None
 
 
     @staticmethod

@@ -1,7 +1,6 @@
 from fastapi import UploadFile
 
 from app.application.ports.i_storage_service import IStorageService
-from app.domain.exceptions.videogame.videogame_already_exists_exception import VideogameAlreadyExistsException
 from app.domain.services.catalog_validation_service import CatalogValidationService
 from app.domain.services.slug_service import SlugService
 
@@ -23,7 +22,7 @@ class UpdateVideogame:
         with self.uow as uow:
             existing_game = CatalogValidationService.get_and_validate_exist_videogame(videogame_id, uow)
             cleaned_name = name.strip() if name else existing_game.name
-            self.validate_name_uniqueness(cleaned_name, videogame_id, uow=uow)
+            CatalogValidationService.validate_videogame_name_uniqueness(cleaned_name, videogame_id, uow=uow)
 
             # actualizar juego
             existing_game.name = cleaned_name
@@ -53,8 +52,11 @@ class UpdateVideogame:
             if old_icon_url:
                 try:
                     self.storage_service.delete_file(old_icon_url)
-                except Exception as e:
-                    print(f"Error al borrar la imagen vieja: {old_icon_url}")
+                except Exception:
+                    # Si hay un error al borrar la imagen anterior, se informa por consola, pero no se lanza una excepción
+                    # porque el usuario ya fue actualizado correctamente y no quiero que eso afecte la respuesta al cliente
+                    from colorama import Fore, Style
+                    print(Fore.RED + "-" * 70 + "\n" + f"Error inesperado al borrar la imagen anterior del usuario: {old_icon_url} \n" + "-" * 70 + "\n" + Style.RESET_ALL)
 
         return VideogameObjectResponse(
             id=cast(int, updated_game.videogame_id),
@@ -63,13 +65,6 @@ class UpdateVideogame:
             rank_per_role=updated_game.rank_per_role,
         )
 
-    # Validar que el nombre no exista en la base de datos
-    @staticmethod
-    def validate_name_uniqueness(cleaned_name: str, current_game_id: int, uow: 'IUnitOfWork') -> bool:
-        found_videogame = uow.videogame_repo.get_videogame_by_name(cleaned_name.lower())
-        if found_videogame and found_videogame.videogame_id != current_game_id:
-            raise VideogameAlreadyExistsException(cleaned_name)
-        return True
 
 
 

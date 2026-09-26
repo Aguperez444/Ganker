@@ -1,6 +1,7 @@
 from typing import List, Optional
 from sqlalchemy import String, DateTime
 from sqlalchemy.orm import Mapped, mapped_column, relationship
+from datetime import datetime
 
 from app.infrastructure.database.base import Base
 
@@ -24,7 +25,7 @@ class UserORM(Base):
     password_hash: Mapped[Optional[str]] = mapped_column(String, nullable=True)
     role: Mapped[str] = mapped_column(String, nullable=False, default="player")
     icon_url: Mapped[Optional[str]] = mapped_column(String, nullable=True)
-    last_connection: Mapped[Optional[DateTime]] = mapped_column(DateTime, nullable=True)
+    last_connection: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
 
 
     # Relaciones

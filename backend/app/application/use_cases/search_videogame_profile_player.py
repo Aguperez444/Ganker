@@ -39,15 +39,15 @@ class SearchVideogameProfilePlayer:
             # Reviso si tengo más filtros
             if filters.roles:
                 for role_id in filters.roles:
-                    CatalogValidationService.get_role_and_validate_exist(role_id, uow)
+                    CatalogValidationService.get_and_validate_exist_role(role_id, uow)
                 specs.append(ByRolesSpecification(filters.roles))
             if filters.ranks:
                 for rank_id in filters.ranks:
-                    CatalogValidationService.get_rank_and_validate_exist(rank_id, uow)
+                    CatalogValidationService.get_and_validate_exist_rank(rank_id, uow)
                 specs.append(ByRanksSpecification(filters.ranks))
             if filters.characters:
                 for character_id in filters.characters:
-                    CatalogValidationService.get_character_and_validate_exist(character_id, uow)
+                    CatalogValidationService.get_and_validate_exist_character(character_id, uow)
                 specs.append(ByCharactersSpecification(filters.characters))
             if filters.name and filters.name.strip() != "":
                 specs.append(ByNamePlayerSpecification(filters.name))

@@ -3,12 +3,13 @@ from typing import cast
 from app.application.ports.i_storage_service import IStorageService
 from app.application.ports.i_unit_of_work import IUnitOfWork
 from app.domain.models.videogame import Videogame
-from app.domain.exceptions.videogame.invalid_videogame_name_exception import InvalidVideogameNameException
-from app.domain.exceptions.videogame.videogame_already_exists_exception import VideogameAlreadyExistsException
 from app.domain.exceptions.file.file_name_not_null_exception import FileNameNotNullException
 from app.domain.exceptions.file.file_not_null_exception import FileNotNullException
 from app.domain.services.slug_service import SlugService
 from app.infrastructure.api.dto.response.base_classes.videogame_object_response import VideogameObjectResponse
+from app.domain.services.catalog_validation_service import CatalogValidationService
+from app.domain.services.static_validation_service import StaticValidationService
+
 
 
 
@@ -18,10 +19,10 @@ class RegisterVideogame:
         self.uow: IUnitOfWork = unit_of_work
 
     def execute(self, name: str, icon_file, icon_filename, rank_per_role: bool) -> VideogameObjectResponse:
-        cleaned_name = self.validate_videogame_name(name)
+        cleaned_name = StaticValidationService.validate_videogame_name_format(name)
 
         with self.uow as uow:
-            self.validate_name_uniqueness(cleaned_name, uow=uow)
+            CatalogValidationService.validate_new_videogame_name_uniqueness(cleaned_name, uow=uow)
             if not icon_file:
                 raise FileNotNullException()
             if icon_file and not icon_filename:
@@ -59,19 +60,3 @@ class RegisterVideogame:
             icon_url=saved_videogame.icon_url or "Sin icono",
             rank_per_role=saved_videogame.rank_per_role,
         )
-
-    # Validar que el nombre del videojuego no esté vacío
-    @staticmethod
-    def validate_videogame_name(name: str) -> str:
-        if not name or not name.strip():
-            raise InvalidVideogameNameException(name)
-        return name.strip()
-
-    # Validar que el nombre no exista en la base de datos
-    @staticmethod
-    def validate_name_uniqueness(cleaned_name: str, uow: 'IUnitOfWork') -> bool:
-        existing_videogame = uow.videogame_repo.get_videogame_by_name(cleaned_name.lower())
-        if existing_videogame:
-            raise VideogameAlreadyExistsException(cleaned_name)
-        return True
-
