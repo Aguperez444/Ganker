@@ -3,8 +3,10 @@ from fastapi import APIRouter, Depends, UploadFile, HTTPException, status, Form,
 from app.application.use_cases.query_characters import QueryCharacters
 from app.application.use_cases.register_character import RegisterCharacter
 from app.application.use_cases.update_character import UpdateCharacter
+from app.application.use_cases.delete_character import DeleteCharacter
 from app.infrastructure.api.dto.response.base_classes.character_object_response import CharacterObjectResponse
 from app.infrastructure.api.dto.response.get_characters_response import GetCharactersResponse
+from app.infrastructure.api.dto.response.delete_character_response import DeleteCharacterResponse
 from app.infrastructure.api.dependencies.auth import require_admin, require_player
 
 
@@ -65,3 +67,11 @@ def update_character(character_id: int,
     updated_character = update_character_use_case.execute(character_id, name, videogame_id, icon)
 
     return updated_character
+
+
+@router.delete("/{character_id}", status_code=200, response_model=DeleteCharacterResponse, dependencies=[Depends(require_admin)])
+def delete_game_character(character_id: int):
+    uow = uow_factory()
+    storage_service = get_storage_service()
+    use_case = DeleteCharacter(storage_service=storage_service, uow=uow)
+    return use_case.execute(character_id=character_id)

@@ -1,6 +1,7 @@
 from typing import Callable
 from sqlalchemy.orm import Session
 
+from app.application.ports.i_character_priority_repository import ICharacterPriorityRepository
 from app.application.ports.i_character_repository import ICharacterRepository
 from app.application.ports.i_conversation_repository import IConversationRepository
 from app.application.ports.i_find_by_specifications_service import IFindBySpecificationRepository
@@ -13,6 +14,7 @@ from app.application.ports.i_refresh_token_repository import IRefreshTokenReposi
 from app.application.ports.i_role_repository import IRoleRepository
 from app.application.ports.i_unit_of_work import IUnitOfWork
 from app.application.ports.i_videogame_repository import IVideogameRepository
+from app.infrastructure.database.repositories.character_priority_repository_impl import CharacterPriorityRepositoryImpl
 from app.infrastructure.database.repositories.character_repository_impl import CharacterRepositoryImpl
 from app.infrastructure.database.repositories.conversation_repo_impl import ConversationRepositoryImpl
 from app.infrastructure.database.repositories.find_by_specification_repository_impl import FindBySpecificationRepositoryImpl
@@ -48,6 +50,7 @@ class SqlAlchemyUnitOfWork(IUnitOfWork):
         self.message_repo: IMessageRepository
         self.find_by_specification_repo: 'IFindBySpecificationRepository'
         self.role_profile_repo: 'IRoleProfileRepository'
+        self.character_priority_repo: 'ICharacterPriorityRepository'
     # Context manager
     def __enter__(self) -> 'SqlAlchemyUnitOfWork':
         self.session: Session = self._sf()  # nueva Session por acción
@@ -61,8 +64,10 @@ class SqlAlchemyUnitOfWork(IUnitOfWork):
         self.conversation_repo: IConversationRepository = ConversationRepositoryImpl(self.session)
         self.message_repo: IMessageRepository = MessageRepoImpl(self.session)
         self.role_profile_repo: 'IRoleProfileRepository' = RoleProfileRepositoryImpl(self.session)
+        self.character_priority_repo: 'ICharacterPriorityRepository' = CharacterPriorityRepositoryImpl(self.session)
         self.find_by_specification_repo: 'IFindBySpecificationRepository' = FindBySpecificationRepositoryImpl(self.session)
         return self
+
 
     def __exit__(self, exc_type, exc, tb) -> None:
         try:
