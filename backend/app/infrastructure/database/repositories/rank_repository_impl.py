@@ -28,3 +28,14 @@ class RankRepositoryImpl(IRankRepository):
         self.session.flush()
         self.session.refresh(orm_rank)
         return RankMapper.orm_to_domain(orm_rank)
+
+    def update_rank(self, rank: 'Rank') -> 'Rank':
+        orm_rank = self.session.query(RankORM).filter(RankORM.rank_id == rank.rank_id).first()
+        if orm_rank:
+            orm_rank.name = rank.name
+            orm_rank.value = rank.value
+            orm_rank.icon_url = rank.icon_url
+            self.session.flush()
+            self.session.refresh(orm_rank)
+            return RankMapper.orm_to_domain(orm_rank)
+        return rank

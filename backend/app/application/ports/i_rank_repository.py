@@ -18,3 +18,7 @@ class IRankRepository(ABC):
     @abstractmethod
     def save_rank(self, rank: 'Rank') -> 'Rank':
         raise NotImplementedError
+
+    @abstractmethod
+    def update_rank(self, rank: 'Rank') -> 'Rank':
+        raise NotImplementedError
