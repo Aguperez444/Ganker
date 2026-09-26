@@ -6,6 +6,7 @@ from app.application.ports.i_conversation_repository import IConversationReposit
 from app.application.ports.i_find_by_specifications_service import IFindBySpecificationRepository
 from app.application.ports.i_game_profile_repository import IGameProfileRepository
 from app.application.ports.i_message_repository import IMessageRepository
+from app.application.ports.i_role_profile_repository import IRoleProfileRepository
 from app.application.ports.i_user_repository import IUserRepository
 from app.application.ports.i_rank_repository import IRankRepository
 from app.application.ports.i_refresh_token_repository import IRefreshTokenRepository
@@ -17,6 +18,7 @@ from app.infrastructure.database.repositories.conversation_repo_impl import Conv
 from app.infrastructure.database.repositories.find_by_specification_repository_impl import FindBySpecificationRepositoryImpl
 from app.infrastructure.database.repositories.game_profile_repository_impl import GameProfileRepositoryImpl
 from app.infrastructure.database.repositories.message_repo_impl import MessageRepoImpl
+from app.infrastructure.database.repositories.role_profile_repository_impl import RoleProfileRepositoryImpl
 from app.infrastructure.database.repositories.user_repository_impl import UserRepositoryImpl
 from app.infrastructure.database.repositories.rank_repository_impl import RankRepositoryImpl
 from app.infrastructure.database.repositories.refresh_token_repository_impl import RefreshTokenRepositoryImpl
@@ -45,6 +47,7 @@ class SqlAlchemyUnitOfWork(IUnitOfWork):
         self.conversation_repo: IConversationRepository
         self.message_repo: IMessageRepository
         self.find_by_specification_repo: 'IFindBySpecificationRepository'
+        self.role_profile_repo: 'IRoleProfileRepository'
     # Context manager
     def __enter__(self) -> 'SqlAlchemyUnitOfWork':
         self.session: Session = self._sf()  # nueva Session por acción
@@ -57,6 +60,7 @@ class SqlAlchemyUnitOfWork(IUnitOfWork):
         self.refresh_token_repo: IRefreshTokenRepository = RefreshTokenRepositoryImpl(self.session)
         self.conversation_repo: IConversationRepository = ConversationRepositoryImpl(self.session)
         self.message_repo: IMessageRepository = MessageRepoImpl(self.session)
+        self.role_profile_repo: 'IRoleProfileRepository' = RoleProfileRepositoryImpl(self.session)
         self.find_by_specification_repo: 'IFindBySpecificationRepository' = FindBySpecificationRepositoryImpl(self.session)
         return self
 

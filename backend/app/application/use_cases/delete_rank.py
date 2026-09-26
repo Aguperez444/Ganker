@@ -19,7 +19,7 @@ class DeleteRank:
                 raise RankNotFoundException(rank_id)
 
             # Validar si existen jugadores o perfiles asociados actualmente al rango
-            associated_count = uow.rank_repo.count_associated_profiles(rank_id)
+            associated_count = uow.role_profile_repo.count_associated_to_rank(rank_id)
             if associated_count > 0:
                 game_id = rank_to_delete.videogame.videogame_id
                 all_game_ranks = uow.rank_repo.get_ranks_by_game_id(cast(int,game_id))
@@ -40,7 +40,7 @@ class DeleteRank:
                         target_rank = other_ranks[0]
 
                 # Actualizar los perfiles asociados para que apunten al rango seleccionado
-                uow.rank_repo.reassign_associated_profiles(
+                uow.role_profile_repo.reassign_associated_to_rank(
                     source_rank_id=rank_id,
                     target_rank_id=cast(int, target_rank.rank_id)
                 )

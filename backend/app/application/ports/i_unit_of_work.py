@@ -2,9 +2,10 @@ from abc import ABC, abstractmethod
 
 from typing import TYPE_CHECKING
 
-from app.application.ports.i_conversation_repository import IConversationRepository
+
 
 if TYPE_CHECKING:
+    from app.application.ports.i_role_profile_repository import IRoleProfileRepository
     from app.application.ports.i_character_repository import ICharacterRepository
     from app.application.ports.i_game_profile_repository import IGameProfileRepository
     from app.application.ports.i_message_repository import IMessageRepository
@@ -14,6 +15,8 @@ if TYPE_CHECKING:
     from app.application.ports.i_refresh_token_repository import IRefreshTokenRepository
     from app.application.ports.i_role_repository import IRoleRepository
     from app.application.ports.i_videogame_repository import IVideogameRepository
+    from app.application.ports.i_conversation_repository import IConversationRepository
+
 
 #abstract class
 class IUnitOfWork(ABC):
@@ -27,6 +30,7 @@ class IUnitOfWork(ABC):
     message_repo: 'IMessageRepository'
     conversation_repo: 'IConversationRepository'
     find_by_specification_repo: 'IFindBySpecificationRepository'
+    role_profile_repo: 'IRoleProfileRepository'
 
 
     @abstractmethod

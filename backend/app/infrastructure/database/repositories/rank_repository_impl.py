@@ -41,16 +41,6 @@ class RankRepositoryImpl(IRankRepository):
             return RankMapper.orm_to_domain(orm_rank)
         return rank
 
-    def count_associated_profiles(self, rank_id: int) -> int:
-        return self.session.query(RoleProfileORM).filter(RoleProfileORM.rank_id == rank_id).count()
-
-    def reassign_associated_profiles(self, source_rank_id: int, target_rank_id: int) -> int:
-        updated_rows = self.session.query(RoleProfileORM).filter(
-            RoleProfileORM.rank_id == source_rank_id
-        ).update({RoleProfileORM.rank_id: target_rank_id}, synchronize_session='fetch')
-        self.session.flush()
-        return updated_rows
-
     def delete_rank(self, rank_id: int) -> bool:
         orm_rank = self.session.query(RankORM).filter(RankORM.rank_id == rank_id).first()
         if orm_rank:

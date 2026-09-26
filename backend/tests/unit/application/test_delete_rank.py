@@ -31,12 +31,12 @@ class TestDeleteRankUseCase:
         rank = Rank(rank_id=10, name="Gold", value=1000, videogame=vg, icon_url="/media/gold.png")
 
         uow.rank_repo.get_rank_by_id.return_value = rank
-        uow.rank_repo.count_associated_profiles.return_value = 0
+        uow.role_profile_repo.count_associated_to_rank.return_value = 0
 
         res = use_case.execute(rank_id=10)
 
         assert "exitosamente" in res.message.lower()
-        uow.rank_repo.reassign_associated_profiles.assert_not_called()
+        uow.rank_repo.reassign_associated_to_rank.assert_not_called()
         uow.rank_repo.delete_rank.assert_called_once_with(10)
         storage_service.delete_file.assert_called_once_with("/media/gold.png")
 
@@ -50,14 +50,14 @@ class TestDeleteRankUseCase:
         platinum = Rank(rank_id=4, name="Platinum", value=2000, videogame=vg, icon_url="/plat.png")
 
         uow.rank_repo.get_rank_by_id.return_value = gold
-        uow.rank_repo.count_associated_profiles.return_value = 5
+        uow.role_profile_repo.count_associated_to_rank.return_value = 5
         uow.rank_repo.get_ranks_by_game_id.return_value = [bronze, silver, gold, platinum]
 
         res = use_case.execute(rank_id=3)
 
         assert "exitosamente" in res.message.lower()
         # El inmediatamente inferior a Gold (1500) es Silver (1000)
-        uow.rank_repo.reassign_associated_profiles.assert_called_once_with(source_rank_id=3, target_rank_id=2)
+        uow.role_profile_repo.reassign_associated_to_rank.assert_called_once_with(source_rank_id=3, target_rank_id=2)
         uow.rank_repo.delete_rank.assert_called_once_with(3)
         storage_service.delete_file.assert_called_once_with("/gold.png")
 
@@ -70,14 +70,14 @@ class TestDeleteRankUseCase:
         gold = Rank(rank_id=3, name="Gold", value=1500, videogame=vg, icon_url="/gold.png")
 
         uow.rank_repo.get_rank_by_id.return_value = bronze
-        uow.rank_repo.count_associated_profiles.return_value = 2
+        uow.role_profile_repo.count_associated_to_rank.return_value = 2
         uow.rank_repo.get_ranks_by_game_id.return_value = [bronze, silver, gold]
 
         res = use_case.execute(rank_id=1)
 
         assert "exitosamente" in res.message.lower()
         # Como Bronze es el rango más bajo, se reasigna al inmediatamente superior: Silver (1000)
-        uow.rank_repo.reassign_associated_profiles.assert_called_once_with(source_rank_id=1, target_rank_id=2)
+        uow.role_profile_repo.reassign_associated_to_rank.assert_called_once_with(source_rank_id=1, target_rank_id=2)
         uow.rank_repo.delete_rank.assert_called_once_with(1)
         storage_service.delete_file.assert_called_once_with("/bronze.png")
 
@@ -97,7 +97,7 @@ class TestDeleteRankUseCase:
         single_rank = Rank(rank_id=1, name="OnlyRank", value=500, videogame=vg, icon_url="/only.png")
 
         uow.rank_repo.get_rank_by_id.return_value = single_rank
-        uow.rank_repo.count_associated_profiles.return_value = 1
+        uow.role_profile_repo.count_associated_to_rank.return_value = 1
         uow.rank_repo.get_ranks_by_game_id.return_value = [single_rank]
 
         with pytest.raises(DomainException) as exc_info:
