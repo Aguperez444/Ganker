@@ -17,3 +17,7 @@ class IRoleRepository(ABC):
     @abstractmethod
     def save_role(self, role: 'Role') -> 'Role':
         raise NotImplementedError
+
+    @abstractmethod
+    def update_role(self, role: 'Role') -> 'Role':
+        raise NotImplementedError

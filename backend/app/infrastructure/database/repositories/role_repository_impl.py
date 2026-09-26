@@ -29,3 +29,14 @@ class RoleRepositoryImpl(IRoleRepository):
         self.session.flush()
         self.session.refresh(orm_role)
         return RoleMapper.orm_to_domain(orm_role)
+
+    def update_role(self, role: 'Role') -> 'Role':
+        orm_role = self.session.query(RoleORM).filter(RoleORM.role_id == role.role_id).first()
+        if orm_role:
+            orm_role.name = role.name
+            orm_role.icon_url = role.icon_url
+            self.session.flush()
+            self.session.refresh(orm_role)
+            return RoleMapper.orm_to_domain(orm_role)
+        return role
+

@@ -123,6 +123,17 @@ class TestCatalogRepositoriesIntegration:
         assert saved.role_id is not None
         assert saved.name == "Jungler"
 
+        # Update role
+        saved.name = "Jungle Carry"
+        saved.icon_url = "/jungle_carry.png"
+        updated = repo.update_role(saved)
+        test_db_session.commit()
+        assert updated.name == "Jungle Carry"
+        assert updated.icon_url == "/jungle_carry.png"
+        reloaded = repo.get_role_by_id(saved.role_id)
+        assert reloaded.name == "Jungle Carry"
+        assert reloaded.icon_url == "/jungle_carry.png"
+
     def test_rank_repository_crud(self, test_db_session, seed_catalog_data, seed_player):
         repo = RankRepositoryImpl(test_db_session)
         role_porfile_repo = RoleProfileRepositoryImpl(test_db_session)
