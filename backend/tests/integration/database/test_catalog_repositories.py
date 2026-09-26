@@ -5,12 +5,14 @@ from app.domain.models.character import Character
 from app.domain.models.role import Role
 from app.domain.models.rank import Rank
 from app.infrastructure.database.repositories.role_profile_repository_impl import RoleProfileRepositoryImpl
+from app.infrastructure.database.repositories.character_priority_repository_impl import CharacterPriorityRepositoryImpl
 from app.infrastructure.database.repositories.videogame_repository_impl import VideogameRepositoryImpl
 from app.infrastructure.database.repositories.character_repository_impl import CharacterRepositoryImpl
 from app.infrastructure.database.repositories.role_repository_impl import RoleRepositoryImpl
 from app.infrastructure.database.repositories.rank_repository_impl import RankRepositoryImpl
 from app.infrastructure.database.models.game_profile_orm import GameProfileORM
 from app.infrastructure.database.models.role_profile_orm import RoleProfileORM
+from app.infrastructure.database.models.character_priority_orm import CharacterPriorityORM
 
 
 class TestCatalogRepositoriesIntegration:
@@ -57,8 +59,9 @@ class TestCatalogRepositoriesIntegration:
         all_games = repo.get_all_videogames()
         assert len(all_games) >= 2
 
-    def test_character_repository_crud(self, test_db_session, seed_catalog_data):
+    def test_character_repository_crud(self, test_db_session, seed_catalog_data, seed_player):
         repo = CharacterRepositoryImpl(test_db_session)
+        char_priority_repo = CharacterPriorityRepositoryImpl(test_db_session)
         vg_orm = seed_catalog_data["videogame"]
         char_orm = seed_catalog_data["characters"][0]
 
@@ -105,6 +108,41 @@ class TestCatalogRepositoriesIntegration:
         test_db_session.commit()
         assert updated.name == "Teemo Omega"
         assert updated.icon_url == "/teemo_omega.png"
+
+        # Character Priority tests: association and priority readjustment
+        gp = GameProfileORM(player_id=seed_player.user_id, videogame_id=vg_orm.videogame_id)
+        test_db_session.add(gp)
+        test_db_session.flush()
+
+        cp1 = CharacterPriorityORM(game_profile_id=gp.game_profile_id, character_id=seed_catalog_data["characters"][0].character_id, priority=1)
+        cp2 = CharacterPriorityORM(game_profile_id=gp.game_profile_id, character_id=created.character_id, priority=2)
+        cp3 = CharacterPriorityORM(game_profile_id=gp.game_profile_id, character_id=seed_catalog_data["characters"][1].character_id, priority=3)
+        test_db_session.add_all([cp1, cp2, cp3])
+        test_db_session.commit()
+
+        assert char_priority_repo.count_associated_to_character(created.character_id) == 1
+
+        # Delete and readjust for character (Teemo Omega, priority 2)
+        char_priority_repo.delete_and_readjust_for_character(created.character_id)
+        test_db_session.commit()
+
+        assert char_priority_repo.count_associated_to_character(created.character_id) == 0
+        remaining_cps = test_db_session.query(CharacterPriorityORM).filter(
+            CharacterPriorityORM.game_profile_id == gp.game_profile_id
+        ).order_by(CharacterPriorityORM.priority.asc()).all()
+        assert len(remaining_cps) == 2
+        assert remaining_cps[0].character_id == seed_catalog_data["characters"][0].character_id
+        assert remaining_cps[0].priority == 1
+        assert remaining_cps[1].character_id == seed_catalog_data["characters"][1].character_id
+        assert remaining_cps[1].priority == 2
+
+        # Delete character
+        deleted = repo.delete_character(created.character_id)
+        test_db_session.commit()
+        assert deleted is True
+        assert repo.get_character_by_id(created.character_id) is None
+        assert repo.delete_character(99999) is False
+
 
     def test_role_repository_crud(self, test_db_session, seed_catalog_data):
         repo = RoleRepositoryImpl(test_db_session)

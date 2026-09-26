@@ -46,3 +46,11 @@ class CharacterRepositoryImpl(ICharacterRepository):
             self.session.flush()
             self.session.refresh(orm_character)
         return CharacterMapper.orm_to_domain(orm_character)
+
+    def delete_character(self, character_id: int) -> bool:
+        orm_character = self.session.query(CharacterORM).filter(CharacterORM.character_id == character_id).first()
+        if orm_character:
+            self.session.delete(orm_character)
+            self.session.flush()
+            return True
+        return False
