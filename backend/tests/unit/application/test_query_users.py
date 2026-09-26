@@ -60,7 +60,7 @@ class TestQueryUsersUseCase:
 
         result = use_case.get_by_id(2)
 
-        assert result.icon_url == "/media/users/icons/icon_example_1.png"
+        assert result.icon_url == "media/users/icons/default_icon.png"
 
     def test_get_by_id_not_found_raises_exception(self, mock_deps):
         use_case, uow = mock_deps

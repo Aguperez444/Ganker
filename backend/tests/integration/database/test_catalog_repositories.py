@@ -1,12 +1,16 @@
 import pytest
+from typing import cast
 from app.domain.models.videogame import Videogame
 from app.domain.models.character import Character
 from app.domain.models.role import Role
 from app.domain.models.rank import Rank
+from app.infrastructure.database.repositories.role_profile_repository_impl import RoleProfileRepositoryImpl
 from app.infrastructure.database.repositories.videogame_repository_impl import VideogameRepositoryImpl
 from app.infrastructure.database.repositories.character_repository_impl import CharacterRepositoryImpl
 from app.infrastructure.database.repositories.role_repository_impl import RoleRepositoryImpl
 from app.infrastructure.database.repositories.rank_repository_impl import RankRepositoryImpl
+from app.infrastructure.database.models.game_profile_orm import GameProfileORM
+from app.infrastructure.database.models.role_profile_orm import RoleProfileORM
 
 
 class TestCatalogRepositoriesIntegration:
@@ -119,8 +123,9 @@ class TestCatalogRepositoriesIntegration:
         assert saved.role_id is not None
         assert saved.name == "Jungler"
 
-    def test_rank_repository_crud(self, test_db_session, seed_catalog_data):
+    def test_rank_repository_crud(self, test_db_session, seed_catalog_data, seed_player):
         repo = RankRepositoryImpl(test_db_session)
+        role_porfile_repo = RoleProfileRepositoryImpl(test_db_session)
         vg_orm = seed_catalog_data["videogame"]
         rank_orm = seed_catalog_data["ranks"][0]
 
@@ -146,3 +151,53 @@ class TestCatalogRepositoriesIntegration:
         assert saved.rank_id is not None
         assert saved.name == "Master"
         assert saved.value == 4000
+
+        # Update rank
+        saved.name = "Grandmaster"
+        saved.value = 4500
+        saved.icon_url = "/grandmaster.png"
+        updated = repo.update_rank(saved)
+        test_db_session.commit()
+        assert updated.name == "Grandmaster"
+        assert updated.value == 4500
+        assert updated.icon_url == "/grandmaster.png"
+
+
+        # Verify from database
+        refetched = repo.get_rank_by_id(cast(int, saved.rank_id))
+        assert refetched is not None
+        assert refetched.name == "Grandmaster"
+        assert refetched.value == 4500
+        assert refetched.icon_url == "/grandmaster.png"
+
+        # Count associated profiles before any association
+        assert role_porfile_repo.count_associated_to_rank(cast(int, saved.rank_id)) == 0
+
+        # Create an associated role_profile
+        gp = GameProfileORM(player_id=seed_player.user_id, videogame_id=vg_orm.videogame_id)
+        test_db_session.add(gp)
+        test_db_session.flush()
+
+        rp = RoleProfileORM(
+            game_profile_id=gp.game_profile_id,
+            role_id=seed_catalog_data["roles"][0].role_id,
+            rank_id=cast(int, saved.rank_id)
+        )
+        test_db_session.add(rp)
+        test_db_session.commit()
+
+        # Count associated profiles now
+        assert role_porfile_repo.count_associated_to_rank(cast(int, saved.rank_id)) == 1
+
+        # Reassign associated profiles
+        reassigned_count = role_porfile_repo.reassign_associated_to_rank(cast(int, saved.rank_id), rank_orm.rank_id)
+        test_db_session.commit()
+        assert reassigned_count == 1
+        assert role_porfile_repo.count_associated_to_rank(cast(int, saved.rank_id)) == 0
+        assert role_porfile_repo.count_associated_to_rank(rank_orm.rank_id) == 1
+
+        # Delete rank
+        deleted = repo.delete_rank(cast(int, saved.rank_id))
+        test_db_session.commit()
+        assert deleted is True
+        assert repo.get_rank_by_id(cast(int, saved.rank_id)) is None

@@ -42,6 +42,7 @@ class UpdateCharacter:
 
             game_folder = SlugService.to_slug(videogame.name)
 
+            old_icon_url = character.icon_url
             new_icon_url = character.icon_url  # Mantener la URL del icono actual si no se proporciona un nuevo icono
             if icon and icon.filename:
                 # Guardar la nueva imagen a través del puerto
@@ -60,7 +61,15 @@ class UpdateCharacter:
                 updated_character = character_repo.update_character(character)
             except Exception as e:
                 # Si hay un error al actualizar, se lanza una excepción
+                self.storage_service.delete_file(new_icon_url)
+                old_icon_url = None
                 raise Exception(f"Error al actualizar el personaje: {str(e)}")
+            finally:
+                try:
+                    if old_icon_url:
+                        self.storage_service.delete_file(old_icon_url)
+                except Exception as e:
+                    print(f"Error al borrar la imagen vieja: {old_icon_url}")
 
         return CharacterObjectResponse(
             character_id=cast(int, updated_character.character_id),

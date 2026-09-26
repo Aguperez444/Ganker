@@ -3,9 +3,12 @@ from fastapi import APIRouter, Depends, File, UploadFile, Form, HTTPException, s
 
 from app.application.use_cases.create_rank import CreateRank
 from app.application.use_cases.query_ranks import QueryRanks
+from app.application.use_cases.update_rank import UpdateRank
+from app.application.use_cases.delete_rank import DeleteRank
 from app.infrastructure.api.dependencies.auth import require_admin, require_player
 from app.infrastructure.api.dto.response.get_ranks_response import GetRanksResponse
 from app.infrastructure.api.dto.response.base_classes.rank_object_response import RankObjectResponse
+from app.infrastructure.api.dto.response.delete_rank_response import DeleteRankResponse
 
 from app.infrastructure.database.unit_of_work.uow_factory import uow_factory
 from app.infrastructure.storage.local_disk_storage_service import LocalDiskStorageService
@@ -50,3 +53,39 @@ def create_game_rank(
         value=value
     )
     return result
+
+
+@router.put("/{rank_id}", status_code=200, response_model=RankObjectResponse, dependencies=[Depends(require_admin)])
+def update_game_rank(
+    rank_id: int,
+    name: str = Form(..., description="Name of the rank"),
+    value: int = Form(..., description="Value of the rank"),
+    icon: UploadFile | None = File(None, description="Icon image file"),
+):
+    if icon and not icon.filename:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="El archivo debe tener un nombre válido."
+        )
+
+    uow = uow_factory()
+    storage_service = get_storage_service()
+    use_case = UpdateRank(storage_service=storage_service, uow=uow)
+
+    result = use_case.execute(
+        rank_id=rank_id,
+        name=name,
+        value=value,
+        icon=icon
+    )
+    return result
+
+
+@router.delete("/{rank_id}", status_code=200, response_model=DeleteRankResponse, dependencies=[Depends(require_admin)])
+def delete_game_rank(rank_id: int):
+    uow = uow_factory()
+    storage_service = get_storage_service()
+    use_case = DeleteRank(storage_service=storage_service, uow=uow)
+    return use_case.execute(rank_id=rank_id)
+
+
