@@ -22,3 +22,15 @@ class IRankRepository(ABC):
     @abstractmethod
     def update_rank(self, rank: 'Rank') -> 'Rank':
         raise NotImplementedError
+
+    @abstractmethod
+    def count_associated_profiles(self, rank_id: int) -> int:
+        raise NotImplementedError
+
+    @abstractmethod
+    def reassign_associated_profiles(self, source_rank_id: int, target_rank_id: int) -> int:
+        raise NotImplementedError
+
+    @abstractmethod
+    def delete_rank(self, rank_id: int) -> bool:
+        raise NotImplementedError

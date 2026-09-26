@@ -49,8 +49,7 @@ class UpdateRank:
                     if other_rank.value == value:
                         raise DuplicatedRankValueException(value)
 
-            old_icon_url = existing_rank.icon_url
-            new_icon_url = existing_rank.icon_url
+            new_icon_url = None
             if icon and icon.filename:
                 game_folder = SlugService.to_slug(existing_rank.videogame.name)
 
@@ -60,7 +59,10 @@ class UpdateRank:
                     subfolder=f"games/{game_folder}/ranks",
                     preserve_original_name=True
                 )
+                old_icon_url = existing_rank.icon_url
                 existing_rank.icon_url = new_icon_url
+            else:
+                old_icon_url = None
 
             existing_rank.name = cleaned_name
             existing_rank.value = value
@@ -70,12 +72,11 @@ class UpdateRank:
             except Exception as e:
                 if new_icon_url:
                     self.storage_service.delete_file(new_icon_url)
-                    old_icon_url = None
                 raise e
-            finally:
+
+            if old_icon_url:
                 try:
-                    if old_icon_url:
-                        self.storage_service.delete_file(old_icon_url)
+                    self.storage_service.delete_file(old_icon_url)
                 except Exception as e:
                     print(f'Error al borrar la imagen {old_icon_url}')
 
