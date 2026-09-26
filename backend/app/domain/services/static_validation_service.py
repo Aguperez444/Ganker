@@ -12,7 +12,7 @@ class StaticValidationService:
 
     @staticmethod
     def validate_username_format(username: str) -> bool:
-        if username is None or username.strip():
+        if username is None or not username.strip():
             raise InvalidUsernameException(username)
         return True
 

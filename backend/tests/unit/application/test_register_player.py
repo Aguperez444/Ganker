@@ -118,11 +118,14 @@ class TestRegisterPlayerUseCase:
 
     @pytest.mark.parametrize("empty_username", ["", "   ", None])
     def test_register_player_invalid_empty_username(self, mock_dependencies, empty_username):
-        use_case, mock_uow, _, _ = mock_dependencies
-        mock_uow.user_repo.get_user_by_mail.return_value = None
+        use_case, _, _, _ = mock_dependencies
+
+        mock_request = MagicMock(spec=RegisterPlayerRequest)
+        mock_request.username = empty_username
+        mock_request.password = "SecurePassword123"
 
         with pytest.raises(InvalidUsernameException) as exc_info:
-            use_case.validate_username(empty_username)
+            use_case.execute(mock_request)
 
         assert exc_info.value.status_code == 400
 
