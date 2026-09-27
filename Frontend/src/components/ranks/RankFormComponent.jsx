@@ -118,6 +118,7 @@ const RankForm = ({
 
     const trimmedName = name.trim();
 
+    // 1. Validar que no esté vacío
     if (!videogameId) {
       setValidationError("Debés seleccionar un videojuego.");
       return;
@@ -133,6 +134,24 @@ const RankForm = ({
       return;
     }
 
+
+    const normalizeName = (str) => str.trim().toLowerCase().replace(/\s+/g, "");
+    const normalizedNewName = normalizeName(trimmedName);
+
+
+    const nameExists = ranks.some((rank) => {
+
+      if (isEditing && String(rank.id) === String(initialRankId)) {
+        return false;
+      }
+      return normalizeName(rank.name) === normalizedNewName;
+    });
+
+    if (nameExists) {
+      setValidationError("Ya existe un rango con ese nombre en este videojuego.");
+      return;
+    }
+
     // El ícono es obligatorio solo si estamos creando uno nuevo
     if (!isEditing && !iconFile) {
       setValidationError("La imagen del ícono es obligatoria.");
@@ -143,13 +162,14 @@ const RankForm = ({
       videogame_id: Number(videogameId),
       name: trimmedName,
       value: Number(value),
-      icon: iconFile, // Será null si no se seleccionó imagen nueva al editar
+      icon: iconFile,
     });
   };
 
+
   const displayedError = validationError || error;
 
-  // En edición el ícono no es estrictamente obligatorio para habilitar el botón
+ 
   const hasChanges = isEditing
     ? Boolean(videogameId) && name.trim().length > 0 && value !== ""
     : Boolean(videogameId) && name.trim().length > 0 && value !== "" && iconFile !== null;

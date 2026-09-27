@@ -8,6 +8,7 @@ const RanksPage = () => {
   const [selectedGameId, setSelectedGameId] = useState("");
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [successMessage, setSuccessMessage] = useState("");
+  const [searchTerm, setSearchTerm] = useState("");
 
   const { games, isLoading: isLoadingGames } = useGames();
 
@@ -29,13 +30,14 @@ const RanksPage = () => {
   useEffect(() => {
     if (selectedGameId) {
       loadRanks(selectedGameId);
+      setSearchTerm(""); // Limpiamos el buscador al cambiar de juego
     }
   }, [selectedGameId, loadRanks]);
 
   const handleOpenRegister = () => {
     clearActionError();
     setSuccessMessage("");
-    setFormMode("create"); 
+    setFormMode("create");
     setSelectedRankId("");
     setIsFormOpen(true);
   };
@@ -71,7 +73,7 @@ const RanksPage = () => {
       videogame_id: Number(selectedGameId),
       name: rankData.name,
       value: rankData.value,
-      icon: rankData.icon, 
+      icon: rankData.icon,
     });
 
     if (!success) return;
@@ -79,6 +81,11 @@ const RanksPage = () => {
     setSuccessMessage(`Rango "${rankData.name}" modificado correctamente.`);
     setIsFormOpen(false);
   };
+
+  // Filtrar los rangos según lo que escriba el usuario en el buscador
+  const filteredRanks = ranks.filter((rank) =>
+    rank.name.toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
   return (
     <section className="min-h-full bg-ganker-bg p-6">
@@ -109,38 +116,47 @@ const RanksPage = () => {
           }`}
         >
           <section className="min-w-0 rounded-2xl border border-white/10 bg-ganker-surface p-6 shadow-xl">
-            <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-              <div className="min-w-0 flex-1">
-                <h2 className="font-heading text-xl font-semibold text-ganker-text">
-                  Rangos por videojuego
-                </h2>
+            {/* Cabecera unificada: Título, Selector, Buscador y Botón */}
+            <div className="mb-6 flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+              <h2 className="font-heading text-xl font-semibold text-ganker-text whitespace-nowrap">
+                    Rangos por videojuego
+              </h2>
+            </div>
+            <div className="mb-6 flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+              <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 flex-1">
+                
 
-                <div className="mt-3">
-                  <label htmlFor="ranks-videogame-filter" className="sr-only">
-                    Ver rangos de
-                  </label>
-                  <select
-                    id="ranks-videogame-filter"
-                    value={selectedGameId}
-                    onChange={(event) => setSelectedGameId(event.target.value)}
-                    disabled={isLoadingGames}
-                    className="w-full max-w-xs rounded-lg border border-white/10 bg-ganker-surface-light px-4 py-2.5 text-sm text-ganker-text outline-none transition-all duration-200 focus:border-ganker-purple-light focus:ring-2 focus:ring-ganker-purple/30 disabled:cursor-not-allowed disabled:opacity-50"
-                  >
-                    <option value="">Ver rangos de...</option>
-                    {games.map((game) => (
-                      <option key={game.id} value={game.id}>
-                        {game.name}
-                      </option>
-                    ))}
-                  </select>
-                </div>
+                <select
+                  id="ranks-videogame-filter"
+                  value={selectedGameId}
+                  onChange={(event) => setSelectedGameId(event.target.value)}
+                  disabled={isLoadingGames}
+                  className="w-full sm:w-auto rounded-lg border border-white/10 bg-ganker-surface-light px-4 py-2.5 text-sm text-ganker-text outline-none transition-all duration-200 focus:border-ganker-purple-light focus:ring-2 focus:ring-ganker-purple/30 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  <option value="">Ver rangos de...</option>
+                  {games.map((game) => (
+                    <option key={game.id} value={game.id}>
+                      {game.name}
+                    </option>
+                  ))}
+                </select>
+
+                {selectedGameId && (
+                  <input
+                    type="text"
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    placeholder="Buscar rango por nombre..."
+                    className="w-full sm:w-64 rounded-lg border border-white/10 bg-ganker-surface-light px-4 py-2.5 text-sm text-ganker-text placeholder:text-ganker-muted outline-none transition-all duration-200 focus:border-ganker-purple-light focus:ring-2 focus:ring-ganker-purple/30"
+                  />
+                )}
               </div>
 
               <button
                 type="button"
                 onClick={handleOpenRegister}
                 disabled={isSaving}
-                className="cursor-pointer self-start rounded-lg bg-gradient-to-r from-ganker-orange via-ganker-orange-light to-ganker-purple px-4 py-2.5 text-sm font-semibold text-white shadow-lg transition-all duration-200 hover:-translate-y-0.5 hover:shadow-ganker-purple/30 disabled:cursor-not-allowed disabled:opacity-50"
+                className="cursor-pointer shrink-0 rounded-lg border border-white/10 bg-ganker-surface-light px-4 py-2.5 text-sm font-semibold text-ganker-text transition-all duration-200 hover:border-ganker-orange hover:bg-ganker-orange hover:text-white hover:-translate-y-0.5 hover:shadow-lg hover:shadow-ganker-orange/20 disabled:cursor-not-allowed disabled:opacity-50"
               >
                 + Registrar rango
               </button>
@@ -148,7 +164,7 @@ const RanksPage = () => {
 
             {selectedGameId ? (
               <RanksListComponent
-                ranks={ranks}
+                ranks={filteredRanks}
                 isLoading={isLoadingRanks}
                 error={ranksError}
                 onEditRank={(rankId) => handleOpenEdit(rankId)}
