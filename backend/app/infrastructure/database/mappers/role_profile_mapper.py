@@ -1,5 +1,3 @@
-from typing import Optional
-
 from app.domain.models.role_profile import RoleProfile
 from app.infrastructure.database.mappers.rank_mapper import RankMapper
 from app.infrastructure.database.mappers.role_mapper import RoleMapper
@@ -16,10 +14,14 @@ class RoleProfileMapper:
         )
 
     @staticmethod
-    def domain_to_orm(role_profile: RoleProfile, game_profile_id: Optional[int]) -> RoleProfileORM:
+    def domain_to_orm(role_profile: RoleProfile) -> RoleProfileORM:
+        if not role_profile.is_persisted():
+            return RoleProfileORM(
+                role_id=role_profile.role.role_id,
+                rank_id=role_profile.rank.rank_id
+            )
         return RoleProfileORM(
             role_profile_id=role_profile.role_profile_id,
-            game_profile_id=game_profile_id,
             role_id=role_profile.role.role_id,
             rank_id=role_profile.rank.rank_id
         )

@@ -6,8 +6,6 @@ from app.domain.exceptions.invalid_id_exception import InvalidIdException
 if TYPE_CHECKING:
     from app.domain.models.videogame import Videogame
 
-
-
 class Character:
     def __init__(self, character_id: Optional[int], name: str, videogame: 'Videogame', icon_url: str):
         self._character_id: Optional[int] = character_id

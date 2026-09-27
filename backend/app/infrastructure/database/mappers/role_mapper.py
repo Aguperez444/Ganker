@@ -14,6 +14,12 @@ class RoleMapper:
 
     @staticmethod
     def domain_to_orm(role: Role) -> RoleORM:
+        if not role.is_persisted():
+            return RoleORM(
+                name = role.name,
+                videogame_id = role.videogame.videogame_id,
+                icon_url=role.icon_url
+            )
         return RoleORM(
             role_id = role.role_id,
             name = role.name,

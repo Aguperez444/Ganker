@@ -1,4 +1,3 @@
-from typing import cast
 from fastapi import APIRouter, Depends
 
 from app.application.use_cases.create_videogame_profile import CreateVideogameProfile
@@ -20,7 +19,7 @@ def create_game_profile(request: CreateGameProfileRequest, player_id: int = Depe
     uow = uow_factory()
     create_game_profile_use_case = CreateVideogameProfile(uow)
     game_profile = create_game_profile_use_case.execute(player_id, request)
-    profile_id = cast(int, game_profile.game_profile_id)
+    profile_id = game_profile.game_profile_id
     response = CreateGameProfileResponse(profile_id=profile_id)
     return response
 

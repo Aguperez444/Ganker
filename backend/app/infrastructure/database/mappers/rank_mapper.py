@@ -15,6 +15,13 @@ class RankMapper:
 
     @staticmethod
     def domain_to_orm(rank: Rank) -> RankORM:
+        if not rank.is_persisted():
+            return RankORM(
+                name = rank.name,
+                value = rank.value,
+                videogame_id = rank.videogame.videogame_id,
+                icon_url = rank.icon_url
+            )
         return RankORM(
             rank_id = rank.rank_id,
             name = rank.name,
