@@ -7,6 +7,11 @@ const RankForm = ({
   error = "",
   onSubmit,
   onCancel,
+  /* Variables para la edición del formulario */
+  ranks = [],
+  isEditing = false,
+  onSelectRank,
+  initialRankId = "",
 }) => {
   const [videogameId, setVideogameId] = useState(initialVideogameId ?? "");
   const [name, setName] = useState("");
@@ -16,6 +21,25 @@ const RankForm = ({
   const [validationError, setValidationError] = useState("");
   const [isDragging, setIsDragging] = useState(false);
   const fileInputRef = useRef(null);
+  const [selectedRankId, setSelectedRankId] = useState(initialRankId ?? "");
+
+  // Sincronizar el id seleccionado si cambia desde las props
+  useEffect(() => {
+    if (initialRankId) {
+      setSelectedRankId(initialRankId);
+    }
+  }, [initialRankId]);
+
+  // Precargar los datos del rango seleccionado cuando estamos editando
+  useEffect(() => {
+    if (isEditing && selectedRankId) {
+      const rankToEdit = ranks.find((r) => String(r.id) === String(selectedRankId));
+      if (rankToEdit) {
+        setName(rankToEdit.name || "");
+        setValue(rankToEdit.value !== undefined ? String(rankToEdit.value) : "");
+      }
+    }
+  }, [selectedRankId, isEditing, ranks]);
 
   useEffect(() => {
     return () => {
@@ -109,7 +133,8 @@ const RankForm = ({
       return;
     }
 
-    if (!iconFile) {
+    // El ícono es obligatorio solo si estamos creando uno nuevo
+    if (!isEditing && !iconFile) {
       setValidationError("La imagen del ícono es obligatoria.");
       return;
     }
@@ -118,24 +143,28 @@ const RankForm = ({
       videogame_id: Number(videogameId),
       name: trimmedName,
       value: Number(value),
-      icon: iconFile,
+      icon: iconFile, // Será null si no se seleccionó imagen nueva al editar
     });
   };
 
   const displayedError = validationError || error;
 
-  const hasChanges =
-    Boolean(videogameId) && name.trim().length > 0 && value !== "" && iconFile !== null;
+  // En edición el ícono no es estrictamente obligatorio para habilitar el botón
+  const hasChanges = isEditing
+    ? Boolean(videogameId) && name.trim().length > 0 && value !== ""
+    : Boolean(videogameId) && name.trim().length > 0 && value !== "" && iconFile !== null;
 
   return (
     <section className="rounded-2xl border border-white/10 bg-ganker-surface p-6 shadow-xl">
       <header className="mb-6">
         <h2 className="font-heading text-xl font-semibold text-ganker-text">
-          Registrar rango
+          {isEditing ? "Modificar rango" : "Registrar rango"}
         </h2>
 
         <p className="mt-1 text-sm text-ganker-muted">
-          Agregá un nuevo rango para un videojuego.
+          {isEditing
+            ? "Actualizá la información del rango seleccionado."
+            : "Agregá un nuevo rango para un videojuego."}
         </p>
       </header>
 
@@ -155,7 +184,7 @@ const RankForm = ({
               setVideogameId(event.target.value);
               if (validationError) setValidationError("");
             }}
-            disabled={isLoading}
+            disabled={isLoading || isEditing}
             className="w-full rounded-lg border border-white/10 bg-ganker-surface-light px-4 py-3 text-ganker-text outline-none transition-all duration-200 focus:border-ganker-purple-light focus:ring-2 focus:ring-ganker-purple/30 disabled:cursor-not-allowed disabled:opacity-50"
           >
             <option value="" disabled>
@@ -168,6 +197,38 @@ const RankForm = ({
             ))}
           </select>
         </div>
+
+        {/* Selector de rango condicional para la edición */}
+        {isEditing && (
+          <div>
+            <label
+              htmlFor="rank-select"
+              className="mb-2 block text-sm font-medium text-ganker-text"
+            >
+              Seleccionar Rango a Modificar <span className="text-ganker-orange">*</span>
+            </label>
+            <select
+              id="rank-select"
+              value={selectedRankId}
+              onChange={(e) => {
+                const rankId = e.target.value;
+                setSelectedRankId(rankId);
+                if (onSelectRank) onSelectRank(rankId);
+              }}
+              disabled={isLoading || !videogameId}
+              className="w-full rounded-lg border border-white/10 bg-ganker-surface-light px-4 py-3 text-ganker-text outline-none transition-all duration-200 focus:border-ganker-purple-light focus:ring-2 focus:ring-ganker-purple/30 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              <option value="" disabled>
+                Seleccioná un rango para editar
+              </option>
+              {ranks.map((rank) => (
+                <option key={rank.id} value={rank.id}>
+                  {rank.name} (Nivel: {rank.value})
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
 
         <div>
           <label
@@ -220,7 +281,7 @@ const RankForm = ({
             htmlFor="rank-icon"
             className="mb-2 block text-sm font-medium text-ganker-text"
           >
-            Ícono del rango <span className="text-ganker-orange">*</span>
+            Ícono del rango {!isEditing && <span className="text-ganker-orange">*</span>}
           </label>
 
           <input
@@ -307,11 +368,10 @@ const RankForm = ({
               </div>
 
               <p className="text-sm font-medium text-ganker-text">
-                Subir imagen del ícono
+                {isEditing ? "Subir nuevo ícono (opcional)" : "Subir imagen del ícono"}
               </p>
               <p className="mt-1 text-xs text-ganker-muted">
-                Hacé clic o arrastrá un archivo aquí (PNG, JPG, WEBP o SVG, máx.
-                5 MB)
+                Hacé clic o arrastrá un archivo aquí (PNG, JPG, WEBP o SVG, máx. 5 MB)
               </p>
             </div>
           )}
@@ -336,7 +396,13 @@ const RankForm = ({
             disabled={isLoading || !hasChanges}
             className="cursor-pointer rounded-lg bg-gradient-to-r from-ganker-orange via-ganker-orange-light to-ganker-purple px-5 py-3 text-sm font-semibold text-white shadow-lg transition-all duration-200 hover:-translate-y-0.5 hover:shadow-ganker-purple/30 active:translate-y-0 disabled:cursor-not-allowed disabled:opacity-50"
           >
-            {isLoading ? "REGISTRANDO..." : "REGISTRAR RANGO"}
+            {isLoading
+              ? isEditing
+                ? "GUARDANDO..."
+                : "REGISTRANDO..."
+              : isEditing
+              ? "GUARDAR CAMBIOS"
+              : "REGISTRAR RANGO"}
           </button>
         </div>
       </form>

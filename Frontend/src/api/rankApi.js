@@ -23,3 +23,20 @@ export const createRank = async ({ videogame_id, name, value, icon }) => {
     },
   });
 };
+
+export const updateRank = async({rankId, name , value, icon }) => {
+  const fd = new FormData();
+  fd.append("name", name);
+  fd.append("value",value)
+  if (icon) {
+    fd.append("icon",icon);
+  }
+
+  const response = await axiosClient.put(`/api/v1/ranks/${rankId}`,fd,{
+    headers: {
+      "Content-Type": "multipart/form-data"
+    }
+  });
+  
+  return response.data
+}

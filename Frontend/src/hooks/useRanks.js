@@ -1,14 +1,16 @@
 import { useCallback, useState } from "react";
-import { createRank, getRanksByGame } from "../api/rankApi";
+import { createRank, getRanksByGame , updateRank} from "../api/rankApi";
 
 const useRanks = () => {
   const [ranks, setRanks] = useState([]);
 
   const [isLoading, setIsLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
-
+ /*para errores al cargar los datos iniciales, error*/
+ /*para los errores al interactuar con los datos, actionError*/
   const [error, setError] = useState("");
   const [actionError, setActionError] = useState("");
+  
 
   const loadRanks = useCallback(async (videogameId) => {
     if (!videogameId) {
@@ -75,6 +77,41 @@ const useRanks = () => {
     }
   };
 
+  const editRank = async ({ rankId, videogame_id, name, value, icon }) => {
+    try {
+      setIsSaving(true);
+      setActionError("");
+
+      await updateRank({ rankId, name, value, icon });
+
+      await loadRanks(videogame_id);
+
+      return true;
+    } catch (error) {
+      if (error.response?.data?.error) {
+        setActionError(error.response.data.error);
+      } else if (error.response?.data?.detail) {
+        setActionError(
+          typeof error.response.data.detail === "string"
+            ? error.response.data.detail
+            : "Error de validación al modificar el rango."
+        );
+      } else if (error.response?.status === 400) {
+        setActionError("Los datos ingresados no son válidos.");
+      } else if (error.response?.status === 404) {
+        setActionError("El elemento seleccionado no existe.");
+      } else if (error.response?.status === 409) {
+        setActionError("Ya existe un rango con ese nombre o valor para este videojuego.");
+      } else {
+        setActionError("Ocurrió un error al modificar el rango.");
+      }
+
+      return false;
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
   const clearActionError = () => {
     setActionError("");
   };
@@ -87,6 +124,7 @@ const useRanks = () => {
     actionError,
     loadRanks,
     registerRank,
+    editRank,
     clearActionError,
   };
 };

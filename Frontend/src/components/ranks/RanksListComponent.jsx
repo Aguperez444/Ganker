@@ -1,6 +1,6 @@
 import { resolveIconUrl } from "../../utils/media";
 
-const RanksListComponent = ({ ranks, isLoading, error }) => {
+const RanksListComponent = ({ ranks, isLoading, error, onEditRank }) => {
   if (isLoading) {
     return (
       <div className="rounded-xl border border-white/10 bg-ganker-surface-light p-6">
@@ -70,9 +70,18 @@ const RanksListComponent = ({ ranks, isLoading, error }) => {
               </p>
             </div>
 
-            <span className="shrink-0 rounded-full bg-ganker-purple/20 px-3 py-1 text-xs font-semibold text-ganker-purple-light">
-              Valor {rank.value}
-            </span>
+            <div className="flex items-center gap-3">
+              <span className="shrink-0 rounded-full bg-ganker-purple/20 px-3 py-1 text-xs font-semibold text-ganker-purple-light">
+                Valor {rank.value}
+              </span>
+              <button
+                type="button"
+                onClick={() => onEditRank(rank.id)}
+                className="cursor-pointer rounded-lg border border-white/10 px-3 py-1.5 text-xs font-semibold text-ganker-purple-light transition hover:bg-ganker-purple/20 hover:text-ganker-text"
+              >
+                Editar
+              </button>
+            </div>
           </li>
         ))}
       </ul>

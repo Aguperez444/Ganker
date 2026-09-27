@@ -19,8 +19,12 @@ const RanksPage = () => {
     actionError,
     loadRanks,
     registerRank,
+    editRank,
     clearActionError,
   } = useRanks();
+
+  const [formMode, setFormMode] = useState("create"); // "create" o "edit"
+  const [selectedRankId, setSelectedRankId] = useState("");
 
   useEffect(() => {
     if (selectedGameId) {
@@ -31,6 +35,16 @@ const RanksPage = () => {
   const handleOpenRegister = () => {
     clearActionError();
     setSuccessMessage("");
+    setFormMode("create"); 
+    setSelectedRankId("");
+    setIsFormOpen(true);
+  };
+
+  const handleOpenEdit = (rankId = "") => {
+    clearActionError();
+    setSuccessMessage("");
+    setFormMode("edit");
+    setSelectedRankId(String(rankId));
     setIsFormOpen(true);
   };
 
@@ -41,20 +55,29 @@ const RanksPage = () => {
 
   const handleRegister = async (rankData) => {
     const success = await registerRank(rankData);
-
-    if (!success) {
-      return;
-    }
+    if (!success) return;
 
     setSuccessMessage(`Rango "${rankData.name}" registrado correctamente.`);
     setIsFormOpen(false);
 
-    // Si el rango se registró para el juego que se está viendo, ya se
-    // refrescó la lista dentro de registerRank. Si fue para otro juego,
-    // cambiamos la vista a ese juego para mostrar el resultado.
     if (String(rankData.videogame_id) !== String(selectedGameId)) {
       setSelectedGameId(String(rankData.videogame_id));
     }
+  };
+
+  const handleUpdate = async (rankData) => {
+    const success = await editRank({
+      rankId: Number(selectedRankId),
+      videogame_id: Number(selectedGameId),
+      name: rankData.name,
+      value: rankData.value,
+      icon: rankData.icon, 
+    });
+
+    if (!success) return;
+
+    setSuccessMessage(`Rango "${rankData.name}" modificado correctamente.`);
+    setIsFormOpen(false);
   };
 
   return (
@@ -128,6 +151,7 @@ const RanksPage = () => {
                 ranks={ranks}
                 isLoading={isLoadingRanks}
                 error={ranksError}
+                onEditRank={(rankId) => handleOpenEdit(rankId)}
               />
             ) : (
               <div className="rounded-xl border border-white/10 bg-ganker-surface-light p-6">
@@ -141,10 +165,14 @@ const RanksPage = () => {
           {isFormOpen && (
             <RankForm
               games={games}
+              ranks={ranks}
               initialVideogameId={selectedGameId}
+              initialRankId={selectedRankId}
+              isEditing={formMode === "edit"}
               isLoading={isSaving}
               error={actionError}
-              onSubmit={handleRegister}
+              onSelectRank={(rankId) => setSelectedRankId(rankId)}
+              onSubmit={formMode === "edit" ? handleUpdate : handleRegister}
               onCancel={handleCancel}
             />
           )}
