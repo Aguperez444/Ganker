@@ -1,22 +1,23 @@
-from typing import cast
 from sqlalchemy.orm import Session, joinedload
 
 from app.application.ports.i_find_by_specifications_service import IFindBySpecificationRepository
+from app.domain.specifications.base import Specification, AndSpecification
+from app.domain.specifications.videogame_profiles.characters_specification import ByCharactersSpecification
+from app.domain.specifications.videogame_profiles.different_player_id_specification import \
+    ByDifferentPlayerIDSpecification
+from app.domain.specifications.videogame_profiles.last_connection_specification import ByLastConnectionSpecification
+from app.domain.specifications.videogame_profiles.ranks_specification import ByRanksSpecification
+from app.domain.specifications.videogame_profiles.roles_specification import ByRolesSpecification
+from app.domain.specifications.videogame_profiles.videogame_specification import ByVideogameSpecification
 from app.infrastructure.api.dto.response.base_classes.character_object_response import CharacterObjectResponse
 from app.infrastructure.api.dto.response.base_classes.rank_object_response import RankObjectResponse
 from app.infrastructure.api.dto.response.base_classes.role_object_response import RoleObjectResponse
 from app.infrastructure.api.dto.response.base_classes.role_profile_object_response import RoleProfileObjectResponse
 from app.infrastructure.api.dto.response.base_classes.videogame_object_response import VideogameObjectResponse
-from app.infrastructure.api.dto.response.get.get_game_profile_response import GetGameProfileResponse, PlayerObjectResponse
+from app.infrastructure.api.dto.response.get.get_game_profile_response import GetGameProfileResponse, \
+    PlayerObjectResponse
 from app.infrastructure.database.mappers.game_profile_mapper import GameProfileMapper
 from app.infrastructure.database.models import GameProfileORM, CharacterPriorityORM, RoleProfileORM, UserORM
-from app.domain.specifications.base import Specification, AndSpecification
-from app.domain.specifications.videogame_profiles.characters_specification import ByCharactersSpecification
-from app.domain.specifications.videogame_profiles.last_connection_specification import ByLastConnectionSpecification
-from app.domain.specifications.videogame_profiles.ranks_specification import ByRanksSpecification
-from app.domain.specifications.videogame_profiles.roles_specification import ByRolesSpecification
-from app.domain.specifications.videogame_profiles.videogame_specification import ByVideogameSpecification
-from app.domain.specifications.videogame_profiles.different_player_id_specification import ByDifferentPlayerIDSpecification
 
 
 class FindBySpecificationRepositoryImpl(IFindBySpecificationRepository):
@@ -86,22 +87,22 @@ class FindBySpecificationRepositoryImpl(IFindBySpecificationRepository):
         
         return GetGameProfileResponse(
             
-            game_profile_id= cast(int, game_profile_domain.game_profile_id),
+            game_profile_id=game_profile_domain.game_profile_id,
             player= player,
             videogame=VideogameObjectResponse(
-                id=cast(int, game_profile_domain.videogame.videogame_id),
+                id=game_profile_domain.videogame.videogame_id,
                 name=game_profile_domain.videogame.name,
                 icon_url=game_profile_domain.videogame.icon_url,
                 rank_per_role=game_profile_domain.videogame.rank_per_role,
             ),
-            characters=[CharacterObjectResponse(character_id=cast(int, character.character_id), name=character.name,
+            characters=[CharacterObjectResponse(character_id=character.character_id, name=character.name,
                                                 icon_url=character.icon_url) for character in ordered_characters],
             role_profiles=[RoleProfileObjectResponse(
-                role_profile_id=cast(int, role_profile.role_profile_id),
-                role=RoleObjectResponse(role_id=cast(int, role_profile.role.role_id), name=role_profile.role.name,
+                role_profile_id=role_profile.role_profile_id,
+                role=RoleObjectResponse(role_id=role_profile.role.role_id, name=role_profile.role.name,
                                         icon_url=role_profile.role.icon_url),
                 rank=RankObjectResponse(
-                    rank_id=cast(int, role_profile.rank.rank_id), name=role_profile.rank.name,
+                    rank_id=role_profile.rank.rank_id, name=role_profile.rank.name,
                     icon_url=role_profile.rank.icon_url, value=role_profile.rank.value)
             ) for role_profile in game_profile_domain.role_profiles]
         )

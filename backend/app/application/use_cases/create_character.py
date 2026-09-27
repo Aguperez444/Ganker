@@ -1,16 +1,12 @@
 from app.application.ports.i_storage_service import IStorageService
 from app.application.ports.i_unit_of_work import IUnitOfWork
 from app.domain.exceptions.file.file_name_not_null_exception import FileNameNotNullException
-from app.domain.models.character import Character
 from app.domain.exceptions.file.file_not_null_exception import FileNotNullException
+from app.domain.models.character import Character
 from app.domain.services.catalog_validation_service import CatalogValidationService
-from app.domain.services.static_validation_service import StaticValidationService
 from app.domain.services.slug_service import SlugService
+from app.domain.services.static_validation_service import StaticValidationService
 from app.infrastructure.api.dto.response.base_classes.character_object_response import CharacterObjectResponse
-
-from typing import cast
-
-
 
 
 class CreateCharacter:
@@ -54,7 +50,7 @@ class CreateCharacter:
                 raise e
 
         return CharacterObjectResponse(
-            character_id=cast(int, saved_character.character_id),
+            character_id=saved_character.character_id,
             name=saved_character.name,
             icon_url=saved_character.icon_url or "Sin icono"
         )

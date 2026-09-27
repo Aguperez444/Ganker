@@ -1,13 +1,13 @@
-from typing import TYPE_CHECKING, cast
-from app.application.ports.i_unit_of_work import IUnitOfWork
-from app.infrastructure.api.dto.request.update_videogame_profile_request import UpdateGameProfileRequest
-from app.domain.services.catalog_validation_service import CatalogValidationService
-from app.domain.services.game_profile_validation_service import GameProfileValidationService
-from app.domain.services.create_game_profile_dto_service import CreateGameProfileDTOService
+from typing import TYPE_CHECKING
 
-from app.domain.models.role_profile import RoleProfile
-from app.infrastructure.api.dto.response.update_videogame_profile_response import UpdateGameProfileResponse
+from app.application.ports.i_unit_of_work import IUnitOfWork
 from app.domain.models.character_priority import CharacterPriority
+from app.domain.models.role_profile import RoleProfile
+from app.domain.services.catalog_validation_service import CatalogValidationService
+from app.domain.services.create_game_profile_dto_service import CreateGameProfileDTOService
+from app.domain.services.game_profile_validation_service import GameProfileValidationService
+from app.infrastructure.api.dto.request.update_videogame_profile_request import UpdateGameProfileRequest
+from app.infrastructure.api.dto.response.update_videogame_profile_response import UpdateGameProfileResponse
 
 if TYPE_CHECKING:
     from app.domain.models.role import Role
@@ -22,7 +22,7 @@ class UpdateVideogameProfile:
         with self.uow as uow:
             # Buscar el perfil en la BD y validar que pertenezca al jugador
             game_profile = CatalogValidationService.get_and_validate_exists_game_profile(game_profile_id, player_id, uow)
-            vg_id = cast(int, game_profile.videogame.videogame_id)
+            vg_id = game_profile.videogame.videogame_id
             vg_name = game_profile.videogame.name
 
             # Buscar y validar los personajes en la base de datos

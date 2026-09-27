@@ -1,12 +1,10 @@
-from typing import TYPE_CHECKING, cast
+from typing import TYPE_CHECKING
 
 from app.application.ports.i_storage_service import IStorageService
-
-from app.infrastructure.api.dto.response.base_classes.character_object_response import CharacterObjectResponse
-
+from app.domain.services.catalog_validation_service import CatalogValidationService
 from app.domain.services.slug_service import SlugService
 from app.domain.services.static_validation_service import StaticValidationService
-from app.domain.services.catalog_validation_service import CatalogValidationService
+from app.infrastructure.api.dto.response.base_classes.character_object_response import CharacterObjectResponse
 
 if TYPE_CHECKING:
     from app.application.ports.i_unit_of_work import IUnitOfWork
@@ -54,6 +52,7 @@ class UpdateCharacter:
                 raise e
 
             if old_icon_url:
+                # noinspection broad-exception
                 try:
                     self.storage_service.delete_file(old_icon_url)
                 except Exception:
@@ -63,7 +62,7 @@ class UpdateCharacter:
                     print(Fore.RED + "-" * 70 + "\n" + f"Error inesperado al borrar la imagen anterior del usuario: {old_icon_url} \n" + "-" * 70 + "\n" + Style.RESET_ALL)
 
         return CharacterObjectResponse(
-            character_id=cast(int, updated_character.character_id),
+            character_id=updated_character.character_id,
             name=updated_character.name,
             icon_url=updated_character.icon_url or "Sin icono",
         )

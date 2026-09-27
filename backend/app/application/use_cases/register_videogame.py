@@ -1,16 +1,12 @@
-from typing import cast
-
 from app.application.ports.i_storage_service import IStorageService
 from app.application.ports.i_unit_of_work import IUnitOfWork
-from app.domain.models.videogame import Videogame
 from app.domain.exceptions.file.file_name_not_null_exception import FileNameNotNullException
 from app.domain.exceptions.file.file_not_null_exception import FileNotNullException
-from app.domain.services.slug_service import SlugService
-from app.infrastructure.api.dto.response.base_classes.videogame_object_response import VideogameObjectResponse
+from app.domain.models.videogame import Videogame
 from app.domain.services.catalog_validation_service import CatalogValidationService
+from app.domain.services.slug_service import SlugService
 from app.domain.services.static_validation_service import StaticValidationService
-
-
+from app.infrastructure.api.dto.response.base_classes.videogame_object_response import VideogameObjectResponse
 
 
 class RegisterVideogame:
@@ -55,7 +51,7 @@ class RegisterVideogame:
                 raise e  # volver a levantar la excepción después de limpiar el archivo para hacer rollback
 
         return VideogameObjectResponse(
-            id=cast(int, saved_videogame.videogame_id),
+            id=saved_videogame.videogame_id,
             name=saved_videogame.name,
             icon_url=saved_videogame.icon_url or "Sin icono",
             rank_per_role=saved_videogame.rank_per_role,

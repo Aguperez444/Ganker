@@ -1,14 +1,14 @@
-from typing import BinaryIO, cast
+from typing import BinaryIO
+
 from app.application.ports.i_storage_service import IStorageService
 from app.application.ports.i_unit_of_work import IUnitOfWork
 from app.domain.exceptions.file.file_name_not_null_exception import FileNameNotNullException
 from app.domain.exceptions.file.file_not_null_exception import FileNotNullException
-
-from app.domain.services.catalog_validation_service import CatalogValidationService
-from app.domain.services.slug_service import SlugService
-from app.domain.models.role import Role
 from app.domain.exceptions.role.duplicated_role_name_exception import DuplicateRoleNameException
 from app.domain.exceptions.role.invalid_role_name_exception import InvalidRoleNameException
+from app.domain.models.role import Role
+from app.domain.services.catalog_validation_service import CatalogValidationService
+from app.domain.services.slug_service import SlugService
 from app.infrastructure.api.dto.response.base_classes.role_object_response import RoleObjectResponse
 
 
@@ -61,7 +61,7 @@ class CreateRole:
                 raise e # volver a levantar la excepción después de limpiar el archivo para hacer rollback
 
         return RoleObjectResponse(
-            role_id=cast(int, saved_role.role_id),
+            role_id=saved_role.role_id,
             name=saved_role.name,
             icon_url=saved_role.icon_url,
         )

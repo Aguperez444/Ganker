@@ -33,7 +33,7 @@ class UserLogin:
             if not self.pass_hasher.verify_password(user_data.password, cast(str, user.password_hash)): #TODO revisar este cast, cuando empecemos a usar cuentas por identidad federada puede llegar a darse el caso de que password sea None
                 raise WrongPasswordException(user_data.mail)
 
-            user_id = cast(int, user.user_id)
+            user_id = user.user_id
             role = user.role
 
             # Generar tokens recibiendo jti y fecha de expiración

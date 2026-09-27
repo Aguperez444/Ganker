@@ -32,6 +32,7 @@ async def websocket_chat_endpoint(
     has_access, recipient_id = await run_in_threadpool(access_use_case.execute, conversation_id, user_id)
     if not has_access:
         # 1008 = Policy Violation (cierra la conexión de inmediato)
+        # noinspection unused-local
         recipient_id = None
         await websocket.close(code=status.WS_1008_POLICY_VIOLATION)
         return

@@ -1,8 +1,7 @@
-from typing import cast, Optional, BinaryIO
+from typing import Optional, BinaryIO
 
 from app.application.ports.i_storage_service import IStorageService
 from app.application.ports.i_unit_of_work import IUnitOfWork
-
 from app.domain.exceptions.user.user_not_found_exception import UserNotFoundException
 from app.domain.services.catalog_validation_service import CatalogValidationService
 from app.infrastructure.api.dto.response.update.update_user_response import UpdateUserResponse
@@ -66,6 +65,7 @@ class UpdateUser:
                 # Si hay un error al actualizar, se lanza una excepción
                 raise Exception(f"Error inesperado al actualizar los datos del usuario", str(e))
 
+            # noinspection broad-exception
             try:
                 # si pude guardar correctamente los cambios en la bdd, ahora si debo borrar la imagen anterior si es que se subió una nueva
                 if cambio_icono and old_icon_url is not None:
@@ -80,7 +80,7 @@ class UpdateUser:
 
         # Lo devuelvo para que el controlador pueda mandarlo en la respuesta
         return UpdateUserResponse(
-            user_id=cast(int, updated_user.user_id),
+            user_id=updated_user.user_id,
             username=updated_user.username,
             name=updated_user.name,
             mail=updated_user.mail,

@@ -1,12 +1,10 @@
+from typing import TYPE_CHECKING
+
 from fastapi import UploadFile
 
 from app.application.ports.i_storage_service import IStorageService
 from app.domain.services.catalog_validation_service import CatalogValidationService
 from app.domain.services.slug_service import SlugService
-
-
-from typing import TYPE_CHECKING, cast
-
 from app.infrastructure.api.dto.response.base_classes.videogame_object_response import VideogameObjectResponse
 
 if TYPE_CHECKING:
@@ -50,6 +48,7 @@ class UpdateVideogame:
                 raise e
 
             if old_icon_url:
+                # noinspection broad-exception
                 try:
                     self.storage_service.delete_file(old_icon_url)
                 except Exception:
@@ -59,7 +58,7 @@ class UpdateVideogame:
                     print(Fore.RED + "-" * 70 + "\n" + f"Error inesperado al borrar la imagen anterior del usuario: {old_icon_url} \n" + "-" * 70 + "\n" + Style.RESET_ALL)
 
         return VideogameObjectResponse(
-            id=cast(int, updated_game.videogame_id),
+            id=updated_game.videogame_id,
             name=updated_game.name,
             icon_url=updated_game.icon_url or "Sin icono",
             rank_per_role=updated_game.rank_per_role,

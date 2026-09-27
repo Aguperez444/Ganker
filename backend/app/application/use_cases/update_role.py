@@ -1,4 +1,3 @@
-from typing import cast
 from fastapi import UploadFile
 
 from app.application.ports.i_storage_service import IStorageService
@@ -32,7 +31,7 @@ class UpdateRole:
 
             # Comprobar que no hay otro rol en el mismo videojuego con el mismo nombre
             game_id = existing_role.videogame.videogame_id
-            role_with_same_name = uow.role_repo.get_role_by_name_and_videogame(cleaned_name, cast(int, game_id))
+            role_with_same_name = uow.role_repo.get_role_by_name_and_videogame(cleaned_name, game_id)
             if role_with_same_name and role_with_same_name.role_id != role_id:
                 raise DuplicateRoleNameException(cleaned_name)
 
@@ -61,6 +60,7 @@ class UpdateRole:
                 raise e
 
             if old_icon_url:
+                # noinspection broad-exception
                 try:
                     self.storage_service.delete_file(old_icon_url)
                 except Exception:
@@ -70,7 +70,7 @@ class UpdateRole:
                     print(Fore.RED + "-" * 70 + "\n" + f"Error inesperado al borrar la imagen anterior del usuario: {old_icon_url} \n" + "-" * 70 + "\n" + Style.RESET_ALL)
 
         return RoleObjectResponse(
-            role_id=cast(int, updated_role.role_id),
+            role_id=updated_role.role_id,
             name=updated_role.name,
             icon_url=updated_role.icon_url,
         )

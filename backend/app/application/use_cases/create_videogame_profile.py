@@ -1,15 +1,14 @@
-from typing import TYPE_CHECKING, cast
+from typing import TYPE_CHECKING
 
 from app.application.ports.i_unit_of_work import IUnitOfWork
-from app.infrastructure.api.dto.request.create_videogame_profile_request import CreateGameProfileRequest
-
-from app.domain.services.catalog_validation_service import CatalogValidationService
-from app.domain.services.game_profile_validation_service import GameProfileValidationService
-from app.domain.models.role_profile import RoleProfile
-from app.domain.models.game_profile import GameProfile
-from app.domain.models.character_priority import CharacterPriority
 from app.domain.exceptions.character.duplicated_character_in_request import DuplicatedCharacterInRequest
 from app.domain.exceptions.role.duplicated_role_in_request import DuplicatedRoleInRequest
+from app.domain.models.character_priority import CharacterPriority
+from app.domain.models.game_profile import GameProfile
+from app.domain.models.role_profile import RoleProfile
+from app.domain.services.catalog_validation_service import CatalogValidationService
+from app.domain.services.game_profile_validation_service import GameProfileValidationService
+from app.infrastructure.api.dto.request.create_videogame_profile_request import CreateGameProfileRequest
 
 if TYPE_CHECKING:
     from app.domain.models.role import Role
@@ -38,13 +37,13 @@ class CreateVideogameProfile:
         with self.uow as uow:
             # Buscar el videojuego en la base de datos
             videogame: 'Videogame' = CatalogValidationService.get_and_validate_exist_videogame(create_videogame_profile_request.videogame_id, uow)
-            CatalogValidationService.validate_not_duplicated_game_profile(player_id, cast(int, videogame.videogame_id), uow)
+            CatalogValidationService.validate_not_duplicated_game_profile(player_id, videogame.videogame_id, uow)
 
             # Buscar los personajes en la base de datos
             characters: list['Character'] = []
             for character_id in create_videogame_profile_request.character_ids:
                 character = CatalogValidationService.get_and_validate_exist_character(character_id, uow)
-                GameProfileValidationService.validate_character_belongs_to_game(character, cast(int, videogame.videogame_id), videogame.name)
+                GameProfileValidationService.validate_character_belongs_to_game(character, videogame.videogame_id, videogame.name)
                 characters.append(character)
 
             # Busco los roles y rangos en la base de datos y creo el role_profile
@@ -55,8 +54,8 @@ class CreateVideogameProfile:
                 rank: 'Rank' = CatalogValidationService.get_and_validate_exist_rank(new_role_profile.rank_id, uow)
 
                 # válido que el rol y el rango pertenezcan al videojuego
-                GameProfileValidationService.validate_role_belongs_to_game(role, cast(int, videogame.videogame_id), videogame.name)
-                GameProfileValidationService.validate_rank_belongs_to_game(rank, cast(int, videogame.videogame_id), videogame.name)
+                GameProfileValidationService.validate_role_belongs_to_game(role, videogame.videogame_id, videogame.name)
+                GameProfileValidationService.validate_rank_belongs_to_game(rank, videogame.videogame_id, videogame.name)
 
                 # creo el role_profile y lo agrego a la lista de role_profiles
                 role_profile: RoleProfile = RoleProfile(

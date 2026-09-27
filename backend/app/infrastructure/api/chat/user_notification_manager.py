@@ -18,6 +18,7 @@ class UserNotificationManager:
     async def send_to_user(self, user_id: int, payload: dict) -> None:
         sockets = list(self._user_sockets.get(user_id, []))
         for socket in sockets:
+            # noinspection broad-exception
             try:
                 await socket.send_json(payload)
             except Exception:

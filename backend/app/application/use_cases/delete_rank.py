@@ -1,10 +1,8 @@
-from typing import cast
-
 from app.application.ports.i_storage_service import IStorageService
 from app.application.ports.i_unit_of_work import IUnitOfWork
+from app.domain.exceptions.rank.cannot_delete_rank_exception import CannotDeleteRankException
 from app.domain.exceptions.rank.rank_not_found_exception import RankNotFoundException
 from app.infrastructure.api.dto.response.delete.delete_rank_response import DeleteRankResponse
-from app.domain.exceptions.rank.cannot_delete_rank_exception import CannotDeleteRankException
 
 
 class DeleteRank:
@@ -22,7 +20,7 @@ class DeleteRank:
             associated_count = uow.role_profile_repo.count_associated_to_rank(rank_id)
             if associated_count > 0:
                 game_id = rank_to_delete.videogame.videogame_id
-                all_game_ranks = uow.rank_repo.get_ranks_by_game_id(cast(int,game_id))
+                all_game_ranks = uow.rank_repo.get_ranks_by_game_id(game_id)
                 other_ranks = [r for r in all_game_ranks if r.rank_id != rank_id]
 
                 if not other_ranks:
@@ -42,7 +40,7 @@ class DeleteRank:
                 # Actualizar los perfiles asociados para que apunten al rango seleccionado
                 uow.role_profile_repo.reassign_associated_to_rank(
                     source_rank_id=rank_id,
-                    target_rank_id=cast(int, target_rank.rank_id)
+                    target_rank_id=target_rank.rank_id
                 )
 
             # Eliminar el rango del sistema

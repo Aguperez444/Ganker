@@ -1,16 +1,16 @@
-from typing import cast, TYPE_CHECKING
+from typing import TYPE_CHECKING
 
 from app.application.ports.i_password_hasher import IPasswordHasher
 from app.application.ports.i_unit_of_work import IUnitOfWork
-from app.infrastructure.api.dto.response.create_register.register_user_response import RegisterUserResponse
-from app.domain.exceptions.mail.email_already_exists_exception import EmailAlreadyExistsException
 from app.domain.exceptions.auth.unauthorized_exception import UnauthorizedException
+from app.domain.exceptions.mail.email_already_exists_exception import EmailAlreadyExistsException
 from app.domain.exceptions.user.user_not_found_exception import UserNotFoundException
 from app.domain.exceptions.user.username_already_exists_exception import UsernameAlreadyExistsException
 from app.domain.models.user import User
 from app.domain.models.user_role import UserRole
-from app.domain.services.static_validation_service import StaticValidationService
 from app.domain.services.catalog_validation_service import CatalogValidationService
+from app.domain.services.static_validation_service import StaticValidationService
+from app.infrastructure.api.dto.response.create_register.register_user_response import RegisterUserResponse
 
 if TYPE_CHECKING:
     from app.infrastructure.api.dto.request.register_user_request import RegisterUserRequest
@@ -62,7 +62,7 @@ class RegisterUser:
 
             # persistir el usuario en la base de datos y obtener el usuario registrado con su id
             registered_user = uow.user_repo.create_user(new_user)
-            user_id = cast(int, registered_user.user_id)
+            user_id = registered_user.user_id
 
         return RegisterUserResponse(
             user_id=user_id,
@@ -77,10 +77,10 @@ class RegisterUser:
     def validate_is_authorized_to_register(authenticated_user: User, new_user_role: str):
         if authenticated_user.role == UserRole.PLAYER:
             # un player no puede crear ningún usuario, solo un admin o un owner pueden crear usuarios
-            raise UnauthorizedException(cast(int, authenticated_user.user_id), authenticated_user.role.value,
+            raise UnauthorizedException(authenticated_user.user_id, authenticated_user.role.value,
                                         new_user_role)
         elif authenticated_user.role == UserRole.ADMIN and new_user_role == UserRole.OWNER:
             # un admin no puede crear un owner, solo un owner puede crear otro owner
-            raise UnauthorizedException(cast(int, authenticated_user.user_id), authenticated_user.role.value,
+            raise UnauthorizedException(authenticated_user.user_id, authenticated_user.role.value,
                                         new_user_role)
         # un owner puede crear lo que quiera, asi que no hay necesidad de validar nada más en ese caso

@@ -1,12 +1,12 @@
-from typing import BinaryIO, cast
+from typing import BinaryIO
+
 from app.application.ports.i_storage_service import IStorageService
 from app.application.ports.i_unit_of_work import IUnitOfWork
-
-from app.domain.models.rank import Rank
 from app.domain.exceptions.rank.duplicated_rank_name_exception import DuplicatedRankNameException
 from app.domain.exceptions.rank.duplicated_rank_value_exception import DuplicatedRankValueException
 from app.domain.exceptions.rank.invalid_rank_name_exception import InvalidRankNameException
 from app.domain.exceptions.rank.invalid_rank_value_exception import InvalidRankValueException
+from app.domain.models.rank import Rank
 from app.domain.services.catalog_validation_service import CatalogValidationService
 from app.domain.services.slug_service import SlugService
 from app.infrastructure.api.dto.response.base_classes.rank_object_response import RankObjectResponse
@@ -61,7 +61,7 @@ class CreateRank:
                 raise e # volver a levantar la excepción después de limpiar el archivo para hacer rollback
 
         return RankObjectResponse(
-            rank_id=cast(int, saved_rank.rank_id),
+            rank_id=saved_rank.rank_id,
             name=saved_rank.name,
             value=saved_rank.value,
             icon_url=saved_rank.icon_url,

@@ -1,4 +1,3 @@
-from typing import cast
 from fastapi import UploadFile
 
 from app.application.ports.i_storage_service import IStorageService
@@ -39,11 +38,11 @@ class UpdateRank:
 
             # Comprobar que no hay otro rango en el mismo videojuego con el mismo nombre o valor vía SQL
             game_id = existing_rank.videogame.videogame_id
-            rank_by_name = uow.rank_repo.get_rank_by_name_and_videogame(cleaned_name, cast(int, game_id))
+            rank_by_name = uow.rank_repo.get_rank_by_name_and_videogame(cleaned_name, game_id)
             if rank_by_name and rank_by_name.rank_id != rank_id:
                 raise DuplicatedRankNameException(cleaned_name)
 
-            rank_by_val = uow.rank_repo.get_rank_by_value_and_videogame(value, cast(int, game_id))
+            rank_by_val = uow.rank_repo.get_rank_by_value_and_videogame(value, game_id)
             if rank_by_val and rank_by_val.rank_id != rank_id:
                 raise DuplicatedRankValueException(value)
 
@@ -73,6 +72,7 @@ class UpdateRank:
                 raise e
 
             if old_icon_url:
+                # noinspection broad-exception
                 try:
                     self.storage_service.delete_file(old_icon_url)
                 except Exception:
@@ -82,7 +82,7 @@ class UpdateRank:
                     print(Fore.RED + "-" * 70 + "\n" + f"Error inesperado al borrar la imagen anterior del usuario: {old_icon_url} \n" + "-" * 70 + "\n" + Style.RESET_ALL)
 
         return RankObjectResponse(
-            rank_id=cast(int, updated_rank.rank_id),
+            rank_id=updated_rank.rank_id,
             name=updated_rank.name,
             value=updated_rank.value,
             icon_url=updated_rank.icon_url,
