@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Depends, UploadFile, File, HTTPException, status, Form
 from typing import Optional
+from pydantic import EmailStr
 
 
 from app.application.use_cases.query_users import QueryUsers
@@ -54,7 +55,7 @@ def register_user(request: RegisterUserRequest, user_id: int = Depends(get_curre
 
 
 @router.put("/", response_model=UpdateUserResponse, status_code=200, dependencies=[Depends(require_player)])
-def update_user(username: str = Form(...),name: str = Form(...),mail: str = Form(...),
+def update_user(username: str = Form(...), name: str = Form(...), mail: EmailStr = Form(...),
                       icon: Optional[UploadFile] = File(None, description="Icon image file"),
                       user_id: int = Depends(get_current_user_id)
                       ) -> UpdateUserResponse:

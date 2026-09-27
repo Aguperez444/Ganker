@@ -48,6 +48,47 @@ class TestRoleEndpointsIntegration:
 
         assert response.status_code == 404
 
+    def test_create_role_without_videogame(self, client, admin_auth_headers):
+        # Probar registrar un rol sin seleccionar un videojuego (falla)
+        file = ("role.png", io.BytesIO(b"data"), "image/png")
+        data = {"name": "NoGameRole"}
+        response = client.post("/api/v1/roles", data=data, files={"icon": file}, headers=admin_auth_headers)
+        assert response.status_code == 422
+
+    def test_create_role_without_name(self, client, admin_auth_headers, seed_catalog_data):
+        # Probar registrar un rol sin ingresar el nombre del rol (falla)
+        vg_id = seed_catalog_data["videogame"].videogame_id
+        file = ("role.png", io.BytesIO(b"data"), "image/png")
+        data = {"videogame_id": vg_id}
+        response = client.post("/api/v1/roles", data=data, files={"icon": file}, headers=admin_auth_headers)
+        assert response.status_code == 422
+
+    def test_create_role_same_name_different_videogame_success(self, client, admin_auth_headers, seed_catalog_data, test_db_session):
+        # Probar registrar un rol con un nombre ya existente pero en un videojuego diferente (pasa)
+        vg2 = VideogameORM(name="Valorant", icon_url="/val.png", rank_per_role=False)
+        test_db_session.add(vg2)
+        test_db_session.commit()
+        test_db_session.refresh(vg2)
+
+        existing_role_name = seed_catalog_data["roles"][0].name
+        file = ("role.png", io.BytesIO(b"data"), "image/png")
+        data = {
+            "name": existing_role_name,
+            "videogame_id": vg2.videogame_id
+        }
+
+        response = client.post(
+            "/api/v1/roles",
+            data=data,
+            files={"icon": file},
+            headers=admin_auth_headers
+        )
+
+        assert response.status_code == 201
+        res_data = response.json()
+        assert res_data["name"] == existing_role_name
+        assert "roles" in res_data["icon_url"]
+
     def test_create_role_duplicate_name(self, client, admin_auth_headers, seed_catalog_data):
         vg_id = seed_catalog_data["videogame"].videogame_id
         existing_role_name = seed_catalog_data["roles"][0].name
