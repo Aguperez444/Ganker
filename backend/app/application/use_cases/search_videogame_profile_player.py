@@ -12,6 +12,7 @@ from app.domain.specifications.videogame_profiles.last_connection_specification 
 
 
 from app.domain.services.catalog_validation_service import CatalogValidationService
+from specifications.videogame_profiles.regions_specification import ByRegionsSpecification
 
 
 class SearchVideogameProfilePlayer:
@@ -51,6 +52,9 @@ class SearchVideogameProfilePlayer:
                 specs.append(ByCharactersSpecification(filters.characters))
             if filters.name and filters.name.strip() != "":
                 specs.append(ByNamePlayerSpecification(filters.name))
+            if filters.regions:
+                specs.append(ByRegionsSpecification(filters.regions))
+
 
             # Combino los filtros
             combined_spec = specs[0]

@@ -21,3 +21,7 @@ class IGameProfileRepository(ABC):
     @abstractmethod
     def update_game_profile(self, game_profile: 'GameProfile') -> 'GameProfile':
         raise NotImplementedError
+
+    @abstractmethod
+    def delete_region(self, region_id: int) -> None:
+        raise NotImplementedError

@@ -11,3 +11,4 @@ class SearchVideogameProfilesRequest(BaseModel):
     name: Optional[str] = Field(min_length=4, max_length=50 , default=None)
     page: int | None = None
     page_size: int | None = None
+    regions: Optional[List[int]] = None

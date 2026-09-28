@@ -64,6 +64,8 @@ class CreateVideogameProfile:
                     rank=rank
                 )
                 new_role_profiles.append(role_profile)
+            # Busco la region en la base de datos
+            region: 'Region' = CatalogValidationService
 
             # Creo la lista de CharacterPriority a partir de la lista de personajes, asignando prioridad según el orden del array.
             prioritized_characters = [CharacterPriority(priority_id=None,priority=index,character=char) for index, char in enumerate(characters, start=1)]
