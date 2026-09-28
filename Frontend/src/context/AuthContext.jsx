@@ -5,7 +5,10 @@ import {
   useEffect,
   useCallback,
 } from "react";
-import axiosClient, { registrarOnSesionExpirada } from "../api/axiosClient";
+import axiosClient, {
+  registrarOnSesionExpirada,
+  registrarOnTokensRenovados,
+} from "../api/axiosClient";
 import { obtenerJugadorActual } from "../api/jugadoresApi";
 
 const AuthContext = createContext(null);
@@ -109,6 +112,29 @@ export function AuthProvider({ children }) {
   useEffect(() => {
     registrarOnSesionExpirada(limpiarEstado);
   }, [limpiarEstado]);
+
+  // El refresh silencioso de axiosClient pisa el access_token en localStorage
+  // fuera de React; esto mantiene `tokens` (y todo lo que se deriva de el,
+  // como el token que usa el socket de notificaciones de ChatContext) al dia
+  // sin esperar a un logout/login o un reload.
+  const actualizarTokensRenovados = useCallback(
+    ({ access_token, refresh_token }) => {
+      setTokens((actuales) =>
+        actuales
+          ? {
+              ...actuales,
+              access_token,
+              refresh_token: refresh_token ?? actuales.refresh_token,
+            }
+          : actuales
+      );
+    },
+    []
+  );
+
+  useEffect(() => {
+    registrarOnTokensRenovados(actualizarTokensRenovados);
+  }, [actualizarTokensRenovados]);
 
   // Guarda una sesion recien creada y trae al usuario. Recibe
   // { access_token, refresh_token, token_type }, que es lo que devuelven tanto

@@ -24,8 +24,8 @@ class UserLogin:
     def execute(self, user_data: 'LoginRequest') -> AuthTokensResponse:
 
         # revisar si el mail pertenece a un usuario registrado
-        with self.uow:
-            user = self.uow.user_repo.get_user_by_mail(user_data.mail)
+        with self.uow as uow:
+            user = uow.user_repo.get_user_by_mail(user_data.mail)
             if user is None:
                 raise EmailNotFoundException(user_data.mail)
 
@@ -43,7 +43,7 @@ class UserLogin:
             )
 
             # Persistir el refresh token en la bd
-            self.uow.refresh_token_repo.save(
+            uow.refresh_token_repo.save(
                 user_id=user_id,
                 role=role,
                 jti=jti,
@@ -52,7 +52,7 @@ class UserLogin:
 
             # Actualizar la fecha de último login del usuario
             user.last_connection = datetime.now()
-            self.uow.user_repo.update_user(user)
+            uow.user_repo.update_user(user)
 
 
         return AuthTokensResponse(access_token, refresh_token)

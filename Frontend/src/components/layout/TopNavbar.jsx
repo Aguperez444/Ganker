@@ -1,10 +1,16 @@
 import { useState, useRef, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
+import ChatNavbarButton from "../chat/ChatNavbarButton.jsx";
 import AvatarUsuarioComponent from "../common/AvatarUsuarioComponent";
 import { esAdmin } from "../../utils/rutas";
 
-const TopNavbar = ({ onOpenMenu, onOpenChat, showChatButton = true }) => {
+const TopNavbar = ({
+  onOpenMenu,
+  onOpenChat,
+  showChatButton = true,
+  chatVisible = false,
+}) => {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
@@ -79,25 +85,13 @@ const TopNavbar = ({ onOpenMenu, onOpenChat, showChatButton = true }) => {
       </div>
 
       <div className="ml-3 flex shrink-0 items-center gap-2">
-        {/* Chat tablet/mobile */}
+        {/* Atajo para enviar un mensaje: siempre al lado del avatar, no solo
+            en mobile/tablet. Funciona como interruptor: en desktop
+            oculta/muestra el panel fijo de chat, en mobile/admin abre/cierra
+            el drawer. `chatVisible` refleja ese estado en el label y en el
+            estilo (igual criterio que el item activo del sidebar). */}
         {showChatButton && (
-          <button
-            type="button"
-            onClick={onOpenChat}
-            aria-label="Abrir conversaciones"
-            className="flex h-10 w-10 cursor-pointer items-center justify-center rounded-lg text-ganker-muted transition hover:bg-ganker-surface-light hover:text-ganker-text xl:hidden"
-          >
-            <svg
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="1.8"
-              className="h-5 w-5"
-              aria-hidden="true"
-            >
-              <path d="M21 15a4 4 0 0 1-4 4H8l-5 3V7a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4Z" />
-            </svg>
-          </button>
+          <ChatNavbarButton onOpenChat={onOpenChat} chatVisible={chatVisible} />
         )}
 
         {/* Usuario */}
