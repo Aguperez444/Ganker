@@ -112,6 +112,11 @@ const useGameProfile = () => {
   }, [selectedGameId]);
 
   const selectGame = (gameId) => {
+    // Volver a clickear el juego ya seleccionado no hace nada: si limpiaramos
+    // los catalogos, el useEffect de selectedGameId no se re-dispara (el id
+    // no cambio) y el formulario quedaria sin personajes, roles ni rangos.
+    if (String(gameId) === String(selectedGameId)) return;
+
     setSelectedGameId(gameId);
 
     setCharacters([]);
