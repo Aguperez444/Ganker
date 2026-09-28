@@ -1,11 +1,10 @@
 from app.application.ports.i_storage_service import IStorageService
 from app.application.ports.i_unit_of_work import IUnitOfWork
 from app.infrastructure.api.dto.response.base_classes.region_object_response import RegionObjectResponse
-from exceptions.region.duplicated_region_name_exception import DuplicatedRegionNameException
-from exceptions.region.invalid_region_name_exception import InvalidRegionNameException
-from models.region import Region
-from services.catalog_validation_service import CatalogValidationService
-from services.slug_service import SlugService
+from app.domain.exceptions.region.duplicated_region_name_exception import DuplicatedRegionNameException
+from app.domain.exceptions.region.invalid_region_name_exception import InvalidRegionNameException
+from app.domain.models.region import Region
+from app.domain.services.catalog_validation_service import CatalogValidationService
 
 
 class CreateRegion:

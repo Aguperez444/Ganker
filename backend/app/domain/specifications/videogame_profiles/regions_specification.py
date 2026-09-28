@@ -1,4 +1,4 @@
-from specifications.base import Specification
+from app.domain.specifications.base import Specification
 
 
 class ByRegionsSpecification(Specification):

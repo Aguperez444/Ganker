@@ -1,7 +1,7 @@
 from app.application.ports.i_storage_service import IStorageService
 from app.application.ports.i_unit_of_work import IUnitOfWork
 from app.infrastructure.api.dto.response.delete.delete_region_response import DeleteRegionResponse
-from exceptions.region.region_not_found_exception import RegionNotFoundException
+from app.domain.exceptions.region.region_not_found_exception import RegionNotFoundException
 
 
 class DeleteRegion:

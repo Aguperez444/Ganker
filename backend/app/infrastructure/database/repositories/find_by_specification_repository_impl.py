@@ -1,5 +1,4 @@
 from sqlalchemy.orm import Session, joinedload
-
 from app.application.ports.i_find_by_specifications_service import IFindBySpecificationRepository
 from app.domain.specifications.base import Specification, AndSpecification
 from app.domain.specifications.videogame_profiles.characters_specification import ByCharactersSpecification
@@ -115,5 +114,5 @@ class FindBySpecificationRepositoryImpl(IFindBySpecificationRepository):
             region=RegionObjectResponse(
                 region_id=game_profile_domain.region.region_id,
                 name=game_profile_domain.region.name
-            )
+            ) if game_profile_domain.region else "Sin Especificar"
         )

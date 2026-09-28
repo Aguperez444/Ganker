@@ -10,11 +10,13 @@ from app.domain.services.catalog_validation_service import CatalogValidationServ
 from app.domain.services.game_profile_validation_service import GameProfileValidationService
 from app.infrastructure.api.dto.request.create_videogame_profile_request import CreateGameProfileRequest
 
+
 if TYPE_CHECKING:
     from app.domain.models.role import Role
     from app.domain.models.rank import Rank
     from app.domain.models.videogame import Videogame
     from app.domain.models.character import Character
+    from app.domain.models.region import Region
 
 
 class CreateVideogameProfile:
@@ -65,7 +67,7 @@ class CreateVideogameProfile:
                 )
                 new_role_profiles.append(role_profile)
             # Busco la region en la base de datos
-            region: 'Region' = CatalogValidationService
+            region: 'Region' = CatalogValidationService.get_and_validate_exists_region(create_videogame_profile_request.region_id, uow)
 
             # Creo la lista de CharacterPriority a partir de la lista de personajes, asignando prioridad según el orden del array.
             prioritized_characters = [CharacterPriority(priority_id=None,priority=index,character=char) for index, char in enumerate(characters, start=1)]
@@ -75,7 +77,8 @@ class CreateVideogameProfile:
                 player_id = player_id,
                 videogame = videogame,
                 characters_priority = prioritized_characters,
-                role_profiles = new_role_profiles
+                role_profiles = new_role_profiles,
+                region= region
             )
 
             # Persisto el game_profile en la base de datos
