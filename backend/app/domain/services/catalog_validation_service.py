@@ -10,6 +10,7 @@ from app.domain.exceptions.game_profile.game_profile_already_exist_exception imp
 from app.domain.exceptions.mail.email_already_exists_exception import EmailAlreadyExistsException
 from app.domain.exceptions.user.username_already_exists_exception import UsernameAlreadyExistsException
 from app.domain.exceptions.videogame.videogame_already_exists_exception import VideogameAlreadyExistsException
+from app.domain.exceptions.region.region_not_found_exception import RegionNotFoundException
 
 if TYPE_CHECKING:
     from app.application.ports.i_unit_of_work import IUnitOfWork
@@ -58,6 +59,13 @@ class CatalogValidationService:
         if game_profile.player_id != player_id:
             raise DoesNotBelongToProfileException("perfil de juego", f"{game_profile_id}")
         return game_profile
+
+    @staticmethod
+    def get_and_validate_exists_region(region_id: int, uow: 'IUnitOfWork'):
+        region = uow.region_repo.get_region_by_id(region_id)
+        if not region:
+            raise RegionNotFoundException(region_id)
+        return region
 
     @staticmethod
     def validate_new_character_name_uniqueness(name: str, videogame_id: int, uow: 'IUnitOfWork'):
