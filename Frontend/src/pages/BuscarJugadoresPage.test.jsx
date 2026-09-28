@@ -8,12 +8,10 @@ import BuscarJugadoresPage from "./BuscarJugadoresPage";
 import { obtenerJugadorActual } from "../api/jugadoresApi";
 import { iniciarConversacion, obtenerConversaciones } from "../api/chatApi";
 import { getGames } from "../api/gameApi";
-import {
-  getRanksByGame,
-  getRolesByGame,
-  getCharactersByGame,
-  searchGameProfiles,
-} from "../api/gameProfileApi";
+import { searchGameProfiles } from "../api/gameProfileApi";
+import { getCharactersByGame } from "../api/characterApi";
+import { getRolesByGame } from "../api/roleApi";
+import { getRanksByGame } from "../api/rankApi";
 
 vi.mock("../api/jugadoresApi", () => ({
   registrarJugador: vi.fn(),
@@ -34,12 +32,25 @@ vi.mock("../api/gameApi", () => ({
 }));
 
 vi.mock("../api/gameProfileApi", () => ({
-  getRanksByGame: vi.fn(),
-  getRolesByGame: vi.fn(),
-  getCharactersByGame: vi.fn(),
   createGameProfile: vi.fn(),
   updateGameProfile: vi.fn(),
   searchGameProfiles: vi.fn(),
+}));
+
+vi.mock("../api/characterApi", () => ({
+  getCharactersByGame: vi.fn(),
+  createCharacter: vi.fn(),
+  updateCharacter: vi.fn(),
+}));
+
+vi.mock("../api/roleApi", () => ({
+  getRolesByGame: vi.fn(),
+  createRole: vi.fn(),
+}));
+
+vi.mock("../api/rankApi", () => ({
+  getRanksByGame: vi.fn(),
+  createRank: vi.fn(),
 }));
 
 vi.mock("../api/axiosClient", () => ({
@@ -137,10 +148,7 @@ function perfilesDePrueba({ ranks, roles, characters, name } = {}) {
     if (roles && !roles.includes(perfil.role_profiles[0].role.role_id)) {
       return false;
     }
-    if (
-      characters &&
-      !characters.includes(perfil.characters[0].character_id)
-    ) {
+    if (characters && !characters.includes(perfil.characters[0].character_id)) {
       return false;
     }
     if (

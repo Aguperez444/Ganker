@@ -1,13 +1,10 @@
 import { useEffect, useState } from "react";
 import { getGames } from "../api/gameApi";
-import {
-  createGameProfile,
-  getCharactersByGame,
-  getRanksByGame,
-  getRolesByGame,
-  updateGameProfile,
-} from "../api/gameProfileApi";
+import { createGameProfile, updateGameProfile } from "../api/gameProfileApi";
 import { useAuth } from "../context/AuthContext";
+import { getCharactersByGame } from "../api/characterApi";
+import { getRolesByGame } from "../api/roleApi";
+import { getRanksByGame } from "../api/rankApi";
 
 const useGameProfile = () => {
   const { refrescarUsuario } = useAuth();
@@ -34,7 +31,9 @@ const useGameProfile = () => {
   const selectedGame = games.find(
     (game) => String(game.id) === String(selectedGameId)
   );
-  const usesRankPerRole = selectedGame ? Boolean(selectedGame.rank_per_role) : true;
+  const usesRankPerRole = selectedGame
+    ? Boolean(selectedGame.rank_per_role)
+    : true;
 
   // US 08 - Editar perfil de juego.
   // null = se esta creando un perfil nuevo. Con id = se esta editando ese

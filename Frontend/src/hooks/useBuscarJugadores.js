@@ -1,11 +1,9 @@
 import { useEffect, useMemo, useState } from "react";
 import { getGames } from "../api/gameApi";
-import {
-  getCharactersByGame,
-  getRanksByGame,
-  getRolesByGame,
-  searchGameProfiles,
-} from "../api/gameProfileApi";
+import { searchGameProfiles } from "../api/gameProfileApi";
+import { getCharactersByGame } from "../api/characterApi";
+import { getRolesByGame } from "../api/roleApi";
+import { getRanksByGame } from "../api/rankApi";
 
 // El filtro de username exige minimo 4 caracteres del lado del backend
 // (SearchVideogameProfilesRequest.name, Field(min_length=4)); mandar menos
@@ -71,6 +69,7 @@ export function useBuscarJugadores() {
   const [roleId, setRoleId] = useState("");
   const [characterId, setCharacterId] = useState("");
   const [username, setUsername] = useState("");
+  const [usernameDebounced, setUsernameDebounced] = useState("");
   const [pagina, setPagina] = useState(1);
   const [orden, setOrden] = useState("");
 
@@ -105,6 +104,14 @@ export function useBuscarJugadores() {
       cancelado = true;
     };
   }, []);
+
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      setUsernameDebounced(username);
+    }, 350);
+
+    return () => clearTimeout(timeoutId);
+  }, [username]);
 
   useEffect(() => {
     let cancelado = false;
@@ -161,8 +168,15 @@ export function useBuscarJugadores() {
         return;
       }
 
-      const usernameBuscado = username.trim();
+      const usernameBuscado = usernameDebounced.trim();
 
+      if (
+        usernameBuscado.length > 0 &&
+        usernameBuscado.length < LARGO_MINIMO_USERNAME
+      ) {
+        setIsLoadingResultados(false);
+        return;
+      }
       try {
         setIsLoadingResultados(true);
         setResultadosError("");
@@ -172,10 +186,7 @@ export function useBuscarJugadores() {
           ranks: rankId ? [Number(rankId)] : undefined,
           roles: roleId ? [Number(roleId)] : undefined,
           characters: characterId ? [Number(characterId)] : undefined,
-          name:
-            usernameBuscado.length >= LARGO_MINIMO_USERNAME
-              ? usernameBuscado
-              : undefined,
+          name: usernameBuscado || undefined,
           page: 1,
           page_size: MAX_RESULTADOS_A_TRAER,
         });
@@ -201,7 +212,7 @@ export function useBuscarJugadores() {
     // eslint-disable-next-line react-hooks/exhaustive-deps -- pagina y orden
     // no van aca: se resuelven en memoria sobre todosLosResultados, no
     // ameritan volver a pedirle al backend.
-  }, [selectedGameId, rankId, roleId, characterId, username]);
+  }, [selectedGameId, rankId, roleId, characterId, usernameDebounced]);
 
   // Cualquier cambio de filtro/juego vuelve a la pagina 1: si no, se podria
   // quedar en una pagina que ya no tiene sentido para el nuevo filtro (ej.

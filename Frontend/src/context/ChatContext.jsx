@@ -90,7 +90,12 @@ export function ChatProvider({ children }) {
   const [error, setError] = useState(null);
   const cargandoConversacionesRef = useRef(false);
 
+  const conversacionesRef = useRef([]);
   const esDesktop = useIsDesktop();
+
+  useEffect(() => {
+    conversacionesRef.current = conversaciones;
+  }, [conversaciones]);
 
   useEffect(() => {
     guardarPreferenciaBooleana(CLAVE_CHAT_ABIERTO, chatAbierto);
@@ -169,17 +174,26 @@ export function ChatProvider({ children }) {
   // sala activa, asi que queda centralizado aca en vez de duplicarse.
   const actualizarUltimoMensaje = useCallback(
     (conversationId, ultimoMensaje, { esVista }) => {
+      const existe = conversacionesRef.current.some(
+        (c) => c.conversation_id === conversationId
+      );
+
+      if (!existe) {
+        cargarConversaciones();
+        return;
+      }
+
       setConversaciones((actuales) => {
         const indice = actuales.findIndex(
           (c) => c.conversation_id === conversationId
         );
 
         if (indice === -1) {
-          cargarConversaciones();
           return actuales;
         }
 
         const conversacion = actuales[indice];
+
         const actualizada = {
           ...conversacion,
           last_message: ultimoMensaje,
@@ -187,7 +201,9 @@ export function ChatProvider({ children }) {
         };
 
         const resto = [...actuales];
+
         resto.splice(indice, 1);
+
         return [actualizada, ...resto];
       });
     },

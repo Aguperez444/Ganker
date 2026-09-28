@@ -1,8 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import AvatarUsuarioComponent from "../common/AvatarUsuarioComponent";
 import { useChatSocket } from "../../hooks/useChatSocket";
+import { useChatHistory } from "../../hooks/useChatHistory";
 import { useChat } from "../../context/ChatContext";
-import { obtenerHistorialMensajes } from "../../api/chatApi";
 import MessageBubbleComponent from "./MessageBubbleComponent";
 import MessageInputComponent from "./MessageInputComponent";
 
@@ -17,11 +17,14 @@ const TAMANO_PAGINA_HISTORIAL = 50;
 
 function mismoMinuto(a, b) {
   if (!a || !b) return false;
+
   const fechaA = new Date(a);
   const fechaB = new Date(b);
+
   if (Number.isNaN(fechaA.getTime()) || Number.isNaN(fechaB.getTime())) {
     return false;
   }
+
   return (
     fechaA.getFullYear() === fechaB.getFullYear() &&
     fechaA.getMonth() === fechaB.getMonth() &&
@@ -31,8 +34,11 @@ function mismoMinuto(a, b) {
   );
 }
 
-// Carga el historial antes de montar ChatWindowInterna: useChatSocket solo
-// lee mensajesIniciales una vez, al montarse.
+// Este componente prepara el historial inicial antes de montar
+// ChatWindowInterna.
+//
+// La llamada HTTP ya no se hace directamente desde el componente:
+// useChatHistory se ocupa de la comunicación con la capa api.
 const ChatWindowComponent = ({
   conversacion,
   currentUserId,
@@ -43,8 +49,12 @@ const ChatWindowComponent = ({
   const { obtenerMensajesDeConversacion, sembrarMensajesDeConversacion } =
     useChat();
 
-  // Lectura pura del cache: si ya se cargo esta conversacion en la sesion
-  // actual, no hace falta pedirla de nuevo.
+  const { cargarPaginaHistorial } = useChatHistory(
+    conversacion.conversation_id
+  );
+
+  // Si ya abrimos esta conversación durante la sesión,
+  // reutilizamos los mensajes guardados en el cache del ChatContext.
   const mensajesCacheados = obtenerMensajesDeConversacion(
     conversacion.conversation_id
   );
@@ -57,33 +67,36 @@ const ChatWindowComponent = ({
 
     let cancelado = false;
 
-    obtenerHistorialMensajes(conversacion.conversation_id, {
+    cargarPaginaHistorial({
       page: 1,
       size: TAMANO_PAGINA_HISTORIAL,
     })
       .then((mensajes) => {
         if (cancelado) return;
-        // El backend los devuelve del mas nuevo al mas viejo.
-        const ordenados = [...mensajes].reverse();
-        sembrarMensajesDeConversacion(
-          conversacion.conversation_id,
-          ordenados
-        );
-        setMensajesDelFetch(ordenados);
+
+        sembrarMensajesDeConversacion(conversacion.conversation_id, mensajes);
+
+        setMensajesDelFetch(mensajes);
       })
-      .catch((err) => {
+      .catch((error) => {
         if (cancelado) return;
-        console.error("Error al cargar el historial de mensajes:", err);
+
+        console.error("Error al cargar el historial de mensajes:", error);
+
         setErrorHistorial("No se pudo cargar el historial de mensajes.");
+
         setMensajesDelFetch([]);
       });
 
     return () => {
       cancelado = true;
     };
-    // Solo debe correr al montar (el componente se remonta por conversacion).
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [conversacion.conversation_id]);
+  }, [
+    conversacion.conversation_id,
+    mensajesCacheados,
+    cargarPaginaHistorial,
+    sembrarMensajesDeConversacion,
+  ]);
 
   const mensajesIniciales = mensajesCacheados ?? mensajesDelFetch;
 
@@ -108,9 +121,6 @@ const ChatWindowComponent = ({
   );
 };
 
-// A diferencia del resto de componentes del proyecto, este abre su propia
-// conexion (useChatSocket). `onMensaje` avisa a ChatContext de cada mensaje
-// para actualizar el ultimo mensaje de la lista de conversaciones.
 const ChatWindowInterna = ({
   conversacion,
   currentUserId,
@@ -122,98 +132,132 @@ const ChatWindowInterna = ({
 }) => {
   const { actualizarMensajesDeConversacion, marcarConversacionComoVista } =
     useChat();
+
+  const { cargarPaginaHistorial } = useChatHistory(
+    conversacion.conversation_id
+  );
+
   const mensajesRef = useRef(null);
+
   const [cargandoAnteriores, setCargandoAnteriores] = useState(false);
+
   const [errorAnteriores, setErrorAnteriores] = useState(null);
+
   const [hayMasAnteriores, setHayMasAnteriores] = useState(
     mensajesIniciales.length >= TAMANO_PAGINA_HISTORIAL
   );
+
   const paginaRef = useRef(1);
 
+  const restaurarScrollRef = useRef(null);
+
   const otroParticipante = conversacion.other_participant;
+
   const nombreOtro =
     otroParticipante?.name || otroParticipante?.username || "Jugador";
 
-  // Cubre el caso de reabrir el panel/drawer con una conversacion ya
-  // activa: eso remonta este componente sin pasar por seleccionarConversacion.
+  // Si se reabre el panel/drawer con la conversación ya activa,
+  // volvemos a marcarla como vista.
   useEffect(() => {
     marcarConversacionComoVista(conversacion.conversation_id);
   }, [conversacion.conversation_id, marcarConversacionComoVista]);
 
-  const { mensajes, setMensajes, estado, error, enviarMensaje } =
-    useChatSocket(
-      conversacion.conversation_id,
-      mensajesIniciales,
-      (mensaje) => onMensaje?.(conversacion.conversation_id, mensaje)
-    );
+  const { mensajes, setMensajes, estado, error, enviarMensaje } = useChatSocket(
+    conversacion.conversation_id,
+    mensajesIniciales,
+    (mensaje) => onMensaje?.(conversacion.conversation_id, mensaje)
+  );
 
-  // El check de "leido" se muestra en cascada: solo en el ultimo mensaje propio.
+  // Solo mostramos el indicador de leído en el último mensaje propio.
   const indiceUltimoMensajePropio = useMemo(() => {
-    for (let i = mensajes.length - 1; i >= 0; i--) {
-      if (mensajes[i].sender_id === currentUserId) return i;
+    for (let indice = mensajes.length - 1; indice >= 0; indice--) {
+      if (mensajes[indice].sender_id === currentUserId) {
+        return indice;
+      }
     }
+
     return -1;
   }, [mensajes, currentUserId]);
 
-  // Mantiene el cache de ChatContext al dia con lo que se ve en pantalla.
+  // Mantiene actualizado el cache global de mensajes de ChatContext.
   useEffect(() => {
     actualizarMensajesDeConversacion(conversacion.conversation_id, mensajes);
-  }, [conversacion.conversation_id, mensajes, actualizarMensajesDeConversacion]);
-
-  // Guarda la altura/scroll previos para restaurar la posicion al
-  // prepender mensajes viejos (el navegador no lo hace solo).
-  const restaurarScrollRef = useRef(null);
+  }, [
+    conversacion.conversation_id,
+    mensajes,
+    actualizarMensajesDeConversacion,
+  ]);
 
   const cargarMensajesAnteriores = async () => {
-    if (cargandoAnteriores || !hayMasAnteriores) return;
+    if (cargandoAnteriores || !hayMasAnteriores) {
+      return;
+    }
 
     setCargandoAnteriores(true);
     setErrorAnteriores(null);
+
     const siguientePagina = paginaRef.current + 1;
 
     try {
-      const mensajesAnteriores = await obtenerHistorialMensajes(
-        conversacion.conversation_id,
-        { page: siguientePagina, size: TAMANO_PAGINA_HISTORIAL }
-      );
+      const mensajesAnteriores = await cargarPaginaHistorial({
+        page: siguientePagina,
+        size: TAMANO_PAGINA_HISTORIAL,
+      });
 
       paginaRef.current = siguientePagina;
+
       setHayMasAnteriores(mensajesAnteriores.length >= TAMANO_PAGINA_HISTORIAL);
 
       if (mensajesAnteriores.length > 0) {
-        const ordenados = [...mensajesAnteriores].reverse();
         const contenedor = mensajesRef.current;
+
         restaurarScrollRef.current = contenedor
-          ? { alturaPrevia: contenedor.scrollHeight, scrollPrevio: contenedor.scrollTop }
+          ? {
+              alturaPrevia: contenedor.scrollHeight,
+              scrollPrevio: contenedor.scrollTop,
+            }
           : null;
 
         setMensajes((actuales) => {
           const idsExistentes = new Set(
-            actuales.map((m) => m.message_id).filter((id) => id != null)
+            actuales
+              .map((mensaje) => mensaje.message_id)
+              .filter((id) => id != null)
           );
-          const nuevos = ordenados.filter(
-            (m) => !idsExistentes.has(m.message_id)
+
+          const nuevos = mensajesAnteriores.filter(
+            (mensaje) => !idsExistentes.has(mensaje.message_id)
           );
+
           return [...nuevos, ...actuales];
         });
       }
-    } catch (err) {
-      console.error("Error al cargar mensajes anteriores:", err);
+    } catch (error) {
+      console.error("Error al cargar mensajes anteriores:", error);
+
       setErrorAnteriores("No se pudieron cargar mensajes anteriores.");
     } finally {
       setCargandoAnteriores(false);
     }
   };
 
+  // Mantiene la posición de scroll cuando se cargan
+  // mensajes anteriores.
+  //
+  // Si llega un mensaje nuevo, hace scroll hasta el final.
   useEffect(() => {
     const contenedor = mensajesRef.current;
+
     if (!contenedor) return;
 
     if (restaurarScrollRef.current) {
       const { alturaPrevia, scrollPrevio } = restaurarScrollRef.current;
+
       restaurarScrollRef.current = null;
+
       contenedor.scrollTop =
         contenedor.scrollHeight - alturaPrevia + scrollPrevio;
+
       return;
     }
 
@@ -244,6 +288,7 @@ const ChatWindowInterna = ({
           <h3 className="truncate font-heading text-sm font-semibold text-ganker-text">
             {nombreOtro}
           </h3>
+
           <span className="text-[11px] text-ganker-muted">
             {TEXTO_ESTADO[estado] ?? estado}
           </span>
@@ -295,7 +340,7 @@ const ChatWindowInterna = ({
         ) : (
           mensajes.map((mensaje, indice) => {
             const siguiente = mensajes[indice + 1];
-            // Agrupa la hora solo dentro de una tanda del mismo remitente.
+
             const mostrarHora =
               !siguiente ||
               siguiente.sender_id !== mensaje.sender_id ||
