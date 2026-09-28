@@ -37,6 +37,12 @@ export const updateRank = async({rankId, name , value, icon }) => {
       "Content-Type": "multipart/form-data"
     }
   });
+
   
   return response.data
 }
+
+export const deleteRank = async (rankId) => {
+  const response = await axiosClient.delete(`/api/v1/ranks/${rankId}`);
+  return response.data;
+};

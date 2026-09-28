@@ -1,6 +1,6 @@
 import { resolveIconUrl } from "../../utils/media";
 
-const RanksListComponent = ({ ranks, isLoading, error, onEditRank }) => {
+const RanksListComponent = ({ ranks, isLoading, error, onEditRank, onDeleteRank }) => {
   if (isLoading) {
     return (
       <div className="rounded-xl border border-white/10 bg-ganker-surface-light p-6">
@@ -21,7 +21,7 @@ const RanksListComponent = ({ ranks, isLoading, error, onEditRank }) => {
     return (
       <div className="rounded-xl border border-white/10 bg-ganker-surface-light p-6">
         <p className="text-sm text-ganker-muted">
-          Este videojuego todavía no tiene rangos registrados.
+          No se encontraron rangos con ese criterio de búsqueda.
         </p>
       </div>
     );
@@ -74,12 +74,22 @@ const RanksListComponent = ({ ranks, isLoading, error, onEditRank }) => {
               <span className="shrink-0 rounded-full bg-ganker-purple/20 px-3 py-1 text-xs font-semibold text-ganker-purple-light">
                 Valor {rank.value}
               </span>
+
               <button
                 type="button"
                 onClick={() => onEditRank(rank.id)}
                 className="cursor-pointer rounded-lg border border-white/10 px-3 py-1.5 text-xs font-semibold text-ganker-purple-light transition hover:bg-ganker-purple/20 hover:text-ganker-text"
               >
                 Editar
+              </button>
+
+              {/* Botón de Eliminar */}
+              <button
+                type="button"
+                onClick={() => onDeleteRank(rank)}
+                className="cursor-pointer rounded-lg border border-ganker-error/30 px-3 py-1.5 text-xs font-semibold text-ganker-error transition hover:bg-ganker-error/20"
+              >
+                Eliminar
               </button>
             </div>
           </li>

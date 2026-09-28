@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-
+import GameDropdown from "../../components/games/GameDropDown";
 const RankForm = ({
   games = [],
   initialVideogameId = "",
@@ -174,6 +174,11 @@ const RankForm = ({
     ? Boolean(videogameId) && name.trim().length > 0 && value !== ""
     : Boolean(videogameId) && name.trim().length > 0 && value !== "" && iconFile !== null;
 
+  // Calculamos el valor jerárquico máximo existente en la lista
+  const maxExistingValue = ranks && ranks.length > 0 
+    ? Math.max(...ranks.map((r) => Number(r.value) || 0)) 
+    : 0;
+
   return (
     <section className="rounded-2xl border border-white/10 bg-ganker-surface p-6 shadow-xl">
       <header className="mb-6">
@@ -190,35 +195,27 @@ const RankForm = ({
 
       <form onSubmit={handleSubmit} className="flex flex-col gap-6">
         <div>
-          <label
-            htmlFor="rank-videogame"
-            className="mb-2 block text-sm font-medium text-ganker-text"
-          >
-            Videojuego <span className="text-ganker-orange">*</span>
-          </label>
-
-          <select
-            id="rank-videogame"
-            value={videogameId}
-            onChange={(event) => {
-              setVideogameId(event.target.value);
-              if (validationError) setValidationError("");
-            }}
-            disabled={isLoading || isEditing}
-            className="w-full rounded-lg border border-white/10 bg-ganker-surface-light px-4 py-3 text-ganker-text outline-none transition-all duration-200 focus:border-ganker-purple-light focus:ring-2 focus:ring-ganker-purple/30 disabled:cursor-not-allowed disabled:opacity-50"
-          >
-            <option value="" disabled>
-              Seleccioná un videojuego
-            </option>
-            {games.map((game) => (
-              <option key={game.id} value={game.id}>
-                {game.name}
-              </option>
-            ))}
-          </select>
+          <div className="mb-2 flex items-center justify-between">
+            <label className="block text-sm font-medium text-ganker-text">
+              Videojuego <span className="text-ganker-orange">*</span>
+            </label>
+            {isEditing && (
+              <span className="text-xs text-ganker-muted italic">
+                No se puede cambiar el juego al editar
+              </span>
+            )}
+          </div>
+ 
+          <GameDropdown
+            games={games}
+            selectedGameId={videogameId}
+            onSelect={(gameId) => setVideogameId(gameId)}
+            isLoading={isLoading}
+            disabled={isEditing}
+          />
         </div>
 
-        {/* Selector de rango condicional para la edición */}
+ 
         {isEditing && (
           <div>
             <label
@@ -272,13 +269,25 @@ const RankForm = ({
           />
         </div>
 
-        <div>
-          <label
-            htmlFor="rank-value"
-            className="mb-2 block text-sm font-medium text-ganker-text"
-          >
-            Valor jerárquico <span className="text-ganker-orange">*</span>
-          </label>
+       <div>
+          <div className="mb-2 flex items-center justify-between">
+            <label
+              htmlFor="rank-value"
+              className="block text-sm font-medium text-ganker-text"
+            >
+              Valor jerárquico <span className="text-ganker-orange">*</span>
+            </label>
+            {(() => {
+              const maxExistingValue = ranks && ranks.length > 0 
+                ? Math.max(...ranks.map((r) => Number(r.value) || 0)) 
+                : 0;
+              return maxExistingValue > 0 ? (
+                <span className="text-xs text-ganker-muted/70">
+                  Último valor cargado: {maxExistingValue}
+                </span>
+              ) : null;
+            })()}
+          </div>
 
           <input
             id="rank-value"

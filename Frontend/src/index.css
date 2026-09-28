@@ -90,3 +90,16 @@ body {
 .animate-gaming-pulse {
   animation: gaming-pulse 2.8s ease-in-out infinite;
 }
+
+@keyframes success-color-pulse {
+  0%, 100% {
+    color: var(--color-ganker-success);
+  }
+  50% {
+    color: var(--color-ganker-orange);
+  }
+}
+
+.animate-success-pulse {
+  animation: success-color-pulse 1.5s ease-in-out infinite;
+}
