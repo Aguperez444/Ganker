@@ -7,6 +7,7 @@ const GameListComponent = ({
   selectedGameId,
   onEdit,
   onEditRoles,
+  onEditRanks,
 }) => {
   if (isLoading) {
     return (
@@ -80,7 +81,17 @@ const GameListComponent = ({
               </p>
             </div>
 
-            <div className="flex items-center gap-2 self-end sm:self-auto">
+            <div className="flex flex-wrap items-center gap-2 self-end sm:self-auto">
+              {onEditRanks && (
+                <button
+                  type="button"
+                  onClick={() => onEditRanks(game)}
+                  className="cursor-pointer rounded-lg bg-ganker-orange/20 px-3 py-2 text-xs font-semibold text-ganker-orange transition hover:bg-ganker-orange/30 hover:text-ganker-text whitespace-nowrap"
+                >
+                  Modificar rangos
+                </button>
+              )}
+
               <button
                 type="button"
                 onClick={() => onEditRoles && onEditRoles(game)}

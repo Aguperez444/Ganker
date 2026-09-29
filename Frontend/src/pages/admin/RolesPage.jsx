@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import RoleForm from "../../components/roles/RoleFormComponent";
 import RolesListComponent from "../../components/roles/RolesListComponent";
-import GameDropdown from "../../components/common/GameDropdown";
+import GameDropdown from "../../components/games/GameDropDown";
 import useGames from "../../hooks/useGames";
 import useRoles from "../../hooks/useRoles";
 
@@ -201,7 +201,7 @@ const RolesPage = () => {
                 roles={filteredRoles}
                 isLoading={isLoadingRoles}
                 error={rolesError}
-                onEditRole={(roleId) => handleOpenEdit(roleId)}
+                onSelectRole={(roleId) => handleOpenEdit(roleId)}
                 onDeleteRole={(role) => handleOpenDelete(role)}
               />
             ) : (

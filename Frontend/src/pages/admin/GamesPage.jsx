@@ -1,15 +1,25 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import GameForm from "../../components/games/GameFormComponent";
 import GameListComponent from "../../components/games/GamesListComponent";
-import RoleForm from "../../components/roles/RoleFormComponent"; // Asegúrate de tener este componente
+import GameRolesPanelComponent from "../../components/roles/GameRolesPanelComponent";
+import RoleForm from "../../components/roles/RoleFormComponent";
 import useGames from "../../hooks/useGames";
-import useRoles from "../../hooks/useRoles"; // Hook de roles que armamos antes
+import useRoles from "../../hooks/useRoles";
 
 const GamesPage = () => {
-  const [mode, setMode] = useState(null); // "create", "edit", "roles", o null
+  const navigate = useNavigate();
+
+  // "create" | "edit" | "roles" (lista de roles del juego) | "role-form"
+  const [mode, setMode] = useState(null);
   const [selectedGame, setSelectedGame] = useState(null);
+  const [selectedRoleId, setSelectedRoleId] = useState("");
+  const [roleFormMode, setRoleFormMode] = useState("edit");
   const [successMessage, setSuccessMessage] = useState("");
   const [hasSeenMessage, setHasSeenMessage] = useState(false);
+
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [roleToDelete, setRoleToDelete] = useState(null);
 
   const {
     games,
@@ -22,18 +32,23 @@ const GamesPage = () => {
     clearActionError,
   } = useGames();
 
-  // Hook para la gestión de roles del juego seleccionado
   const {
     roles,
     isLoading: isLoadingRoles,
+    isSaving: isSavingRole,
+    error: rolesError,
+    actionError: roleActionError,
     registerRole,
     editRole,
+    deleteRole,
     loadRoles,
     clearActionError: clearRoleError,
   } = useRoles();
 
-  const [selectedRoleId, setSelectedRoleId] = useState("");
-  const [roleFormMode, setRoleFormMode] = useState("create"); // "create" o "edit" dentro del panel de roles
+  const showSuccess = (message) => {
+    setSuccessMessage(message);
+    setHasSeenMessage(false);
+  };
 
   const handleOpenRegister = () => {
     clearActionError();
@@ -49,15 +64,50 @@ const GamesPage = () => {
     setMode("edit");
   };
 
+  // La pagina de rangos lee el juego del state de la navegacion, asi que la
+  // lista de rangos de ese juego ya aparece cargada al llegar.
+  const handleOpenRanks = (game) => {
+    navigate("/app/admin/ranks", { state: { videogameId: game.id } });
+  };
+
   const handleOpenRoles = (game) => {
     clearActionError();
     clearRoleError();
     setSuccessMessage("");
     setSelectedGame(game);
+    setSelectedRoleId("");
     setMode("roles");
+    loadRoles(game.id);
+  };
+
+  const handleSelectRole = (roleId) => {
+    clearRoleError();
+    setSuccessMessage("");
+    setSelectedRoleId(roleId);
+    setRoleFormMode("edit");
+    setMode("role-form");
+  };
+
+  const handleOpenRoleRegister = () => {
+    clearRoleError();
+    setSuccessMessage("");
     setSelectedRoleId("");
     setRoleFormMode("create");
-    loadRoles(game.id);
+    setMode("role-form");
+  };
+
+  const handleBackToRoles = () => {
+    clearRoleError();
+    setSelectedRoleId("");
+    setMode("roles");
+  };
+
+  const handleClosePanel = () => {
+    clearActionError();
+    clearRoleError();
+    setSelectedGame(null);
+    setSelectedRoleId("");
+    setMode(null);
   };
 
   const handleCancel = () => {
@@ -72,8 +122,7 @@ const GamesPage = () => {
     if (!success) return;
 
     const gameName = typeof gameData === "object" ? gameData.name : gameData;
-    setSuccessMessage(`Videojuego "${gameName}" registrado correctamente.`);
-    setHasSeenMessage(false);
+    showSuccess(`Videojuego "${gameName}" registrado correctamente.`);
     setMode(null);
   };
 
@@ -84,8 +133,7 @@ const GamesPage = () => {
     if (!success) return;
 
     const gameName = typeof gameData === "object" ? gameData.name : gameData;
-    setSuccessMessage(`Videojuego "${gameName}" modificado correctamente.`);
-    setHasSeenMessage(false);
+    showSuccess(`Videojuego "${gameName}" modificado correctamente.`);
     setMode(null);
     setSelectedGame(null);
   };
@@ -94,9 +142,10 @@ const GamesPage = () => {
     const success = await registerRole(roleData);
     if (!success) return;
 
-    setSuccessMessage(`Rol "${roleData.name}" registrado correctamente para ${selectedGame?.name}.`);
-    setHasSeenMessage(false);
-    setMode(null);
+    showSuccess(
+      `Rol "${roleData.name}" registrado correctamente para ${selectedGame?.name}.`
+    );
+    handleBackToRoles();
   };
 
   const handleUpdateRole = async (roleData) => {
@@ -109,9 +158,35 @@ const GamesPage = () => {
     });
     if (!success) return;
 
-    setSuccessMessage(`Rol "${roleData.name}" modificado correctamente.`);
+    showSuccess(`Rol "${roleData.name}" modificado correctamente.`);
+    handleBackToRoles();
+  };
+
+  const handleOpenDelete = (role) => {
+    clearRoleError();
+    setSuccessMessage("");
     setHasSeenMessage(false);
-    setMode(null);
+    setRoleToDelete(role);
+    setIsDeleteModalOpen(true);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!roleToDelete || !selectedGame) return;
+
+    const success = await deleteRole({
+      roleId: roleToDelete.id,
+      videogame_id: Number(selectedGame.id),
+    });
+    if (!success) return;
+
+    showSuccess(`Rol "${roleToDelete.name}" eliminado correctamente.`);
+    setIsDeleteModalOpen(false);
+    setRoleToDelete(null);
+  };
+
+  const handleCancelDelete = () => {
+    setIsDeleteModalOpen(false);
+    setRoleToDelete(null);
   };
 
   return (
@@ -146,7 +221,9 @@ const GamesPage = () => {
 
         <div
           className={`mt-8 grid gap-6 ${
-            mode ? "lg:grid-cols-[minmax(0,1.4fr)_minmax(320px,0.8fr)]" : "grid-cols-1"
+            mode
+              ? "lg:grid-cols-[minmax(0,1.4fr)_minmax(320px,0.8fr)]"
+              : "grid-cols-1"
           }`}
         >
           <section className="min-w-0 rounded-2xl border border-white/10 bg-ganker-surface p-6 shadow-xl">
@@ -177,7 +254,8 @@ const GamesPage = () => {
               error={error}
               selectedGameId={selectedGame?.id}
               onEdit={handleOpenEdit}
-              onEditRoles={handleOpenRoles} // <--- Pasamos esta función para el nuevo botón en la lista
+              onEditRoles={handleOpenRoles}
+              onEditRanks={handleOpenRanks}
             />
           </section>
 
@@ -208,27 +286,91 @@ const GamesPage = () => {
             />
           )}
 
-          {/* Panel Lateral para la gestión / modificación de Roles del juego seleccionado */}
+          {/* Panel con los roles del juego seleccionado */}
           {mode === "roles" && selectedGame && (
-            <RoleForm
+            <GameRolesPanelComponent
               key={`roles-${selectedGame.id}`}
+              game={selectedGame}
+              roles={roles}
+              isLoading={isLoadingRoles}
+              isSaving={isSavingRole}
+              error={rolesError}
+              selectedRoleId={selectedRoleId}
+              onSelectRole={handleSelectRole}
+              onDeleteRole={handleOpenDelete}
+              onRegisterRole={handleOpenRoleRegister}
+              onClose={handleClosePanel}
+            />
+          )}
+
+          {/* Formulario de rol: registra o modifica el rol elegido en el panel */}
+          {mode === "role-form" && selectedGame && (
+            <RoleForm
+              key={`role-form-${selectedGame.id}-${
+                roleFormMode === "edit" ? selectedRoleId : "new"
+              }`}
               games={games}
               roles={roles}
               initialVideogameId={selectedGame.id}
               initialRoleId={selectedRoleId}
               isEditing={roleFormMode === "edit"}
-              isLoading={isLoadingRoles || isSaving}
-              error={actionError}
-              onSelectRole={(roleId) => {
-                setSelectedRoleId(roleId);
-                if (roleId) setRoleFormMode("edit");
-              }}
+              lockVideogame
+              hideRoleSelector
+              isLoading={isSavingRole}
+              error={roleActionError}
               onSubmit={roleFormMode === "edit" ? handleUpdateRole : handleRegisterRole}
-              onCancel={handleCancel}
+              onCancel={handleBackToRoles}
+              onBack={handleBackToRoles}
             />
           )}
         </div>
       </div>
+
+      {isDeleteModalOpen && roleToDelete && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+          <div className="w-full max-w-md rounded-2xl border border-white/10 bg-ganker-surface p-6 shadow-2xl">
+            <h3 className="font-heading text-xl font-bold text-ganker-text">
+              Eliminar Rol
+            </h3>
+
+            <p className="mt-3 text-sm text-ganker-muted">
+              ¿Estás seguro de que deseas eliminar el rol{" "}
+              <strong className="text-ganker-text">{roleToDelete.name}</strong>?
+            </p>
+
+            <p className="mt-2 text-xs text-ganker-muted">
+              También se van a eliminar los perfiles de rol que lo tengan
+              asignado.
+            </p>
+
+            {roleActionError && (
+              <div className="mt-4 rounded-lg border border-ganker-error/20 bg-ganker-error/10 px-3 py-2">
+                <p className="text-xs text-ganker-error">{roleActionError}</p>
+              </div>
+            )}
+
+            <div className="mt-6 flex items-center justify-end gap-3">
+              <button
+                type="button"
+                onClick={handleCancelDelete}
+                disabled={isSavingRole}
+                className="cursor-pointer rounded-lg border border-white/10 px-4 py-2 text-sm font-semibold text-ganker-text transition hover:bg-white/5 disabled:opacity-50"
+              >
+                Cancelar
+              </button>
+
+              <button
+                type="button"
+                onClick={handleConfirmDelete}
+                disabled={isSavingRole}
+                className="cursor-pointer rounded-lg bg-ganker-error px-4 py-2 text-sm font-semibold text-white shadow-lg transition hover:bg-ganker-error/80 disabled:opacity-50"
+              >
+                {isSavingRole ? "Eliminando..." : "Sí, eliminar"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </section>
   );
 };

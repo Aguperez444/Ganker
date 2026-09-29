@@ -17,7 +17,7 @@ export const createRole = async ({ videogame_id, name, icon }) => {
 
 
   // Sin barra final: la ruta del backend es "/api/v1/roles" (no "/api/v1/roles/").
-  await axiosClient.post("/api/v1/roles", fd, {
+  const response = await axiosClient.post("/api/v1/roles", fd, {
     headers: {
       "Content-Type": "multipart/form-data",
     },

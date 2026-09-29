@@ -1,11 +1,17 @@
 import { useEffect, useState } from "react";
+import { useLocation } from "react-router-dom";
 import RankForm from "../../components/ranks/RankFormComponent";
 import RanksListComponent from "../../components/ranks/RanksListComponent";
 import useGames from "../../hooks/useGames";
 import useRanks from "../../hooks/useRanks";
 
 const RanksPage = () => {
-  const [selectedGameId, setSelectedGameId] = useState("");
+  // Cuando se llega desde "Modificar rangos" en la pagina de juegos, el juego
+  // viene en el state de la navegacion y la lista arranca por ese juego.
+  const location = useLocation();
+  const [selectedGameId, setSelectedGameId] = useState(() =>
+    location.state?.videogameId != null ? String(location.state.videogameId) : ""
+  );
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [successMessage, setSuccessMessage] = useState("");
   const [searchTerm, setSearchTerm] = useState("");

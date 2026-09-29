@@ -1,6 +1,13 @@
 import { resolveIconUrl } from "../../utils/media";
 
-const RolesListComponent = ({ roles, isLoading, error }) => {
+const RolesListComponent = ({
+  roles,
+  isLoading,
+  error,
+  onSelectRole,
+  onDeleteRole,
+  selectedRoleId,
+}) => {
   if (isLoading) {
     return (
       <div className="rounded-xl border border-white/10 bg-ganker-surface-light p-6">
@@ -35,7 +42,12 @@ const RolesListComponent = ({ roles, isLoading, error }) => {
         {sortedRoles.map((role) => (
           <li
             key={role.id}
-            className="flex items-center justify-between gap-4 bg-ganker-surface-light px-5 py-4 transition hover:bg-white/5"
+            className={[
+              "flex items-center justify-between gap-4 px-5 py-4 transition",
+              String(selectedRoleId) === String(role.id)
+                ? "bg-ganker-purple/20"
+                : "bg-ganker-surface-light hover:bg-white/5",
+            ].join(" ")}
           >
             <div className="flex min-w-0 items-center gap-3">
               {resolveIconUrl(role.icon_url) ? (
@@ -68,6 +80,29 @@ const RolesListComponent = ({ roles, isLoading, error }) => {
               <p className="truncate font-medium text-ganker-text">
                 {role.name}
               </p>
+            </div>
+
+            <div className="flex shrink-0 items-center gap-2">
+              {onSelectRole && (
+                <button
+                  type="button"
+                  onClick={() => onSelectRole(role.id)}
+                  className="cursor-pointer rounded-lg border border-white/10 px-3 py-1.5 text-xs font-semibold text-ganker-purple-light transition hover:bg-ganker-purple/20 hover:text-ganker-text"
+                >
+                  Modificar
+                </button>
+              )}
+
+              {onDeleteRole && (
+                <button
+                  type="button"
+                  onClick={() => onDeleteRole(role)}
+                  aria-label={`Eliminar rol ${role.name}`}
+                  className="cursor-pointer rounded-lg border border-ganker-error/30 px-3 py-1.5 text-xs font-semibold text-ganker-error transition hover:bg-ganker-error/15 hover:text-white"
+                >
+                  Eliminar
+                </button>
+              )}
             </div>
           </li>
         ))}

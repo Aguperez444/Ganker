@@ -1,5 +1,6 @@
-import { useCallback, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import { getRolesByGame, createRole, updateRole, deleteRole as deleteRoleApi } from "../api/roleApi";
+import { DELETE_ROLES_HABILITADO } from "../utils/apiFlags";
 
 const useRoles = () => {
   const [roles, setRoles] = useState([]);
@@ -7,6 +8,14 @@ const useRoles = () => {
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState("");
   const [actionError, setActionError] = useState("");
+  // Bajas hechas contra el backend simulado, a la espera de que exista el
+  // endpoint DELETE /api/v1/roles/{id}.
+  const [solicitudesPendientes, setSolicitudesPendientes] = useState([]);
+  // En un ref y no en estado: el backend sigue teniendo el rol, asi que sin
+  // esto volveria a aparecer en cada recarga de la lista. Va en ref para que
+  // loadRoles pueda leerlo sin cambiar de identidad y disparar efecto en las
+  // paginas que dependen de ella.
+  const idsEliminados = useRef(new Set());
 
   const loadRoles = useCallback(async (videogameId) => {
     if (!videogameId) {
@@ -21,13 +30,15 @@ const useRoles = () => {
       const gameRoles = await getRolesByGame(videogameId);
 
       setRoles(
-        (gameRoles || []).map((role) => ({
-          id: role.role_id || role.id,
-          name: role.name,
-          description: role.description,
-          icon_url: role.icon_url,
-          videogame_id: videogameId,
-        }))
+        (gameRoles || [])
+          .map((role) => ({
+            id: role.role_id || role.id,
+            name: role.name,
+            description: role.description,
+            icon_url: role.icon_url,
+            videogame_id: videogameId,
+          }))
+          .filter((role) => !idsEliminados.current.has(role.id))
       );
     } catch (err) {
       console.error("Error al cargar roles:", err);
@@ -94,6 +105,31 @@ const useRoles = () => {
   };
 
   const deleteRole = async ({ roleId, videogame_id }) => {
+    // El backend todavia no expone DELETE /api/v1/roles/{id}. Mientras tanto
+    // la baja se simula aca: el rol sale de la lista y la peticion que habria
+    // que enviar queda guardada en solicitudesPendientes, que es el vector
+    // que despues hay que vaciar contra el endpoint real.
+    if (!DELETE_ROLES_HABILITADO) {
+      const solicitud = {
+        method: "DELETE",
+        url: `/api/v1/roles/${roleId}`,
+        role_id: roleId,
+        videogame_id,
+        registrada_en: new Date().toISOString(),
+      };
+
+      setIsSaving(true);
+      setActionError("");
+
+      setSolicitudesPendientes((actuales) => [...actuales, solicitud]);
+      idsEliminados.current.add(roleId);
+      setRoles((actuales) => actuales.filter((role) => String(role.id) !== String(roleId)));
+
+      setIsSaving(false);
+
+      return true;
+    }
+
     try {
       setIsSaving(true);
       setActionError("");
@@ -129,6 +165,7 @@ const useRoles = () => {
     isSaving,
     error,
     actionError,
+    solicitudesPendientes,
     loadRoles,
     registerRole,
     editRole,

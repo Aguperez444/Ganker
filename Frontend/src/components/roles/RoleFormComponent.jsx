@@ -8,10 +8,13 @@ const RoleForm = ({
   error = "",
   onSubmit,
   onCancel,
+  onBack,
+  lockVideogame = false,
   roles = [],
   isEditing = false,
   onSelectRole,
   initialRoleId = "",
+  hideRoleSelector = false,
 }) => {
   const [videogameId, setVideogameId] = useState(initialVideogameId ?? "");
   const [name, setName] = useState("");
@@ -151,6 +154,8 @@ const RoleForm = ({
 
   const displayedError = validationError || error;
 
+  const videogameLocked = isEditing || lockVideogame;
+
   const hasChanges = isEditing
     ? Boolean(videogameId) && name.trim().length > 0
     : Boolean(videogameId) && name.trim().length > 0 && iconFile !== null;
@@ -158,6 +163,30 @@ const RoleForm = ({
   return (
     <section className="rounded-2xl border border-white/10 bg-ganker-surface p-6 shadow-xl">
       <header className="mb-6">
+        {onBack && (
+          <button
+            type="button"
+            onClick={onBack}
+            disabled={isLoading}
+            className="mb-4 flex cursor-pointer items-center gap-1.5 text-sm font-semibold text-ganker-muted transition hover:text-ganker-text disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            <svg
+              className="h-4 w-4"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M15 19l-7-7 7-7"
+              />
+            </svg>
+            Atrás
+          </button>
+        )}
+
         <h2 className="font-heading text-xl font-semibold text-ganker-text">
           {isEditing ? "Modificar rol" : "Registrar rol"}
         </h2>
@@ -175,9 +204,9 @@ const RoleForm = ({
             <label className="block text-sm font-medium text-ganker-text">
               Videojuego <span className="text-ganker-orange">*</span>
             </label>
-            {isEditing && (
+            {videogameLocked && (
               <span className="text-xs text-ganker-muted italic">
-                No se puede cambiar el videojuego al editar
+                No se puede cambiar el videojuego desde acá
               </span>
             )}
           </div>
@@ -187,12 +216,12 @@ const RoleForm = ({
             selectedGameId={videogameId}
             onSelect={(gameId) => setVideogameId(gameId)}
             isLoading={isLoading}
-            disabled={isEditing}
+            disabled={videogameLocked}
           />
         </div>
 
         {/* Selector de Rol a modificar si estamos en modo edición */}
-        {isEditing && (
+        {isEditing && !hideRoleSelector && (
           <div>
             <label
               htmlFor="role-select"

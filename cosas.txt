@@ -1,0 +1,61 @@
+29 - Modificar rol
+
+    Story
+    Como administrador, quiero modificar el rol para mantener actualizada su información.
+
+    Criterios de aceptación
+    Se debe permitir al administrador seleccionar un rol existente para editarlo.
+
+    Se debe permitir modificar el nombre del rol.
+
+    Se debe permitir actualizar la imagen o ícono representativo del rol.
+
+    No se debe permitir cambiar el videojuego al que pertenece el rol desde esta funcionalidad.
+
+    Se debe validar que los campos obligatorios (como el nombre del rol) no queden vacíos.
+
+    Se debe validar que el nuevo nombre no esté duplicado con otro rol existente dentro del mismo videojuego.
+
+    Los datos modificados deben guardarse correctamente al confirmar los cambios.
+
+    Si algún dato ingresado no cumple con las validaciones, no se deben guardar los cambios y se debe notificar el error correspondiente.
+
+    El administrador debe recibir una confirmación cuando el rol haya sido modificado correctamente.
+
+    Pruebas de usuario
+    Probar modificar un rol ingresando información válida y confirmar los cambios (pasa).
+
+    Probar modificar el nombre de un rol dejando el campo vacío (falla).
+
+    Probar modificar el nombre de un rol ingresando uno que ya existe en el mismo videojuego (falla).
+
+    Probar modificar un rol manteniendo su nombre actual y cambiando únicamente su ícono o descripción (pasa).
+
+    Probar modificar un rol asignando un nombre que ya existe pero en otro videojuego diferente (pasa).
+
+30 - Eliminar rol
+    Story
+    Como administrador, quiero eliminar el rol para retirar aquel que ya no corresponda.
+
+    Criterios de aceptación
+    Se debe permitir al administrador seleccionar un rol existente para eliminarlo.
+
+    Se debe solicitar una confirmación explícita antes de proceder con la eliminación definitiva del rol.
+
+    Se debe validar si existen jugadores, publicaciones o perfiles asociados actualmente al rol que se intenta eliminar.
+
+    Se deben Eliminar todos los roleProfiles asignados al rol eliminado, si un gameProfile queda sin roleProfiles tras la eliminacion, debe eliminarse también.
+
+    Si el rol no posee dependencias activas, debe eliminarse correctamente del sistema tras la confirmación, sin modificar ninguna otra estructura.
+
+    El administrador debe recibir un mensaje de confirmación cuando el rol haya sido eliminado exitosamente.
+
+    Pruebas de usuario
+    Probar eliminar un rol existente sin jugadores o registros asociados y confirmar la acción (pasa).
+
+    Probar cancelar la confirmación de eliminación de un rol (no se elimina, pasa).
+
+    Probar eliminar un rol que se encuentra asignado a uno o más jugadores o perfiles activos, se elimina y elimina los roleProfiles y gameProfile si corresponde (Pasa).
+
+    Probar eliminar un rol inexistente o previamente eliminado (falla).
+        
