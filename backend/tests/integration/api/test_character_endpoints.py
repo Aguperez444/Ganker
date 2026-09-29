@@ -66,7 +66,7 @@ class TestCharacterEndpointsIntegration:
         )
 
         assert response.status_code == 409
-        assert "already exists" in response.json().get("error", "").lower()
+        assert "ya existe" in response.json().get("error", "").lower()
 
     def test_register_character_invalid_name(self, client, admin_auth_headers, seed_catalog_data):
         vg_id = seed_catalog_data["videogame"].videogame_id

@@ -71,7 +71,7 @@ class TestGameProfileEndpointsIntegration:
         # Second creation fails with domain exception status_code (400)
         res2 = client.post("/api/v1/game_profiles/", json=payload, headers=player_auth_headers)
         assert res2.status_code == 400
-        assert "already has a profile created" in res2.json().get("error", "")
+        assert "ya tiene un perfil creado" in res2.json().get("error", "")
 
     def test_create_game_profile_videogame_not_found(self, client, player_auth_headers, seed_catalog_data):
         payload = {
