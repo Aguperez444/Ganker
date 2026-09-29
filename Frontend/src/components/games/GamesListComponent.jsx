@@ -87,7 +87,7 @@ const GameListComponent = ({
                 <button
                   type="button"
                   onClick={() => onEditCharacters(game)}
-                  className="cursor-pointer rounded-lg border border-white/10 bg-ganker-card2 px-3 py-2 text-xs font-semibold text-ganker-muted transition hover:bg-ganker-surface-light hover:text-ganker-text whitespace-nowrap"
+                  className="cursor-pointer rounded-lg border border-white/10 bg-ganker-bg px-3 py-2 text-xs font-semibold text-ganker-muted transition hover:bg-ganker-surface-light hover:text-ganker-text whitespace-nowrap"
                 >
                   Modificar personajes
                 </button>

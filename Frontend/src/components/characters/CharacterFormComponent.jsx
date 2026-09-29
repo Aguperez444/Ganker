@@ -329,7 +329,7 @@ const CharacterForm = ({
           <button
             type="submit"
             disabled={isLoading || !hasChanges}
-            className="cursor-pointer rounded-lg bg-gradient-to-r from-ganker-orange via-ganker-orange-light to-ganker-purple px-5 py-3 text-sm font-semibold text-white shadow-lg transition-all duration-200 hover:-translate-y-0.5 hover:shadow-ganker-purple/30 active:translate-y-0 disabled:cursor-not-allowed disabled:opacity-50"
+            className="cursor-pointer shrink-0 rounded-lg border border-white/10 bg-ganker-surface-light px-4 py-2.5 text-sm font-semibold text-ganker-text transition-all duration-200 hover:border-ganker-orange hover:bg-ganker-orange hover:text-white hover:-translate-y-0.5 hover:shadow-lg hover:shadow-ganker-orange/20 disabled:cursor-not-allowed disabled:opacity-50"
           >
             {isLoading
               ? isEditMode
