@@ -65,3 +65,13 @@ class GameProfileRepositoryImpl(IGameProfileRepository):
 
         self._session.flush()
         return GameProfileMapper.orm_to_domain(orm_existing)
+
+    def delete_game_profile(self, game_profile_id: int) -> bool:
+        orm_game_profile = self._session.query(GameProfileORM).filter(
+            GameProfileORM.game_profile_id == game_profile_id
+        ).first()
+        if orm_game_profile:
+            self._session.delete(orm_game_profile)
+            self._session.flush()
+            return True
+        return False
