@@ -6,6 +6,7 @@ from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from app.application.ports.i_role_profile_repository import IRoleProfileRepository
+    from app.application.ports.i_character_priority_repository import ICharacterPriorityRepository
     from app.application.ports.i_character_repository import ICharacterRepository
     from app.application.ports.i_game_profile_repository import IGameProfileRepository
     from app.application.ports.i_message_repository import IMessageRepository
@@ -31,6 +32,7 @@ class IUnitOfWork(ABC):
     conversation_repo: 'IConversationRepository'
     find_by_specification_repo: 'IFindBySpecificationRepository'
     role_profile_repo: 'IRoleProfileRepository'
+    character_priority_repo: 'ICharacterPriorityRepository'
 
 
     @abstractmethod

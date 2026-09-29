@@ -15,6 +15,10 @@ class IRoleRepository(ABC):
         pass
 
     @abstractmethod
+    def get_role_by_name_and_videogame(self, name: str, videogame_id: int) -> Optional['Role']:
+        raise NotImplementedError
+
+    @abstractmethod
     def save_role(self, role: 'Role') -> 'Role':
         raise NotImplementedError
 

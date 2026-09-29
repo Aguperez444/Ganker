@@ -1,4 +1,3 @@
-from typing import cast
 from fastapi import UploadFile
 
 from app.application.ports.i_storage_service import IStorageService
@@ -7,7 +6,7 @@ from app.domain.exceptions.rank.duplicated_rank_name_exception import Duplicated
 from app.domain.exceptions.rank.duplicated_rank_value_exception import DuplicatedRankValueException
 from app.domain.exceptions.rank.invalid_rank_name_exception import InvalidRankNameException
 from app.domain.exceptions.rank.invalid_rank_value_exception import InvalidRankValueException
-from app.domain.exceptions.rank.rank_not_found_exception import RankNotFoundException
+from app.domain.services.catalog_validation_service import CatalogValidationService
 from app.domain.services.slug_service import SlugService
 from app.infrastructure.api.dto.response.base_classes.rank_object_response import RankObjectResponse
 
@@ -35,19 +34,17 @@ class UpdateRank:
         cleaned_name = name.strip()
 
         with self.uow as uow:
-            existing_rank = uow.rank_repo.get_rank_by_id(rank_id)
-            if not existing_rank:
-                raise RankNotFoundException(rank_id)
+            existing_rank = CatalogValidationService.get_and_validate_exist_rank(rank_id, uow)
 
-            # Comprobar que no hay otro rango en el mismo videojuego con el mismo nombre o valor
+            # Comprobar que no hay otro rango en el mismo videojuego con el mismo nombre o valor vía SQL
             game_id = existing_rank.videogame.videogame_id
-            existing_ranks = uow.rank_repo.get_ranks_by_game_id(cast(int,game_id))
-            for other_rank in existing_ranks:
-                if other_rank.rank_id != rank_id:
-                    if other_rank.name == cleaned_name:
-                        raise DuplicatedRankNameException(cleaned_name)
-                    if other_rank.value == value:
-                        raise DuplicatedRankValueException(value)
+            rank_by_name = uow.rank_repo.get_rank_by_name_and_videogame(cleaned_name, game_id)
+            if rank_by_name and rank_by_name.rank_id != rank_id:
+                raise DuplicatedRankNameException(cleaned_name)
+
+            rank_by_val = uow.rank_repo.get_rank_by_value_and_videogame(value, game_id)
+            if rank_by_val and rank_by_val.rank_id != rank_id:
+                raise DuplicatedRankValueException(value)
 
             new_icon_url = None
             if icon and icon.filename:
@@ -75,13 +72,17 @@ class UpdateRank:
                 raise e
 
             if old_icon_url:
+                # noinspection broad-exception
                 try:
                     self.storage_service.delete_file(old_icon_url)
-                except Exception as e:
-                    print(f'Error al borrar la imagen {old_icon_url}')
+                except Exception:
+                    # Si hay un error al borrar la imagen anterior, se informa por consola, pero no se lanza una excepción
+                    # porque el usuario ya fue actualizado correctamente y no quiero que eso afecte la respuesta al cliente
+                    from colorama import Fore, Style
+                    print(Fore.RED + "-" * 70 + "\n" + f"Error inesperado al borrar la imagen anterior del usuario: {old_icon_url} \n" + "-" * 70 + "\n" + Style.RESET_ALL)
 
         return RankObjectResponse(
-            rank_id=cast(int, updated_rank.rank_id),
+            rank_id=updated_rank.rank_id,
             name=updated_rank.name,
             value=updated_rank.value,
             icon_url=updated_rank.icon_url,

@@ -21,6 +21,16 @@ class UserMapper:
 
     @staticmethod
     def domain_to_orm(user_domain: User) -> UserORM:
+        if not user_domain.is_persisted():
+            return UserORM(
+                username=user_domain.username,
+                name=user_domain.name,
+                mail=user_domain.mail,
+                role=user_domain.role.value,
+                password_hash=user_domain.password_hash,
+                icon_url=user_domain.icon_url,
+                last_connection=user_domain.last_connection
+            )
         return UserORM(
             user_id=user_domain.user_id,
             username=user_domain.username,

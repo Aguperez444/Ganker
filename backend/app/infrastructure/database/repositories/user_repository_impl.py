@@ -1,4 +1,5 @@
 from app.application.ports.i_user_repository import IUserRepository
+from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from typing import TYPE_CHECKING, Optional
@@ -21,8 +22,10 @@ class UserRepositoryImpl(IUserRepository):
         domain_user = UserMapper.orm_to_domain(orm_user)
         return domain_user
 
-    def get_user_by_mail(self, mail) -> Optional['User']:
-        found = self.session.query(UserORM).filter(UserORM.mail == mail).first()
+    def get_user_by_mail(self, mail: str) -> Optional['User']:
+        found = self.session.query(UserORM).filter(
+            func.lower(UserORM.mail) == func.lower(mail.strip())
+        ).first()
         domain_found = UserMapper.orm_to_domain(found) if found else None
         return domain_found
 
@@ -33,7 +36,9 @@ class UserRepositoryImpl(IUserRepository):
 
 
     def get_user_by_username(self, username: str) -> Optional['User']:
-        found = self.session.query(UserORM).filter(UserORM.username == username).first()
+        found = self.session.query(UserORM).filter(
+            func.lower(UserORM.username) == func.lower(username.strip())
+        ).first()
         domain_found = UserMapper.orm_to_domain(found) if found else None
         return domain_found
 

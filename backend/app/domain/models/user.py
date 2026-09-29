@@ -1,6 +1,8 @@
 from datetime import datetime
 from typing import TYPE_CHECKING, Optional
 
+from app.domain.exceptions.entity_not_persited_exception import EntityNotPersistedException
+from app.domain.exceptions.invalid_id_exception import InvalidIdException
 from app.domain.models.user_role import UserRole
 
 if TYPE_CHECKING:
@@ -31,10 +33,14 @@ class User:
         self._last_connection: Optional[datetime] = last_connection
 
     @property
-    def user_id(self) -> Optional[int]:
+    def user_id(self) -> int:
+        if self._user_id is None:
+            raise EntityNotPersistedException("User")
         return self._user_id
     @user_id.setter
     def user_id(self, value: int) -> None:
+        if isinstance(value, bool) or not isinstance(value, int):
+            raise InvalidIdException(value)
         self._user_id = value
 
     @property
@@ -93,10 +99,14 @@ class User:
     def last_connection(self) -> Optional[datetime]:
         return self._last_connection
     @last_connection.setter
-    def last_connection(self, value: Optional[datetime]) -> None:
+    def last_connection(self, value: datetime) -> None:
         self._last_connection = value
 
     def __repr__(self) -> str:
         return (f"User(user_id={self.user_id or 'sin_id'}, username='{self.username}',"
                 f" name='{self.name}', mail='{self.mail or 'sin_mail'}', password_hash='{self.password_hash or 'sin_password'}',"
                 f" role={self.role}, profiles={self.profiles}, icon_url='{self.icon_url or 'sin_icon'}', last_connection='{self.last_connection or 'sin_last_connection'}')")
+
+
+    def is_persisted(self) -> bool:
+        return self._user_id is not None

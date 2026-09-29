@@ -140,5 +140,7 @@ class TestRegisterUserUseCase:
     def test_empty_username_raises_bad_request(self, mock_deps):
         use_case, _, _ = mock_deps
 
+        req = RegisterUserRequest(name="A", username="  ", mail="a@ex.com", password="Password123", role=UserRole.PLAYER)
+
         with pytest.raises(InvalidUsernameException):
-            use_case.validate_username("  ")
+            use_case.execute(req, authenticated_user_id=1)

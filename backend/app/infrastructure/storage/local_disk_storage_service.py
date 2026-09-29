@@ -37,10 +37,10 @@ class LocalDiskStorageService(IStorageService):
             subfolder: str,
             preserve_original_name: bool = False
     ) -> str:
-        # 1. Valida extensión permitida y genera slug del nombre
+        # 1. Comprueba que la extensión sea permitida y genera slug del nombre
         clean_stem, ext = SlugService.sanitize_image_filename(filename)
 
-        # 2. Resuelve la subcarpeta y asegura que no intente subir niveles
+        # 2. Resuelve la sub carpeta y asegura que no intente subir niveles
         target_dir = self._resolve_and_validate_path(subfolder)
         target_dir.mkdir(parents=True, exist_ok=True)
 
@@ -58,7 +58,7 @@ class LocalDiskStorageService(IStorageService):
             target_filename = f"{uuid.uuid4().hex}.{ext}"
             file_path = target_dir / target_filename
 
-        # 4. Asegura el puntero al inicio y copia el stream en bloques de 1MB
+        # 4. Asegura el puntero al inicio y copia el stream en bloques de 1 MB
         if hasattr(file_content, "seek"):
             file_content.seek(0)
 

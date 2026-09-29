@@ -7,7 +7,7 @@ if TYPE_CHECKING:
     from app.application.ports.i_unit_of_work import IUnitOfWork
 
 
-class GetOrCreateConversationUseCase:
+class GetOrCreateConversation:
     def __init__(self, uow: 'IUnitOfWork'):
         self.uow = uow
 

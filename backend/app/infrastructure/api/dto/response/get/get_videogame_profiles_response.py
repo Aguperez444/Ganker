@@ -1,6 +1,6 @@
 from pydantic import BaseModel
 
-from app.infrastructure.api.dto.response.get_game_profile_response import GetGameProfileResponse
+from app.infrastructure.api.dto.response.get.get_game_profile_response import GetGameProfileResponse
 
 
 class GetVideogameProfilesResponse(BaseModel):

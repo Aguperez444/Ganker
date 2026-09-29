@@ -1,4 +1,3 @@
-from typing import cast
 from fastapi import APIRouter, Depends
 
 from app.application.use_cases.create_videogame_profile import CreateVideogameProfile
@@ -7,9 +6,9 @@ from app.application.use_cases.update_videogame_profile import UpdateVideogamePr
 from app.infrastructure.api.dependencies.auth import get_current_user_id, require_player
 from app.infrastructure.api.dto.request.Search_videogame_profiles_request import SearchVideogameProfilesRequest
 from app.infrastructure.api.dto.request.create_videogame_profile_request import CreateGameProfileRequest
-from app.infrastructure.api.dto.response.create_videogame_profile_response import CreateGameProfileResponse
+from app.infrastructure.api.dto.response.create_register.create_videogame_profile_response import CreateGameProfileResponse
 from app.infrastructure.api.dto.request.update_videogame_profile_request import UpdateGameProfileRequest
-from app.infrastructure.api.dto.response.get_videogame_profiles_response import GetVideogameProfilesResponse
+from app.infrastructure.api.dto.response.get.get_videogame_profiles_response import GetVideogameProfilesResponse
 from app.infrastructure.api.dto.response.update_videogame_profile_response import UpdateGameProfileResponse
 from app.infrastructure.database.unit_of_work.uow_factory import uow_factory
 
@@ -20,7 +19,7 @@ def create_game_profile(request: CreateGameProfileRequest, player_id: int = Depe
     uow = uow_factory()
     create_game_profile_use_case = CreateVideogameProfile(uow)
     game_profile = create_game_profile_use_case.execute(player_id, request)
-    profile_id = cast(int, game_profile.game_profile_id)
+    profile_id = game_profile.game_profile_id
     response = CreateGameProfileResponse(profile_id=profile_id)
     return response
 

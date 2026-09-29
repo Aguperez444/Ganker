@@ -17,11 +17,18 @@ const AdminHomePage = () => {
       badge: "Disponible",
     },
     {
+      titulo: "Roles",
+      descripcion: "Administrá los roles disponibles por videojuego.",
+      path: "/app/admin/roles",
+      botonTexto: "Gestionar roles",
+      badge: "Disponible",
+    },
+    {
       titulo: "Personajes",
       descripcion: "Administrá los personajes y agentes de cada videojuego.",
       path: "/app/admin/characters",
       botonTexto: "Gestionar personajes",
-      badge: "Próximo sprint",
+      badge: "Disponible",
     },
     {
       titulo: "Moderación",

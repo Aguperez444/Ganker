@@ -30,6 +30,8 @@ from app.infrastructure.api.controllers.chat_controller import router as chat_ro
 from app.infrastructure.api.controllers.chat_websocket import router as chat_websocket
 from app.infrastructure.api.controllers.notifications_websocket import router as notifications_websocket
 
+
+# noinspection unused-parameter,shadowing-names
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # Crea tablas en Postgres (Docker) o SQLite (Local)
@@ -42,6 +44,8 @@ async def lifespan(app: FastAPI):
     # Cierra adecuadamente el pool de conexiones de la aplicación
     engine.dispose()
 
+
+# noinspection redeclaration
 app = FastAPI(title="Ganker", version="1.0.0", lifespan=lifespan)
 
 # CORS
@@ -67,6 +71,7 @@ if not IS_DOCKER:
 
 
 # EXCEPTION HANDLERS
+# noinspection unused-parameter
 @app.exception_handler(DomainException)
 async def domain_exception_handler(
     request: Request,
@@ -96,5 +101,6 @@ port = 8000
 
 if __name__ == "__main__":
     print("Starting FastAPI server...")
+    # noinspection HttpUrlsUsage
     print(f"docs: http://{host}:{port}/docs")
     uvicorn.run("app.infrastructure.start.main:app", host=host, port=port,reload=True)

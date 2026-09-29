@@ -17,6 +17,14 @@ class MessageMapper:
 
     @staticmethod
     def domain_to_orm(message: Message) -> MessageORM:
+        if not message.is_persisted():
+            return MessageORM(
+                conversation_id=message.conversation_id,
+                sender_id=message.sender.user_id,
+                content=message.content,
+                timestamp=message.timestamp,
+                is_read=message.is_read
+            )
         return MessageORM(
             message_id=message.message_id,
             conversation_id=message.conversation_id,

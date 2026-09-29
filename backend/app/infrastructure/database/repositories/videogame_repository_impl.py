@@ -31,7 +31,7 @@ class VideogameRepositoryImpl(IVideogameRepository):
 
     def get_videogame_by_name(self, videogame_name: str) -> Optional['Videogame']:
 
-        found = self.session.query(VideogameORM).filter(func.lower(VideogameORM.name) == videogame_name.lower()).first()
+        found = self.session.query(VideogameORM).filter(func.lower(VideogameORM.name) == func.lower(videogame_name.strip())).first()
         domain_found = VideogameMapper.orm_to_domain(found) if found else None
         return domain_found
 

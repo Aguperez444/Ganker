@@ -1,21 +1,23 @@
-import axiosClient from "./axiosClient"; // Asegúrate de ajustar la ruta relativa según dónde esté guardado roleApi.js
+import axiosClient from "./axiosClient";
 
-// Obtener roles por ID de videojuego
-export const getRolesByGame = async (videogame_id) => {
-  const response = await axiosClient.get(`/api/v1/roles/${videogame_id}`);
-  return response.data;
+export const getRolesByGame = async (videogameId) => {
+  const response = await axiosClient.get(`/api/v1/roles/${videogameId}`);
+
+  return response.data.roles;
 };
 
-// Crear un rol (con multipart/form-data)
 export const createRole = async ({ videogame_id, name, icon }) => {
-  const formData = new FormData();
-  formData.append("videogame_id", videogame_id);
-  formData.append("name", name);
+  const fd = new FormData();
+  fd.append("videogame_id", videogame_id);
+  fd.append("name", name);
   if (icon) {
-    formData.append("icon", icon);
+      fd.append("icon", icon);
   }
 
-  const response = await axiosClient.post(`/api/v1/roles`, formData, {
+
+
+  // Sin barra final: la ruta del backend es "/api/v1/roles" (no "/api/v1/roles/").
+  await axiosClient.post("/api/v1/roles", fd, {
     headers: {
       "Content-Type": "multipart/form-data",
     },

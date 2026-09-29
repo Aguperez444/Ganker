@@ -1,5 +1,8 @@
 from typing import Optional
 
+from app.domain.exceptions.entity_not_persited_exception import EntityNotPersistedException
+from app.domain.exceptions.invalid_id_exception import InvalidIdException
+
 
 class Videogame:
     def __init__(self, videogame_id: Optional[int], name: str, icon_url:str, rank_per_role: bool):
@@ -9,10 +12,14 @@ class Videogame:
         self._rank_per_role: bool = bool(rank_per_role) if rank_per_role is not None else False
 
     @property
-    def videogame_id(self) -> Optional[int]:
+    def videogame_id(self) -> int:
+        if self._videogame_id is None:
+            raise EntityNotPersistedException("Videogame")
         return self._videogame_id
     @videogame_id.setter
-    def videogame_id(self, value: Optional[int]):
+    def videogame_id(self, value: int):
+        if isinstance(value, bool) or not isinstance(value, int):
+            raise InvalidIdException(value)
         self._videogame_id = value
 
     @property
@@ -40,6 +47,9 @@ class Videogame:
         if isinstance(other, Videogame):
             return self._videogame_id is not None and self._videogame_id == other._videogame_id
         return False
+
+    def is_persisted(self) -> bool:
+        return self._videogame_id is not None
 
     def __repr__(self) -> str:
         return f"Videogame(videogame_id={self.videogame_id or 'sin_id'}, name='{self.name}', icon_url='{self.icon_url}', rank_per_role={self.rank_per_role})"

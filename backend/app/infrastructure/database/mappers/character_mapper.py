@@ -15,6 +15,12 @@ class CharacterMapper:
 
     @staticmethod
     def domain_to_orm(character: Character) -> CharacterORM:
+        if not character.is_persisted():
+            return CharacterORM(
+                name = character.name,
+                videogame_id = character.videogame.videogame_id,
+                icon_url = character.icon_url
+            )
         return CharacterORM(
             character_id = character.character_id,
             name = character.name,

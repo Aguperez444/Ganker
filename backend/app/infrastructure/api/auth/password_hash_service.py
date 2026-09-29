@@ -11,6 +11,7 @@ class PasswordHashService(IPasswordHasher):
         return self._hasher.hash(password)
 
     def verify_password(self, plain_password: str, hashed_password: str) -> bool:
+        # noinspection broad-exception
         try:
             return self._hasher.verify(hashed_password, plain_password)
         except Exception: #TODO revisar, seguramente me esté cargando alguna excepción de argon2 que debería capturar

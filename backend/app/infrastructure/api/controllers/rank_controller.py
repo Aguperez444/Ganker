@@ -6,9 +6,9 @@ from app.application.use_cases.query_ranks import QueryRanks
 from app.application.use_cases.update_rank import UpdateRank
 from app.application.use_cases.delete_rank import DeleteRank
 from app.infrastructure.api.dependencies.auth import require_admin, require_player
-from app.infrastructure.api.dto.response.get_ranks_response import GetRanksResponse
+from app.infrastructure.api.dto.response.get.get_ranks_response import GetRanksResponse
 from app.infrastructure.api.dto.response.base_classes.rank_object_response import RankObjectResponse
-from app.infrastructure.api.dto.response.delete_rank_response import DeleteRankResponse
+from app.infrastructure.api.dto.response.delete.delete_rank_response import DeleteRankResponse
 
 from app.infrastructure.database.unit_of_work.uow_factory import uow_factory
 from app.infrastructure.storage.local_disk_storage_service import LocalDiskStorageService

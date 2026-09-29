@@ -1,5 +1,6 @@
 from typing import TYPE_CHECKING, Optional
 
+from sqlalchemy import func
 from app.application.ports.i_role_repository import IRoleRepository
 from app.infrastructure.database.models.role_orm import RoleORM
 from app.infrastructure.database.mappers.role_mapper import RoleMapper
@@ -21,6 +22,13 @@ class RoleRepositoryImpl(IRoleRepository):
         found = self.session.query(RoleORM).filter(RoleORM.videogame_id == game_id).all()
         domain_found = [RoleMapper.orm_to_domain(role) for role in found]
         return domain_found
+
+    def get_role_by_name_and_videogame(self, name: str, videogame_id: int) -> Optional['Role']:
+        found = self.session.query(RoleORM).filter(
+            func.lower(RoleORM.name) == func.lower(name.strip()),
+            RoleORM.videogame_id == videogame_id
+        ).first()
+        return RoleMapper.orm_to_domain(found) if found else None
 
 
     def save_role(self, role: 'Role') -> 'Role':

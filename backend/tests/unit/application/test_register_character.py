@@ -1,7 +1,7 @@
 from unittest.mock import MagicMock
 import pytest
 
-from app.application.use_cases.register_character import RegisterCharacter
+from app.application.use_cases.create_character import CreateCharacter
 from app.application.ports.i_storage_service import IStorageService
 from app.domain.models.videogame import Videogame
 from app.domain.models.character import Character
@@ -26,7 +26,7 @@ class TestRegisterCharacterUseCase:
         storage_service.save_image_file = MagicMock(return_value="/media/games/lol/characters/ahri.png")
         storage_service.delete_file = MagicMock(return_value=True)
 
-        use_case = RegisterCharacter(storage_service=storage_service, unit_of_work=uow)
+        use_case = CreateCharacter(storage_service=storage_service, unit_of_work=uow)
         return use_case, uow, storage_service
 
     def test_register_character_happy_path(self, mock_deps):

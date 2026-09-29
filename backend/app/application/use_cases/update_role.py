@@ -1,11 +1,10 @@
-from typing import cast
 from fastapi import UploadFile
 
 from app.application.ports.i_storage_service import IStorageService
 from app.application.ports.i_unit_of_work import IUnitOfWork
 from app.domain.exceptions.role.duplicated_role_name_exception import DuplicateRoleNameException
 from app.domain.exceptions.role.invalid_role_name_exception import InvalidRoleNameException
-from app.domain.exceptions.role.role_not_found_exception import RoleNotFoundException
+from app.domain.services.catalog_validation_service import CatalogValidationService
 from app.domain.services.slug_service import SlugService
 from app.infrastructure.api.dto.response.base_classes.role_object_response import RoleObjectResponse
 
@@ -28,17 +27,13 @@ class UpdateRole:
         cleaned_name = name.strip()
 
         with self.uow as uow:
-            existing_role = uow.role_repo.get_role_by_id(role_id)
-            if not existing_role:
-                raise RoleNotFoundException(role_id)
+            existing_role = CatalogValidationService.get_and_validate_exist_role(role_id, uow)
 
             # Comprobar que no hay otro rol en el mismo videojuego con el mismo nombre
             game_id = existing_role.videogame.videogame_id
-            existing_roles = uow.role_repo.get_roles_by_game_id(cast(int, game_id))
-            for other_role in existing_roles:
-                if other_role.role_id != role_id:
-                    if other_role.name == cleaned_name:
-                        raise DuplicateRoleNameException(cleaned_name)
+            role_with_same_name = uow.role_repo.get_role_by_name_and_videogame(cleaned_name, game_id)
+            if role_with_same_name and role_with_same_name.role_id != role_id:
+                raise DuplicateRoleNameException(cleaned_name)
 
             new_icon_url = None
             if icon and icon.filename:
@@ -65,13 +60,17 @@ class UpdateRole:
                 raise e
 
             if old_icon_url:
+                # noinspection broad-exception
                 try:
                     self.storage_service.delete_file(old_icon_url)
-                except Exception as e:
-                    print(f'Error al borrar la imagen {old_icon_url}')
+                except Exception:
+                    # Si hay un error al borrar la imagen anterior, se informa por consola, pero no se lanza una excepción
+                    # porque el usuario ya fue actualizado correctamente y no quiero que eso afecte la respuesta al cliente
+                    from colorama import Fore, Style
+                    print(Fore.RED + "-" * 70 + "\n" + f"Error inesperado al borrar la imagen anterior del usuario: {old_icon_url} \n" + "-" * 70 + "\n" + Style.RESET_ALL)
 
         return RoleObjectResponse(
-            role_id=cast(int, updated_role.role_id),
+            role_id=updated_role.role_id,
             name=updated_role.name,
             icon_url=updated_role.icon_url,
         )

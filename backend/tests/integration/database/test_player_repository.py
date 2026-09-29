@@ -41,6 +41,11 @@ class TestUserRepositoryIntegration:
         assert found is not None
         assert found.username == "gamer2"
 
+        # Case-insensitive and whitespace check
+        found_upper = repo.get_user_by_mail("  GAMER2@EXAMPLE.COM  ")
+        assert found_upper is not None
+        assert found_upper.username == "gamer2"
+
         not_found = repo.get_user_by_mail("nonexistent@example.com")
         assert not_found is None
 
@@ -53,6 +58,11 @@ class TestUserRepositoryIntegration:
         found = repo.get_user_by_username("gamer3")
         assert found is not None
         assert found.mail == "gamer3@example.com"
+
+        # Case-insensitive and whitespace check (pepe vs PEPE)
+        found_upper = repo.get_user_by_username("  GAMER3  ")
+        assert found_upper is not None
+        assert found_upper.mail == "gamer3@example.com"
 
         not_found = repo.get_user_by_username("unknown_user")
         assert not_found is None

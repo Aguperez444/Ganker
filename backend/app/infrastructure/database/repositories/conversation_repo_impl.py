@@ -29,7 +29,7 @@ class ConversationRepositoryImpl(IConversationRepository):
 
 
     def find_by_participants_ids(self, user_1_id: int, user_2_id: int) -> Optional['Conversation']:
-        # Como normalizamos en el use case, alcanza con comparar exactamente las columnas
+        # Como normalizamos en él use case, alcanza con comparar exactamente las columnas
         found_conversation: ConversationORM = self.session.query(ConversationORM).filter(
             ConversationORM.user_1_id == user_1_id,
             ConversationORM.user_2_id == user_2_id
