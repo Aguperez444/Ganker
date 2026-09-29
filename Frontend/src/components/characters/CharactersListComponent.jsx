@@ -6,6 +6,7 @@ const CharactersListComponent = ({
   error,
   selectedCharacterId,
   onEdit,
+  onDelete,
 }) => {
   if (isLoading) {
     return (
@@ -83,13 +84,23 @@ const CharactersListComponent = ({
               </p>
             </div>
 
-            <button
-              type="button"
-              onClick={() => onEdit(character)}
-              className="shrink-0 cursor-pointer rounded-lg px-3 py-2 text-sm font-semibold text-ganker-purple-light transition hover:bg-ganker-purple/20 hover:text-ganker-text"
-            >
-              Modificar
-            </button>
+            <div className="flex shrink-0 items-center gap-1">
+              <button
+                type="button"
+                onClick={() => onEdit(character)}
+                className="cursor-pointer rounded-lg px-3 py-2 text-sm font-semibold text-ganker-purple-light transition hover:bg-ganker-purple/20 hover:text-ganker-text"
+              >
+                Modificar
+              </button>
+
+              <button
+                type="button"
+                onClick={() => onDelete(character)}
+                className="cursor-pointer rounded-lg px-3 py-2 text-sm font-semibold text-ganker-error transition hover:bg-ganker-error/10"
+              >
+                Eliminar
+              </button>
+            </div>
           </li>
         ))}
       </ul>
