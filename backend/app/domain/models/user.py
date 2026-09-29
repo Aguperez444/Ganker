@@ -1,7 +1,7 @@
 from datetime import datetime
 from typing import TYPE_CHECKING, Optional
 
-from app.domain.exceptions.entity_not_persited_exception import EntityNotPersistedException
+from app.domain.exceptions.entity_not_persisted_exception import EntityNotPersistedException
 from app.domain.exceptions.invalid_id_exception import InvalidIdException
 from app.domain.models.user_role import UserRole
 

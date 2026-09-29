@@ -30,9 +30,9 @@ def get_roles_by_videogame_id(videogame_id: int):
 
 @router.post("", status_code=201, response_model=RoleObjectResponse, dependencies=[Depends(require_admin)])
 def create_game_role(
-    videogame_id: int = Form(..., description="ID of the videogame"),
-    name: str = Form(..., description="Name of the role"),
-    icon: UploadFile = File(..., description="Icon image file"),
+    videogame_id: int = Form(..., description="ID del videojuego"),
+    name: str = Form(..., description="Nombre del rol"),
+    icon: UploadFile = File(..., description="Archivo de imagen del ícono"),
 ):
     # Asegurarse de que la petición incluya un archivo con nombre
     if not icon.filename:
@@ -58,8 +58,8 @@ def create_game_role(
 @router.put("/{role_id}", status_code=200, response_model=RoleObjectResponse, dependencies=[Depends(require_admin)])
 def update_game_role(
     role_id: int,
-    name: str = Form(..., description="Name of the role"),
-    icon: UploadFile | None = File(None, description="Icon image file"),
+    name: str = Form(..., description="Nombre del rol"),
+    icon: UploadFile | None = File(None, description="Archivo de imagen del ícono"),
 ):
     if icon and not icon.filename:
         raise HTTPException(

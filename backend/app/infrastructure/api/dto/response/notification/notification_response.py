@@ -1,4 +1,4 @@
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, Field, ConfigDict
 
 from app.infrastructure.api.dto.response.notification.notification_type_enum import NotificationType
 
@@ -6,8 +6,8 @@ from app.infrastructure.api.dto.response.notification.notification_type_enum imp
 class NotificationResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
-    type: NotificationType
-    conversation_id: int
-    sender_id: int
-    content: str
-    timestamp: str
+    type: NotificationType = Field(..., description="Tipo de notificación")
+    conversation_id: int = Field(..., description="ID de la conversación asociada a la notificación")
+    sender_id: int = Field(..., description="ID del remitente de la notificación")
+    content: str = Field(..., description="Contenido del mensaje que generó la notificación")
+    timestamp: str = Field(..., description="Marca de tiempo de la notificación")

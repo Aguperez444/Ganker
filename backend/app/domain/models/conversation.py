@@ -1,6 +1,6 @@
 from typing import TYPE_CHECKING, Optional
 
-from app.domain.exceptions.entity_not_persited_exception import EntityNotPersistedException
+from app.domain.exceptions.entity_not_persisted_exception import EntityNotPersistedException
 from app.domain.exceptions.invalid_id_exception import InvalidIdException
 
 if TYPE_CHECKING:
@@ -67,4 +67,4 @@ class Conversation:
             return self.user_2
         elif user_id == self.user_2.user_id:
             return self.user_1
-        raise ValueError(f"User with id {user_id} is not part of this conversation.")
+        raise ValueError(f"El usuario con id {user_id} no forma parte de esta conversación.")

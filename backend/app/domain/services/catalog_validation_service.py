@@ -109,10 +109,10 @@ class CatalogValidationService:
 
     @staticmethod
     def is_duplicated_username(username: str, uow: 'IUnitOfWork') -> bool:
-        usuario_con_ese_username = uow.user_repo.get_user_by_username(username)
-        return usuario_con_ese_username is not None
+        found_user = uow.user_repo.get_user_by_username(username)
+        return found_user is not None
 
     @staticmethod
     def is_duplicated_mail(mail: str, uow: IUnitOfWork) -> bool:
-        usuario_con_ese_mail = uow.user_repo.get_user_by_mail(mail)
-        return usuario_con_ese_mail is not None
+        found_user = uow.user_repo.get_user_by_mail(mail)
+        return found_user is not None
