@@ -6,6 +6,7 @@ const GameListComponent = ({
   error,
   selectedGameId,
   onEdit,
+  onEditRoles,
 }) => {
   if (isLoading) {
     return (
@@ -40,7 +41,7 @@ const GameListComponent = ({
           <li
             key={game.id}
             className={[
-              "flex items-center justify-between gap-4 px-5 py-4 transition",
+              "flex flex-col sm:flex-row sm:items-center justify-between gap-4 px-5 py-4 transition",
               selectedGameId === game.id
                 ? "bg-ganker-purple/20"
                 : "bg-ganker-surface-light hover:bg-white/5",
@@ -79,13 +80,23 @@ const GameListComponent = ({
               </p>
             </div>
 
-            <button
-              type="button"
-              onClick={() => onEdit(game)}
-              className="shrink-0 cursor-pointer rounded-lg px-3 py-2 text-sm font-semibold text-ganker-purple-light transition hover:bg-ganker-purple/20 hover:text-ganker-text"
-            >
-              Modificar
-            </button>
+            <div className="flex items-center gap-2 self-end sm:self-auto">
+              <button
+                type="button"
+                onClick={() => onEditRoles && onEditRoles(game)}
+                className="cursor-pointer rounded-lg bg-ganker-purple/25 px-3 py-2 text-xs font-semibold text-ganker-purple-light transition hover:bg-ganker-purple/40 hover:text-ganker-text whitespace-nowrap"
+              >
+                Modificar roles
+              </button>
+
+              <button
+                type="button"
+                onClick={() => onEdit(game)}
+                className="cursor-pointer rounded-lg border border-white/10 px-3 py-2 text-xs font-semibold text-ganker-text transition hover:bg-white/5 whitespace-nowrap"
+              >
+                Modificar juego
+              </button>
+            </div>
           </li>
         ))}
       </ul>
