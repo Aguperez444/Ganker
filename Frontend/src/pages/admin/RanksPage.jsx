@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useLocation } from "react-router-dom";
 import RankForm from "../../components/ranks/RankFormComponent";
 import RanksListComponent from "../../components/ranks/RanksListComponent";
+import GameDropdown from "../../components/games/GameDropDown";
 import useGames from "../../hooks/useGames";
 import useRanks from "../../hooks/useRanks";
 
@@ -132,20 +133,12 @@ const RanksPage = () => {
               <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 flex-1">
                 
 
-                <select
-                  id="ranks-videogame-filter"
-                  value={selectedGameId}
-                  onChange={(event) => setSelectedGameId(event.target.value)}
-                  disabled={isLoadingGames}
-                  className="w-full sm:w-auto rounded-lg border border-white/10 bg-ganker-surface-light px-4 py-2.5 text-sm text-ganker-text outline-none transition-all duration-200 focus:border-ganker-purple-light focus:ring-2 focus:ring-ganker-purple/30 disabled:cursor-not-allowed disabled:opacity-50"
-                >
-                  <option value="">Ver rangos de...</option>
-                  {games.map((game) => (
-                    <option key={game.id} value={game.id}>
-                      {game.name}
-                    </option>
-                  ))}
-                </select>
+                <GameDropdown
+                  games={games}
+                  selectedGameId={selectedGameId}
+                  onSelect={(gameId) => setSelectedGameId(String(gameId))}
+                  isLoading={isLoadingGames}
+                />
 
                 {selectedGameId && (
                   <input

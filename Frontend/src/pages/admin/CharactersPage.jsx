@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useLocation } from "react-router-dom";
 import CharacterForm from "../../components/characters/CharacterFormComponent";
 import CharactersListComponent from "../../components/characters/CharactersListComponent";
+import GameDropdown from "../../components/games/GameDropDown";
 import useGames from "../../hooks/useGames";
 import useCharacters from "../../hooks/useCharacters";
 
@@ -133,27 +134,13 @@ const CharactersPage = () => {
                   Personajes por videojuego
                 </h2>
 
-                <div className="mt-3">
-                  <label
-                    htmlFor="characters-videogame-filter"
-                    className="sr-only"
-                  >
-                    Ver personajes de
-                  </label>
-                  <select
-                    id="characters-videogame-filter"
-                    value={selectedGameId}
-                    onChange={(event) => setSelectedGameId(event.target.value)}
-                    disabled={isLoadingGames}
-                    className="w-full max-w-xs rounded-lg border border-white/10 bg-ganker-surface-light px-4 py-2.5 text-sm text-ganker-text outline-none transition-all duration-200 focus:border-ganker-purple-light focus:ring-2 focus:ring-ganker-purple/30 disabled:cursor-not-allowed disabled:opacity-50"
-                  >
-                    <option value="">Ver personajes de...</option>
-                    {games.map((game) => (
-                      <option key={game.id} value={game.id}>
-                        {game.name}
-                      </option>
-                    ))}
-                  </select>
+                <div className="mt-3 max-w-xs">
+                  <GameDropdown
+                    games={games}
+                    selectedGameId={selectedGameId}
+                    onSelect={(gameId) => setSelectedGameId(String(gameId))}
+                    isLoading={isLoadingGames}
+                  />
                 </div>
               </div>
 

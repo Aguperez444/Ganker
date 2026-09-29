@@ -177,7 +177,7 @@ const RolesPage = () => {
                 <GameDropdown
                   games={games}
                   selectedGameId={selectedGameId}
-                  onSelect={(gameId) => setSelectedGameId(gameId)}
+                  onSelect={(gameId) => setSelectedGameId(String(gameId))}
                   isLoading={isLoadingGames}
                 />
 
