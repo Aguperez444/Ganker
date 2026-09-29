@@ -1,10 +1,12 @@
 from fastapi import APIRouter, Depends, Form, UploadFile, File, HTTPException, status
 
 from app.application.use_cases.create_role import CreateRole
+from app.application.use_cases.delete_role import DeleteRole
 from app.application.use_cases.query_roles import QueryRoles
 from app.application.use_cases.update_role import UpdateRole
 from app.infrastructure.api.dependencies.auth import require_admin, require_player
 
+from app.infrastructure.api.dto.response.delete.delete_role_response import DeleteRoleResponse
 from app.infrastructure.api.dto.response.get.get_roles_response import GetRolesResponse
 from app.infrastructure.api.dto.response.base_classes.role_object_response import RoleObjectResponse
 from app.infrastructure.database.unit_of_work.uow_factory import uow_factory
@@ -75,3 +77,11 @@ def update_game_role(
         icon=icon
     )
     return result
+
+
+@router.delete("/{role_id}", status_code=200, response_model=DeleteRoleResponse, dependencies=[Depends(require_admin)])
+def delete_game_role(role_id: int):
+    uow = uow_factory()
+    storage_service = get_storage_service()
+    use_case = DeleteRole(storage_service=storage_service, uow=uow)
+    return use_case.execute(role_id=role_id)
