@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useLocation } from "react-router-dom";
 import RoleForm from "../../components/roles/RoleFormComponent";
 import RolesListComponent from "../../components/roles/RolesListComponent";
 import GameDropdown from "../../components/games/GameDropDown";
@@ -6,7 +7,12 @@ import useGames from "../../hooks/useGames";
 import useRoles from "../../hooks/useRoles";
 
 const RolesPage = () => {
-  const [selectedGameId, setSelectedGameId] = useState("");
+  // Cuando se llega desde "Modificar roles" en la pagina de juegos, el juego
+  // viene en el state de la navegacion y la lista arranca por ese juego.
+  const location = useLocation();
+  const [selectedGameId, setSelectedGameId] = useState(() =>
+    location.state?.videogameId != null ? String(location.state.videogameId) : ""
+  );
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [successMessage, setSuccessMessage] = useState("");
   const [searchTerm, setSearchTerm] = useState("");

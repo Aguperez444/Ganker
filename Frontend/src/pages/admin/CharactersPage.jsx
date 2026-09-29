@@ -1,11 +1,17 @@
 import { useEffect, useState } from "react";
+import { useLocation } from "react-router-dom";
 import CharacterForm from "../../components/characters/CharacterFormComponent";
 import CharactersListComponent from "../../components/characters/CharactersListComponent";
 import useGames from "../../hooks/useGames";
 import useCharacters from "../../hooks/useCharacters";
 
 const CharactersPage = () => {
-  const [selectedGameId, setSelectedGameId] = useState("");
+  // Cuando se llega desde "Modificar personajes" en la pagina de juegos, el
+  // juego viene en el state de la navegacion y la lista arranca por ese juego.
+  const location = useLocation();
+  const [selectedGameId, setSelectedGameId] = useState(() =>
+    location.state?.videogameId != null ? String(location.state.videogameId) : ""
+  );
   const [mode, setMode] = useState(null);
   const [selectedCharacter, setSelectedCharacter] = useState(null);
   const [successMessage, setSuccessMessage] = useState("");
