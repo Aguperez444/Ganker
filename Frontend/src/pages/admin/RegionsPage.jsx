@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import ConfirmDeleteModal from "../../components/common/ConfirmDeleteModal";
-import RegionForm from "../../components/regions/RegionFormComponent";
-import RegionsListComponent from "../../components/regions/RegionsListComponent";
+import RegionForm from "../../components/region/RegionFormComponent";
+import RegionsListComponent from "../../components/region/RegionsListComponent";
 import useGames from "../../hooks/useGames";
 import useRegions from "../../hooks/useRegions";
 
