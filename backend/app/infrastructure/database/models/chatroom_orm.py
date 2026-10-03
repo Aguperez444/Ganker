@@ -5,9 +5,12 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.infrastructure.database.base import Base
 
 from typing import TYPE_CHECKING
+
+
 if TYPE_CHECKING:
     from app.infrastructure.database.models.chatroom_member_orm import ChatroomMemberORM
     from app.infrastructure.database.models.team_orm import TeamORM
+    from app.infrastructure.database.models import MessageORM
 
 
 class ChatroomORM(Base):
@@ -19,3 +22,4 @@ class ChatroomORM(Base):
     # Relaciones
     members: Mapped[List["ChatroomMemberORM"]] = relationship(back_populates="chatroom")
     teams: Mapped[List["TeamORM"]] = relationship(back_populates="chatroom")
+    messages: Mapped[List["MessageORM"]] = relationship(back_populates="chatroom")
