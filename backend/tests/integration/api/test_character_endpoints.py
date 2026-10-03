@@ -49,6 +49,47 @@ class TestCharacterEndpointsIntegration:
 
         assert response.status_code == 404
 
+    def test_register_character_without_videogame(self, client, admin_auth_headers):
+        # Probar registrar un personaje sin seleccionar un videojuego (falla)
+        file = ("char.png", io.BytesIO(b"data"), "image/png")
+        data = {"name": "NoGameChar"}
+        response = client.post("/api/v1/characters/", data=data, files={"icon": file}, headers=admin_auth_headers)
+        assert response.status_code == 422
+
+    def test_register_character_without_name(self, client, admin_auth_headers, seed_catalog_data):
+        # Probar registrar un personaje sin ingresar su nombre (falla)
+        vg_id = seed_catalog_data["videogame"].videogame_id
+        file = ("char.png", io.BytesIO(b"data"), "image/png")
+        data = {"videogame_id": vg_id}
+        response = client.post("/api/v1/characters/", data=data, files={"icon": file}, headers=admin_auth_headers)
+        assert response.status_code == 422
+
+    def test_register_character_same_name_different_videogame_success(self, client, admin_auth_headers, seed_catalog_data, test_db_session):
+        # Probar registrar un personaje con un nombre ya existente pero en un videojuego diferente (pasa)
+        from app.infrastructure.database.models.videogame_orm import VideogameORM
+        vg2 = VideogameORM(name="Valorant", icon_url="/val.png", rank_per_role=False)
+        test_db_session.add(vg2)
+        test_db_session.commit()
+        test_db_session.refresh(vg2)
+
+        existing_char_name = seed_catalog_data["characters"][0].name
+        file = ("char.png", io.BytesIO(b"data"), "image/png")
+        data = {
+            "name": existing_char_name,
+            "videogame_id": vg2.videogame_id
+        }
+
+        response = client.post(
+            "/api/v1/characters/",
+            data=data,
+            files={"icon": file},
+            headers=admin_auth_headers
+        )
+
+        assert response.status_code == 201
+        res_data = response.json()
+        assert res_data["name"] == existing_char_name
+
     def test_register_character_duplicate_name(self, client, admin_auth_headers, seed_catalog_data):
         vg_id = seed_catalog_data["videogame"].videogame_id
         existing_char_name = seed_catalog_data["characters"][0].name
@@ -163,6 +204,57 @@ class TestCharacterEndpointsIntegration:
         )
 
         assert response.status_code == 409
+
+    def test_update_character_empty_name(self, client, admin_auth_headers, seed_catalog_data):
+        # Probar modificar el nombre de un personaje dejando el campo vacío (falla)
+        char_id = seed_catalog_data["characters"][0].character_id
+        vg_id = seed_catalog_data["videogame"].videogame_id
+        file = ("icon.png", io.BytesIO(b"data"), "image/png")
+        data = {"name": "   ", "videogame_id": vg_id}
+
+        response = client.put(f"/api/v1/characters/{char_id}", data=data, files={"icon": file}, headers=admin_auth_headers)
+        assert response.status_code == 400
+
+    def test_update_character_keep_name_change_icon(self, client, admin_auth_headers, seed_catalog_data):
+        # Probar modificar un personaje manteniendo su nombre actual y cambiando únicamente su avatar (pasa)
+        char = seed_catalog_data["characters"][0]
+        vg_id = seed_catalog_data["videogame"].videogame_id
+        file = ("new_icon.png", io.BytesIO(b"new-icon-data"), "image/png")
+        data = {
+            "name": char.name,
+            "videogame_id": vg_id
+        }
+
+        response = client.put(f"/api/v1/characters/{char.character_id}", data=data, files={"icon": file}, headers=admin_auth_headers)
+        assert response.status_code == 200
+        res_data = response.json()
+        assert res_data["name"] == char.name
+        assert "characters" in res_data["icon_url"]
+
+    def test_update_character_same_name_different_videogame_success(self, client, admin_auth_headers, seed_catalog_data, test_db_session):
+        # Probar modificar un personaje asignando un nombre que ya existe pero en otro videojuego diferente (pasa)
+        from app.infrastructure.database.models.videogame_orm import VideogameORM
+        from app.infrastructure.database.models.character_orm import CharacterORM
+
+        vg2 = VideogameORM(name="Valorant", icon_url="/val.png", rank_per_role=False)
+        test_db_session.add(vg2)
+        test_db_session.flush()
+
+        char_val = CharacterORM(name="Jett", videogame_id=vg2.videogame_id, icon_url="/jett.png")
+        test_db_session.add(char_val)
+        test_db_session.commit()
+
+        char_lol = seed_catalog_data["characters"][0]
+        file = ("icon.png", io.BytesIO(b"data"), "image/png")
+        data = {
+            "name": "Jett",
+            "videogame_id": seed_catalog_data["videogame"].videogame_id
+        }
+
+        response = client.put(f"/api/v1/characters/{char_lol.character_id}", data=data, files={"icon": file}, headers=admin_auth_headers)
+        assert response.status_code == 200
+        res_data = response.json()
+        assert res_data["name"] == "Jett"
 
     def test_update_character_missing_icon(self, client, admin_auth_headers, seed_catalog_data):
         char_id = seed_catalog_data["characters"][0].character_id

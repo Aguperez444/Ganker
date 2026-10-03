@@ -2,6 +2,7 @@ from typing import TYPE_CHECKING
 
 from app.domain.models.conversation import Conversation
 from app.domain.exceptions.user.user_not_found_exception import UserNotFoundException
+from app.domain.exceptions.chat.cannot_start_conversation_with_self_exception import CannotStartConversationWithSelfException
 
 if TYPE_CHECKING:
     from app.application.ports.i_unit_of_work import IUnitOfWork
@@ -13,7 +14,7 @@ class GetOrCreateConversation:
 
     def execute(self, current_user_id: int, target_user_id: int) -> Conversation:
         if current_user_id == target_user_id:
-            raise ValueError("No podés iniciar una conversación con vos mismo")
+            raise CannotStartConversationWithSelfException()
 
         # Normalizamos el orden para garantizar unicidad estricta
         user_1_id = min(current_user_id, target_user_id)
