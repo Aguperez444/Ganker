@@ -79,7 +79,9 @@ const GameProfileForm = ({
         ) : (
           <div className="flex flex-wrap gap-3">
             {(isEditMode
-              ? games.filter((game) => String(game.id) === String(selectedGameId))
+              ? games.filter(
+                  (game) => String(game.id) === String(selectedGameId)
+                )
               : games
             ).map((game) => {
               const isSelected = String(game.id) === String(selectedGameId);
@@ -166,6 +168,7 @@ const GameProfileForm = ({
                     onChange={(characterId) => onAddCharacter(characterId)}
                     options={availableCharacters}
                     placeholder="Agregar personaje..."
+                    buscable
                     getOptionId={(character) => character.character_id}
                   />
                 </div>

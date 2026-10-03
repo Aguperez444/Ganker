@@ -17,18 +17,18 @@ class RefreshToken:
         user_id = token_data["user_id"]
         old_jti = token_data["jti"]
 
-        with self.uow:
+        with self.uow as uow:
             # 2. Verificar que el token exista en DB y no esté revocado
-            if not self.uow.refresh_token_repo.is_valid(old_jti):
+            if not uow.refresh_token_repo.is_valid(old_jti):
                 raise InvalidTokenException("El refresh token ha sido revocado o es inválido")
 
             # 3. Verificar existencia del usuario en DB
-            user = self.uow.user_repo.get_user_by_id(user_id)
+            user = uow.user_repo.get_user_by_id(user_id)
             if user is None:
                 raise UserNotFoundException(user_id)
 
             # 4. Revocar el token viejo (Rotación)
-            self.uow.refresh_token_repo.revoke_by_jti(old_jti)
+            uow.refresh_token_repo.revoke_by_jti(old_jti)
 
             # 4.1 Obtener el rol del usuario
             role = user.role
@@ -40,7 +40,7 @@ class RefreshToken:
             )
 
             # 6. Guardar el nuevo refresh token
-            self.uow.refresh_token_repo.save(
+            uow.refresh_token_repo.save(
                 user_id=user_id,
                 role=role,
                 jti=new_jti,
@@ -49,7 +49,7 @@ class RefreshToken:
 
             # 7. Actualizar la última conexión del usuario
             user.last_connection = datetime.now()
-            self.uow.user_repo.update_user(user)
+            uow.user_repo.update_user(user)
 
         return AuthTokensResponse(
             access_token=new_access_token,

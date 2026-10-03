@@ -5,9 +5,9 @@ from app.infrastructure.api.dto.response.base_classes.role_profile_object_respon
 from app.infrastructure.api.dto.response.base_classes.videogame_object_response import VideogameObjectResponse
 
 class GameProfileObjectResponse(BaseModel):
-    game_profile_id: int = Field(..., description="ID único del perfil de juego actualizado")
-    player_id: int = Field(..., description="ID del jugador asociado al perfil de juego actualizado")
-    videogame: VideogameObjectResponse = Field(..., description="Videojuego asociado al perfil de juego actualizado")
-    characters: List[CharacterObjectResponse] = Field(..., description="Personajes asociados al perfil de juego actualizado")
-    role_profiles: List['RoleProfileObjectResponse'] = Field(..., description="Perfiles de rol asociados al perfil de juego actualizado")
+    game_profile_id: int = Field(..., description="ID único del perfil de juego")
+    player_id: int = Field(..., description="ID del jugador asociado al perfil de juego")
+    videogame: VideogameObjectResponse = Field(..., description="Videojuego asociado al perfil de juego")
+    characters: List[CharacterObjectResponse] = Field(..., description="Personajes asociados al perfil de juego")
+    role_profiles: List['RoleProfileObjectResponse'] = Field(..., description="Perfiles de rol asociados al perfil de juego")
 

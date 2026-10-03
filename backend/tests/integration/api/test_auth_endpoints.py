@@ -169,7 +169,7 @@ class TestAuthEndpointsIntegration:
         # Second logout with same token fails with 401
         logout_res2 = client.post("/auth/v1/logout", json={"refresh_token": refresh_token})
         assert logout_res2.status_code == 401
-        assert "revok" in logout_res2.json().get("error", "").lower()
+        assert "revocado" in logout_res2.json().get("error", "").lower()
 
     def test_logout_invalid_jwt(self, client):
         response = client.post("/auth/v1/logout", json={"refresh_token": "invalid.jwt.token"})

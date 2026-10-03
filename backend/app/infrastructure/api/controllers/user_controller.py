@@ -56,7 +56,7 @@ def register_user(request: RegisterUserRequest, user_id: int = Depends(get_curre
 
 @router.put("/", response_model=UpdateUserResponse, status_code=200, dependencies=[Depends(require_player)])
 def update_user(username: str = Form(...), name: str = Form(...), mail: EmailStr = Form(...),
-                      icon: Optional[UploadFile] = File(None, description="Icon image file"),
+                      icon: Optional[UploadFile] = File(None, description="Archivo de imagen del ícono"),
                       user_id: int = Depends(get_current_user_id)
                       ) -> UpdateUserResponse:
     # Asegurarse de que la petición incluya un archivo con nombre
