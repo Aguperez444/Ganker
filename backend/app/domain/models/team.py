@@ -10,6 +10,7 @@ from app.domain.exceptions.team.role_already_ocupied_exception import RoleAlread
 from app.domain.exceptions.team.team_is_full_exception import TeamIsAlreadyFullException
 from app.domain.exceptions.team.team_member_slot_not_found_exception import TeamMemberSlotNotFoundException
 from app.domain.exceptions.team.user_already_in_team_exception import UserAlreadyInTeamException
+from app.domain.models.conversation_member import ConversationMember
 
 
 if TYPE_CHECKING:
@@ -167,6 +168,15 @@ class Team:
 
         if user_role_profile.rank.value < self.min_rank.value or user_role_profile.rank.value > self.max_rank.value:
             raise InvalidrankException(self.team_id, user_role_profile.rank.rank_id, user_role_profile.rank.value, self.min_rank.value, self.max_rank.value)
+
+        target_slot.user = new_user
+
+        # Agregar al usuario a la conversación del equipo
+        self.conversation.members.append(ConversationMember(
+            conversation_member_id=None,
+            conversation_id=self.conversation.conversation_id,
+            user=new_user
+        ))
 
 
 

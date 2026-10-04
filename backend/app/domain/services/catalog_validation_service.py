@@ -12,7 +12,10 @@ from app.domain.exceptions.mail.email_already_exists_exception import EmailAlrea
 from app.domain.exceptions.user.username_already_exists_exception import UsernameAlreadyExistsException
 from app.domain.exceptions.videogame.videogame_already_exists_exception import VideogameAlreadyExistsException
 
+from app.domain.exceptions.team.InvalidRegionException import InvalidRegionException
+
 if TYPE_CHECKING:
+    from app.domain.models.region import Region
     from app.domain.models.user import User
     from app.application.ports.i_unit_of_work import IUnitOfWork
     from app.domain.models.character import Character
@@ -23,6 +26,13 @@ if TYPE_CHECKING:
 
 
 class CatalogValidationService:
+
+    @staticmethod
+    def get_and_validate_exist_region(region_id: int, uow: 'IUnitOfWork') -> 'Region':
+        region = uow.region_repo.get_by_id(region_id)
+        if not region:
+            raise InvalidRegionException(region_id, -1)
+        return region
 
     @staticmethod
     def get_and_validate_exist_user(user_id: int, uow: 'IUnitOfWork') -> 'User':

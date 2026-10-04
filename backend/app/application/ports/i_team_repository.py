@@ -21,3 +21,11 @@ class ITeamRepository(ABC):
         Actualiza los miembros de un equipo en la base de datos.
         """
         raise NotImplementedError
+
+    @abstractmethod
+    def is_user_in_any_active_team(self, user_id: int) -> bool:
+        raise NotImplementedError
+        
+    @abstractmethod
+    def create_team(self, team: 'Team') -> 'Team':
+        raise NotImplementedError

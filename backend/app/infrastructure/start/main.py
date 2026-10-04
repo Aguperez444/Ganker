@@ -26,9 +26,11 @@ from app.infrastructure.api.controllers.role_controller import router as role_ro
 from app.infrastructure.api.controllers.rank_controller import router as rank_router
 from app.infrastructure.api.controllers.character_controller import router as character_router
 from app.infrastructure.api.controllers.chat_controller import router as chat_router
+from app.infrastructure.api.controllers.team_controller import router as team_router
 
 from app.infrastructure.api.controllers.chat_websocket import router as chat_websocket
 from app.infrastructure.api.controllers.notifications_websocket import router as notifications_websocket
+from app.infrastructure.api.controllers.team_websocket import router as team_websocket
 
 
 # noinspection unused-parameter,shadowing-names
@@ -95,6 +97,8 @@ app.include_router(character_router)
 app.include_router(chat_websocket)
 app.include_router(chat_router)
 app.include_router(notifications_websocket)
+app.include_router(team_router)
+app.include_router(team_websocket)
 
 host = "127.0.0.1"
 port = 8000
