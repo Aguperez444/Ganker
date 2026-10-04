@@ -29,8 +29,8 @@ def start_or_get_conversation(payload: StartConversationRequest, current_user_id
 
     return CreateConversationSummaryResponse(
         conversation_id=conversation.conversation_id,
-        player_1_id=conversation.user_1.user_id,
-        player_2_id=conversation.user_2.user_id
+        player_1_id=conversation.members[0].user.user_id,
+        player_2_id=conversation.members[1].user.user_id
     )
 
 

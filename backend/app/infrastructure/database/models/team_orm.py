@@ -9,7 +9,7 @@ if TYPE_CHECKING:
     from app.infrastructure.database.models.videogame_orm import VideogameORM
     from app.infrastructure.database.models.region_orm import RegionORM
     from app.infrastructure.database.models.rank_orm import RankORM
-    from app.infrastructure.database.models.chatroom_orm import ChatroomORM
+    from app.infrastructure.database.models.conversation_orm import ConversationORM
     from app.infrastructure.database.models.team_member_role_orm import TeamMemberRoleORM
 
 
@@ -23,12 +23,12 @@ class TeamORM(Base):
     region_id: Mapped[int] = mapped_column(ForeignKey("region.region_id"), nullable=False)
     min_rank_id: Mapped[int] = mapped_column(ForeignKey("rank.rank_id"), nullable=False)
     max_rank_id: Mapped[int] = mapped_column(ForeignKey("rank.rank_id"), nullable=False)
-    chatroom_id: Mapped[int] = mapped_column(ForeignKey("chatroom.chatroom_id"), nullable=False)
+    conversation_id: Mapped[int] = mapped_column(ForeignKey("conversation.conversation_id"), nullable=False)
 
     # Relaciones
     videogame: Mapped["VideogameORM"] = relationship()
     region: Mapped["RegionORM"] = relationship(back_populates="teams")
     min_rank: Mapped["RankORM"] = relationship(foreign_keys=[min_rank_id])
     max_rank: Mapped["RankORM"] = relationship(foreign_keys=[max_rank_id])
-    chatroom: Mapped["ChatroomORM"] = relationship(back_populates="teams")
+    conversation: Mapped["ConversationORM"] = relationship(back_populates="teams")
     members_roles: Mapped[List["TeamMemberRoleORM"]] = relationship(back_populates="team")

@@ -7,7 +7,7 @@ if TYPE_CHECKING:
     from app.domain.models.videogame import Videogame
     from app.domain.models.region import Region
     from app.domain.models.rank import Rank
-    from app.domain.models.chatroom import Chatroom
+    from app.domain.models.conversation import Conversation
     from app.domain.models.team_member_role import TeamMemberRole
 
 
@@ -21,7 +21,7 @@ class Team:
                  region: 'Region',
                  min_rank: 'Rank',
                  max_rank: 'Rank',
-                 chatroom: 'Chatroom',
+                 conversation: 'Conversation',
                  members: List['TeamMemberRole'] = None):
         self._team_id = team_id
         self._name = name
@@ -30,7 +30,7 @@ class Team:
         self._region = region
         self._min_rank = min_rank
         self._max_rank = max_rank
-        self._chatroom = chatroom
+        self._conversation = conversation
         self._members = members if members is not None else []
 
     @property
@@ -87,11 +87,11 @@ class Team:
         self._max_rank = value
 
     @property
-    def chatroom(self) -> 'Chatroom':
-        return self._chatroom
-    @chatroom.setter
-    def chatroom(self, value: 'Chatroom'):
-        self._chatroom = value
+    def conversation(self) -> 'Conversation':
+        return self._conversation
+    @conversation.setter
+    def conversation(self, value: 'Conversation'):
+        self._conversation = value
 
     @property
     def members(self) -> List['TeamMemberRole']:

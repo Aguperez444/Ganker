@@ -8,7 +8,6 @@ from app.infrastructure.database.base import Base
 if TYPE_CHECKING:
     from app.infrastructure.database.models.conversation_orm import ConversationORM
     from app.infrastructure.database.models.user_orm import UserORM
-    from app.infrastructure.database.models import ChatroomORM
 
 
 class MessageORM(Base):
@@ -16,15 +15,11 @@ class MessageORM(Base):
 
     message_id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     conversation_id: Mapped[Optional[int]] = mapped_column(ForeignKey("conversation.conversation_id"), nullable=True)
-    chatroom_id: Mapped[Optional[int]] = mapped_column(ForeignKey("chatroom.chatroom_id"), nullable=True)
     sender_id: Mapped[int] = mapped_column(ForeignKey("user.user_id"), nullable=False)
     content: Mapped[str] = mapped_column(Text, nullable=False)
     timestamp: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, default=lambda: datetime.now(timezone.utc))
     is_read: Mapped[bool] = mapped_column(nullable=False, default=False)
 
-
-
     # Relaciones
-    chatroom: Mapped["ChatroomORM"] = relationship(back_populates="messages")
     conversation: Mapped["ConversationORM"] = relationship(back_populates="messages")
     sender: Mapped["UserORM"] = relationship(back_populates="sent_messages")
