@@ -23,5 +23,5 @@ class IGameProfileRepository(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    def delete_region(self, region_id: int) -> None:
+    def disassociate_region(self, region_id: int) -> None:
         raise NotImplementedError

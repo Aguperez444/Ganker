@@ -49,7 +49,9 @@ class UpdateVideogameProfile:
                 )
                 new_role_profiles.append(role_profile)
 
+            # Busco la region y valido que pertenezca al videojuego
             region = CatalogValidationService.get_and_validate_exists_region(update_videogame_profile_request.region_id, uow)
+            CatalogValidationService.validate_region_are_videogame_regions(region.region_id, game_profile.videogame.videogame_id, uow)
 
             # Actualizar la entidad de dominio con las nuevas listas
             game_profile.characters_priority = characters_priority

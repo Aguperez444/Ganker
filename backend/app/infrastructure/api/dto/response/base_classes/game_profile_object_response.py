@@ -11,4 +11,4 @@ class GameProfileObjectResponse(BaseModel):
     videogame: VideogameObjectResponse = Field(..., description="Videojuego asociado al perfil de juego actualizado")
     characters: List[CharacterObjectResponse] = Field(..., description="Personajes asociados al perfil de juego actualizado")
     role_profiles: List['RoleProfileObjectResponse'] = Field(..., description="Perfiles de rol asociados al perfil de juego actualizado")
-    region: RegionObjectResponse = Field(..., description="Region de juego asociado al perfil de juego actualizado")
+    region: RegionObjectResponse | None = Field(..., description="Region de juego asociado al perfil de juego actualizado")

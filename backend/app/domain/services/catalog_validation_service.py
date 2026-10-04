@@ -11,6 +11,7 @@ from app.domain.exceptions.mail.email_already_exists_exception import EmailAlrea
 from app.domain.exceptions.user.username_already_exists_exception import UsernameAlreadyExistsException
 from app.domain.exceptions.videogame.videogame_already_exists_exception import VideogameAlreadyExistsException
 from app.domain.exceptions.region.region_not_found_exception import RegionNotFoundException
+from app.domain.exceptions.region.duplicated_region_name_exception import DuplicatedRegionNameException
 
 if TYPE_CHECKING:
     from app.application.ports.i_unit_of_work import IUnitOfWork
@@ -82,6 +83,13 @@ class CatalogValidationService:
         return True
 
     @staticmethod
+    def validate_region_name_uniqueness(name: str, videogame_id: int, uow: 'IUnitOfWork'):
+        existing_region = uow.region_repo.get_region_by_name_and_videogame(name, videogame_id)
+        if existing_region:
+            raise DuplicatedRegionNameException(name, videogame_id)
+        return True
+
+    @staticmethod
     def validate_new_videogame_name_uniqueness(cleaned_name: str, uow: 'IUnitOfWork') -> bool:
         existing_videogame = uow.videogame_repo.get_videogame_by_name(cleaned_name.lower())
         if existing_videogame:
@@ -124,3 +132,11 @@ class CatalogValidationService:
     def is_duplicated_mail(mail: str, uow: IUnitOfWork) -> bool:
         usuario_con_ese_mail = uow.user_repo.get_user_by_mail(mail)
         return usuario_con_ese_mail is not None
+
+    @staticmethod
+    def validate_region_are_videogame_regions(region_id: int, videogame_id: int, uow: 'IUnitOfWork'):
+        region = uow.region_repo.get_region_by_id(region_id)
+        if not region:
+            raise RegionNotFoundException(region_id)
+        if region.videogame.videogame_id != videogame_id:
+            raise DoesNotBelongToProfileException("region", f"{region_id}")

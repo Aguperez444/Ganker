@@ -63,10 +63,12 @@ class GameProfileRepositoryImpl(IGameProfileRepository):
             for role_profile in game_profile.role_profiles
         )
 
+        orm_existing.region_id = game_profile.region.region_id if game_profile.region else None
+
         self._session.flush()
         return GameProfileMapper.orm_to_domain(orm_existing)
 
-    def delete_region(self, region_id: int) -> None:
+    def disassociate_region(self, region_id: int) -> None:
 
         associations = self._session.query(GameProfileORM).filter(GameProfileORM.region_id == region_id).all()
         if not associations:
@@ -74,5 +76,6 @@ class GameProfileRepositoryImpl(IGameProfileRepository):
 
         for game_profile in associations:
             game_profile.region_id = None
-            self._session.flush()
+
+        self._session.flush()
 
