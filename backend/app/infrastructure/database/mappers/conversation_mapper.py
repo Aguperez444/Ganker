@@ -2,7 +2,7 @@ from app.domain.models.conversation import Conversation
 from app.infrastructure.database.mappers.message_mapper import MessageMapper
 from app.infrastructure.database.models.conversation_orm import ConversationORM
 from app.infrastructure.database.mappers.conversation_member_mapper import ConversationMemberMapper
-from app.domain.models.conversation_type import ConversationType
+from app.domain.models.conversation_type_enum import ConversationTypeEnum
 
 class ConversationMapper:
     @staticmethod
@@ -11,7 +11,7 @@ class ConversationMapper:
             conversation_id=conversation_orm.conversation_id,
             members=[ConversationMemberMapper.orm_to_domain(member) for member in conversation_orm.members],
             messages=[MessageMapper.orm_to_domain(message) for message in conversation_orm.messages],
-            conversation_type=ConversationType(conversation_orm.type) if conversation_orm.type else ConversationType.PRIVATE,
+            conversation_type=ConversationTypeEnum(conversation_orm.type) if conversation_orm.type else ConversationTypeEnum.PRIVATE,
             name=conversation_orm.name
         )
     @staticmethod
@@ -37,7 +37,7 @@ class ConversationMapper:
             conversation_id=conversation_orm.conversation_id,
             members=[ConversationMemberMapper.orm_to_domain(member) for member in conversation_orm.members],
             messages=[],
-            conversation_type=ConversationType(conversation_orm.type) if conversation_orm.type else ConversationType.PRIVATE,
+            conversation_type=ConversationTypeEnum(conversation_orm.type) if conversation_orm.type else ConversationTypeEnum.PRIVATE,
             name=conversation_orm.name
         )
 
@@ -47,6 +47,6 @@ class ConversationMapper:
             conversation_id=conversation_orm.conversation_id,
             members=[ConversationMemberMapper.orm_to_domain(member) for member in conversation_orm.members],
             messages=[MessageMapper.orm_to_domain(conversation_orm.messages[-1])] if conversation_orm.messages else [],
-            conversation_type=ConversationType(conversation_orm.type) if conversation_orm.type else ConversationType.PRIVATE,
+            conversation_type=ConversationTypeEnum(conversation_orm.type) if conversation_orm.type else ConversationTypeEnum.PRIVATE,
             name=conversation_orm.name
         )

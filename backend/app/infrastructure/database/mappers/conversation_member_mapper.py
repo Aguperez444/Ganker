@@ -1,7 +1,7 @@
 from app.domain.models.conversation_member import ConversationMember
 from app.infrastructure.database.models.conversation_member_orm import ConversationMemberORM
 from app.infrastructure.database.mappers.user_mapper import UserMapper
-from app.domain.models.conversation_member_role import ConversationMemberRole
+from app.domain.models.conversation_member_role_enum import ConversationMemberRoleEnum
 
 class ConversationMemberMapper:
 
@@ -11,7 +11,7 @@ class ConversationMemberMapper:
             conversation_member_id=member_orm.conversation_member_id,
             conversation_id=member_orm.conversation_id,
             user=UserMapper.orm_to_domain(member_orm.user),
-            role=ConversationMemberRole(member_orm.role) if member_orm.role else None
+            role=ConversationMemberRoleEnum(member_orm.role) if member_orm.role else None
         )
 
     @staticmethod

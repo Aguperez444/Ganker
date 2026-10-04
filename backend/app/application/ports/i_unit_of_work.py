@@ -2,7 +2,7 @@ from abc import ABC, abstractmethod
 
 from typing import TYPE_CHECKING
 
-
+from app.application.ports.i_team_repository import ITeamRepository
 
 if TYPE_CHECKING:
     from app.application.ports.i_role_profile_repository import IRoleProfileRepository
@@ -33,6 +33,7 @@ class IUnitOfWork(ABC):
     find_by_specification_repo: 'IFindBySpecificationRepository'
     role_profile_repo: 'IRoleProfileRepository'
     character_priority_repo: 'ICharacterPriorityRepository'
+    team_repo: 'ITeamRepository'
 
 
     @abstractmethod

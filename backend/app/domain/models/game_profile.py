@@ -3,10 +3,13 @@ from typing import TYPE_CHECKING, Optional
 from app.domain.exceptions.entity_not_persisted_exception import EntityNotPersistedException
 from app.domain.exceptions.invalid_id_exception import InvalidIdException
 
+
 if TYPE_CHECKING:
     from app.domain.models.character_priority import CharacterPriority
     from app.domain.models.role_profile import RoleProfile
     from app.domain.models.videogame import Videogame
+    from app.domain.models.region import Region
+    from app.domain.models.role import Role
 
 
 class GameProfile:
@@ -14,7 +17,8 @@ class GameProfile:
                  player_id: int,
                  videogame: 'Videogame',
                  characters_priority: list['CharacterPriority'],
-                 role_profiles: list['RoleProfile']
+                 role_profiles: list['RoleProfile'],
+                 region: Optional['Region'] = None
                  ):
 
         self._game_profile_id: Optional[int] = game_profile_id
@@ -22,6 +26,7 @@ class GameProfile:
         self._videogame: 'Videogame' = videogame
         self._characters_priority: list['CharacterPriority'] = characters_priority
         self._role_profiles: list['RoleProfile'] = role_profiles
+        self._region: Optional['Region'] = region
 
     @property
     def game_profile_id(self) -> int:
@@ -64,6 +69,13 @@ class GameProfile:
     def role_profiles(self, value: list['RoleProfile']) -> None:
         self._role_profiles = value
 
+    @property
+    def region(self) -> Optional['Region']:
+        return self._region
+    @region.setter
+    def region(self, value: Optional['Region']) -> None:
+        self._region = value
+
     def is_persisted(self) -> bool:
         return self._game_profile_id is not None
 
@@ -71,3 +83,15 @@ class GameProfile:
         return (f"GameProfile(game_profile_id={self.game_profile_id or 'sin_id'},"
                 f" player_id={self.player_id}, videogame={self.videogame},"
                 f" characters_priority={self.characters_priority}, role_profiles={self.role_profiles})")
+
+    def get_role_profile_by_role(self, role: 'Role') -> 'None|RoleProfile':
+        for role_profile in self._role_profiles:
+            if role_profile.role.role_id == role.role_id:
+                return role_profile
+        return None
+
+    def get_role_profile_by_role_id(self, role_id: int) -> 'None|RoleProfile':
+        for role_profile in self._role_profiles:
+            if role_profile.role.role_id == role_id:
+                return role_profile
+        return None

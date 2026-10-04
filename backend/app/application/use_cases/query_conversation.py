@@ -1,6 +1,6 @@
 from app.application.ports.i_unit_of_work import IUnitOfWork
 from app.domain.models.message import Message
-from app.domain.models.conversation_type import ConversationType
+from app.domain.models.conversation_type_enum import ConversationTypeEnum
 from app.infrastructure.api.dto.response.conversation_summary_response import ConversationSummaryResponse, \
     ConversationSummaryItemResponse, LastMessageResponse, ParticipantSummaryResponse
 
@@ -21,7 +21,7 @@ class QueryConversations:
                                                    is_read=message.is_read) if message else None
                 unread_count = uow.message_repo.get_unread_count_by_conversation_id(conversation.conversation_id, user_id)
 
-                if conversation.conversation_type == ConversationType.PRIVATE:
+                if conversation.conversation_type == ConversationTypeEnum.PRIVATE:
                     other_user = conversation.get_other_user(user_id)
                     other_participant = ParticipantSummaryResponse(
                         user_id=other_user.user_id,

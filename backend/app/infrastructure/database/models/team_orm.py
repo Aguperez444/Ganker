@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Optional
 from sqlalchemy import String, Boolean, ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -20,7 +20,7 @@ class TeamORM(Base):
     name: Mapped[str] = mapped_column(String, nullable=False)
     allow_other_regions: Mapped[bool] = mapped_column(Boolean, nullable=False)
     videogame_id: Mapped[int] = mapped_column(ForeignKey("videogame.videogame_id"), nullable=False)
-    region_id: Mapped[int] = mapped_column(ForeignKey("region.region_id"), nullable=False)
+    region_id: Mapped[Optional[int]] = mapped_column(ForeignKey("region.region_id"), nullable=True)
     min_rank_id: Mapped[int] = mapped_column(ForeignKey("rank.rank_id"), nullable=False)
     max_rank_id: Mapped[int] = mapped_column(ForeignKey("rank.rank_id"), nullable=False)
     conversation_id: Mapped[int] = mapped_column(ForeignKey("conversation.conversation_id"), nullable=False)

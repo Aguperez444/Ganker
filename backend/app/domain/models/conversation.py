@@ -2,7 +2,7 @@ from typing import TYPE_CHECKING, Optional, List
 
 from app.domain.exceptions.entity_not_persisted_exception import EntityNotPersistedException
 from app.domain.exceptions.invalid_id_exception import InvalidIdException
-from app.domain.models.conversation_type import ConversationType
+from app.domain.models.conversation_type_enum import ConversationTypeEnum
 
 if TYPE_CHECKING:
     from app.domain.models.user import User
@@ -11,11 +11,11 @@ if TYPE_CHECKING:
 
 
 class Conversation:
-    def __init__(self, conversation_id: Optional[int], members: List['ConversationMember'], messages: list['Message'], conversation_type: ConversationType = ConversationType.PRIVATE, name: Optional[str] = None):
+    def __init__(self, conversation_id: Optional[int], members: List['ConversationMember'], messages: list['Message'], conversation_type: ConversationTypeEnum = ConversationTypeEnum.PRIVATE, name: Optional[str] = None):
         self._conversation_id: Optional[int] = conversation_id
         self._members: List['ConversationMember'] = members
         self._messages: list['Message'] = messages
-        self._conversation_type: ConversationType = conversation_type
+        self._conversation_type: ConversationTypeEnum = conversation_type
         self._name: Optional[str] = name
 
 
@@ -48,11 +48,11 @@ class Conversation:
         self._messages = value
 
     @property
-    def conversation_type(self) -> ConversationType:
+    def conversation_type(self) -> ConversationTypeEnum:
         return self._conversation_type
     
     @conversation_type.setter
-    def conversation_type(self, value: ConversationType):
+    def conversation_type(self, value: ConversationTypeEnum):
         self._conversation_type = value
 
     @property
@@ -71,7 +71,7 @@ class Conversation:
         return any(member.user.user_id == user_id for member in self._members)
 
     def get_other_user(self, user_id: int) -> 'User':
-        if self._conversation_type == ConversationType.PRIVATE:
+        if self._conversation_type == ConversationTypeEnum.PRIVATE:
             for member in self._members:
                 if member.user.user_id != user_id:
                     return member.user

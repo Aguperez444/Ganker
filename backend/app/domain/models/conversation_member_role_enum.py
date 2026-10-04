@@ -1,5 +1,5 @@
 from enum import IntEnum
 
-class ConversationMemberRole(IntEnum):
+class ConversationMemberRoleEnum(IntEnum):
     ADMIN = 1
     MEMBER = 2
