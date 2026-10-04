@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Optional
 
 if TYPE_CHECKING:
     from app.domain.models.team import Team
@@ -9,7 +9,7 @@ if TYPE_CHECKING:
 class ITeamRepository(ABC):
 
     @abstractmethod
-    def get_by_id_for_update(self, team_id: int) -> 'Team':
+    def get_by_id_for_update(self, team_id: int) -> Optional['Team']:
         """
         Obtiene un equipo por su ID con un bloqueo FOR UPDATE para evitar colisiones en entornos concurrentes.
         """
