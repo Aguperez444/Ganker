@@ -82,7 +82,8 @@ class GameProfile:
     def __repr__(self) -> str:
         return (f"GameProfile(game_profile_id={self.game_profile_id or 'sin_id'},"
                 f" player_id={self.player_id}, videogame={self.videogame},"
-                f" characters_priority={self.characters_priority}, role_profiles={self.role_profiles})")
+                f" characters_priority={self.characters_priority}, role_profiles={self.role_profiles}),"
+                f" region={self.region or 'sin_region'})")
 
     def get_role_profile_by_role(self, role: 'Role') -> 'None|RoleProfile':
         for role_profile in self._role_profiles:

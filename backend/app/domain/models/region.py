@@ -8,10 +8,11 @@ if TYPE_CHECKING:
 
 
 class Region:
+
     def __init__(self, region_id: Optional[int], name: str, videogame: 'Videogame'):
-        self._region_id = region_id
-        self._name = name
-        self._videogame = videogame
+        self._region_id: Optional[int] = region_id
+        self._name: str = name
+        self._videogame: 'Videogame' = videogame
 
     @property
     def region_id(self) -> int:
@@ -19,7 +20,7 @@ class Region:
             raise EntityNotPersistedException("Region")
         return self._region_id
     @region_id.setter
-    def region_id(self, value: int):
+    def region_id(self, value: int)-> None:
         if isinstance(value, bool) or not isinstance(value, int):
             raise InvalidIdException(value)
         self._region_id = value
@@ -28,15 +29,15 @@ class Region:
     def name(self) -> str:
         return self._name
     @name.setter
-    def name(self, value: str):
-        self._name = value
+    def name (self, name: str) -> None:
+            self._name = name
 
     @property
-    def videogame(self) -> 'Videogame':
+    def videogame(self) -> Videogame:
         return self._videogame
     @videogame.setter
-    def videogame(self, value: 'Videogame'):
-        self._videogame = value
+    def videogame (self, videogame: Videogame) -> None:
+        self._videogame = videogame
 
     def __eq__(self, other: object) -> bool:
         if isinstance(other, Region):
@@ -47,4 +48,5 @@ class Region:
         return self._region_id is not None
 
     def __repr__(self) -> str:
-        return f"Region(region_id={self.region_id if self.is_persisted() else 'sin_id'}, name='{self.name}', videogame={self.videogame})"
+        return (f"Region(region_id={self.region_id or 'sin_id'} , name={self.name},"
+                f"videogame={self.videogame})")

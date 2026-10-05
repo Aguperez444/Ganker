@@ -2,7 +2,7 @@ from abc import ABC, abstractmethod
 
 from typing import TYPE_CHECKING
 
-
+from app.application.ports.i_region_repository import IRegionRepository
 
 if TYPE_CHECKING:
     from app.application.ports.i_role_profile_repository import IRoleProfileRepository
