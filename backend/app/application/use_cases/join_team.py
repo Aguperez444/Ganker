@@ -21,7 +21,7 @@ class JoinTeam:
             current_user = CatalogValidationService.get_and_validate_exist_user(user_id, uow)
 
             # 1. Obtenemos el target_team con bloqueo FOR UPDATE para evitar colisiones
-            target_team: 'Team' = uow.team_repo.get_by_id_for_update(target_team_id)
+            target_team: 'Team|None' = uow.team_repo.get_by_id_for_update(target_team_id)
             if not target_team:
                 raise TeamNotFoundException(target_team_id)
 

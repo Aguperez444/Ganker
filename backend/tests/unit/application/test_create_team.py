@@ -42,7 +42,7 @@ def test_create_team_success(mock_uow):
 
     mock_uow.user_repo.get_user_by_id.return_value = user
     mock_uow.videogame_repo.get_videogame_by_id.return_value = vg
-    mock_uow.region_repo.get_by_id.return_value = region
+    mock_uow.region_repo.get_region_by_id.return_value = region
     mock_uow.rank_repo.get_rank_by_id.side_effect = lambda rid: min_r if rid == 1 else max_r
     mock_uow.role_repo.get_role_by_id.return_value = role
     mock_uow.team_repo.is_user_in_any_active_team.return_value = False

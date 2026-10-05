@@ -34,9 +34,11 @@ class Team:
                  min_rank: 'Rank',
                  max_rank: 'Rank',
                  conversation: 'Conversation',
-                 members: List['TeamMemberRole'] = None):
+                 members: List['TeamMemberRole'] = None,
+                 description: Optional[str] = None):
         self._team_id: int|None = team_id
         self._name: str = name
+        self._description: Optional[str] = description
         self._allow_other_regions: bool = bool(allow_other_regions) if allow_other_regions is not None else False
         self._videogame: 'Videogame' = videogame
         self._region: 'Region' = region
@@ -62,6 +64,13 @@ class Team:
     @name.setter
     def name(self, value: str):
         self._name = value
+
+    @property
+    def description(self) -> Optional[str]:
+        return self._description
+    @description.setter
+    def description(self, value: Optional[str]):
+        self._description = value
 
     @property
     def allow_other_regions(self) -> bool:

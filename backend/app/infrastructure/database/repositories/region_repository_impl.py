@@ -11,6 +11,7 @@ from app.infrastructure.database.models.region_orm import RegionORM
 if TYPE_CHECKING:
     from app.domain.models.region import Region
 
+#TODO REVISAR ESTO, NO ESTOY SEGURO DE HASTA QUE PUNTO ESTO DEVUELVE NONE REALMENTE
 
 class RegionRepositoryImpl(IRegionRepository):
     def __init__(self, session: Session):
@@ -63,6 +64,3 @@ class RegionRepositoryImpl(IRegionRepository):
     def count_associated_to_region(self, region_id) -> int:
 
         return self.session.query(RegionORM).filter(RegionORM.region_id == region_id).count()
-    def get_by_id(self, region_id: int) -> Optional['Region']:
-        orm = self.session.query(RegionORM).filter(RegionORM.region_id == region_id).first()
-        return RegionMapper.orm_to_domain(orm) if orm else None

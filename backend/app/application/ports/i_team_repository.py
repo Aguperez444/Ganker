@@ -18,8 +18,14 @@ class ITeamRepository(ABC):
     @abstractmethod
     def update_team_members(self, target_team: 'Team') -> 'Team':
         """
-        Actualiza los miembros de un equipo en la base de datos.
+        Actualiza los miembros de un equipo.
         """
+        raise NotImplementedError
+        
+    @abstractmethod
+    def search_teams(self, videogame_id: Optional[int] = None, region_id: Optional[int] = None, 
+                     rank_id: Optional[int] = None, vacant_slots: Optional[int] = None, 
+                     role_id: Optional[int] = None, search_term: Optional[str] = None) -> List['Team']:
         raise NotImplementedError
 
     @abstractmethod

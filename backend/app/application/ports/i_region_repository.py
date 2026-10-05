@@ -25,9 +25,6 @@ class IRegionRepository(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    def get_by_id(self, region_id: int) -> Optional['Region']:
-        pass
-    @abstractmethod
     def update_region(self, region: 'Region') -> 'Region':
         raise NotImplementedError
 

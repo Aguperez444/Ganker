@@ -18,6 +18,7 @@ class TeamORM(Base):
 
     team_id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     name: Mapped[str] = mapped_column(String, nullable=False)
+    description: Mapped[Optional[str]] = mapped_column(String, nullable=True)
     allow_other_regions: Mapped[bool] = mapped_column(Boolean, nullable=False)
     videogame_id: Mapped[int] = mapped_column(ForeignKey("videogame.videogame_id"), nullable=False)
     region_id: Mapped[Optional[int]] = mapped_column(ForeignKey("region.region_id"), nullable=True)

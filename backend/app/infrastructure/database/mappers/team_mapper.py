@@ -13,6 +13,7 @@ class TeamMapper:
         return Team(
             team_id = team_orm.team_id,
             name = team_orm.name,
+            description = team_orm.description,
             allow_other_regions = team_orm.allow_other_regions,
             videogame = VideogameMapper.orm_to_domain(team_orm.videogame),
             region = RegionMapper.orm_to_domain(team_orm.region) if team_orm.region else None,
@@ -27,6 +28,7 @@ class TeamMapper:
         if not team.is_persisted():
             return TeamORM(
                 name = team.name,
+                description = team.description,
                 allow_other_regions = team.allow_other_regions,
                 videogame_id = team.videogame.videogame_id,
                 region_id = team.region.region_id if team.region and team.region.is_persisted() else None,
@@ -37,6 +39,7 @@ class TeamMapper:
         return TeamORM(
             team_id = team.team_id,
             name = team.name,
+            description = team.description,
             allow_other_regions = team.allow_other_regions,
             videogame_id = team.videogame.videogame_id,
             region_id = team.region.region_id if team.region and team.region.is_persisted() else None,

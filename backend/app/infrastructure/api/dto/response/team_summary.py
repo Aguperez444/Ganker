@@ -22,6 +22,7 @@ class UserSummaryResponse(BaseModel):
 class TeamSummaryResponse(BaseModel):
     team_id: int = Field(..., description="ID único del equipo")
     team_name: str = Field(..., description="Nombre del equipo")
+    description: str | None = Field(None, description="Mensaje descriptivo de la sala")
     player_count: int = Field(..., description="Cantidad de jugadores en el equipo")
     max_players: int = Field(..., description="Cantidad máxima de jugadores permitidos en el equipo")
     members: list[UserSummaryResponse] = Field(..., description="Lista de miembros del equipo")

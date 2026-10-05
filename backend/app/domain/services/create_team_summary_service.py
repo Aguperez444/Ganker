@@ -16,6 +16,7 @@ class CreateTeamSummaryService:
         return TeamSummaryResponse(
             team_id=team.team_id,
             team_name=team.name,
+            description=team.description,
             player_count=sum(member.user is not None for member in team.members),
             max_players=len(team.members),
             members=[

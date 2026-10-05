@@ -6,7 +6,6 @@ from app.domain.models.conversation import Conversation
 from app.domain.models.conversation_member import ConversationMember
 from app.domain.models.conversation_type_enum import ConversationTypeEnum
 from app.domain.models.team_role_enum import TeamRoleEnum
-from app.domain.exceptions.team.user_already_in_team_exception import UserAlreadyInTeamException
 from app.domain.exceptions.team.invalid_rank_exception import InvalidrankException
 from app.domain.services.catalog_validation_service import CatalogValidationService
 from app.domain.exceptions.game_profile.game_profile_not_found_exception import GameProfileNotFoundException
@@ -28,9 +27,11 @@ class CreateTeam:
         with self._uow as uow:
             current_user = CatalogValidationService.get_and_validate_exist_user(user_id, uow)
             videogame = CatalogValidationService.get_and_validate_exist_videogame(request.videogame_id, uow)
-            region = CatalogValidationService.get_and_validate_exist_region(request.region_id, uow)
             min_rank = CatalogValidationService.get_and_validate_exist_rank(request.min_rank_id, uow)
             max_rank = CatalogValidationService.get_and_validate_exist_rank(request.max_rank_id, uow)
+
+            if request.region_id is not None:
+                region = CatalogValidationService.get_and_validate_exist_region(request.region_id, uow)
 
             # TODO: Crear una exception para esto
             if min_rank.value > max_rank.value:
@@ -38,25 +39,25 @@ class CreateTeam:
 
             # Revisar si el usuario ya pertenece a un equipo activo
             if uow.team_repo.is_user_in_any_active_team(user_id):
-                raise UserAlreadyInTeamException(0, user_id) # Using 0 as placeholder since it's a general block
+                raise ValueError("El usuario ya pertenece a un equipo activo") # TODO: Crear una exception para esto
 
             # obtener el perfil de juego del usuario para el videojuego especificado
             user_game_profile = current_user.get_game_profile_by_videogame(videogame)
             if not user_game_profile:
-                raise GameProfileNotFoundException(user_id, videogame.videogame_id)
+                raise GameProfileNotFoundException(None, user_id, videogame.videogame_id)
 
             #  Validar la región del perfil de juego del usuario con la región del equipo
             if not request.allow_other_regions and user_game_profile.region and user_game_profile.region.region_id != region.region_id:
                 raise InvalidRegionException(region.region_id, user_game_profile.region.region_id)
 
-            # Validate creator role and rank
+            # Validar el rango del perfil de juego del usuario con el rango mínimo y máximo del equipo
             creator_role = CatalogValidationService.get_and_validate_exist_role(request.creator_game_role_id, uow)
-            user_role_profile = user_game_profile.get_role_profile_by_role(creator_role)
-            if not user_role_profile:
+            creator_role_profile = user_game_profile.get_role_profile_by_role(creator_role)
+            if not creator_role_profile:
                 raise InvalidRoleProfileException(creator_role.role_id, user_game_profile.game_profile_id)
 
-            if user_role_profile.rank.value < min_rank.value or user_role_profile.rank.value > max_rank.value:
-                raise InvalidrankException(0, user_role_profile.rank.rank_id, user_role_profile.rank.value, min_rank.value, max_rank.value)
+            if creator_role_profile.rank.value < min_rank.value or creator_role_profile.rank.value > max_rank.value:
+                raise InvalidrankException(0, creator_role_profile.rank.rank_id, creator_role_profile.rank.value, min_rank.value, max_rank.value)
 
             # Crear la conversación del equipo
             conv_member = ConversationMember(
@@ -100,6 +101,7 @@ class CreateTeam:
             new_team = Team(
                 team_id=None,
                 name=request.name,
+                description=request.description,
                 allow_other_regions=request.allow_other_regions,
                 videogame=videogame,
                 region=region,

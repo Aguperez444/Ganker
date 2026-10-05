@@ -1,9 +1,11 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Query
 from starlette.concurrency import run_in_threadpool
+from typing import Optional
 
 from app.application.use_cases.join_team import JoinTeam
 from app.application.use_cases.create_team import CreateTeam
-from app.infrastructure.api.dependencies.auth import get_current_user_id
+from app.application.use_cases.search_teams import SearchTeams
+from app.infrastructure.api.dependencies.auth import get_current_user_id, require_player
 from app.infrastructure.api.dto.request.join_team_request import JoinTeamRequest
 from app.infrastructure.api.dto.request.create_team_request import CreateTeamRequest
 from app.infrastructure.api.dto.response.team.event_type_enum import TeamEventTypeEnum
@@ -13,7 +15,29 @@ from app.infrastructure.database.unit_of_work.uow_factory import uow_factory
 
 router = APIRouter(prefix="/api/v1/teams", tags=["teams"])
 
-@router.post("", status_code=201)
+@router.get("", status_code=200, dependencies=[Depends(require_player)])
+async def search_teams(
+    videogame_id: Optional[int] = Query(None),
+    region_id: Optional[int] = Query(None),
+    rank_id: Optional[int] = Query(None),
+    vacant_slots: Optional[int] = Query(None),
+    role_id: Optional[int] = Query(None),
+    search: Optional[str] = Query(None),
+):
+    uow = uow_factory()
+    use_case = SearchTeams(uow)
+    results = await run_in_threadpool(
+        use_case.execute,
+        videogame_id=videogame_id,
+        region_id=region_id,
+        rank_id=rank_id,
+        vacant_slots=vacant_slots,
+        role_id=role_id,
+        search=search
+    )
+    return results
+
+@router.post("", status_code=201, dependencies=[Depends(require_player)])
 async def create_team(
     payload: CreateTeamRequest,
     user_id: int = Depends(get_current_user_id),
@@ -29,7 +53,7 @@ async def create_team(
 
     return created_team_data
 
-@router.post("/{team_id}/join")
+@router.post("/{team_id}/join", status_code=200, dependencies=[Depends(require_player)])
 async def join_lobby(
     team_id: int,
     payload: JoinTeamRequest,

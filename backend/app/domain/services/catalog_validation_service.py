@@ -31,7 +31,7 @@ class CatalogValidationService:
 
     @staticmethod
     def get_and_validate_exist_region(region_id: int, uow: 'IUnitOfWork') -> 'Region':
-        region = uow.region_repo.get_by_id(region_id)
+        region = uow.region_repo.get_region_by_id(region_id)
         if not region:
             raise InvalidRegionException(region_id, -1)
         return region

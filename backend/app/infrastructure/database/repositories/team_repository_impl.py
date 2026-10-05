@@ -1,11 +1,13 @@
 from typing import TYPE_CHECKING, Optional
 
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, aliased
+from sqlalchemy import or_, and_
 
 from app.application.ports.i_team_repository import ITeamRepository
 from app.domain.exceptions.team.team_not_found_exception import TeamNotFoundException
 from app.infrastructure.database.mappers.team_mapper import TeamMapper
 from app.infrastructure.database.models.team_orm import TeamORM
+from app.infrastructure.database.models.rank_orm import RankORM
 from app.infrastructure.database.models.conversation_member_orm import ConversationMemberORM
 from app.infrastructure.database.models.team_member_role_orm import TeamMemberRoleORM
 from app.infrastructure.database.mappers.conversation_mapper import ConversationMapper
@@ -77,3 +79,55 @@ class TeamRepositoryImpl(ITeamRepository):
         self.session.add(team_orm)
         self.session.flush()
         return TeamMapper.orm_to_domain(team_orm)
+
+    def search_teams(self, videogame_id: Optional[int] = None, region_id: Optional[int] = None, 
+                     rank_id: Optional[int] = None, vacant_slots: Optional[int] = None, 
+                     role_id: Optional[int] = None, search_term: Optional[str] = None) -> list['Team']:
+        query = self.session.query(TeamORM)
+
+        # Solo equipos con cupos vacantes
+        query = query.filter(TeamORM.members_roles.any(TeamMemberRoleORM.user_id == None))
+
+        if videogame_id:
+            query = query.filter(TeamORM.videogame_id == videogame_id)
+
+        if region_id:
+            query = query.filter(TeamORM.region_id == region_id)
+
+        if rank_id:
+
+            MinRank = aliased(RankORM)
+            MaxRank = aliased(RankORM)
+            SearchRank = aliased(RankORM)
+            
+            search_rank_value = self.session.query(SearchRank.value).filter(SearchRank.rank_id == rank_id).scalar()
+            
+            if search_rank_value is not None:
+                query = query.join(MinRank, TeamORM.min_rank_id == MinRank.rank_id)
+                query = query.join(MaxRank, TeamORM.max_rank_id == MaxRank.rank_id)
+                query = query.filter(MinRank.value <= search_rank_value)
+                query = query.filter(MaxRank.value >= search_rank_value)
+
+        if role_id:
+            query = query.filter(TeamORM.members_roles.any(and_(
+                TeamMemberRoleORM.game_role_id == role_id,
+                TeamMemberRoleORM.user_id == None
+            )))
+
+        if search_term:
+            query = query.filter(or_(
+                TeamORM.name.ilike(f"%{search_term}%"),
+                TeamORM.description.ilike(f"%{search_term}%")
+            ))
+
+        results = query.all()
+        
+        if vacant_slots is not None:
+            final_results = []
+            for team in results:
+                empty_slots = sum(1 for m in team.members_roles if m.user_id is None)
+                if empty_slots >= vacant_slots:
+                    final_results.append(team)
+            results = final_results
+
+        return [TeamMapper.orm_to_domain(team) for team in results]
