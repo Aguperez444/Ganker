@@ -15,7 +15,10 @@ export function obtenerConversaciones() {
 }
 
 // El backend devuelve los mensajes del mas nuevo al mas viejo.
-export function obtenerHistorialMensajes(conversationId, { page = 1, size = 50 } = {}) {
+export function obtenerHistorialMensajes(
+  conversationId,
+  { page = 1, size = 50 } = {}
+) {
   return axiosClient
     .get(`/api/v1/chat/conversations/${conversationId}/messages`, {
       params: { page, size },

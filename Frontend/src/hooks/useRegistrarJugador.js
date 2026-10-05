@@ -68,7 +68,9 @@ export function useRegistrarJugador() {
           setErrorServidor(mensaje ?? "No se pudo completar el registro.");
         }
       } else {
-        setErrorServidor(mensaje ?? "No se pudo completar el registro. Probá de nuevo.");
+        setErrorServidor(
+          mensaje ?? "No se pudo completar el registro. Probá de nuevo."
+        );
       }
       return null;
     } finally {
@@ -76,5 +78,13 @@ export function useRegistrarJugador() {
     }
   }
 
-  return { valores, errores, cargando, errorServidor, handleChange, handleBlur, handleSubmit };
+  return {
+    valores,
+    errores,
+    cargando,
+    errorServidor,
+    handleChange,
+    handleBlur,
+    handleSubmit,
+  };
 }

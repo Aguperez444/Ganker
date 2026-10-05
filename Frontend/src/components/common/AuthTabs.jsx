@@ -20,7 +20,9 @@ function AuthTabs() {
             key={ruta}
             to={ruta}
             className={`flex-1 rounded-md py-2.5 text-center text-sm font-semibold font-body transition ${
-              activa ? "bg-ganker-purple text-ganker-text" : "text-ganker-muted hover:text-ganker-text"
+              activa
+                ? "bg-ganker-purple text-ganker-text"
+                : "text-ganker-muted hover:text-ganker-text"
             }`}
           >
             {etiqueta}

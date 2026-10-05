@@ -171,7 +171,6 @@ Frontend/
 > `@tailwindcss/vite`. Si necesitás extender el tema (colores, fuentes), se hace
 > con la directiva `@theme` dentro de `src/index.css`.
 
-
 ### Regla de convivencia entre carpetas
 
 Un componente de `components/` **no llama directamente a `api/`**. Esa llamada

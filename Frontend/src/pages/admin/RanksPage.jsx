@@ -82,7 +82,9 @@ const RanksPage = () => {
 
         <div
           className={`mt-8 grid gap-6 ${
-            isFormOpen ? "lg:grid-cols-[minmax(0,1.4fr)_minmax(320px,0.8fr)]" : ""
+            isFormOpen
+              ? "lg:grid-cols-[minmax(0,1.4fr)_minmax(320px,0.8fr)]"
+              : ""
           }`}
         >
           <section className="min-w-0 rounded-2xl border border-white/10 bg-ganker-surface p-6 shadow-xl">

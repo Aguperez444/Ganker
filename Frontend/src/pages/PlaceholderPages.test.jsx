@@ -2,7 +2,6 @@ import { render, screen } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import { describe, it, expect } from "vitest";
 
-import EquiposPage from "./EquiposPage";
 import ModeracionPage from "./admin/ModeracionPage";
 import HomePage from "./HomePage";
 import AdminHomePage from "./admin/AdminHomePage";
@@ -11,23 +10,8 @@ describe("Páginas placeholder para funcionalidades en desarrollo", () => {
   // BuscarJugadoresPage dejo de ser un placeholder (US 10 - Iniciar
   // conversacion privada). Su propio test vive en BuscarJugadoresPage.test.jsx.
 
-  it("EquiposPage muestra el mensaje de funcionalidad en próximo sprint", () => {
-    render(
-      <MemoryRouter>
-        <EquiposPage />
-      </MemoryRouter>
-    );
-
-    expect(
-      screen.getByRole("heading", { level: 1, name: "Equipos" })
-    ).toBeInTheDocument();
-
-    expect(
-      screen.getByText(
-        /\[Equipos\] se implementará en un próximo sprint\.\.\./i
-      )
-    ).toBeInTheDocument();
-  });
+  // EquiposPage dejó de ser un placeholder (US 01, US 02, US 03).
+  // Su propio test vive en EquiposPage.test.jsx.
 
   // CharactersPage dejo de ser un placeholder (Registrar/Modificar
   // personaje). Su propio test viviria en CharactersPage.test.jsx si se

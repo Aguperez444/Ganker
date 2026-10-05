@@ -63,9 +63,13 @@ describe("GameProfileForm - resolución de imágenes", () => {
     expect(characterImg.getAttribute("src")).not.toBe(
       "/media/games/league_of_legends/characters/ahri.png"
     );
-    expect(characterImg.getAttribute("src")).toContain("/media/games/league_of_legends/characters/ahri.png");
+    expect(characterImg.getAttribute("src")).toContain(
+      "/media/games/league_of_legends/characters/ahri.png"
+    );
     if (import.meta.env.VITE_API_URL) {
-      expect(characterImg.getAttribute("src")).toContain(import.meta.env.VITE_API_URL);
+      expect(characterImg.getAttribute("src")).toContain(
+        import.meta.env.VITE_API_URL
+      );
     }
   });
 
@@ -81,7 +85,9 @@ describe("GameProfileForm - resolución de imágenes", () => {
     expect(roleImg.getAttribute("src")).not.toBe(
       "/media/games/league_of_legends/roles/mid.png"
     );
-    expect(roleImg.getAttribute("src")).toContain("/media/games/league_of_legends/roles/mid.png");
+    expect(roleImg.getAttribute("src")).toContain(
+      "/media/games/league_of_legends/roles/mid.png"
+    );
   });
 
   it("no renderiza etiqueta img si el rol tiene 'Sin icono'", () => {

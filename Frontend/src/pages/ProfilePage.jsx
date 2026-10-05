@@ -65,7 +65,9 @@ const ProfilePage = () => {
 
   const handleSubmit = async () => {
     const success =
-      mode === "edit" ? await submitEditGameProfile() : await submitGameProfile();
+      mode === "edit"
+        ? await submitEditGameProfile()
+        : await submitGameProfile();
 
     if (!success) {
       return;

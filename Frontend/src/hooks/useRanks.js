@@ -64,7 +64,9 @@ const useRanks = () => {
       } else if (error.response?.status === 404) {
         setActionError("El videojuego seleccionado no existe.");
       } else if (error.response?.status === 409) {
-        setActionError("Ya existe un rango con ese nombre o valor para este videojuego.");
+        setActionError(
+          "Ya existe un rango con ese nombre o valor para este videojuego."
+        );
       } else {
         setActionError("Ocurrió un error al registrar el rango.");
       }

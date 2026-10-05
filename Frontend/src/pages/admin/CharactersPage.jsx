@@ -243,7 +243,7 @@ const CharactersPage = () => {
           )}
         </div>
       </div>
-            <ModalConfirmacionComponent
+      <ModalConfirmacionComponent
         isOpen={Boolean(characterToDelete)}
         title="Eliminar personaje"
         message={
@@ -257,8 +257,8 @@ const CharactersPage = () => {
             </p>
             <p className="mt-2">
               Si algún jugador lo tiene entre sus personajes preferidos, se
-              quitará de su perfil y se reordenarán las prioridades. Esta
-              acción no se puede deshacer.
+              quitará de su perfil y se reordenarán las prioridades. Esta acción
+              no se puede deshacer.
             </p>
           </>
         }
@@ -269,7 +269,6 @@ const CharactersPage = () => {
         onCancel={handleCancelDelete}
       />
     </section>
-    
   );
 };
 

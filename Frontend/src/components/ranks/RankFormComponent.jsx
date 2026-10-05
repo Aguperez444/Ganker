@@ -125,7 +125,10 @@ const RankForm = ({
   const displayedError = validationError || error;
 
   const hasChanges =
-    Boolean(videogameId) && name.trim().length > 0 && value !== "" && iconFile !== null;
+    Boolean(videogameId) &&
+    name.trim().length > 0 &&
+    value !== "" &&
+    iconFile !== null;
 
   return (
     <section className="rounded-2xl border border-white/10 bg-ganker-surface p-6 shadow-xl">

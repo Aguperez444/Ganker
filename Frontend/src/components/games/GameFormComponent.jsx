@@ -198,9 +198,9 @@ const GameForm = ({
               Rango por rol
             </span>
             <span className="block text-xs text-ganker-muted">
-              Si está activo, cada rol del perfil tiene su propio rango. Si
-              está desactivado, el perfil usa un único rango para todos los
-              roles seleccionados.
+              Si está activo, cada rol del perfil tiene su propio rango. Si está
+              desactivado, el perfil usa un único rango para todos los roles
+              seleccionados.
             </span>
           </span>
         </label>

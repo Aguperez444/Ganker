@@ -2,18 +2,16 @@ import { renderHook, act, waitFor } from "@testing-library/react";
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import useGameProfile from "./useGameProfile";
 import { getGames } from "../api/gameApi";
-import {
-  getCharactersByGame,
-  getRanksByGame,
-  getRolesByGame,
-} from "../api/gameProfileApi";
+import { getCharactersByGame } from "../api/characterApi";
+import { getRolesByGame } from "../api/roleApi";
+import { getRanksByGame } from "../api/rankApi";
 
 vi.mock("../api/gameApi", () => ({ getGames: vi.fn() }));
+vi.mock("../api/characterApi", () => ({ getCharactersByGame: vi.fn() }));
+vi.mock("../api/roleApi", () => ({ getRolesByGame: vi.fn() }));
+vi.mock("../api/rankApi", () => ({ getRanksByGame: vi.fn() }));
 vi.mock("../api/gameProfileApi", () => ({
   createGameProfile: vi.fn(),
-  getCharactersByGame: vi.fn(),
-  getRanksByGame: vi.fn(),
-  getRolesByGame: vi.fn(),
   updateGameProfile: vi.fn(),
 }));
 vi.mock("../context/AuthContext", () => ({

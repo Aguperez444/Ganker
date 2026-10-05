@@ -280,9 +280,10 @@ describe("US 03 - Buscar jugadores", () => {
       screen.getByRole("button", { name: /limpiar filtros/i })
     );
 
-    expect(
-      screen.getAllByRole("button", { name: /enviar mensaje/i }).length
-    ).toBe(3);
+    const botones = await screen.findAllByRole("button", {
+      name: /enviar mensaje/i,
+    });
+    expect(botones.length).toBe(3);
   });
 
   it("no muestra el botón de enviar mensaje en la propia tarjeta", async () => {

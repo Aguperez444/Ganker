@@ -17,7 +17,7 @@ function mapearErrorAccion(error, accion) {
 
   const status = error.response?.status;
   if (status === 400) return "Los datos ingresados no son válidos.";
-    if (status === 404) {
+  if (status === 404) {
     return accion === "eliminar"
       ? "El personaje no existe o ya fue eliminado."
       : "El videojuego seleccionado no existe.";
@@ -85,15 +85,15 @@ const useCharacters = () => {
   };
 
   const removeCharacter = async (characterId, videogameId) => {
-   try {
-     setIsSaving(true);
-     setActionError("");
+    try {
+      setIsSaving(true);
+      setActionError("");
 
-     await deleteCharacter(characterId);
-     await loadCharacters(videogameId);
+      await deleteCharacter(characterId);
+      await loadCharacters(videogameId);
 
-     return true;
-    }catch (error) {
+      return true;
+    } catch (error) {
       setActionError(mapearErrorAccion(error, "eliminar"));
 
       // Si el personaje ya no existe (otro admin lo borró), refrescamos la
@@ -124,8 +124,6 @@ const useCharacters = () => {
       setIsSaving(false);
     }
   };
-
-  
 
   const clearActionError = () => {
     setActionError("");
