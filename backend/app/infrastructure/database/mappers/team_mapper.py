@@ -26,7 +26,7 @@ class TeamMapper:
     @staticmethod
     def domain_to_orm(team: Team) -> TeamORM:
         if not team.is_persisted():
-            return TeamORM(
+            orm_team = TeamORM(
                 name = team.name,
                 description = team.description,
                 allow_other_regions = team.allow_other_regions,
@@ -34,16 +34,25 @@ class TeamMapper:
                 region_id = team.region.region_id if team.region and team.region.is_persisted() else None,
                 min_rank_id = team.min_rank.rank_id,
                 max_rank_id = team.max_rank.rank_id,
-                conversation_id = team.conversation.conversation_id
+                conversation = ConversationMapper.domain_to_orm(team.conversation),
+                members_roles= [TeamMemberRoleMapper.domain_to_orm(member) for member in team.members] if team.members else []
             )
-        return TeamORM(
-            team_id = team.team_id,
-            name = team.name,
-            description = team.description,
-            allow_other_regions = team.allow_other_regions,
-            videogame_id = team.videogame.videogame_id,
-            region_id = team.region.region_id if team.region and team.region.is_persisted() else None,
-            min_rank_id = team.min_rank.rank_id,
-            max_rank_id = team.max_rank.rank_id,
-            conversation_id = team.conversation.conversation_id
-        )
+        else:
+            orm_team = TeamORM(
+                team_id = team.team_id,
+                name = team.name,
+                description = team.description,
+                allow_other_regions = team.allow_other_regions,
+                videogame_id = team.videogame.videogame_id,
+                region_id = team.region.region_id if team.region and team.region.is_persisted() else None,
+                min_rank_id = team.min_rank.rank_id,
+                max_rank_id = team.max_rank.rank_id,
+                conversation = ConversationMapper.domain_to_orm(team.conversation),
+                members_roles = [TeamMemberRoleMapper.domain_to_orm(member) for member in team.members] if team.members else []
+
+            )
+
+        if team.conversation.is_persisted():
+            orm_team.conversation_id = team.conversation.conversation_id
+
+        return orm_team

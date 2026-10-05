@@ -19,6 +19,17 @@ class CreateTeamSummaryService:
             description=team.description,
             player_count=sum(member.user is not None for member in team.members),
             max_players=len(team.members),
+            videogame_id=team.videogame.videogame_id if getattr(team, 'videogame', None) else None,
+            videogame_name=team.videogame.name if getattr(team, 'videogame', None) else None,
+            region_id=team.region.region_id if getattr(team, 'region', None) else None,
+            region_name=team.region.name if getattr(team, 'region', None) and team.region.name else 'Sin región',
+            min_rank_id=team.min_rank.rank_id if getattr(team, 'min_rank', None) else None,
+            min_rank_name=team.min_rank.name if getattr(team, 'min_rank', None) else None,
+            min_rank_value=team.min_rank.value if getattr(team, 'min_rank', None) else None,
+            max_rank_id=team.max_rank.rank_id if getattr(team, 'max_rank', None) else None,
+            max_rank_name=team.max_rank.name if getattr(team, 'max_rank', None) else None,
+            max_rank_value=team.max_rank.value if getattr(team, 'max_rank', None) else None,
+            allow_other_regions=getattr(team, 'allow_other_regions', False),
             members=[
                 CreateTeamSummaryService._map_member(member, team)
                 for member in team.members
@@ -35,8 +46,9 @@ class CreateTeamSummaryService:
                 name='Libre',
                 icon_url=member.game_role.icon_url,
                 active_game_profile=GameProfileSummaryResponse(
-                    region_name=team.region.name if team.region.name else 'Sin región',
+                    region_name=team.region.name if getattr(team, 'region', None) and team.region.name else 'Sin región',
                     active_role_profile=RoleProfileSummaryResponse(
+                        role_id=member.game_role.role_id if getattr(member, 'game_role', None) else None,
                         role_name=member.game_role.name,
                         rank_name='',
                         rank_icon_url='/media/ranks/empty_rank_icon.png'
@@ -46,7 +58,7 @@ class CreateTeamSummaryService:
 
         # Slot Ocupado (Calculamos en base al usuario de este slot específico)
         user_game_profile = member.user.get_game_profile_by_videogame(team.videogame)
-        user_role_profile = user_game_profile.get_role_profile_by_role(member.game_role)
+        user_role_profile = user_game_profile.get_role_profile_by_role(member.game_role) if user_game_profile else None
 
         return UserSummaryResponse(
             user_id=member.user.user_id,
@@ -54,11 +66,12 @@ class CreateTeamSummaryService:
             name=member.user.name,
             icon_url=member.user.icon_url,
             active_game_profile=GameProfileSummaryResponse(
-                region_name=user_game_profile.region.name if user_game_profile.region else 'Sin región',
+                region_name=user_game_profile.region.name if user_game_profile and user_game_profile.region else 'Sin región',
                 active_role_profile=RoleProfileSummaryResponse(
-                    role_name=user_role_profile.role.name,
-                    rank_name=user_role_profile.rank.name,
-                    rank_icon_url=user_role_profile.rank.icon_url
+                    role_id=member.game_role.role_id if getattr(member, 'game_role', None) else None,
+                    role_name=user_role_profile.role.name if user_role_profile else member.game_role.name,
+                    rank_name=user_role_profile.rank.name if user_role_profile else '',
+                    rank_icon_url=user_role_profile.rank.icon_url if user_role_profile else ''
                 )
             )
         )
