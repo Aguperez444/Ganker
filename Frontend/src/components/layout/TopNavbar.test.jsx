@@ -19,6 +19,8 @@ vi.mock("../../api/chatApi", () => ({
   iniciarConversacion: vi.fn(),
   obtenerConversaciones: vi.fn(),
   marcarConversacionComoLeida: vi.fn().mockResolvedValue({}),
+  obtenerChatrooms: vi.fn().mockResolvedValue([]),
+  marcarChatroomComoLeido: vi.fn().mockResolvedValue({}),
 }));
 
 vi.mock("../../api/axiosClient", () => ({

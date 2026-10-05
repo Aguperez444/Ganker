@@ -1,4 +1,10 @@
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import {
+  BrowserRouter,
+  Routes,
+  Route,
+  Navigate,
+  useParams,
+} from "react-router-dom";
 import LandingPage from "../pages/LandingPage.jsx";
 import HomePage from "../pages/HomePage.jsx";
 import RegistroPage from "../pages/RegistroPage.jsx";
@@ -19,6 +25,13 @@ import CharactersPage from "../pages/admin/CharactersPage.jsx";
 import ModeracionPage from "../pages/admin/ModeracionPage.jsx";
 import { ROLES_ADMIN } from "../utils/rutas.js";
 
+function RedirigirAEquipo() {
+  const { teamId } = useParams();
+  return (
+    <Navigate to={teamId ? `/app/equipos/${teamId}` : "/app/equipos"} replace />
+  );
+}
+
 /**
  * Definicion central de rutas de la aplicacion.
  * Cada nueva pantalla se agrega aca como un <Route> apuntando a su page.
@@ -29,6 +42,10 @@ function AppRouter() {
       <Routes>
         {/* Landing: accesible siempre, con o sin sesion iniciada */}
         <Route path="/" element={<LandingPage />} />
+
+        {/* Compatibilidad con /teams/:teamId (Guía v2) */}
+        <Route path="/teams/:teamId" element={<RedirigirAEquipo />} />
+        <Route path="/teams" element={<Navigate to="/app/equipos" replace />} />
 
         {/* Solo accesibles SIN sesion: si ya esta logueado, se lo manda a /app */}
         <Route element={<PublicOnlyRoute />}>
@@ -50,6 +67,7 @@ function AppRouter() {
               element={<Navigate to="/app/jugadores" replace />}
             />
             <Route path="equipos" element={<EquiposPage />} />
+            <Route path="equipos/:teamId" element={<EquiposPage />} />
           </Route>
         </Route>
 

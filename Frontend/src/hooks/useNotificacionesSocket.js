@@ -1,8 +1,17 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { crearNotificacionesSocket } from "../api/chatSocketApi";
 
-const MAX_INTENTOS_RECONEXION = 6;
-const TIPO_NUEVO_MENSAJE = "NEW_MESSAGE_NOTIFICATION";
+export const TIPOS_NOTIFICACION = {
+  NEW_MESSAGE: "NEW_MESSAGE_NOTIFICATION",
+  NEW_CHATROOM_MESSAGE: "NEW_CHATROOM_MESSAGE_NOTIFICATION",
+  TEAM_JOINED: "TEAM_JOINED_NOTIFICATION",
+  TEAM_NEW_MEMBER: "TEAM_NEW_MEMBER_NOTIFICATION",
+  MESSAGES_READ: "MESSAGES_READ_NOTIFICATION",
+};
+
+const TIPOS_SOPORTADOS = new Set(Object.values(TIPOS_NOTIFICACION));
+
+const MAX_INTENTOS_RECONEXION = 5;
 
 export function useNotificacionesSocket(token, onNotificacion) {
   const [conectado, setConectado] = useState(false);
@@ -50,7 +59,7 @@ export function useNotificacionesSocket(token, onNotificacion) {
         return;
       }
 
-      if (data.type === TIPO_NUEVO_MENSAJE) {
+      if (TIPOS_SOPORTADOS.has(data.type)) {
         onNotificacionRef.current?.(data);
       }
     };

@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import AvatarUsuarioComponent from "../common/AvatarUsuarioComponent";
+import { urlDeMedia } from "../../utils/media";
 import { useChatSocket } from "../../hooks/useChatSocket";
 import { useChatHistory } from "../../hooks/useChatHistory";
 import { useChat } from "../../context/ChatContext";
@@ -49,8 +50,11 @@ const ChatWindowComponent = ({
   const { obtenerMensajesDeConversacion, sembrarMensajesDeConversacion } =
     useChat();
 
+  const isChatroom = Boolean(conversacion.is_chatroom);
+
   const { cargarPaginaHistorial } = useChatHistory(
-    conversacion.conversation_id
+    conversacion.conversation_id,
+    isChatroom
   );
 
   // Si ya abrimos esta conversación durante la sesión,
@@ -133,8 +137,11 @@ const ChatWindowInterna = ({
   const { actualizarMensajesDeConversacion, marcarConversacionComoVista } =
     useChat();
 
+  const isChatroom = Boolean(conversacion.is_chatroom);
+
   const { cargarPaginaHistorial } = useChatHistory(
-    conversacion.conversation_id
+    conversacion.conversation_id,
+    isChatroom
   );
 
   const mensajesRef = useRef(null);
@@ -156,16 +163,21 @@ const ChatWindowInterna = ({
   const nombreOtro =
     otroParticipante?.name || otroParticipante?.username || "Jugador";
 
+  const titulo = isChatroom
+    ? conversacion.name || "Chat de equipo"
+    : nombreOtro;
+
   // Si se reabre el panel/drawer con la conversación ya activa,
   // volvemos a marcarla como vista.
   useEffect(() => {
-    marcarConversacionComoVista(conversacion.conversation_id);
-  }, [conversacion.conversation_id, marcarConversacionComoVista]);
+    marcarConversacionComoVista(conversacion.conversation_id, isChatroom);
+  }, [conversacion.conversation_id, isChatroom, marcarConversacionComoVista]);
 
   const { mensajes, setMensajes, estado, error, enviarMensaje } = useChatSocket(
     conversacion.conversation_id,
     mensajesIniciales,
-    (mensaje) => onMensaje?.(conversacion.conversation_id, mensaje)
+    (mensaje) => onMensaje?.(conversacion.conversation_id, mensaje),
+    isChatroom
   );
 
   // Solo mostramos el indicador de leído en el último mensaje propio.
@@ -280,17 +292,43 @@ const ChatWindowInterna = ({
           </button>
         )}
 
-        <div className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-full border border-ganker-purple/40 bg-ganker-surface-light text-sm font-semibold text-ganker-text">
-          <AvatarUsuarioComponent user={otroParticipante} alt={nombreOtro} />
-        </div>
+        {isChatroom ? (
+          <div className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-ganker-purple/40 bg-ganker-purple/10 text-sm font-semibold text-ganker-purple-light">
+            {conversacion.icon_url ? (
+              <img
+                src={urlDeMedia(conversacion.icon_url)}
+                alt={titulo}
+                className="h-full w-full object-cover"
+                onError={(e) => {
+                  e.currentTarget.style.display = "none";
+                }}
+              />
+            ) : (
+              <span>🛡️</span>
+            )}
+          </div>
+        ) : (
+          <div className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-full border border-ganker-purple/40 bg-ganker-surface-light text-sm font-semibold text-ganker-text">
+            <AvatarUsuarioComponent user={otroParticipante} alt={titulo} />
+          </div>
+        )}
 
         <div className="min-w-0 flex-1">
-          <h3 className="truncate font-heading text-sm font-semibold text-ganker-text">
-            {nombreOtro}
-          </h3>
+          <div className="flex items-center gap-1.5 min-w-0">
+            <h3 className="truncate font-heading text-sm font-semibold text-ganker-text">
+              {titulo}
+            </h3>
+            {isChatroom && (
+              <span className="shrink-0 rounded bg-ganker-purple/20 px-1 py-0.2 text-[9px] font-bold text-ganker-purple-light uppercase">
+                Equipo
+              </span>
+            )}
+          </div>
 
           <span className="text-[11px] text-ganker-muted">
-            {TEXTO_ESTADO[estado] ?? estado}
+            {isChatroom && conversacion.member_count
+              ? `${conversacion.member_count} miembros · ${TEXTO_ESTADO[estado] ?? estado}`
+              : (TEXTO_ESTADO[estado] ?? estado)}
           </span>
         </div>
 
@@ -353,6 +391,7 @@ const ChatWindowInterna = ({
                 esPropio={mensaje.sender_id === currentUserId}
                 mostrarHora={mostrarHora}
                 mostrarIndicadorLeido={indice === indiceUltimoMensajePropio}
+                esChatroom={isChatroom}
               />
             );
           })

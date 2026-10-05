@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import AvatarUsuarioComponent from "../common/AvatarUsuarioComponent";
+import { urlDeMedia } from "../../utils/media";
 
 function formatearFechaReciente(timestamp) {
   if (!timestamp) return "";
@@ -18,7 +19,7 @@ function formatearFechaReciente(timestamp) {
 }
 
 /**
- * US 10 - Lista de conversaciones del jugador logueado.
+ * US 10 - Lista de conversaciones y chatrooms del jugador logueado.
  */
 const ConversationListComponent = ({
   conversaciones,
@@ -85,24 +86,32 @@ const ConversationListComponent = ({
           </div>
         ) : conversaciones.length === 0 ? (
           <div className="space-y-2 p-6 text-center text-sm text-ganker-muted">
-            <p>Todavía no tenés conversaciones.</p>
+            <p>Todavía no tenés conversaciones ni equipos.</p>
             <p className="text-xs text-ganker-muted/80">
-              Buscá un jugador en{" "}
-              <Link
-                to="/app/jugadores"
-                className="text-ganker-purple-light hover:underline"
-              >
-                Buscar jugadores
-              </Link>{" "}
-              y enviale un mensaje.
+              Buscá jugadores o equipos para empezar a chatear.
             </p>
           </div>
         ) : (
           conversaciones.map((c) => {
+            const esChatroom = Boolean(c.is_chatroom);
             const otro = c.other_participant;
-            const nombreOtro = otro?.name || otro?.username || "Jugador";
+            const titulo = esChatroom
+              ? c.name || "Chat de equipo"
+              : otro?.name || otro?.username || "Jugador";
             const activa = conversacionActivaId === c.conversation_id;
             const noLeido = (c.unread_count ?? 0) > 0;
+
+            const previewMensaje = (() => {
+              if (!c.last_message) {
+                return esChatroom
+                  ? "Chat del equipo..."
+                  : "Iniciá la conversación...";
+              }
+              if (esChatroom && c.last_message.sender_username) {
+                return `${c.last_message.sender_username}: ${c.last_message.content}`;
+              }
+              return c.last_message.content;
+            })();
 
             return (
               <button
@@ -115,16 +124,28 @@ const ConversationListComponent = ({
                     : ""
                 }`}
               >
-                {/* El overflow-hidden que recorta la foto circular tiene que
-                    quedar en un div aparte del que ancla el puntito: si el
-                    puntito fuera hijo del mismo contenedor recortado, el
-                    overflow-hidden se lo comía y quedaba pegado adentro del
-                    circulo en vez de asomar la mitad afuera como un aviso
-                    real (estilo Discord/WhatsApp). */}
                 <div className="relative h-10 w-10 shrink-0">
-                  <div className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-full border border-ganker-purple/30 bg-ganker-surface-light text-sm font-semibold text-ganker-text">
-                    <AvatarUsuarioComponent user={otro} alt={nombreOtro} />
-                  </div>
+                  {esChatroom ? (
+                    <div className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-xl border border-ganker-purple/40 bg-ganker-purple/10 text-sm font-semibold text-ganker-purple-light">
+                      {c.icon_url ? (
+                        <img
+                          src={urlDeMedia(c.icon_url)}
+                          alt={titulo}
+                          className="h-full w-full object-cover"
+                          onError={(e) => {
+                            e.currentTarget.style.display = "none";
+                          }}
+                        />
+                      ) : (
+                        <span>🛡️</span>
+                      )}
+                    </div>
+                  ) : (
+                    <div className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-full border border-ganker-purple/30 bg-ganker-surface-light text-sm font-semibold text-ganker-text">
+                      <AvatarUsuarioComponent user={otro} alt={titulo} />
+                    </div>
+                  )}
+
                   {noLeido && (
                     <span
                       className="absolute -top-0.5 -right-0.5 h-3 w-3 rounded-full bg-ganker-error ring-2 ring-ganker-surface"
@@ -135,11 +156,19 @@ const ConversationListComponent = ({
 
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center justify-between gap-2">
-                    <p
-                      className={`truncate text-sm ${noLeido ? "font-bold" : "font-semibold"} text-ganker-text`}
-                    >
-                      {nombreOtro}
-                    </p>
+                    <div className="flex items-center gap-1.5 min-w-0">
+                      <p
+                        className={`truncate text-sm ${noLeido ? "font-bold" : "font-semibold"} text-ganker-text`}
+                      >
+                        {titulo}
+                      </p>
+                      {esChatroom && (
+                        <span className="shrink-0 rounded bg-ganker-purple/20 px-1 py-0.2 text-[9px] font-bold text-ganker-purple-light uppercase">
+                          Equipo
+                        </span>
+                      )}
+                    </div>
+
                     {c.last_message?.timestamp && (
                       <span className="shrink-0 text-[10px] text-ganker-muted">
                         {formatearFechaReciente(c.last_message.timestamp)}
@@ -151,9 +180,7 @@ const ConversationListComponent = ({
                     <p
                       className={`truncate text-xs ${noLeido ? "font-semibold text-ganker-text" : "text-ganker-muted"}`}
                     >
-                      {c.last_message
-                        ? c.last_message.content
-                        : "Iniciá la conversación..."}
+                      {previewMensaje}
                     </p>
                     {noLeido && c.unread_count > 1 && (
                       <span className="shrink-0 rounded-full bg-ganker-error/20 px-1.5 py-0.5 text-[10px] font-bold text-ganker-error">

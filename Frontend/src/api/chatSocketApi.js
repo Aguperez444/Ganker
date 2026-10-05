@@ -18,6 +18,16 @@ export function crearChatSocket(conversationId, token) {
   );
 }
 
+export function crearChatroomSocket(chatroomId, token) {
+  return new WebSocket(
+    urlWebSocket(
+      `/api/v1/ws/chat/chatroom/${chatroomId}?token=${encodeURIComponent(
+        token
+      )}`
+    )
+  );
+}
+
 export function crearNotificacionesSocket(token) {
   return new WebSocket(
     urlWebSocket(`/api/v1/ws/notifications?token=${encodeURIComponent(token)}`)

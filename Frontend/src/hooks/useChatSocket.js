@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { CLAVES_SESION } from "../api/axiosClient";
-import { crearChatSocket } from "../api/chatSocketApi";
+import { crearChatSocket, crearChatroomSocket } from "../api/chatSocketApi";
 
 const MAX_INTENTOS_RECONEXION = 5;
 
@@ -9,7 +9,8 @@ const TIPO_MENSAJES_LEIDOS = "MESSAGES_READ_NOTIFICATION";
 export function useChatSocket(
   conversationId,
   mensajesIniciales = [],
-  onMensaje
+  onMensaje,
+  isChatroom = false
 ) {
   const [mensajes, setMensajes] = useState(mensajesIniciales);
   const [estado, setEstado] = useState("CERRADO");
@@ -47,7 +48,9 @@ export function useChatSocket(
     setEstado("CONECTANDO");
     setError(null);
 
-    const socket = crearChatSocket(conversationId, token);
+    const socket = isChatroom
+      ? crearChatroomSocket(conversationId, token)
+      : crearChatSocket(conversationId, token);
 
     socketRef.current = socket;
 
@@ -113,7 +116,12 @@ export function useChatSocket(
       socketRef.current = null;
 
       if (event.code === 1008) {
-        setError(event.reason || "No tenés acceso a esta conversación.");
+        setError(
+          event.reason ||
+            (isChatroom
+              ? "No tienes acceso a este chatroom de equipo."
+              : "No tenés acceso a esta conversación.")
+        );
         return;
       }
 
@@ -132,7 +140,7 @@ export function useChatSocket(
 
       setError("Se perdió la conexión con el chat.");
     };
-  }, [conversationId]);
+  }, [conversationId, isChatroom]);
 
   useEffect(() => {
     conectarRef.current = conectar;

@@ -14,15 +14,31 @@ export function UnirseEquipoModalComponent({
   onClose,
   onConfirm,
 }) {
-  const vacantes = team?.members?.filter((m) => m.user_id === null) ?? [];
-  const primerRolId =
-    vacantes[0]?.active_game_profile?.active_role_profile?.role_id ?? null;
+  const vacantes =
+    team?.members?.filter((m) => m.user_id === null || m.is_vacant) ?? [];
+  const primerSlot = vacantes[0] ?? null;
 
-  const [selectedRoleId, setSelectedRoleId] = useState(null);
+  const [selectedSlotId, setSelectedSlotId] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorLocal, setErrorLocal] = useState("");
 
-  const roleIdActivo = selectedRoleId ?? primerRolId;
+  const slotActivoId =
+    selectedSlotId ??
+    primerSlot?.team_member_role_id ??
+    primerSlot?.active_game_profile?.active_role_profile?.role_id ??
+    null;
+
+  const slotSeleccionado =
+    vacantes.find(
+      (v) =>
+        v.team_member_role_id === slotActivoId ||
+        v.active_game_profile?.active_role_profile?.role_id === slotActivoId
+    ) ??
+    primerSlot ??
+    null;
+
+  const roleIdActivo =
+    slotSeleccionado?.active_game_profile?.active_role_profile?.role_id ?? null;
 
   // Manejar Escape
   useEffect(() => {
@@ -48,7 +64,7 @@ export function UnirseEquipoModalComponent({
   });
 
   const handleConfirmar = async () => {
-    if (!roleIdActivo) {
+    if (!slotSeleccionado) {
       setErrorLocal("Por favor selecciona un cupo vacante.");
       return;
     }
@@ -61,7 +77,8 @@ export function UnirseEquipoModalComponent({
     setIsSubmitting(true);
     setErrorLocal("");
 
-    const res = await onConfirm(team, roleIdActivo);
+    const targetSlotId = slotSeleccionado.team_member_role_id ?? roleIdActivo;
+    const res = await onConfirm(team, targetSlotId, roleIdActivo);
     setIsSubmitting(false);
 
     if (!res.success) {
@@ -137,17 +154,23 @@ export function UnirseEquipoModalComponent({
             <div className="grid gap-2">
               {vacantes.map((v, idx) => {
                 const roleProfile = v.active_game_profile?.active_role_profile;
-                const roleId = roleProfile?.role_id;
+                const slotId =
+                  v.team_member_role_id ?? roleProfile?.role_id ?? idx;
                 const roleName = roleProfile?.role_name || "Rol libre";
                 const icon = v.icon_url ? urlDeMedia(v.icon_url) : null;
-                const isSelected = roleIdActivo === roleId;
+                const isSelected =
+                  slotActivoId === slotId ||
+                  (slotSeleccionado &&
+                    v.team_member_role_id &&
+                    slotSeleccionado.team_member_role_id ===
+                      v.team_member_role_id);
 
                 return (
                   <button
-                    key={`vacante-slot-${idx}`}
+                    key={`vacante-slot-${v.team_member_role_id ?? idx}`}
                     type="button"
                     onClick={() => {
-                      setSelectedRoleId(roleId);
+                      setSelectedSlotId(slotId);
                       setErrorLocal("");
                     }}
                     className={`flex w-full items-center justify-between rounded-xl border p-3 text-left transition ${

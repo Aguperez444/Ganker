@@ -31,3 +31,29 @@ export function marcarConversacionComoLeida(conversationId) {
     .patch(`/api/v1/chat/conversations/${conversationId}/read`)
     .then((res) => res.data);
 }
+
+/**
+ * Chatrooms Grupales (Chat de Equipo) - Guía v2
+ */
+export function obtenerChatrooms() {
+  return axiosClient
+    .get("/api/v1/chat/chatroom")
+    .then((res) => res.data.chatrooms);
+}
+
+export function obtenerHistorialChatroom(
+  chatroomId,
+  { page = 1, size = 30 } = {}
+) {
+  return axiosClient
+    .get(`/api/v1/chat/chatroom/${chatroomId}/messages`, {
+      params: { page, size },
+    })
+    .then((res) => res.data.messages);
+}
+
+export function marcarChatroomComoLeido(chatroomId) {
+  return axiosClient
+    .patch(`/api/v1/chat/chatroom/${chatroomId}/read`)
+    .then((res) => res.data);
+}

@@ -3,7 +3,12 @@ import { getGames } from "../api/gameApi";
 import { getRegionsByGame } from "../api/regionApi";
 import { getRanksByGame } from "../api/rankApi";
 import { getRolesByGame } from "../api/roleApi";
-import { searchTeams, createTeam, joinTeam } from "../api/teamsApi";
+import {
+  searchTeams,
+  createTeam,
+  joinTeam,
+  getMyActiveTeam,
+} from "../api/teamsApi";
 import { useAuth } from "../context/AuthContext";
 import { useChat } from "../context/ChatContext";
 import useTeamsSocket, {
@@ -17,8 +22,7 @@ import {
 
 export function useEquipos() {
   const { user } = useAuth();
-  const { cargarConversaciones, seleccionarConversacion, abrirChat } =
-    useChat();
+  const { cargarConversaciones, abrirChat, abrirChatroom } = useChat();
 
   // Catálogos
   const [games, setGames] = useState([]);
@@ -220,14 +224,18 @@ export function useEquipos() {
         ) {
           setTeams((prev) => [
             nuevoEquipo,
-            ...prev.filter((t) => t.team_id !== nuevoEquipo.team_id),
+            ...prev.filter(
+              (t) => String(t.team_id) !== String(nuevoEquipo.team_id)
+            ),
           ]);
         }
       } else if (event.type === EVENTO_TEAM_MEMBER_JOINED) {
         const equipoActualizado = event.data;
         setTeams((prev) =>
           prev.map((t) =>
-            t.team_id === equipoActualizado.team_id ? equipoActualizado : t
+            String(t.team_id) === String(equipoActualizado.team_id)
+              ? equipoActualizado
+              : t
           )
         );
       }
@@ -237,19 +245,41 @@ export function useEquipos() {
 
   useTeamsSocket(handleLobbyEvent);
 
+  // Equipo activo obtenido del backend (/api/v1/teams/me)
+  const [equipoActivoServidor, setEquipoActivoServidor] = useState(null);
+
+  useEffect(() => {
+    let cancelado = false;
+    if (user) {
+      getMyActiveTeam()
+        .then((data) => {
+          if (!cancelado) setEquipoActivoServidor(data ?? null);
+        })
+        .catch(() => {
+          // Ignorar si no está autenticado o no tiene equipo
+        });
+    }
+    return () => {
+      cancelado = true;
+    };
+  }, [user]);
+
   // Verificar si el usuario actual ya pertenece a algún equipo activo
   const miEquipoActivo = useMemo(() => {
     if (!user) return null;
+    if (equipoActivoServidor) return equipoActivoServidor;
     return (
       teams.find((team) =>
         team.members?.some(
           (m) =>
             m.user_id !== null &&
-            (m.username === user.username || m.name === user.name)
+            (m.user_id === user.user_id ||
+              m.username === user.username ||
+              m.name === user.name)
         )
       ) ?? null
     );
-  }, [teams, user]);
+  }, [equipoActivoServidor, teams, user]);
 
   const estaEnEquipoActivo = Boolean(miEquipoActivo);
 
@@ -292,8 +322,14 @@ export function useEquipos() {
     try {
       const nuevoEquipo = await createTeam(formData);
 
-      // Actualizar lista local de equipos
-      setTeams((prev) => [nuevoEquipo, ...prev]);
+      // Actualizar lista local de equipos y equipo activo evitando duplicados
+      setTeams((prev) => [
+        nuevoEquipo,
+        ...prev.filter(
+          (t) => String(t.team_id) !== String(nuevoEquipo.team_id)
+        ),
+      ]);
+      setEquipoActivoServidor(nuevoEquipo);
 
       // Refrescar conversaciones del chat para habilitar la nueva sala grupal
       try {
@@ -323,14 +359,30 @@ export function useEquipos() {
   };
 
   // Unirse a un equipo
-  const solicitarUnirseAEquipo = async (team, targetRoleId) => {
+  const solicitarUnirseAEquipo = async (
+    team,
+    targetSlotId,
+    targetGameRoleId
+  ) => {
     setActionError("");
     setSuccessNotification("");
+
+    const vacanteSeleccionada = team.members?.find(
+      (m) =>
+        m.team_member_role_id === Number(targetSlotId) ||
+        (m.is_vacant &&
+          m.active_game_profile?.active_role_profile?.role_id ===
+            Number(targetSlotId))
+    );
+    const roleIdParaValidar =
+      targetGameRoleId ||
+      vacanteSeleccionada?.active_game_profile?.active_role_profile?.role_id ||
+      targetSlotId;
 
     const validacion = validarUnirseEquipo({
       team,
       user,
-      targetRoleId,
+      targetRoleId: roleIdParaValidar,
       ranks,
       estaEnEquipoActivo,
     });
@@ -341,13 +393,21 @@ export function useEquipos() {
     }
 
     try {
-      const response = await joinTeam(team.team_id, targetRoleId);
+      const slotIdAEnviar =
+        vacanteSeleccionada?.team_member_role_id ?? targetSlotId;
+      const response = await joinTeam(team.team_id, slotIdAEnviar);
       const equipoActualizado = response.data || response;
+      if (!equipoActualizado.conversation_id && response.chatroom_id) {
+        equipoActualizado.conversation_id = response.chatroom_id;
+      }
 
-      // Actualizar equipo en la lista local
+      // Actualizar equipo activo y estado local evitando duplicados
+      setEquipoActivoServidor(equipoActualizado);
       setTeams((prev) =>
         prev.map((t) =>
-          t.team_id === equipoActualizado.team_id ? equipoActualizado : t
+          String(t.team_id) === String(equipoActualizado.team_id)
+            ? equipoActualizado
+            : t
         )
       );
 
@@ -358,11 +418,17 @@ export function useEquipos() {
         console.error("Error refrescando chat tras unirse:", chatErr);
       }
 
-      setSuccessNotification(
-        `¡Te has incorporado exitosamente al equipo "${team.team_name}"!`
-      );
+      const mensajeExito =
+        response.message ||
+        `¡Te has incorporado exitosamente al equipo "${team.team_name}"!`;
+      setSuccessNotification(mensajeExito);
 
-      return { success: true, team: equipoActualizado };
+      return {
+        success: true,
+        team: equipoActualizado,
+        chatroomId: response.chatroom_id,
+        message: mensajeExito,
+      };
     } catch (err) {
       console.error("Error al unirse al equipo:", err);
       let mensaje = "No se pudo unir al equipo.";
@@ -395,24 +461,45 @@ export function useEquipos() {
     }
   };
 
-  const abrirChatDeEquipo = async (team) => {
-    try {
-      const lista = await cargarConversaciones();
-      const convoEquipo = (lista ?? []).find(
-        (c) =>
-          c.name?.toLowerCase().includes(team.team_name.toLowerCase()) ||
-          c.name?.toLowerCase().includes("equipo")
-      );
-
-      if (convoEquipo) {
-        seleccionarConversacion(convoEquipo.conversation_id);
-      } else {
+  const abrirChatDeEquipo = useCallback(
+    async (team) => {
+      if (!team) return;
+      try {
         abrirChat();
+        const chatroomId = team.conversation_id;
+        if (chatroomId) {
+          abrirChatroom(chatroomId, team);
+          return;
+        }
+
+        const lista = await cargarConversaciones();
+        const convoEquipo = (lista ?? []).find(
+          (c) =>
+            c.chatroom_id === team.conversation_id ||
+            c.team_id === team.team_id ||
+            c.name?.toLowerCase().includes(team.team_name?.toLowerCase() ?? "")
+        );
+        if (convoEquipo) {
+          abrirChatroom(convoEquipo.conversation_id, convoEquipo);
+        }
+      } catch (err) {
+        console.error("Error al abrir chat de equipo:", err);
       }
-    } catch {
-      abrirChat();
-    }
-  };
+    },
+    [abrirChat, abrirChatroom, cargarConversaciones]
+  );
+
+  const teamsDeduplicados = useMemo(() => {
+    const idsVistos = new Set();
+    return teams.filter((team) => {
+      if (!team || team.team_id === undefined || team.team_id === null)
+        return false;
+      const idStr = String(team.team_id);
+      if (idsVistos.has(idStr)) return false;
+      idsVistos.add(idStr);
+      return true;
+    });
+  }, [teams]);
 
   return {
     // Catálogos
@@ -442,7 +529,7 @@ export function useEquipos() {
     hayFiltrosActivos,
 
     // Lista de Equipos
-    teams,
+    teams: teamsDeduplicados,
     isLoadingTeams,
     teamsError,
     fetchTeams,

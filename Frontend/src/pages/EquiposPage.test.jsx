@@ -1,12 +1,18 @@
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, it, expect, vi, beforeEach } from "vitest";
+import { MemoryRouter } from "react-router-dom";
 import EquiposPage from "./EquiposPage";
 import { getGames } from "../api/gameApi";
 import { getRegionsByGame } from "../api/regionApi";
 import { getRanksByGame } from "../api/rankApi";
 import { getRolesByGame } from "../api/roleApi";
-import { searchTeams, createTeam, joinTeam } from "../api/teamsApi";
+import {
+  searchTeams,
+  createTeam,
+  joinTeam,
+  getMyActiveTeam,
+} from "../api/teamsApi";
 
 // Mocks de APIs
 vi.mock("../api/gameApi", () => ({ getGames: vi.fn() }));
@@ -17,6 +23,7 @@ vi.mock("../api/teamsApi", () => ({
   searchTeams: vi.fn(),
   createTeam: vi.fn(),
   joinTeam: vi.fn(),
+  getMyActiveTeam: vi.fn(),
 }));
 
 // Mock de WebSocket de teams
@@ -115,6 +122,7 @@ describe("EquiposPage - US 01, US 02, US 03", () => {
         },
       },
       {
+        team_member_role_id: 1,
         user_id: null,
         username: "Libre",
         name: "Libre",
@@ -132,18 +140,26 @@ describe("EquiposPage - US 01, US 02, US 03", () => {
     ],
   };
 
+  const renderEquiposPage = () =>
+    render(
+      <MemoryRouter>
+        <EquiposPage />
+      </MemoryRouter>
+    );
+
   beforeEach(() => {
     vi.clearAllMocks();
     getGames.mockResolvedValue(gamesMock);
     getRegionsByGame.mockResolvedValue(regionsMock);
     getRanksByGame.mockResolvedValue(ranksMock);
     getRolesByGame.mockResolvedValue(rolesMock);
+    getMyActiveTeam.mockResolvedValue(null);
     searchTeams.mockResolvedValue([team1Mock]);
     mockCargarConversaciones.mockResolvedValue([]);
   });
 
   it("US 03: Probar ingresar a la sección de búsqueda y visualizar el listado de equipos con sus datos, integrantes, vacantes y contador de jugadores", async () => {
-    render(<EquiposPage />);
+    renderEquiposPage();
 
     expect(
       screen.getByRole("heading", { level: 1, name: "Equipos" })
@@ -166,7 +182,7 @@ describe("EquiposPage - US 01, US 02, US 03", () => {
   it("US 03: Probar realizar una búsqueda o filtros con criterios que no coincidan con ningún equipo disponible (muestra mensaje de sin resultados)", async () => {
     searchTeams.mockResolvedValue([]);
 
-    render(<EquiposPage />);
+    renderEquiposPage();
 
     expect(
       await screen.findByText(
@@ -177,7 +193,7 @@ describe("EquiposPage - US 01, US 02, US 03", () => {
 
   it("US 03: Probar limpiar los filtros aplicados y verificar que se recargue el listado general", async () => {
     const usuario = userEvent.setup();
-    render(<EquiposPage />);
+    renderEquiposPage();
 
     await screen.findByText("Los Halcones");
 
@@ -246,7 +262,7 @@ describe("EquiposPage - US 01, US 02, US 03", () => {
 
     createTeam.mockResolvedValue(nuevoEquipoCreado);
 
-    render(<EquiposPage />);
+    renderEquiposPage();
     await screen.findByText("Los Halcones");
 
     // Abrir modal de registrar equipo
@@ -343,7 +359,7 @@ describe("EquiposPage - US 01, US 02, US 03", () => {
 
     joinTeam.mockResolvedValue({ status: "success", data: equipoActualizado });
 
-    render(<EquiposPage />);
+    renderEquiposPage();
     await screen.findByText("Los Halcones");
 
     // Click en "Unirse al equipo" en la tarjeta

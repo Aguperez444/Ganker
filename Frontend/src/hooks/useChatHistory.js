@@ -1,19 +1,21 @@
 import { useCallback } from "react";
-import { obtenerHistorialMensajes } from "../api/chatApi";
+import {
+  obtenerHistorialMensajes,
+  obtenerHistorialChatroom,
+} from "../api/chatApi";
 
-export function useChatHistory(conversationId) {
+export function useChatHistory(conversationId, isChatroom = false) {
   const cargarPaginaHistorial = useCallback(
     async ({ page = 1, size = 50 } = {}) => {
-      const mensajes = await obtenerHistorialMensajes(conversationId, {
-        page,
-        size,
-      });
+      const mensajes = isChatroom
+        ? await obtenerHistorialChatroom(conversationId, { page, size })
+        : await obtenerHistorialMensajes(conversationId, { page, size });
 
       // El backend devuelve del más nuevo al más viejo.
       // La UI trabaja del más viejo al más nuevo.
       return [...mensajes].reverse();
     },
-    [conversationId]
+    [conversationId, isChatroom]
   );
 
   return {

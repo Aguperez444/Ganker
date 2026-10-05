@@ -11,7 +11,10 @@ import {
   iniciarConversacion,
   obtenerConversaciones,
   marcarConversacionComoLeida,
+  obtenerChatrooms,
+  marcarChatroomComoLeido,
 } from "../api/chatApi";
+
 import { useAuth } from "./AuthContext";
 import { obtenerIdUsuarioDesdeToken } from "../utils/jwt";
 import { reproducirSonidoNotificacion } from "../utils/sonido";
@@ -42,7 +45,6 @@ function guardarPreferenciaBooleana(clave, valor) {
   }
 }
 
-// `cargandoRef` evita pedidos GET concurrentes si ya hay uno en vuelo.
 async function cargarYSetearConversaciones({
   isAuthenticated,
   setConversaciones,
@@ -52,24 +54,75 @@ async function cargarYSetearConversaciones({
 }) {
   if (!isAuthenticated) {
     setConversaciones([]);
-    return;
+    return [];
   }
 
-  if (cargandoRef.current) return;
-  cargandoRef.current = true;
+  if (cargandoRef.current) {
+    return cargandoRef.current;
+  }
 
   setCargando(true);
   setError(null);
-  try {
-    const lista = await obtenerConversaciones();
-    setConversaciones(lista ?? []);
-  } catch (err) {
-    console.error("Error al cargar conversaciones:", err);
-    setError("No se pudieron cargar las conversaciones.");
-  } finally {
-    setCargando(false);
-    cargandoRef.current = false;
-  }
+
+  const promesa = (async () => {
+    try {
+      const [privadas, chatrooms] = await Promise.all([
+        typeof obtenerConversaciones === "function"
+          ? obtenerConversaciones().catch((err) => {
+              console.error("Error al cargar conversaciones privadas:", err);
+              return [];
+            })
+          : [],
+        typeof obtenerChatrooms === "function"
+          ? obtenerChatrooms().catch((err) => {
+              console.error("Error al cargar chatrooms grupales:", err);
+              return [];
+            })
+          : [],
+      ]);
+
+      const chatroomsNormalizados = (chatrooms ?? []).map((cr) => ({
+        conversation_id: cr.chatroom_id,
+        chatroom_id: cr.chatroom_id,
+        team_id: cr.team_id,
+        name: cr.name,
+        icon_url: cr.icon_url,
+        member_count: cr.member_count,
+        last_message: cr.last_message,
+        unread_count: cr.unread_count ?? 0,
+        is_chatroom: true,
+      }));
+
+      const privadasNormalizadas = (privadas ?? []).map((c) => ({
+        ...c,
+        is_chatroom: false,
+      }));
+
+      const todas = [...chatroomsNormalizados, ...privadasNormalizadas];
+      todas.sort((a, b) => {
+        const tA = a.last_message?.timestamp
+          ? new Date(a.last_message.timestamp).getTime()
+          : 0;
+        const tB = b.last_message?.timestamp
+          ? new Date(b.last_message.timestamp).getTime()
+          : 0;
+        return tB - tA;
+      });
+
+      setConversaciones(todas);
+      return todas;
+    } catch (err) {
+      console.error("Error al cargar conversaciones:", err);
+      setError("No se pudieron cargar las conversaciones.");
+      return [];
+    } finally {
+      setCargando(false);
+      cargandoRef.current = null;
+    }
+  })();
+
+  cargandoRef.current = promesa;
+  return promesa;
 }
 
 // Estado global del chat: conversaciones, cual esta activa, y la conexion
@@ -88,7 +141,7 @@ export function ChatProvider({ children }) {
   );
   const [cargando, setCargando] = useState(false);
   const [error, setError] = useState(null);
-  const cargandoConversacionesRef = useRef(false);
+  const cargandoConversacionesRef = useRef(null);
 
   const conversacionesRef = useRef([]);
   const esDesktop = useIsDesktop();
@@ -118,6 +171,7 @@ export function ChatProvider({ children }) {
   // cerrar y reabrir el chat en la misma sesion. Ref (no state): solo lo
   // lee/actualiza ChatWindowComponent, no hace falta re-renderizar por esto.
   const mensajesPorConversacionRef = useRef(new Map());
+  const ultimaMarcadaRef = useRef(new Map());
 
   // Solo LEE el cache; sembrarMensajesDeConversacion es quien lo mutua.
   const obtenerMensajesDeConversacion = useCallback((conversationId) => {
@@ -210,17 +264,29 @@ export function ChatProvider({ children }) {
     [cargarConversaciones]
   );
 
-  // Notificacion global: llega para cualquier conversacion, la este viendo o no.
+  // Notificacion global: llega para cualquier conversacion o chatroom, la este viendo o no.
   const manejarNotificacion = useCallback(
     (notificacion) => {
-      const esVista = estaViendo(notificacion.conversation_id);
+      // Eventos de equipo: recargan la lista para reflejar el nuevo chatroom
+      if (
+        notificacion.type === "TEAM_JOINED_NOTIFICATION" ||
+        notificacion.type === "TEAM_NEW_MEMBER_NOTIFICATION"
+      ) {
+        cargarConversaciones();
+        return;
+      }
+
+      const convoId = notificacion.conversation_id || notificacion.chatroom_id;
+      if (!convoId) return;
+
+      const esVista = estaViendo(convoId);
 
       if (!esVista) {
         reproducirSonidoNotificacion();
       }
 
       actualizarUltimoMensaje(
-        notificacion.conversation_id,
+        convoId,
         {
           content: notificacion.content,
           timestamp: notificacion.timestamp,
@@ -229,7 +295,7 @@ export function ChatProvider({ children }) {
         { esVista }
       );
     },
-    [estaViendo, actualizarUltimoMensaje]
+    [estaViendo, actualizarUltimoMensaje, cargarConversaciones]
   );
 
   useNotificacionesSocket(isAuthenticated ? token : null, manejarNotificacion);
@@ -264,23 +330,65 @@ export function ChatProvider({ children }) {
   // Separada de seleccionarConversacion para que ChatWindowComponent
   // tambien la llame al montar (reabrir un panel/drawer con la conversacion
   // ya activa no pasa por seleccionarConversacion).
-  const marcarConversacionComoVista = useCallback((conversationId) => {
-    setConversaciones((actuales) =>
-      actuales.map((c) =>
-        c.conversation_id === conversationId ? { ...c, unread_count: 0 } : c
-      )
-    );
+  const marcarConversacionComoVista = useCallback(
+    (conversationId, esChatroomExplicit) => {
+      if (!conversationId) return;
 
-    // Fire and forget: si no avisamos al backend, is_read queda en false
-    // en la base y un refresh de pagina vuelve a mostrar estos mensajes
-    // como no leidos.
-    marcarConversacionComoLeida(conversationId).catch((err) => {
-      console.error("Error al marcar la conversación como leída:", err);
-    });
-  }, []);
+      const target = conversacionesRef.current.find(
+        (c) => c.conversation_id === conversationId
+      );
+
+      // Si no está en el listado y no se especificó el tipo, evitamos un PATCH a ciegas
+      if (!target && esChatroomExplicit === undefined) {
+        return;
+      }
+
+      const esChatroom =
+        esChatroomExplicit !== undefined
+          ? Boolean(esChatroomExplicit)
+          : Boolean(target?.is_chatroom);
+
+      // Solo actualizamos el estado si realmente cambia algún unread_count para no provocar re-renders
+      let teniaNoLeidos = false;
+      setConversaciones((actuales) => {
+        const conv = actuales.find((c) => c.conversation_id === conversationId);
+        if (!conv || (conv.unread_count ?? 0) === 0) {
+          return actuales;
+        }
+        teniaNoLeidos = true;
+        return actuales.map((c) =>
+          c.conversation_id === conversationId ? { ...c, unread_count: 0 } : c
+        );
+      });
+
+      // Si no tenía mensajes sin leer, no spameamos el endpoint PATCH
+      if (target && (target.unread_count ?? 0) === 0 && !teniaNoLeidos) {
+        return;
+      }
+
+      // Throttle: evitar requests concurrentes/duplicados al mismo ID en un intervalo de 2s
+      const ahora = Date.now();
+      const ultimoMarcado = ultimaMarcadaRef.current.get(conversationId) ?? 0;
+      if (ahora - ultimoMarcado < 2000) {
+        return;
+      }
+      ultimaMarcadaRef.current.set(conversationId, ahora);
+
+      if (esChatroom) {
+        marcarChatroomComoLeido(conversationId).catch((err) => {
+          console.error("Error al marcar chatroom como leído:", err);
+        });
+      } else {
+        marcarConversacionComoLeida(conversationId).catch((err) => {
+          console.error("Error al marcar la conversación como leída:", err);
+        });
+      }
+    },
+    []
+  );
 
   const seleccionarConversacion = useCallback(
-    (conversationId) => {
+    (conversationId, esChatroom) => {
       setConversacionActivaId(conversationId);
       // Hay que abrir los dos flags (no solo el que aplica segun esDesktop
       // en este momento): si el usuario habia cerrado el panel/drawer, la
@@ -288,7 +396,7 @@ export function ChatProvider({ children }) {
       // arriba), como si no hubiera pasado nada.
       setChatAbierto(true);
       setPanelDesktopVisible(true);
-      marcarConversacionComoVista(conversationId);
+      marcarConversacionComoVista(conversationId, esChatroom);
     },
     [marcarConversacionComoVista]
   );
@@ -369,6 +477,38 @@ export function ChatProvider({ children }) {
     [conversaciones, conversacionActivaId]
   );
 
+  const abrirChatroom = useCallback(
+    (chatroomId, teamData = null) => {
+      if (!chatroomId) return;
+
+      if (teamData) {
+        setConversaciones((actuales) => {
+          if (actuales.some((c) => c.conversation_id === chatroomId)) {
+            return actuales;
+          }
+          const nuevoChatroom = {
+            conversation_id: chatroomId,
+            chatroom_id: chatroomId,
+            team_id: teamData.team_id,
+            name: teamData.team_name || teamData.name || "Equipo",
+            icon_url: teamData.icon_url || null,
+            member_count: teamData.player_count || 1,
+            last_message: null,
+            unread_count: 0,
+            is_chatroom: true,
+          };
+          return [nuevoChatroom, ...actuales];
+        });
+      }
+
+      setConversacionActivaId(chatroomId);
+      setChatAbierto(true);
+      setPanelDesktopVisible(true);
+      marcarConversacionComoVista(chatroomId, true);
+    },
+    [marcarConversacionComoVista]
+  );
+
   const value = {
     conversaciones: isAuthenticated ? conversaciones : [],
     conversacionActiva: isAuthenticated ? conversacionActiva : null,
@@ -382,6 +522,7 @@ export function ChatProvider({ children }) {
     token,
     cargarConversaciones,
     seleccionarConversacion,
+    abrirChatroom,
     marcarConversacionComoVista,
     cerrarConversacionActiva,
     abrirChat,

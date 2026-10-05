@@ -30,6 +30,7 @@ export const createTeam = async (teamData) => {
   const payload = {
     name: teamData.name.trim(),
     description: teamData.description?.trim() || null,
+    icon_url: teamData.icon_url?.trim() || null,
     allow_other_regions: Boolean(teamData.allow_other_regions),
     videogame_id: Number(teamData.videogame_id),
     region_id: teamData.region_id ? Number(teamData.region_id) : null,
@@ -47,5 +48,15 @@ export const joinTeam = async (teamId, targetTeamMemberRoleId) => {
   const response = await axiosClient.post(`/api/v1/teams/${teamId}/join`, {
     target_team_member_role_id: Number(targetTeamMemberRoleId),
   });
+  return response.data;
+};
+
+export const getMyActiveTeam = async () => {
+  const response = await axiosClient.get("/api/v1/teams/me");
+  return response.data;
+};
+
+export const getTeamById = async (teamId) => {
+  const response = await axiosClient.get(`/api/v1/teams/${teamId}`);
   return response.data;
 };

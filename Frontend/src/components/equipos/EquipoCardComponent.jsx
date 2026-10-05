@@ -31,23 +31,40 @@ export function EquipoCardComponent({
   );
 
   // Rango representativo de la sala:
-  // Si tenemos min_rank_name y max_rank_name mostramos el rango permitido.
-  // Sino, tomamos el rango del líder o primer integrante.
   const rangoRepresentativo = (() => {
+    if (team.representative_rank?.name) {
+      return {
+        name: team.representative_rank.name,
+        icon_url: team.representative_rank.icon_url,
+      };
+    }
     if (team.min_rank_name && team.max_rank_name) {
-      if (team.min_rank_name === team.max_rank_name) {
-        return team.min_rank_name;
-      }
-      return `${team.min_rank_name} - ${team.max_rank_name}`;
+      const name =
+        team.min_rank_name === team.max_rank_name
+          ? team.min_rank_name
+          : `${team.min_rank_name} - ${team.max_rank_name}`;
+      return { name, icon_url: null };
     }
     const primerRango =
       miembrosOcupados[0]?.active_game_profile?.active_role_profile?.rank_name;
-    return primerRango || "Sin rango especificado";
+    return { name: primerRango || "Sin rango especificado", icon_url: null };
   })();
 
   // Comprobar si el usuario cumple con los requisitos para unirse a alguna vacante
   const evaluacionRequisitos = (() => {
     if (!user || esMiembro || estaLleno) return null;
+
+    // Si el backend envió join_eligibility directamente, usarlo prioritariamente (Guía v2)
+    if (team.join_eligibility) {
+      return {
+        cumple: Boolean(team.join_eligibility.can_join),
+        motivo:
+          team.join_eligibility.reason ||
+          (team.join_eligibility.can_join
+            ? "Cumples los requisitos"
+            : "No cumples con los requisitos del equipo"),
+      };
+    }
 
     if (estaEnEquipoActivo) {
       return { cumple: false, motivo: "Ya tienes un equipo activo." };
@@ -87,27 +104,44 @@ export function EquipoCardComponent({
       className="flex flex-col justify-between rounded-2xl border border-white/10 bg-ganker-surface p-5 transition hover:border-ganker-purple/40 sm:p-6"
     >
       <div>
-        {/* Cabecera de la sala: Nombre, juego y contador */}
+        {/* Cabecera de la sala: Avatar del equipo, Nombre, juego y contador */}
         <div className="flex items-start justify-between gap-3">
-          <div className="min-w-0">
-            <h3 className="truncate font-heading text-lg font-bold text-ganker-text sm:text-xl">
-              {team.team_name}
-            </h3>
-
-            <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-ganker-muted">
-              {team.videogame_name && (
-                <span className="inline-flex items-center rounded-md border border-white/10 bg-ganker-surface-light px-2 py-0.5 font-medium text-ganker-purple-light">
-                  {team.videogame_name}
-                </span>
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-ganker-purple/40 bg-ganker-purple/10 text-xl font-bold text-ganker-purple-light">
+              {team.icon_url ? (
+                <img
+                  src={urlDeMedia(team.icon_url)}
+                  alt={team.team_name}
+                  className="h-full w-full object-cover"
+                  onError={(e) => {
+                    e.currentTarget.style.display = "none";
+                  }}
+                />
+              ) : (
+                <span>🛡️</span>
               )}
+            </div>
 
-              <span className="inline-flex items-center rounded-md border border-white/10 bg-white/5 px-2 py-0.5 text-ganker-muted">
-                {team.allow_other_regions
-                  ? "Cualquier región"
-                  : team.region_name
-                    ? `Región: ${team.region_name}`
-                    : "Región local"}
-              </span>
+            <div className="min-w-0">
+              <h3 className="truncate font-heading text-lg font-bold text-ganker-text sm:text-xl">
+                {team.team_name}
+              </h3>
+
+              <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-ganker-muted">
+                {team.videogame_name && (
+                  <span className="inline-flex items-center rounded-md border border-white/10 bg-ganker-surface-light px-2 py-0.5 font-medium text-ganker-purple-light">
+                    {team.videogame_name}
+                  </span>
+                )}
+
+                <span className="inline-flex items-center rounded-md border border-white/10 bg-white/5 px-2 py-0.5 text-ganker-muted">
+                  {team.allow_other_regions
+                    ? "Cualquier región"
+                    : team.region_name
+                      ? `Región: ${team.region_name}`
+                      : "Región local"}
+                </span>
+              </div>
             </div>
           </div>
 
@@ -132,8 +166,15 @@ export function EquipoCardComponent({
         {/* Rango representativo de la sala */}
         <div className="mt-4 flex items-center gap-2 rounded-xl border border-white/5 bg-ganker-surface-light/50 px-3 py-2 text-xs">
           <span className="font-semibold text-ganker-muted">Rango:</span>
+          {rangoRepresentativo.icon_url && (
+            <img
+              src={urlDeMedia(rangoRepresentativo.icon_url)}
+              alt=""
+              className="h-4 w-4 object-contain"
+            />
+          )}
           <span className="font-medium text-ganker-text">
-            {rangoRepresentativo}
+            {rangoRepresentativo.name}
           </span>
         </div>
 

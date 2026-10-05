@@ -9,6 +9,8 @@ import {
   iniciarConversacion,
   obtenerConversaciones,
   marcarConversacionComoLeida,
+  obtenerChatrooms,
+  marcarChatroomComoLeido,
 } from "../api/chatApi";
 
 vi.mock("../api/jugadoresApi", () => ({
@@ -21,6 +23,8 @@ vi.mock("../api/chatApi", () => ({
   iniciarConversacion: vi.fn(),
   obtenerConversaciones: vi.fn(),
   marcarConversacionComoLeida: vi.fn(),
+  obtenerChatrooms: vi.fn(),
+  marcarChatroomComoLeido: vi.fn(),
 }));
 
 vi.mock("../api/axiosClient", () => ({
@@ -117,7 +121,12 @@ async function renderConSesion() {
   localStorage.setItem("refresh_token", "refresco");
   obtenerJugadorActual.mockResolvedValue(JUGADOR);
   obtenerConversaciones.mockResolvedValue(CONVERSACIONES);
+  obtenerChatrooms.mockResolvedValue([]);
   marcarConversacionComoLeida.mockResolvedValue({
+    status: "ok",
+    messages_marked: 0,
+  });
+  marcarChatroomComoLeido.mockResolvedValue({
     status: "ok",
     messages_marked: 0,
   });

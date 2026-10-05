@@ -41,11 +41,18 @@ const MessageBubbleComponent = ({
   esPropio,
   mostrarHora = true,
   mostrarIndicadorLeido = esPropio,
+  esChatroom = false,
 }) => {
-  const indicadorLeido = esPropio && mostrarIndicadorLeido;
+  const indicadorLeido = esPropio && mostrarIndicadorLeido && !esChatroom;
+  const remitente = mensaje.sender_name || mensaje.sender_username;
 
   return (
     <div className={`flex flex-col ${esPropio ? "items-end" : "items-start"}`}>
+      {esChatroom && !esPropio && remitente && (
+        <span className="mb-0.5 text-[11px] font-semibold text-ganker-purple-light">
+          {remitente}
+        </span>
+      )}
       <div
         className={`max-w-[75%] rounded-2xl px-4 py-2.5 text-sm break-words ${
           esPropio

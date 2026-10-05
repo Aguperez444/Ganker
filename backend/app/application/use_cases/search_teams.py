@@ -17,6 +17,7 @@ class SearchTeams:
         """
         with self._uow as uow:
             viewer = None
+            viewer_in_other_team = False
             if user_id is not None:
                 viewer = CatalogValidationService.get_and_validate_exist_user(user_id, uow)
                 viewer_in_other_team = uow.team_repo.is_user_in_any_active_team(user_id) if viewer is not None else False

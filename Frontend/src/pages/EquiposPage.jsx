@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { useNavigate, useParams } from "react-router-dom";
 import CampoTexto from "../components/common/CampoTexto";
 import IconSelectComponent from "../components/common/IconSelectComponent";
 import EquipoCardComponent from "../components/equipos/EquipoCardComponent";
@@ -57,6 +58,9 @@ export function EquiposPage() {
     setActionError,
   } = useEquipos();
 
+  const navigate = useNavigate();
+  const { teamId } = useParams();
+
   const [modalCrearAbierto, setModalCrearAbierto] = useState(false);
   const [equipoParaUnirse, setEquipoParaUnirse] = useState(null);
 
@@ -68,6 +72,9 @@ export function EquiposPage() {
 
   const handleCrearEquipo = async (formData) => {
     const res = await registrarEquipo(formData);
+    if (res.success && res.team?.team_id) {
+      navigate(`/app/equipos/${res.team.team_id}`);
+    }
     return res;
   };
 
@@ -77,10 +84,37 @@ export function EquiposPage() {
     setEquipoParaUnirse(team);
   };
 
-  const handleConfirmarUnirse = async (team, targetRoleId) => {
-    const res = await solicitarUnirseAEquipo(team, targetRoleId);
+  const handleConfirmarUnirse = async (
+    team,
+    targetSlotId,
+    targetGameRoleId
+  ) => {
+    const res = await solicitarUnirseAEquipo(
+      team,
+      targetSlotId,
+      targetGameRoleId
+    );
+    if (res.success && team?.team_id) {
+      navigate(`/app/equipos/${team.team_id}`);
+    }
     return res;
   };
+
+  const chatAbiertoParaTeamRef = useRef(null);
+
+  // Si la ruta contiene un teamId correspondiente a nuestro equipo activo, abrir su chat automáticamente una sola vez
+  useEffect(() => {
+    if (
+      teamId &&
+      miEquipoActivo &&
+      String(miEquipoActivo.team_id) === String(teamId)
+    ) {
+      if (chatAbiertoParaTeamRef.current !== String(teamId)) {
+        chatAbiertoParaTeamRef.current = String(teamId);
+        abrirChatDeEquipo(miEquipoActivo);
+      }
+    }
+  }, [teamId, miEquipoActivo, abrirChatDeEquipo]);
 
   return (
     <section className="min-h-full bg-ganker-bg px-4 py-6 sm:px-6 lg:px-8">
