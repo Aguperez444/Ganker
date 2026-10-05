@@ -29,18 +29,11 @@ class QueryConversations:
                         name=other_user.name,
                         icon_url=other_user.icon_url if other_user.icon_url else ""
                     )
-                else:
-                    # Adaptador temporal para chatrooms para que el frontend no rompa
-                    other_participant = ParticipantSummaryResponse(
-                        user_id=0,
-                        username=conversation.name or "Grupo",
-                        name=conversation.name or "Grupo",
-                        icon_url=""
-                    )
 
-                summary = ConversationSummaryItemResponse(conversation_id=conversation.conversation_id,
-                                                          other_participant=other_participant, last_message=last_message,
-                                                          unread_count=unread_count)
-                conversations_summary_objects.append(summary)
+
+                    summary = ConversationSummaryItemResponse(conversation_id=conversation.conversation_id,
+                                                              other_participant=other_participant, last_message=last_message,
+                                                              unread_count=unread_count)
+                    conversations_summary_objects.append(summary)
 
         return ConversationSummaryResponse(conversations=conversations_summary_objects)
