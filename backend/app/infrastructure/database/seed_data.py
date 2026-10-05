@@ -8,6 +8,7 @@ from app.infrastructure.database.models.user_orm import UserORM
 from app.infrastructure.database.models.character_orm import CharacterORM
 from app.infrastructure.database.models.role_orm import RoleORM
 from app.infrastructure.database.models.rank_orm import RankORM
+from datetime import datetime
 
 SEEDS_DIR = Path(__file__).resolve().parent / "seeds"
 
@@ -20,6 +21,21 @@ def _read_csv(filename: str) -> list[dict]:
         reader = csv.DictReader(f)
         return list(reader)
 
+
+def _parse_str(val: str | None) -> str | None:
+    if not val or val.strip().upper() in ("", "NULL", "NONE"):
+        return None
+    return val.strip()
+
+def _parse_datetime(val: str | None) -> datetime | None:
+    parsed = _parse_str(val)
+    if not parsed:
+        return None
+    try:
+        # Ajusta el formato ISO si tus CSV guardan timestamps reales (ej: 2026-10-04 12:00:00)
+        return datetime.fromisoformat(parsed)
+    except ValueError:
+        return None
 
 def seed_database(session: Session) -> None:
     # 1. Videogames
@@ -50,7 +66,7 @@ def seed_database(session: Session) -> None:
                     password_hash=row["password_hash"] if row["password_hash"] else None,
                     role=row["role"],
                     icon_url=row["icon_url"] if row["icon_url"] else None,
-                    last_connection=row["last_connection"] if row["last_connection"] else None,
+                    last_connection=_parse_datetime(row.get("last_connection")),
                 )
             )
         session.commit()

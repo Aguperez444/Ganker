@@ -6,6 +6,7 @@ from app.application.use_cases.get_or_create_conversation import GetOrCreateConv
 from app.application.use_cases.save_message import SaveMessage
 from app.application.use_cases.get_messages import GetMessages
 from app.domain.models.conversation import Conversation
+from app.domain.models.conversation_member import ConversationMember
 from app.domain.models.message import Message
 from app.domain.models.user import User
 from app.domain.models.user_role import UserRole
@@ -42,7 +43,7 @@ class TestChatUseCases:
         mock_uow.user_repo.get_user_by_id.side_effect = lambda uid: user1 if uid == 1 else user2
         mock_uow.conversation_repo.find_by_participants_ids.return_value = None
 
-        new_conv = Conversation(conversation_id=10, user_1=user1, user_2=user2, messages=[])
+        new_conv = Conversation(conversation_id=10, members=[ConversationMember(None, 10, user1), ConversationMember(None, 10, user2)], messages=[])
         mock_uow.conversation_repo.create_conversation.return_value = new_conv
 
         result = use_case.execute(current_user_id=1, target_user_id=2)
@@ -58,7 +59,7 @@ class TestChatUseCases:
         user2 = User(user_id=2, username="u2", name="User 2", mail="u2@test.com", password_hash="h", role=UserRole.PLAYER, profiles=[])
 
         mock_uow.user_repo.get_user_by_id.side_effect = lambda uid: user1 if uid == 1 else user2
-        existing = Conversation(conversation_id=10, user_1=user1, user_2=user2, messages=[])
+        existing = Conversation(conversation_id=10, members=[ConversationMember(None, 10, user1), ConversationMember(None, 10, user2)], messages=[])
         mock_uow.conversation_repo.find_by_participants_ids.return_value = existing
 
         result = use_case.execute(current_user_id=1, target_user_id=2)
@@ -126,7 +127,7 @@ class TestChatUseCases:
 
         user1 = User(user_id=1, username="u1", name="User 1", mail="u1@test.com", password_hash="h", role=UserRole.PLAYER, profiles=[])
         user2 = User(user_id=2, username="u2", name="User 2", mail="u2@test.com", password_hash="h", role=UserRole.PLAYER, profiles=[])
-        conv = Conversation(conversation_id=10, user_1=user1, user_2=user2, messages=[])
+        conv = Conversation(conversation_id=10, members=[ConversationMember(None, 10, user1), ConversationMember(None, 10, user2)], messages=[])
         mock_uow.conversation_repo.get_by_conversation_id.return_value = conv
 
         msg1 = Message(message_id=1, content="Hola", sender=user1, conversation_id=10, timestamp=datetime.now(), is_read=True)
@@ -145,7 +146,7 @@ class TestChatUseCases:
 
         user1 = User(user_id=1, username="u1", name="User 1", mail="u1@test.com", password_hash="h", role=UserRole.PLAYER, profiles=[])
         user2 = User(user_id=2, username="u2", name="User 2", mail="u2@test.com", password_hash="h", role=UserRole.PLAYER, profiles=[])
-        conv = Conversation(conversation_id=10, user_1=user1, user_2=user2, messages=[])
+        conv = Conversation(conversation_id=10, members=[ConversationMember(None, 10, user1), ConversationMember(None, 10, user2)], messages=[])
         mock_uow.conversation_repo.get_by_conversation_id.return_value = conv
         mock_uow.message_repo.get_by_conversation_id.return_value = []
 
@@ -159,7 +160,7 @@ class TestChatUseCases:
 
         user1 = User(user_id=1, username="u1", name="User 1", mail="u1@test.com", password_hash="h", role=UserRole.PLAYER, profiles=[])
         user2 = User(user_id=2, username="u2", name="User 2", mail="u2@test.com", password_hash="h", role=UserRole.PLAYER, profiles=[])
-        conv = Conversation(conversation_id=10, user_1=user1, user_2=user2, messages=[])
+        conv = Conversation(conversation_id=10, members=[ConversationMember(None, 10, user1), ConversationMember(None, 10, user2)], messages=[])
         mock_uow.conversation_repo.get_by_conversation_id.return_value = conv
         mock_uow.message_repo.get_by_conversation_id.return_value = []
 
@@ -174,7 +175,7 @@ class TestChatUseCases:
 
         user1 = User(user_id=1, username="u1", name="User 1", mail="u1@test.com", password_hash="h", role=UserRole.PLAYER, profiles=[])
         user2 = User(user_id=2, username="u2", name="User 2", mail="u2@test.com", password_hash="h", role=UserRole.PLAYER, profiles=[])
-        conv = Conversation(conversation_id=10, user_1=user1, user_2=user2, messages=[])
+        conv = Conversation(conversation_id=10, members=[ConversationMember(None, 10, user1), ConversationMember(None, 10, user2)], messages=[])
         mock_uow.conversation_repo.get_by_conversation_id.return_value = conv
 
         with pytest.raises(UserDoesNotBelongToConversationException) as exc_info:

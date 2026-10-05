@@ -1,6 +1,7 @@
 from app.domain.exceptions.character.invalid_character_name_exception import InvalidCharacterNameException
 from app.domain.exceptions.user.invalid_username_exception import InvalidUsernameException
 from app.domain.exceptions.videogame.invalid_videogame_name_exception import InvalidVideogameNameException
+from app.domain.exceptions.region.invalid_region_name_exception import InvalidRegionNameException
 
 
 class StaticValidationService:
@@ -20,4 +21,10 @@ class StaticValidationService:
     def validate_videogame_name_format(name: str) -> str:
         if not name or not name.strip():
             raise InvalidVideogameNameException(name)
+        return name.strip()
+
+    @staticmethod
+    def validate_region_name_format(name: str) -> str:
+        if not name or not name.strip():
+            raise InvalidRegionNameException(name)
         return name.strip()

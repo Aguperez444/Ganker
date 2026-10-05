@@ -2,6 +2,7 @@ from app.domain.models.game_profile import GameProfile
 from app.infrastructure.api.dto.response.base_classes.character_object_response import CharacterObjectResponse
 from app.infrastructure.api.dto.response.base_classes.game_profile_object_response import GameProfileObjectResponse
 from app.infrastructure.api.dto.response.base_classes.rank_object_response import RankObjectResponse
+from app.infrastructure.api.dto.response.base_classes.region_object_response import RegionObjectResponse
 from app.infrastructure.api.dto.response.base_classes.role_object_response import RoleObjectResponse
 from app.infrastructure.api.dto.response.base_classes.role_profile_object_response import RoleProfileObjectResponse
 from app.infrastructure.api.dto.response.base_classes.videogame_object_response import VideogameObjectResponse
@@ -30,7 +31,11 @@ class CreateGameProfileDTOService:
                 rank=RankObjectResponse(
                     rank_id=role_profile.rank.rank_id, name=role_profile.rank.name,
                     icon_url= role_profile.rank.icon_url, value=role_profile.rank.value)
-            ) for role_profile in domain_game_profile.role_profiles]
+            ) for role_profile in domain_game_profile.role_profiles],
+            region= RegionObjectResponse(
+                region_id=domain_game_profile.region.region_id,
+                name=domain_game_profile.region.name
+            ) if domain_game_profile.region else None
         )
 
     @staticmethod
@@ -54,5 +59,9 @@ class CreateGameProfileDTOService:
                 rank=RankObjectResponse(
                     rank_id=role_profile.rank.rank_id, name=role_profile.rank.name,
                     icon_url= role_profile.rank.icon_url, value=role_profile.rank.value)
-            ) for role_profile in domain_game_profile.role_profiles]
+            ) for role_profile in domain_game_profile.role_profiles],
+            region= RegionObjectResponse(
+                region_id=domain_game_profile.region.region_id,
+                name=domain_game_profile.region.name
+            ) if domain_game_profile.region else None
         )

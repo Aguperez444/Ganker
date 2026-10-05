@@ -14,3 +14,4 @@ class UpdateGameProfileRequest(BaseModel):
         default_factory=list,
         description="Lista actualizada de roles con su rango"
     )
+    region_id: int = Field(..., description="Id de la region")
