@@ -12,6 +12,8 @@ from app.domain.services.catalog_validation_service import CatalogValidationServ
 from app.domain.exceptions.game_profile.game_profile_not_found_exception import GameProfileNotFoundException
 from app.domain.exceptions.team.invalid_role_profile_exception import InvalidRoleProfileException
 from app.domain.exceptions.team.InvalidRegionException import InvalidRegionException
+from app.domain.exceptions.team.invalid_rank_range_exception import InvalidRankRangeException
+from app.domain.exceptions.team.catalog_item_videogame_mismatch_exception import CatalogItemVideogameMismatchException
 
 from typing import TYPE_CHECKING
 from app.domain.services.create_team_summary_service import CreateTeamSummaryService
@@ -35,13 +37,17 @@ class CreateTeam:
             if request.region_id is not None:
                 region = CatalogValidationService.get_and_validate_exist_region(request.region_id, uow)
 
-            # TODO: Crear una exception para esto
+            # Los rangos deben pertenecer al videojuego del equipo
+            for rank in (min_rank, max_rank):
+                if rank.videogame != videogame:
+                    raise CatalogItemVideogameMismatchException("rango", rank.rank_id, videogame.videogame_id)
+
             if min_rank.value > max_rank.value:
-                raise ValueError("Rango mínimo no puede ser superior al máximo")
+                raise InvalidRankRangeException(min_rank.value, max_rank.value)
 
             # Revisar si el usuario ya pertenece a un equipo activo
             if uow.team_repo.is_user_in_any_active_team(user_id):
-                raise UserAlreadyInTeamException(0, user_id)
+                raise UserAlreadyInTeamException(user_id)
 
             # obtener el perfil de juego del usuario para el videojuego especificado
             user_game_profile = current_user.get_game_profile_by_videogame(videogame)
@@ -49,11 +55,15 @@ class CreateTeam:
                 raise GameProfileNotFoundException(None, user_id, videogame.videogame_id)
 
             #  Validar la región del perfil de juego del usuario con la región del equipo
-            if not request.allow_other_regions and region is not None and user_game_profile.region and user_game_profile.region.region_id != region.region_id:
-                raise InvalidRegionException(region.region_id, user_game_profile.region.region_id)
+            if not request.allow_other_regions and region is not None:
+                player_region = user_game_profile.region
+                if player_region is None or player_region.region_id != region.region_id:
+                    raise InvalidRegionException(region.region_id, player_region.region_id if player_region else None)
 
             # Validar el rango del perfil de juego del usuario con el rango mínimo y máximo del equipo
             creator_role = CatalogValidationService.get_and_validate_exist_role(request.creator_game_role_id, uow)
+            if creator_role.videogame != videogame:
+                raise CatalogItemVideogameMismatchException("rol", creator_role.role_id, videogame.videogame_id)
             creator_role_profile = user_game_profile.get_role_profile_by_role(creator_role)
             if not creator_role_profile:
                 raise InvalidRoleProfileException(creator_role.role_id, user_game_profile.game_profile_id)
@@ -73,7 +83,7 @@ class CreateTeam:
                 members=[conv_member],
                 messages=[],
                 conversation_type=ConversationTypeEnum.GROUP,
-                name=f"Chat del equipo {request.name}"
+                name=f"Chat del equipo {request.name}",
             )
 
             team_members = []
@@ -91,6 +101,8 @@ class CreateTeam:
             # 2. Crear los miembros vacantes (Vacancies)
             for role_id in request.vacant_game_role_ids:
                 game_role = CatalogValidationService.get_and_validate_exist_role(role_id, uow)
+                if game_role.videogame != videogame:
+                    raise CatalogItemVideogameMismatchException("rol", game_role.role_id, videogame.videogame_id)
                 vacancy = TeamMemberRole(
                     team_member_role_id=None,
                     team_role=TeamRoleEnum.MEMBER,
@@ -104,6 +116,8 @@ class CreateTeam:
                 team_id=None,
                 name=request.name,
                 description=request.description,
+                icon_url=request.icon_url,
+                is_active=True,
                 allow_other_regions=request.allow_other_regions,
                 videogame=videogame,
                 region=region,
@@ -115,4 +129,4 @@ class CreateTeam:
 
             created_team = uow.team_repo.create_team(new_team)
 
-            return CreateTeamSummaryService.create_team_summary(created_team)
+            return CreateTeamSummaryService.create_team_summary(created_team, viewer=current_user)

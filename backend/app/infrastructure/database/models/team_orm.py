@@ -1,5 +1,5 @@
 from typing import List, Optional
-from sqlalchemy import String, Boolean, ForeignKey
+from sqlalchemy import String, Boolean, ForeignKey, true
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.infrastructure.database.base import Base
@@ -20,6 +20,8 @@ class TeamORM(Base):
     name: Mapped[str] = mapped_column(String, nullable=False)
     description: Mapped[Optional[str]] = mapped_column(String, nullable=True)
     allow_other_regions: Mapped[bool] = mapped_column(Boolean, nullable=False)
+    icon_url: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+    is_active: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True, server_default=true())
     videogame_id: Mapped[int] = mapped_column(ForeignKey("videogame.videogame_id"), nullable=False)
     region_id: Mapped[Optional[int]] = mapped_column(ForeignKey("region.region_id"), nullable=True)
     min_rank_id: Mapped[int] = mapped_column(ForeignKey("rank.rank_id"), nullable=False)

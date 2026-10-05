@@ -70,6 +70,15 @@ class Conversation:
     def belongs_user_id(self, user_id: int):
         return any(member.user.user_id == user_id for member in self._members)
 
+    def is_group(self) -> bool:
+        return self._conversation_type == ConversationTypeEnum.GROUP
+
+    def get_member(self, user_id: int) -> Optional['ConversationMember']:
+        for member in self._members:
+            if member.user.user_id == user_id:
+                return member
+        return None
+
     def get_other_user(self, user_id: int) -> 'User':
         if self._conversation_type == ConversationTypeEnum.PRIVATE:
             for member in self._members:

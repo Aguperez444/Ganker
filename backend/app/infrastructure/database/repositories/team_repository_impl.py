@@ -1,7 +1,7 @@
 from typing import TYPE_CHECKING, Optional
 
 from sqlalchemy.orm import Session, aliased
-from sqlalchemy import or_, and_
+from sqlalchemy import or_, and_, func, select
 
 from app.application.ports.i_team_repository import ITeamRepository
 from app.domain.exceptions.team.team_not_found_exception import TeamNotFoundException
@@ -64,10 +64,25 @@ class TeamRepositoryImpl(ITeamRepository):
         self.session.expire(team_orm, ["members_roles"])
         return TeamMapper.orm_to_domain(team_orm)
 
-    def is_user_in_any_active_team(self, user_id: int) -> bool:
+    def get_by_id(self, team_id: int) -> Optional['Team']:
+        team_orm = self.session.query(TeamORM).filter(TeamORM.team_id == team_id).first()
+        return TeamMapper.orm_to_domain(team_orm) if team_orm else None
 
-        return self.session.query(TeamMemberRoleORM).filter(
-            TeamMemberRoleORM.user_id == user_id
+    def get_active_team_by_user_id(self, user_id: int) -> Optional['Team']:
+        team_orm = (
+            self.session.query(TeamORM)
+            .join(TeamMemberRoleORM, TeamMemberRoleORM.team_id == TeamORM.team_id)
+            .filter(TeamMemberRoleORM.user_id == user_id, TeamORM.is_active.is_(True))
+            .first()
+        )
+        return TeamMapper.orm_to_domain(team_orm) if team_orm else None
+
+    def is_user_in_any_active_team(self, user_id: int) -> bool:
+        return self.session.query(TeamMemberRoleORM).join(
+            TeamORM, TeamORM.team_id == TeamMemberRoleORM.team_id
+        ).filter(
+            TeamMemberRoleORM.user_id == user_id,
+            TeamORM.is_active.is_(True)
         ).count() > 0
 
     def create_team(self, team: 'Team') -> 'Team':
@@ -80,13 +95,21 @@ class TeamRepositoryImpl(ITeamRepository):
         self.session.flush()
         return TeamMapper.orm_to_domain(team_orm)
 
-    def search_teams(self, videogame_id: Optional[int] = None, region_id: Optional[int] = None, 
-                     rank_id: Optional[int] = None, vacant_slots: Optional[int] = None, 
-                     role_id: Optional[int] = None, search_term: Optional[str] = None) -> list['Team']:
-        query = self.session.query(TeamORM)
+    def search_teams(self, videogame_id: Optional[int] = None, region_id: Optional[int] = None,
+                     rank_id: Optional[int] = None, vacant_slots: Optional[int] = None,
+                     role_id: Optional[int] = None, search_term: Optional[str] = None,
+                     limit: Optional[int] = None, offset: int = 0) -> list['Team']:
+        query = self.session.query(TeamORM).filter(TeamORM.is_active.is_(True))
 
-        # Solo equipos con cupos vacantes
-        query = query.filter(TeamORM.members_roles.any(TeamMemberRoleORM.user_id == None))
+        # Cantidad de vacantes de cada equipo (subconsulta correlacionada)
+        vacant_count = (
+            select(func.count(TeamMemberRoleORM.team_member_role_id))
+            .where(TeamMemberRoleORM.team_id == TeamORM.team_id, TeamMemberRoleORM.user_id.is_(None))
+            .correlate(TeamORM)
+            .scalar_subquery()
+        )
+        # Solo equipos con cupos vacantes (y, si se pide, con al menos esa cantidad)
+        query = query.filter(vacant_count >= max(vacant_slots or 1, 1))
 
         if videogame_id:
             query = query.filter(TeamORM.videogame_id == videogame_id)
@@ -95,14 +118,11 @@ class TeamRepositoryImpl(ITeamRepository):
             query = query.filter(TeamORM.region_id == region_id)
 
         if rank_id:
+            search_rank_value = self.session.query(RankORM.value).filter(RankORM.rank_id == rank_id).scalar()
 
-            MinRank = aliased(RankORM)
-            MaxRank = aliased(RankORM)
-            SearchRank = aliased(RankORM)
-            
-            search_rank_value = self.session.query(SearchRank.value).filter(SearchRank.rank_id == rank_id).scalar()
-            
             if search_rank_value is not None:
+                MinRank = aliased(RankORM)
+                MaxRank = aliased(RankORM)
                 query = query.join(MinRank, TeamORM.min_rank_id == MinRank.rank_id)
                 query = query.join(MaxRank, TeamORM.max_rank_id == MaxRank.rank_id)
                 query = query.filter(MinRank.value <= search_rank_value)
@@ -111,23 +131,28 @@ class TeamRepositoryImpl(ITeamRepository):
         if role_id:
             query = query.filter(TeamORM.members_roles.any(and_(
                 TeamMemberRoleORM.game_role_id == role_id,
-                TeamMemberRoleORM.user_id == None
+                TeamMemberRoleORM.user_id.is_(None)
             )))
 
         if search_term:
+            escaped = search_term.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
+            pattern = f"%{escaped}%"
             query = query.filter(or_(
-                TeamORM.name.ilike(f"%{search_term}%"),
-                TeamORM.description.ilike(f"%{search_term}%")
+                TeamORM.name.ilike(pattern, escape="\\"),
+                TeamORM.description.ilike(pattern, escape="\\")
             ))
 
-        results = query.all()
-        
-        if vacant_slots is not None:
-            final_results = []
-            for team in results:
-                empty_slots = sum(1 for m in team.members_roles if m.user_id is None)
-                if empty_slots >= vacant_slots:
-                    final_results.append(team)
-            results = final_results
+        # Los equipos más recientes primero
+        query = query.order_by(TeamORM.team_id.desc()).offset(offset)
+        if limit is not None:
+            query = query.limit(limit)
 
-        return [TeamMapper.orm_to_domain(team) for team in results]
+        return [TeamMapper.orm_to_domain(team) for team in query.all()]
+
+    def get_team_info_by_conversation_ids(self, conversation_ids: list[int]) -> dict[int, tuple[int, Optional[str]]]:
+        if not conversation_ids:
+            return {}
+        rows = self.session.query(TeamORM.conversation_id, TeamORM.team_id, TeamORM.icon_url).filter(
+            TeamORM.conversation_id.in_(conversation_ids)
+        ).all()
+        return {conversation_id: (team_id, icon_url) for conversation_id, team_id, icon_url in rows}

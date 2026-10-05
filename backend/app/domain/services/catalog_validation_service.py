@@ -14,7 +14,6 @@ from app.domain.exceptions.videogame.videogame_already_exists_exception import V
 from app.domain.exceptions.region.region_not_found_exception import RegionNotFoundException
 from app.domain.exceptions.region.duplicated_region_name_exception import DuplicatedRegionNameException
 
-from app.domain.exceptions.team.InvalidRegionException import InvalidRegionException
 
 if TYPE_CHECKING:
     from app.domain.models.region import Region
@@ -33,7 +32,7 @@ class CatalogValidationService:
     def get_and_validate_exist_region(region_id: int, uow: 'IUnitOfWork') -> 'Region':
         region = uow.region_repo.get_region_by_id(region_id)
         if not region:
-            raise InvalidRegionException(region_id, -1)
+            raise RegionNotFoundException(region_id)
         return region
 
     @staticmethod
