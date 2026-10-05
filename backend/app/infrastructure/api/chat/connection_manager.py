@@ -1,7 +1,6 @@
 from collections import defaultdict
 from fastapi import WebSocket
-
-from app.infrastructure.api.dto.response.message_response import MessageResponse
+from pydantic import BaseModel
 
 
 class ConversationConnectionManager:
@@ -28,7 +27,11 @@ class ConversationConnectionManager:
         """Verifica en memoria si el usuario tiene al menos una conexión activa en esta sala."""
         return bool(self._active_connections.get(conversation_id, {}).get(user_id))
 
-    async def broadcast_to_conversation(self, conversation_id: int, message: MessageResponse) -> None:
+    def get_online_user_ids(self, conversation_id: int) -> set[int]:
+        """IDs de los usuarios con al menos una conexión activa en la sala."""
+        return set(self._active_connections.get(conversation_id, {}).keys())
+
+    async def broadcast_to_conversation(self, conversation_id: int, message: BaseModel) -> None:
         # convierte el mensaje a un modelo JSON para enviarlo a los websockets
         payload = message.model_dump_json()
         # obtengo todos los websockets activos para la conversación de ambos usuarios

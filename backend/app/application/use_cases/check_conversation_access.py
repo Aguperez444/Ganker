@@ -17,4 +17,5 @@ class CheckConversationAccess:
                 other_user = conversation.get_other_user(user_id)
                 return True, other_user.user_id
             else:
-                return True, None
+                # Los chatrooms grupales se acceden por el websocket /chatroom
+                return False, None

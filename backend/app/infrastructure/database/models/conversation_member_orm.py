@@ -17,6 +17,7 @@ class ConversationMemberORM(Base):
     conversation_id: Mapped[int] = mapped_column(ForeignKey("conversation.conversation_id"), nullable=False)
     user_id: Mapped[int] = mapped_column(ForeignKey("user.user_id"), nullable=False)
     role: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
+    last_read_message_id: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
 
     # Relaciones
     conversation: Mapped["ConversationORM"] = relationship(back_populates="members")

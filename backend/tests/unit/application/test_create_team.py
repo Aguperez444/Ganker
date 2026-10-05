@@ -79,7 +79,7 @@ def test_create_team_already_in_team(mock_uow):
     
     mock_uow.team_repo.is_user_in_any_active_team.return_value = True
 
-    req = CreateTeamRequest(name="A", allow_other_regions=False, videogame_id=1, region_id=1, min_rank_id=1, max_rank_id=1, creator_game_role_id=1, vacant_game_role_ids=[])
+    req = CreateTeamRequest(name="A", allow_other_regions=False, videogame_id=1, region_id=1, min_rank_id=1, max_rank_id=1, creator_game_role_id=1, vacant_game_role_ids=[1])
 
     with pytest.raises(UserAlreadyInTeamException):
         use_case.execute(1, req)

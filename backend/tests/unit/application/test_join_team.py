@@ -46,9 +46,11 @@ def test_join_team_success(mock_uow):
     mock_uow.user_repo.get_user_by_id.return_value = user
     mock_uow.team_repo.get_by_id_for_update.return_value = team
     mock_uow.team_repo.update_team_members.return_value = team
+    mock_uow.team_repo.is_user_in_any_active_team.return_value = False
 
     res = use_case.execute(1, 1, 1)
 
-    assert res.player_count == 1
-    assert res.max_players == 1
+    assert res.data.player_count == 1
+    assert res.data.max_players == 1
+    assert res.chatroom_id == 1
     assert team.members[0].user == user

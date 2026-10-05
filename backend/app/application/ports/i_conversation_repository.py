@@ -4,6 +4,7 @@ from typing import TYPE_CHECKING, Optional
 
 if TYPE_CHECKING:
     from app.domain.models.conversation import Conversation
+    from app.domain.models.conversation_type_enum import ConversationTypeEnum
 
 
 class IConversationRepository(ABC):
@@ -23,6 +24,11 @@ class IConversationRepository(ABC):
         raise NotImplementedError("Este método debe ser implementado por la clase hija.")
 
     @abstractmethod
-    def list_by_user_id(self, user_id: int) -> list[Conversation]:
-        """Lista todas las conversaciones de un usuario."""
+    def list_by_user_id(self, user_id: int, conversation_type: Optional['ConversationTypeEnum'] = None) -> list[Conversation]:
+        """Lista las conversaciones de un usuario, opcionalmente filtradas por tipo."""
+        raise NotImplementedError("Este método debe ser implementado por la clase hija.")
+
+    @abstractmethod
+    def update_last_read_message(self, conversation_id: int, user_id: int, message_id: int) -> None:
+        """Actualiza el último mensaje leído de un miembro de la conversación."""
         raise NotImplementedError("Este método debe ser implementado por la clase hija.")

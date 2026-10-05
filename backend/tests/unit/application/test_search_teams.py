@@ -52,7 +52,7 @@ def test_search_teams(mock_uow):
     assert results[0].description == "Desc 1"
     assert results[0].max_players == 1
     mock_uow.team_repo.search_teams.assert_called_once_with(
-        videogame_id=1, region_id=None, rank_id=None, vacant_slots=None, role_id=None, search_term="Team 1"
+        videogame_id=1, region_id=None, rank_id=None, vacant_slots=None, role_id=None, search_term="Team 1", limit=None, offset=0
     )
 
 def test_search_teams_empty(mock_uow):
