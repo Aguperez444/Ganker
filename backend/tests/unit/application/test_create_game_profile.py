@@ -62,7 +62,7 @@ class TestCreateVideogameProfileUseCase:
         request = CreateGameProfileRequest(
             videogame_id=1,
             character_ids=[10, 11],
-            roles=[RoleRankInput(role_id=100, rank_id=1000)]
+            roles=[RoleRankInput(role_id=100, rank_id=1000)], region_id=None
         )
 
         result = use_case.execute(player_id=5, create_videogame_profile_request=request)
@@ -78,7 +78,7 @@ class TestCreateVideogameProfileUseCase:
         request = CreateGameProfileRequest(
             videogame_id=999,
             character_ids=[1],
-            roles=[RoleRankInput(role_id=1, rank_id=1)]
+            roles=[RoleRankInput(role_id=1, rank_id=1)], region_id=None
         )
 
         with pytest.raises(VideogameNotFoundException) as exc_info:
@@ -98,7 +98,7 @@ class TestCreateVideogameProfileUseCase:
         request = CreateGameProfileRequest(
             videogame_id=1,
             character_ids=[1],
-            roles=[RoleRankInput(role_id=1, rank_id=1)]
+            roles=[RoleRankInput(role_id=1, rank_id=1)], region_id=None
         )
 
         with pytest.raises(GameProfileAlreadyExistException) as exc_info:
@@ -117,7 +117,7 @@ class TestCreateVideogameProfileUseCase:
         request = CreateGameProfileRequest(
             videogame_id=1,
             character_ids=[999],
-            roles=[RoleRankInput(role_id=1, rank_id=1)]
+            roles=[RoleRankInput(role_id=1, rank_id=1)], region_id=None
         )
 
         with pytest.raises(CharacterNotFoundException) as exc_info:
@@ -140,7 +140,7 @@ class TestCreateVideogameProfileUseCase:
         request = CreateGameProfileRequest(
             videogame_id=1,
             character_ids=[10],
-            roles=[RoleRankInput(role_id=1, rank_id=1)]
+            roles=[RoleRankInput(role_id=1, rank_id=1)], region_id=None
         )
 
         with pytest.raises(DoesNotBelongToGameException) as exc_info:
@@ -162,7 +162,7 @@ class TestCreateVideogameProfileUseCase:
         request = CreateGameProfileRequest(
             videogame_id=1,
             character_ids=[1],
-            roles=[RoleRankInput(role_id=888, rank_id=1)]
+            roles=[RoleRankInput(role_id=888, rank_id=1)], region_id=None
         )
 
         with pytest.raises(RoleNotFoundException) as exc_info:
@@ -189,7 +189,7 @@ class TestCreateVideogameProfileUseCase:
         request = CreateGameProfileRequest(
             videogame_id=1,
             character_ids=[1],
-            roles=[RoleRankInput(role_id=1, rank_id=1)]
+            roles=[RoleRankInput(role_id=1, rank_id=1)], region_id=None
         )
 
         with pytest.raises(DoesNotBelongToGameException) as exc_info:
@@ -213,7 +213,7 @@ class TestCreateVideogameProfileUseCase:
         request = CreateGameProfileRequest(
             videogame_id=1,
             character_ids=[1],
-            roles=[RoleRankInput(role_id=1, rank_id=777)]
+            roles=[RoleRankInput(role_id=1, rank_id=777)], region_id=None
         )
 
         with pytest.raises(RankNotFoundException) as exc_info:
@@ -240,7 +240,7 @@ class TestCreateVideogameProfileUseCase:
         request = CreateGameProfileRequest(
             videogame_id=1,
             character_ids=[1],
-            roles=[RoleRankInput(role_id=1, rank_id=1)]
+            roles=[RoleRankInput(role_id=1, rank_id=1)], region_id=None
         )
 
         with pytest.raises(DoesNotBelongToGameException) as exc_info:

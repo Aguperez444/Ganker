@@ -7,6 +7,7 @@ from app.domain.models.conversation_member import ConversationMember
 from app.domain.models.conversation_type_enum import ConversationTypeEnum
 from app.domain.models.team_role_enum import TeamRoleEnum
 from app.domain.exceptions.team.invalid_rank_exception import InvalidrankException
+from app.domain.exceptions.team.user_already_in_team_exception import UserAlreadyInTeamException
 from app.domain.services.catalog_validation_service import CatalogValidationService
 from app.domain.exceptions.game_profile.game_profile_not_found_exception import GameProfileNotFoundException
 from app.domain.exceptions.team.invalid_role_profile_exception import InvalidRoleProfileException
@@ -30,6 +31,7 @@ class CreateTeam:
             min_rank = CatalogValidationService.get_and_validate_exist_rank(request.min_rank_id, uow)
             max_rank = CatalogValidationService.get_and_validate_exist_rank(request.max_rank_id, uow)
 
+            region = None
             if request.region_id is not None:
                 region = CatalogValidationService.get_and_validate_exist_region(request.region_id, uow)
 
@@ -39,7 +41,7 @@ class CreateTeam:
 
             # Revisar si el usuario ya pertenece a un equipo activo
             if uow.team_repo.is_user_in_any_active_team(user_id):
-                raise ValueError("El usuario ya pertenece a un equipo activo") # TODO: Crear una exception para esto
+                raise UserAlreadyInTeamException(0, user_id)
 
             # obtener el perfil de juego del usuario para el videojuego especificado
             user_game_profile = current_user.get_game_profile_by_videogame(videogame)
@@ -47,7 +49,7 @@ class CreateTeam:
                 raise GameProfileNotFoundException(None, user_id, videogame.videogame_id)
 
             #  Validar la región del perfil de juego del usuario con la región del equipo
-            if not request.allow_other_regions and user_game_profile.region and user_game_profile.region.region_id != region.region_id:
+            if not request.allow_other_regions and region is not None and user_game_profile.region and user_game_profile.region.region_id != region.region_id:
                 raise InvalidRegionException(region.region_id, user_game_profile.region.region_id)
 
             # Validar el rango del perfil de juego del usuario con el rango mínimo y máximo del equipo

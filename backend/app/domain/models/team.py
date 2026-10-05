@@ -10,6 +10,7 @@ from app.domain.exceptions.team.role_already_ocupied_exception import RoleAlread
 from app.domain.exceptions.team.team_is_full_exception import TeamIsAlreadyFullException
 from app.domain.exceptions.team.team_member_slot_not_found_exception import TeamMemberSlotNotFoundException
 from app.domain.exceptions.team.user_already_in_team_exception import UserAlreadyInTeamException
+from app.domain.exceptions.team.team_without_region_must_allow_others_exception import TeamWithoutRegionMustAllowOthersException
 from app.domain.models.conversation_member import ConversationMember
 
 
@@ -41,7 +42,11 @@ class Team:
         self._description: Optional[str] = description
         self._allow_other_regions: bool = bool(allow_other_regions) if allow_other_regions is not None else False
         self._videogame: 'Videogame' = videogame
-        self._region: 'Region' = region
+        self._region: Optional['Region'] = region
+        
+        if self._region is None and not self._allow_other_regions:
+            raise TeamWithoutRegionMustAllowOthersException()
+            
         self._min_rank: 'Rank' = min_rank
         self._max_rank: 'Rank' = max_rank
         self._conversation: 'Conversation' = conversation
@@ -172,7 +177,7 @@ class Team:
             raise InvalidRoleProfileException(target_slot.game_role.role_id, user_game_profile.game_profile_id)
 
         # Validar que el jugador cumpla con los requisitos del equipo
-        if not self.allow_other_regions and user_game_profile.region.region_id is not None and user_game_profile.region.region_id != self.region.region_id:
+        if not self.allow_other_regions and self.region is not None and user_game_profile.region and user_game_profile.region.region_id != self.region.region_id:
             raise InvalidRegionException(self.region.region_id, user_game_profile.region.region_id)
 
         if user_role_profile.rank.value < self.min_rank.value or user_role_profile.rank.value > self.max_rank.value:

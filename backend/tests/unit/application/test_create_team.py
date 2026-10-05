@@ -74,7 +74,7 @@ def test_create_team_already_in_team(mock_uow):
     use_case = CreateTeam(mock_uow)
     mock_uow.user_repo.get_user_by_id.return_value = User(1, "u", "u", "a", "p", UserRole.PLAYER, [])
     mock_uow.videogame_repo.get_videogame_by_id.return_value = Videogame(1, "LoL", "/icon", True)
-    mock_uow.region_repo.get_by_id.return_value = Region(1, "LAS", Videogame(1, "LoL", "/icon", True))
+    mock_uow.region_repo.get_region_by_id.return_value = Region(1, "LAS", Videogame(1, "LoL", "/icon", True))
     mock_uow.rank_repo.get_rank_by_id.return_value = Rank(1, "B", 1000, Videogame(1, "LoL", "/icon", True), "")
     
     mock_uow.team_repo.is_user_in_any_active_team.return_value = True
