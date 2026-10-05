@@ -1,9 +1,10 @@
-from app.infrastructure.database.mappers.videogame_mapper import VideogameMapper
-from app.infrastructure.database.models.region_orm import RegionORM
 from app.domain.models.region import Region
+from app.infrastructure.database.models.region_orm import RegionORM
+from app.infrastructure.database.mappers.videogame_mapper import VideogameMapper
 
 
 class RegionMapper:
+
     @staticmethod
     def orm_to_domain(region_orm: RegionORM | None) -> Region | None:
         if region_orm is None:

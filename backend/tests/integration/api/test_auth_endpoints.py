@@ -43,7 +43,13 @@ class TestAuthEndpointsIntegration:
         assert response.status_code == 401
         assert "La contraseña es incorrecta" in response.json().get("error", "")
 
-    def test_login_missing_form_fields(self, client):
+    def test_login_without_email(self, client):
+        # Probar iniciar sesión sin ingresar email (falla)
+        response = client.post("/auth/v1/login", data={"password": "Password123"})
+        assert response.status_code == 422
+
+    def test_login_without_password(self, client):
+        # Probar iniciar sesión sin ingresar contraseña (falla)
         response = client.post("/auth/v1/login", data={"username": "test@example.com"})
         assert response.status_code == 422
 
@@ -113,6 +119,42 @@ class TestAuthEndpointsIntegration:
         refresh_res = client.post("/auth/v1/refresh", json={"refresh_token": refresh_token})
         assert refresh_res.status_code == 401
 
+    def test_access_after_logout_fails(self, client, seed_player):
+        # Probar a acceder a una funcionalidad que requiere autenticación luego de cerrar sesión (falla)
+        login_res = client.post("/auth/v1/login", data={
+            "username": seed_player.mail,
+            "password": "Password123"
+        })
+        refresh_token = login_res.json()["refresh_token"]
+
+        logout_res = client.post("/auth/v1/logout", json={"refresh_token": refresh_token})
+        assert logout_res.status_code == 204
+
+        # Intentar renovar el token con el refresh token invalidado falla con 401
+        refresh_res = client.post("/auth/v1/refresh", json={"refresh_token": refresh_token})
+        assert refresh_res.status_code == 401
+
+    def test_login_again_after_logout_success(self, client, seed_player):
+        # Probar iniciar sesión nuevamente luego de cerrar sesión utilizando credenciales válidas (pasa)
+        login_res = client.post("/auth/v1/login", data={
+            "username": seed_player.mail,
+            "password": "Password123"
+        })
+        refresh_token = login_res.json()["refresh_token"]
+
+        logout_res = client.post("/auth/v1/logout", json={"refresh_token": refresh_token})
+        assert logout_res.status_code == 204
+
+        # Iniciar sesión nuevamente con las credenciales de la cuenta
+        login_again_res = client.post("/auth/v1/login", data={
+            "username": seed_player.mail,
+            "password": "Password123"
+        })
+        assert login_again_res.status_code == 200
+        new_data = login_again_res.json()
+        assert "access_token" in new_data
+        assert "refresh_token" in new_data
+
     def test_logout_already_revoked_token_fails(self, client, seed_player):
         login_res = client.post("/auth/v1/login", data={
             "username": seed_player.mail,
@@ -127,7 +169,7 @@ class TestAuthEndpointsIntegration:
         # Second logout with same token fails with 401
         logout_res2 = client.post("/auth/v1/logout", json={"refresh_token": refresh_token})
         assert logout_res2.status_code == 401
-        assert "revok" in logout_res2.json().get("error", "").lower()
+        assert "revocado" in logout_res2.json().get("error", "").lower()
 
     def test_logout_invalid_jwt(self, client):
         response = client.post("/auth/v1/logout", json={"refresh_token": "invalid.jwt.token"})

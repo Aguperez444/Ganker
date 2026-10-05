@@ -1,6 +1,6 @@
 from typing import Optional
 
-from app.domain.exceptions.entity_not_persited_exception import EntityNotPersistedException
+from app.domain.exceptions.entity_not_persisted_exception import EntityNotPersistedException
 from app.domain.exceptions.invalid_id_exception import InvalidIdException
 
 

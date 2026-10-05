@@ -1,5 +1,5 @@
 from app.application.ports.i_unit_of_work import IUnitOfWork
-from app.infrastructure.api.dto.request.Search_videogame_profiles_request import SearchVideogameProfilesRequest
+from app.infrastructure.api.dto.request.search_videogame_profiles_request import SearchVideogameProfilesRequest
 from app.infrastructure.api.dto.response.get.get_videogame_profiles_response import GetVideogameProfilesResponse
 from app.domain.specifications.base import Specification
 from app.domain.specifications.videogame_profiles.characters_specification import ByCharactersSpecification

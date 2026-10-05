@@ -2,11 +2,11 @@ from pydantic import BaseModel, Field
 from typing import List
 
 class RoleRankInput(BaseModel):
-    role_id: int
-    rank_id: int
+    role_id: int = Field(..., description="ID del rol seleccionado")
+    rank_id: int = Field(..., description="ID del rango asociado al rol")
 
 class CreateGameProfileRequest(BaseModel):
-    videogame_id: int
+    videogame_id: int = Field(..., description="ID del videojuego para el cual se crea el perfil")
     character_ids: List[int] = Field(
         ...,
         min_length=1,
@@ -17,4 +17,4 @@ class CreateGameProfileRequest(BaseModel):
         min_length=1,
         description="Lista de roles con su rango (debe indicar al menos un rol)"
     )
-    region_id: int
+    region_id: int  = Field(description='ID de la región del jugador')

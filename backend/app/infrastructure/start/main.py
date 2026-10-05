@@ -36,7 +36,7 @@ from app.infrastructure.api.controllers.notifications_websocket import router as
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # Crea tablas en Postgres (Docker) o SQLite (Local)
-    Base.metadata.create_all(bind=engine)
+    #Base.metadata.create_all(bind=engine)
     # 2. Poblar datos iniciales si las tablas están vacías
     with Session(engine) as session:
         seed_database(session)

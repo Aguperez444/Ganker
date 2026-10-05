@@ -7,6 +7,7 @@ from app.infrastructure.database.base import Base
 if TYPE_CHECKING:
     from app.infrastructure.database.models.videogame_orm import VideogameORM
     from app.infrastructure.database.models.game_profile_orm import GameProfileORM
+    from app.infrastructure.database.models.team_orm import TeamORM
 
 
 class RegionORM(Base):
@@ -19,3 +20,4 @@ class RegionORM(Base):
     # Relaciones
     videogame: Mapped["VideogameORM"] = relationship(back_populates="region")
     game_profiles: Mapped[List["GameProfileORM"]] = relationship(back_populates="region")
+    teams: Mapped[List["TeamORM"]] = relationship(back_populates="region")

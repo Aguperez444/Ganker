@@ -117,3 +117,20 @@ class TestRegisterCharacterUseCase:
             use_case.execute(name="Ahri", videogame_id=1, icon_file=MagicMock(), icon_filename="ahri.png")
 
         storage_service.delete_file.assert_called_once_with("/media/games/lol/characters/ahri.png")
+
+    def test_register_character_same_name_different_videogame(self, mock_deps):
+        # Probar registrar un personaje con un nombre ya existente pero en un videojuego diferente (pasa)
+        use_case, uow, storage_service = mock_deps
+
+        vg2 = Videogame(videogame_id=2, name="Valorant", icon_url="/val.png", rank_per_role=False)
+        uow.videogame_repo.get_videogame_by_id.return_value = vg2
+        uow.character_repo.get_character_by_name_and_videogame.return_value = None
+
+        saved = Character(character_id=50, name="Ahri", videogame=vg2, icon_url="/media/games/valorant/characters/ahri.png")
+        uow.character_repo.create_character.return_value = saved
+
+        result = use_case.execute(name="Ahri", videogame_id=2, icon_file=MagicMock(), icon_filename="ahri.png")
+
+        assert result.character_id == 50
+        assert result.name == "Ahri"
+        uow.character_repo.create_character.assert_called_once()

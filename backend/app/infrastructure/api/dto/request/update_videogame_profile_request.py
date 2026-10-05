@@ -2,8 +2,8 @@ from pydantic import BaseModel, Field
 from typing import List
 
 class RoleRankInput(BaseModel):
-    role_id: int
-    rank_id: int
+    role_id: int = Field(..., description="ID del rol seleccionado")
+    rank_id: int = Field(..., description="ID del rango asociado al rol")
 
 class UpdateGameProfileRequest(BaseModel):
     character_ids: List[int] = Field(

@@ -10,13 +10,13 @@ from app.infrastructure.api.dto.response.base_classes.videogame_object_response 
 class PlayerObjectResponse(BaseModel):
     player_id: int = Field(..., description="ID único del jugador")
     player_name: str = Field(..., description="Nombre del jugador")
-    icon_url: str | None = "/media/users/icons/icon_example_1.png"
+    icon_url: str | None = Field("/media/users/icons/icon_example_1.png", description="URL del ícono del jugador")
     last_connection: datetime | None = Field(..., description="Última conexión del jugador")
 
 class GetGameProfileResponse(BaseModel):
-    game_profile_id: int = Field(..., description="ID único del perfil de juego actualizado")
-    player: PlayerObjectResponse = Field(..., description="Jugador asociado al perfil de juego actualizado")
-    videogame: VideogameObjectResponse = Field(..., description="Videojuego asociado al perfil de juego actualizado")
-    characters: List[CharacterObjectResponse] = Field(..., description="Personajes asociados al perfil de juego actualizado")
-    role_profiles: List['RoleProfileObjectResponse'] = Field(..., description="Perfiles de rol asociados al perfil de juego actualizado")
-    region: RegionObjectResponse | str = Field(..., description="Region de juego asociado al perfil de juego actualizado")
+    game_profile_id: int = Field(..., description="ID único del perfil de juego")
+    player: PlayerObjectResponse = Field(..., description="Jugador asociado al perfil de juego")
+    videogame: VideogameObjectResponse = Field(..., description="Videojuego asociado al perfil de juego")
+    characters: List[CharacterObjectResponse] = Field(..., description="Personajes asociados al perfil de juego")
+    role_profiles: List['RoleProfileObjectResponse'] = Field(..., description="Perfiles de rol asociados al perfil de juego")
+    region: RegionObjectResponse | str = Field(..., description="Region de juego asociado al perfil de juego")
