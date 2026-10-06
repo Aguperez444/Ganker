@@ -3,8 +3,8 @@ from typing import TYPE_CHECKING, Optional
 from app.domain.models.team_role_enum import TeamRoleEnum
 
 from app.infrastructure.api.dto.response.team_summary import TeamSummaryResponse, UserSummaryResponse, \
-    GameProfileSummaryResponse, RoleProfileSummaryResponse, RepresentativeRankResponse, JoinEligibilityResponse
-
+    GameProfileSummaryResponse, RoleProfileSummaryResponse, RepresentativeRankResponse, JoinEligibilityResponse, \
+    RankSummaryResponse, VideogameInfoSummaryResponse, RegionInfoSummaryResponse, ConsultantPlayerInfo
 
 if TYPE_CHECKING:
     from app.domain.models.team import Team
@@ -40,22 +40,33 @@ class CreateTeamSummaryService:
             conversation_id=conversation_id,
             player_count=sum(member.user is not None for member in team.members),
             max_players=len(team.members),
-            vacant_slots=len(team.vacant_slots()),
+            allow_other_regions=team.allow_other_regions,
             representative_rank=CreateTeamSummaryService._representative_rank(team),
-            is_member=is_member,
-            is_leader=is_leader,
-            join_eligibility=join_eligibility,
-            videogame_id=team.videogame.videogame_id if getattr(team, 'videogame', None) else None,
-            videogame_name=team.videogame.name if getattr(team, 'videogame', None) else None,
-            region_id=team.region.region_id if getattr(team, 'region', None) else None,
-            region_name=team.region.name if getattr(team, 'region', None) and team.region.name else 'Sin región',
-            min_rank_id=team.min_rank.rank_id if getattr(team, 'min_rank', None) else None,
-            min_rank_name=team.min_rank.name if getattr(team, 'min_rank', None) else None,
-            min_rank_value=team.min_rank.value if getattr(team, 'min_rank', None) else None,
-            max_rank_id=team.max_rank.rank_id if getattr(team, 'max_rank', None) else None,
-            max_rank_name=team.max_rank.name if getattr(team, 'max_rank', None) else None,
-            max_rank_value=team.max_rank.value if getattr(team, 'max_rank', None) else None,
-            allow_other_regions=getattr(team, 'allow_other_regions', False),
+            min_rank=RankSummaryResponse(
+                rank_id=team.min_rank.rank_id,
+                name=team.min_rank.name,
+                value=team.min_rank.value,
+                icon_url=team.min_rank.icon_url
+            ),
+            max_rank=RankSummaryResponse(
+                rank_id=team.max_rank.rank_id,
+                name=team.max_rank.name,
+                value=team.max_rank.value,
+                icon_url=team.max_rank.icon_url
+            ),
+            videogame=VideogameInfoSummaryResponse(
+                videogame_id=team.videogame.videogame_id,
+                name=team.videogame.name,
+            ),
+            region=RegionInfoSummaryResponse(
+                region_id=None if not team.region else team.region.region_id,
+                region_name='Sin región' if not team.region else team.region.name,
+            ),
+            consultant_player_info=ConsultantPlayerInfo(
+                is_member=is_member,
+                is_leader=is_leader,
+                join_eligibility=join_eligibility,
+            ),
             members=[
                 CreateTeamSummaryService._map_member(member, team)
                 for member in team.members
@@ -75,6 +86,10 @@ class CreateTeamSummaryService:
 
     @staticmethod
     def _member_rank(member: 'TeamMemberRole', team: 'Team'):
+        """
+        obtiene el rango del integrante del equipo, si tiene perfil de juego y perfil de rol para el videojuego y rol del equipo.
+        usado para calcular el rango representativo del equipo, que es el rango de los integrantes más cercano al promedio.
+        """
         if member.user is None:
             return None
         profile = member.user.get_game_profile_by_videogame(team.videogame)
@@ -83,11 +98,18 @@ class CreateTeamSummaryService:
 
     @staticmethod
     def _representative_rank(team: 'Team') -> Optional[RepresentativeRankResponse]:
+        """
+        Calcula el rango representativo del equipo, que es el rango de los integrantes más cercano al promedio.
+        """
         ranks = [r for r in (CreateTeamSummaryService._member_rank(m, team) for m in team.members) if r is not None]
         if not ranks:
             return None
         average = sum(r.value for r in ranks) / len(ranks)
-        closest = min(ranks, key=lambda r: abs(r.value - average))
+
+        higher_or_equal = [r for r in ranks if r.value >= average]
+        closest = min(
+            higher_or_equal,key=lambda r: r.value
+            ) if higher_or_equal else max(ranks, key=lambda r: r.value)
         return RepresentativeRankResponse(rank_id=closest.rank_id, name=closest.name,
                                           icon_url=closest.icon_url, average_value=average)
 
