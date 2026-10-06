@@ -181,11 +181,19 @@ export function EquiposPage() {
                 <p className="text-xs text-ganker-muted">
                   {miEquipoActivo.player_count}/{miEquipoActivo.max_players}{" "}
                   integrantes
-                  {miEquipoActivo.videogame_name
-                    ? ` · ${miEquipoActivo.videogame_name}`
+                  {miEquipoActivo.videogame?.name ||
+                  miEquipoActivo.videogame_name
+                    ? ` · ${
+                        miEquipoActivo.videogame?.name ||
+                        miEquipoActivo.videogame_name
+                      }`
                     : ""}
-                  {miEquipoActivo.region_name
-                    ? ` (${miEquipoActivo.region_name})`
+                  {miEquipoActivo.region?.region_name ||
+                  miEquipoActivo.region_name
+                    ? ` (${
+                        miEquipoActivo.region?.region_name ||
+                        miEquipoActivo.region_name
+                      })`
                     : ""}
                 </p>
               </div>

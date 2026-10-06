@@ -88,6 +88,10 @@ export function UnirseEquipoModalComponent({
     }
   };
 
+  const minRankName = team?.min_rank?.name || team?.min_rank_name;
+  const maxRankName = team?.max_rank?.name || team?.max_rank_name;
+  const regionName = team?.region?.region_name || team?.region_name;
+
   return (
     <div
       role="dialog"
@@ -124,8 +128,8 @@ export function UnirseEquipoModalComponent({
           <div>
             <span className="text-ganker-muted">Rango requerido:</span>
             <p className="font-semibold text-ganker-text">
-              {team.min_rank_name && team.max_rank_name
-                ? `${team.min_rank_name} - ${team.max_rank_name}`
+              {minRankName && maxRankName
+                ? `${minRankName} - ${maxRankName}`
                 : "Sin restricción de rango"}
             </p>
           </div>
@@ -135,7 +139,7 @@ export function UnirseEquipoModalComponent({
             <p className="font-semibold text-ganker-text">
               {team.allow_other_regions
                 ? "Permite otras regiones"
-                : team.region_name || "Misma región requerida"}
+                : regionName || "Misma región requerida"}
             </p>
           </div>
         </div>

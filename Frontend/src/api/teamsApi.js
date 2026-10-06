@@ -27,20 +27,54 @@ export const searchTeams = async (filters = {}) => {
 };
 
 export const createTeam = async (teamData) => {
-  const payload = {
-    name: teamData.name.trim(),
-    description: teamData.description?.trim() || null,
-    icon_url: teamData.icon_url?.trim() || null,
-    allow_other_regions: Boolean(teamData.allow_other_regions),
-    videogame_id: Number(teamData.videogame_id),
-    region_id: teamData.region_id ? Number(teamData.region_id) : null,
-    min_rank_id: Number(teamData.min_rank_id),
-    max_rank_id: Number(teamData.max_rank_id),
-    creator_game_role_id: Number(teamData.creator_game_role_id),
-    vacant_game_role_ids: (teamData.vacant_game_role_ids || []).map(Number),
-  };
+  let body;
 
-  const response = await axiosClient.post("/api/v1/teams", payload);
+  if (teamData instanceof FormData) {
+    body = teamData;
+  } else {
+    const formData = new FormData();
+    formData.append("name", teamData.name.trim());
+    if (teamData.description && teamData.description.trim()) {
+      formData.append("description", teamData.description.trim());
+    }
+    formData.append(
+      "allow_other_regions",
+      String(Boolean(teamData.allow_other_regions))
+    );
+    formData.append("videogame_id", String(Number(teamData.videogame_id)));
+    if (teamData.region_id) {
+      formData.append("region_id", String(Number(teamData.region_id)));
+    }
+    formData.append("min_rank_id", String(Number(teamData.min_rank_id)));
+    formData.append("max_rank_id", String(Number(teamData.max_rank_id)));
+    formData.append(
+      "creator_game_role_id",
+      String(Number(teamData.creator_game_role_id))
+    );
+
+    (teamData.vacant_game_role_ids || []).forEach((id) => {
+      formData.append("vacant_game_role_ids", String(Number(id)));
+    });
+
+    if (
+      teamData.team_icon instanceof File ||
+      teamData.team_icon instanceof Blob
+    ) {
+      formData.append(
+        "team_icon",
+        teamData.team_icon,
+        teamData.team_icon.name || "team_icon.png"
+      );
+    }
+
+    body = formData;
+  }
+
+  const response = await axiosClient.post("/api/v1/teams", body, {
+    headers: {
+      "Content-Type": undefined,
+    },
+  });
   return response.data;
 };
 

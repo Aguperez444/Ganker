@@ -13,22 +13,37 @@ export function EquipoCardComponent({
   onUnirse,
   onAbrirChat,
 }) {
-  const vacantes = team.members?.filter((m) => m.user_id === null) ?? [];
+  const vacantes =
+    team.members?.filter((m) => m.is_vacant || m.user_id === null) ?? [];
   const miembrosOcupados =
-    team.members?.filter((m) => m.user_id !== null) ?? [];
+    team.members?.filter((m) => !m.is_vacant && m.user_id !== null) ?? [];
 
   const estaLleno =
-    team.player_count >= team.max_players || vacantes.length === 0;
+    (team.player_count !== undefined &&
+      team.max_players !== undefined &&
+      team.player_count >= team.max_players) ||
+    vacantes.length === 0;
 
-  const esMiembro = Boolean(
-    user &&
-    miembrosOcupados.some(
-      (m) =>
-        m.user_id === user.user_id ||
-        m.username === user.username ||
-        m.name === user.name
-    )
-  );
+  const consultantInfo = team.consultant_player_info;
+  const joinEligibility =
+    consultantInfo?.join_eligibility ?? team.join_eligibility;
+
+  const esMiembro =
+    consultantInfo?.is_member ??
+    Boolean(
+      user &&
+      miembrosOcupados.some(
+        (m) =>
+          m.user_id === user.user_id ||
+          m.username === user.username ||
+          m.name === user.name
+      )
+    );
+
+  const videogameName = team.videogame?.name || team.videogame_name;
+  const regionName = team.region?.region_name || team.region_name;
+  const minRankName = team.min_rank?.name || team.min_rank_name;
+  const maxRankName = team.max_rank?.name || team.max_rank_name;
 
   // Rango representativo de la sala:
   const rangoRepresentativo = (() => {
@@ -38,11 +53,11 @@ export function EquipoCardComponent({
         icon_url: team.representative_rank.icon_url,
       };
     }
-    if (team.min_rank_name && team.max_rank_name) {
+    if (minRankName && maxRankName) {
       const name =
-        team.min_rank_name === team.max_rank_name
-          ? team.min_rank_name
-          : `${team.min_rank_name} - ${team.max_rank_name}`;
+        minRankName === maxRankName
+          ? minRankName
+          : `${minRankName} - ${maxRankName}`;
       return { name, icon_url: null };
     }
     const primerRango =
@@ -54,13 +69,13 @@ export function EquipoCardComponent({
   const evaluacionRequisitos = (() => {
     if (!user || esMiembro || estaLleno) return null;
 
-    // Si el backend envió join_eligibility directamente, usarlo prioritariamente (Guía v2)
-    if (team.join_eligibility) {
+    // Si el backend envió join_eligibility (v2 o anidado en consultant_player_info v3), usarlo prioritariamente
+    if (joinEligibility) {
       return {
-        cumple: Boolean(team.join_eligibility.can_join),
+        cumple: Boolean(joinEligibility.can_join),
         motivo:
-          team.join_eligibility.reason ||
-          (team.join_eligibility.can_join
+          joinEligibility.reason ||
+          (joinEligibility.can_join
             ? "Cumples los requisitos"
             : "No cumples con los requisitos del equipo"),
       };
@@ -128,17 +143,17 @@ export function EquipoCardComponent({
               </h3>
 
               <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-ganker-muted">
-                {team.videogame_name && (
+                {videogameName && (
                   <span className="inline-flex items-center rounded-md border border-white/10 bg-ganker-surface-light px-2 py-0.5 font-medium text-ganker-purple-light">
-                    {team.videogame_name}
+                    {videogameName}
                   </span>
                 )}
 
                 <span className="inline-flex items-center rounded-md border border-white/10 bg-white/5 px-2 py-0.5 text-ganker-muted">
                   {team.allow_other_regions
                     ? "Cualquier región"
-                    : team.region_name
-                      ? `Región: ${team.region_name}`
+                    : regionName
+                      ? `Región: ${regionName}`
                       : "Región local"}
                 </span>
               </div>
@@ -186,7 +201,7 @@ export function EquipoCardComponent({
 
           <div className="grid gap-2">
             {team.members?.map((member, index) => {
-              const esVacante = member.user_id === null;
+              const esVacante = member.is_vacant || member.user_id === null;
               const roleProfile =
                 member.active_game_profile?.active_role_profile;
               const roleName = roleProfile?.role_name || "Rol libre";
@@ -230,7 +245,7 @@ export function EquipoCardComponent({
               }
 
               // Miembro activo
-              const esLider = index === 0;
+              const esLider = member.is_leader ?? index === 0;
 
               return (
                 <div
@@ -304,9 +319,18 @@ export function EquipoCardComponent({
           <button
             type="button"
             onClick={() => onUnirse?.(team)}
-            disabled={estaLleno}
+            disabled={
+              estaLleno ||
+              (evaluacionRequisitos && !evaluacionRequisitos.cumple)
+            }
+            title={
+              evaluacionRequisitos && !evaluacionRequisitos.cumple
+                ? evaluacionRequisitos.motivo
+                : undefined
+            }
             className={`w-full rounded-xl px-4 py-2.5 text-sm font-semibold transition ${
-              estaLleno
+              estaLleno ||
+              (evaluacionRequisitos && !evaluacionRequisitos.cumple)
                 ? "cursor-not-allowed border border-white/10 bg-white/5 text-ganker-muted"
                 : "cursor-pointer bg-gradient-to-r from-ganker-orange to-ganker-purple text-white shadow-lg shadow-ganker-purple/20 hover:opacity-90"
             }`}

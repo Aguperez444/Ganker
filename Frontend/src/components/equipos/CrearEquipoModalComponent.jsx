@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import CampoTexto from "../common/CampoTexto";
 import IconSelectComponent from "../common/IconSelectComponent";
+import ModalRecortarAvatar from "../jugadores/ModalRecortarAvatarComponent";
 import { getRegionsByGame } from "../../api/regionApi";
 import { getRanksByGame } from "../../api/rankApi";
 import { getRolesByGame } from "../../api/roleApi";
@@ -19,6 +20,14 @@ export function CrearEquipoModalComponent({
 }) {
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
+  const [teamIconFile, setTeamIconFile] = useState(null);
+  const [previewIconUrl, setPreviewIconUrl] = useState(null);
+  const [modalRecorteAbierto, setModalRecorteAbierto] = useState(false);
+  const [imagenParaRecortar, setImagenParaRecortar] = useState(null);
+  const [nombreArchivoOriginal, setNombreArchivoOriginal] =
+    useState("team_icon.png");
+  const [errorImagen, setErrorImagen] = useState(null);
+
   const [videogameId, setVideogameId] = useState("");
   const [regionId, setRegionId] = useState("");
   const [allowOtherRegions, setAllowOtherRegions] = useState(false);
@@ -116,6 +125,62 @@ export function CrearEquipoModalComponent({
     });
   };
 
+  const handleSeleccionarArchivo = (e) => {
+    setErrorImagen(null);
+    const archivo = e.target.files?.[0];
+    if (!archivo) return;
+
+    if (!archivo.type.startsWith("image/")) {
+      setErrorImagen(
+        "Por favor seleccioná un archivo de imagen válido (JPG, PNG o WEBP)."
+      );
+      e.target.value = "";
+      return;
+    }
+
+    const objectUrl = URL.createObjectURL(archivo);
+    setImagenParaRecortar(objectUrl);
+    setNombreArchivoOriginal(archivo.name || "team_icon.png");
+    setModalRecorteAbierto(true);
+    e.target.value = "";
+  };
+
+  const handleConfirmarRecorte = (file, previewUrl) => {
+    if (imagenParaRecortar) {
+      URL.revokeObjectURL(imagenParaRecortar);
+      setImagenParaRecortar(null);
+    }
+    setModalRecorteAbierto(false);
+    setTeamIconFile(file);
+    setPreviewIconUrl(previewUrl);
+  };
+
+  const handleCerrarModalRecorte = () => {
+    if (imagenParaRecortar) {
+      URL.revokeObjectURL(imagenParaRecortar);
+      setImagenParaRecortar(null);
+    }
+    setModalRecorteAbierto(false);
+  };
+
+  const handleQuitarIcono = () => {
+    if (previewIconUrl) {
+      URL.revokeObjectURL(previewIconUrl);
+    }
+    setTeamIconFile(null);
+    setPreviewIconUrl(null);
+    setErrorImagen(null);
+  };
+
+  const handleCerrar = () => {
+    if (isSubmitting) return;
+    if (imagenParaRecortar) {
+      URL.revokeObjectURL(imagenParaRecortar);
+      setImagenParaRecortar(null);
+    }
+    onClose();
+  };
+
   // Obtener perfil del usuario para el juego seleccionado para previsualizar su rango
   const perfilUsuario = buscarPerfilDeJuegoDeUsuario(user, videogameId);
 
@@ -126,6 +191,7 @@ export function CrearEquipoModalComponent({
     const formData = {
       name,
       description,
+      team_icon: teamIconFile,
       videogame_id: videogameId,
       region_id: allowOtherRegions ? regionId || null : regionId,
       allow_other_regions: allowOtherRegions,
@@ -142,6 +208,11 @@ export function CrearEquipoModalComponent({
     if (!resultado.success) {
       setErrores(resultado.errores || { general: resultado.error });
     } else {
+      if (previewIconUrl) {
+        URL.revokeObjectURL(previewIconUrl);
+      }
+      setTeamIconFile(null);
+      setPreviewIconUrl(null);
       onClose();
     }
   };
@@ -165,7 +236,7 @@ export function CrearEquipoModalComponent({
           </h2>
           <button
             type="button"
-            onClick={onClose}
+            onClick={handleCerrar}
             disabled={isSubmitting}
             className="rounded-lg p-1.5 text-ganker-muted transition hover:bg-white/5 hover:text-ganker-text"
           >
@@ -189,6 +260,84 @@ export function CrearEquipoModalComponent({
         )}
 
         <form onSubmit={handleSubmit} className="mt-5 space-y-4">
+          {/* Logo del equipo con recorte circular */}
+          <div className="flex flex-col gap-4 rounded-xl border border-white/5 bg-ganker-surface-light/40 p-4 sm:flex-row sm:items-center">
+            <div className="relative flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-full border-2 border-ganker-purple/40 bg-gradient-to-br from-ganker-orange to-ganker-purple font-heading text-2xl font-bold text-white shadow-md">
+              {previewIconUrl ? (
+                <img
+                  src={previewIconUrl}
+                  alt="Vista previa del logo del equipo"
+                  className="h-full w-full rounded-full object-cover"
+                />
+              ) : (
+                <span>
+                  {name.trim() ? name.trim().charAt(0).toUpperCase() : "🛡️"}
+                </span>
+              )}
+            </div>
+
+            <div className="flex-1 space-y-2">
+              <div className="flex flex-wrap items-center gap-2.5">
+                <label
+                  htmlFor="input-team-icon"
+                  className="inline-flex cursor-pointer items-center gap-2 rounded-lg border border-white/10 bg-ganker-surface-light px-3.5 py-2 font-heading text-xs font-bold text-ganker-text transition hover:border-ganker-orange/50 hover:bg-white/5"
+                >
+                  <svg
+                    className="h-4 w-4 text-ganker-orange"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"
+                    />
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"
+                    />
+                  </svg>
+                  {previewIconUrl ? "Cambiar logo" : "Subir logo del equipo"}
+                </label>
+
+                {previewIconUrl && (
+                  <button
+                    type="button"
+                    onClick={handleQuitarIcono}
+                    className="cursor-pointer rounded-lg border border-ganker-error/30 bg-ganker-error/10 px-3 py-2 font-heading text-xs font-semibold text-ganker-error transition hover:bg-ganker-error/20"
+                  >
+                    Descartar logo
+                  </button>
+                )}
+
+                <input
+                  id="input-team-icon"
+                  type="file"
+                  accept="image/*"
+                  onChange={handleSeleccionarArchivo}
+                  className="sr-only"
+                />
+              </div>
+
+              <p className="text-xs text-ganker-muted">
+                Logo o escudo del equipo (opcional). Podrás encuadrarlo con
+                recorte circular. Si se omite, se asignará un ícono por defecto.
+              </p>
+
+              {errorImagen && (
+                <p
+                  role="alert"
+                  className="text-xs font-medium text-ganker-error"
+                >
+                  {errorImagen}
+                </p>
+              )}
+            </div>
+          </div>
+
           {/* Nombre del equipo */}
           <CampoTexto
             label="Nombre del equipo *"
@@ -454,7 +603,7 @@ export function CrearEquipoModalComponent({
           <div className="flex justify-end gap-3 border-t border-white/10 pt-4">
             <button
               type="button"
-              onClick={onClose}
+              onClick={handleCerrar}
               disabled={isSubmitting}
               className="cursor-pointer rounded-xl border border-white/10 px-5 py-2.5 text-sm font-semibold text-ganker-muted transition hover:bg-white/5 hover:text-ganker-text disabled:opacity-50"
             >
@@ -471,6 +620,16 @@ export function CrearEquipoModalComponent({
           </div>
         </form>
       </div>
+
+      <ModalRecortarAvatar
+        isOpen={modalRecorteAbierto}
+        imagenSrc={imagenParaRecortar}
+        nombreArchivoOriginal={nombreArchivoOriginal}
+        onClose={handleCerrarModalRecorte}
+        onConfirm={handleConfirmarRecorte}
+        titulo="Encuadrar logo del equipo"
+        descripcion="Arrastrá y ajustá el zoom para centrar el logo en el círculo."
+      />
     </div>
   );
 }

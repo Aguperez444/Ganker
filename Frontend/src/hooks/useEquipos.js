@@ -217,10 +217,12 @@ export function useEquipos() {
 
       if (event.type === EVENTO_TEAM_CREATED) {
         const nuevoEquipo = event.data;
+        const nuevoEquipoGameId =
+          nuevoEquipo.videogame?.videogame_id ?? nuevoEquipo.videogame_id;
         // Solo agregar si matchea el videojuego filtrado actual (o si no hay filtro de juego)
         if (
           !selectedGameId ||
-          Number(nuevoEquipo.videogame_id) === Number(selectedGameId)
+          Number(nuevoEquipoGameId) === Number(selectedGameId)
         ) {
           setTeams((prev) => [
             nuevoEquipo,
@@ -269,14 +271,17 @@ export function useEquipos() {
     if (!user) return null;
     if (equipoActivoServidor) return equipoActivoServidor;
     return (
-      teams.find((team) =>
-        team.members?.some(
-          (m) =>
-            m.user_id !== null &&
-            (m.user_id === user.user_id ||
-              m.username === user.username ||
-              m.name === user.name)
-        )
+      teams.find(
+        (team) =>
+          team.consultant_player_info?.is_member === true ||
+          team.members?.some(
+            (m) =>
+              !m.is_vacant &&
+              m.user_id !== null &&
+              (m.user_id === user.user_id ||
+                m.username === user.username ||
+                m.name === user.name)
+          )
       ) ?? null
     );
   }, [equipoActivoServidor, teams, user]);

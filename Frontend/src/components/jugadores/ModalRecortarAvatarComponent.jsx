@@ -14,6 +14,8 @@ function ModalRecortarAvatar({
   nombreArchivoOriginal = "avatar.png",
   onClose,
   onConfirm,
+  titulo = "Encuadrar foto de perfil",
+  descripcion = "Arrastrá y ajustá el zoom para centrar tu foto en el círculo.",
 }) {
   const [zoom, setZoom] = useState(1);
   const [pan, setPan] = useState({ x: 0, y: 0 });
@@ -236,11 +238,9 @@ function ModalRecortarAvatar({
               id="titulo-recorte-avatar"
               className="font-heading text-lg font-bold text-ganker-text"
             >
-              Encuadrar foto de perfil
+              {titulo}
             </h3>
-            <p className="mt-1 text-xs text-ganker-muted">
-              Arrastrá y ajustá el zoom para centrar tu foto en el círculo.
-            </p>
+            <p className="mt-1 text-xs text-ganker-muted">{descripcion}</p>
           </div>
           <button
             type="button"

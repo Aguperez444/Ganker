@@ -146,8 +146,10 @@ export function validarUnirseEquipo({
 }) {
   // 1. Validar que el equipo cuente con al menos una vacante
   const hayVacantes =
-    team.player_count < team.max_players ||
-    team.members?.some((m) => m.user_id === null);
+    (team.player_count !== undefined &&
+      team.max_players !== undefined &&
+      team.player_count < team.max_players) ||
+    team.members?.some((m) => m.is_vacant || m.user_id === null);
 
   if (!hayVacantes) {
     return {
@@ -174,10 +176,13 @@ export function validarUnirseEquipo({
     };
   }
 
+  const videogameId = team.videogame?.videogame_id || team.videogame_id;
+  const videogameName = team.videogame?.name || team.videogame_name;
+
   const userGameProfile = buscarPerfilDeJuegoDeUsuario(
     user,
-    team.videogame_id,
-    team.videogame_name
+    videogameId,
+    videogameName
   );
 
   if (!userGameProfile) {
@@ -212,29 +217,39 @@ export function validarUnirseEquipo({
 
   // Obtener min_val y max_val
   let minVal =
-    team.min_rank_value !== undefined && team.min_rank_value !== null
-      ? Number(team.min_rank_value)
-      : null;
+    team.min_rank?.value !== undefined && team.min_rank?.value !== null
+      ? Number(team.min_rank.value)
+      : team.min_rank_value !== undefined && team.min_rank_value !== null
+        ? Number(team.min_rank_value)
+        : null;
   let maxVal =
-    team.max_rank_value !== undefined && team.max_rank_value !== null
-      ? Number(team.max_rank_value)
-      : null;
+    team.max_rank?.value !== undefined && team.max_rank?.value !== null
+      ? Number(team.max_rank.value)
+      : team.max_rank_value !== undefined && team.max_rank_value !== null
+        ? Number(team.max_rank_value)
+        : null;
 
-  if (minVal === null && team.min_rank_id && ranks.length > 0) {
-    const r = ranks.find((x) => Number(x.rank_id) === Number(team.min_rank_id));
+  const minRankId = team.min_rank?.rank_id || team.min_rank_id;
+  const maxRankId = team.max_rank?.rank_id || team.max_rank_id;
+
+  if (minVal === null && minRankId && ranks.length > 0) {
+    const r = ranks.find((x) => Number(x.rank_id) === Number(minRankId));
     if (r) minVal = Number(r.value);
   }
-  if (maxVal === null && team.max_rank_id && ranks.length > 0) {
-    const r = ranks.find((x) => Number(x.rank_id) === Number(team.max_rank_id));
+  if (maxVal === null && maxRankId && ranks.length > 0) {
+    const r = ranks.find((x) => Number(x.rank_id) === Number(maxRankId));
     if (r) maxVal = Number(r.value);
   }
+
+  const minRankName = team.min_rank?.name || team.min_rank_name;
+  const maxRankName = team.max_rank?.name || team.max_rank_name;
 
   if (minVal !== null && userRankVal < minVal) {
     return {
       esValido: false,
       error: `Tu rango (${
         userRoleProfile.rank?.name || ""
-      }) es inferior al rango mínimo requerido (${team.min_rank_name || "mínimo"}).`,
+      }) es inferior al rango mínimo requerido (${minRankName || "mínimo"}).`,
     };
   }
 
@@ -243,15 +258,15 @@ export function validarUnirseEquipo({
       esValido: false,
       error: `Tu rango (${
         userRoleProfile.rank?.name || ""
-      }) es superior al rango máximo permitido (${team.max_rank_name || "máximo"}).`,
+      }) es superior al rango máximo permitido (${maxRankName || "máximo"}).`,
     };
   }
 
   // 6. Validar región
   const allowOthers = Boolean(team.allow_other_regions);
   if (!allowOthers) {
-    const teamRegionId = team.region_id;
-    const teamRegionName = team.region_name;
+    const teamRegionId = team.region?.region_id || team.region_id;
+    const teamRegionName = team.region?.region_name || team.region_name;
     const userRegionId = userGameProfile.region?.region_id;
     const userRegionName = userGameProfile.region?.name;
 
