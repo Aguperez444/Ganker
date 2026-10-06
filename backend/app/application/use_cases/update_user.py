@@ -14,7 +14,7 @@ class UpdateUser:
         self.storage_service: IStorageService = storage_service
 
     def execute(self, user_id: int, username: str, name: str, mail: str,
-                icon_file: Optional[BinaryIO] = None, icon_filename: Optional[str] = None) -> UpdateUserResponse:
+                icon_file: Optional[BinaryIO] = None) -> UpdateUserResponse:
         icon_changed: bool = False
         old_icon_url: str | None = None
         with self.uow as uow:
@@ -34,7 +34,7 @@ class UpdateUser:
 
             new_icon_url = user.icon_url  # por defecto persisto la url anterior
             # compruebo si me llegó una imagen nueva
-            if icon_file and icon_filename:
+            if icon_file:
                 try:
                     # actualizo la bandera de cambio de icono
                     icon_changed = True
@@ -42,7 +42,7 @@ class UpdateUser:
                     # Guardo la nueva imagen a través del puerto
                     new_icon_url = self.storage_service.save_image_file(
                         file_content=icon_file,
-                        filename=icon_filename,
+                        filename='do_not_use_original_name',  # no uso el nombre original para evitar colisiones
                         subfolder=f"users/icons",
                         preserve_original_name=False
                     )

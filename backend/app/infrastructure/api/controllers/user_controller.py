@@ -67,13 +67,12 @@ def update_user(username: str = Form(...), name: str = Form(...), mail: EmailStr
         )
 
     file_obj = icon.file if icon else None
-    filename = icon.filename if icon else None
 
     uow = uow_factory()
     storage_service = get_storage_service()
 
     update_user_use_case = UpdateUser(uow, storage_service)
-    return update_user_use_case.execute(user_id, username, name, mail, file_obj, filename)
+    return update_user_use_case.execute(user_id, username, name, mail, file_obj)
 
 @router.get("/me", response_model=GetUserResponse, status_code=200, dependencies=[Depends(require_player)])
 def get_user(user_id: int = Depends(get_current_user_id)) -> GetUserResponse:
