@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, Query, UploadFile, File
 from starlette.concurrency import run_in_threadpool
 from typing import Optional
 
@@ -15,17 +15,14 @@ from app.infrastructure.api.dto.response.team.event_type_enum import TeamEventTy
 from app.infrastructure.api.dto.response.team_summary import TeamSummaryResponse, JoinTeamResponse
 from app.infrastructure.api.teams.teams_feed_connection_manager import teams_feed_manager
 from app.infrastructure.database.unit_of_work.uow_factory import uow_factory
-
+from app.infrastructure.storage.local_disk_storage_service import LocalDiskStorageService
 
 router = APIRouter(prefix="/api/v1/teams", tags=["teams"])
 
-# Campos que dependen del jugador que consulta y por lo tanto no deben enviarse en un broadcast a todos los clientes
-_VIEWER_SPECIFIC_FIELDS = {"is_member", "is_leader", "join_eligibility"}
 
 
-def _public_payload(team: TeamSummaryResponse) -> dict:
-    return team.model_dump(mode="json", exclude=_VIEWER_SPECIFIC_FIELDS)
-
+def get_storage_service():
+    return LocalDiskStorageService()
 
 @router.get("", status_code=200, response_model=list[TeamSummaryResponse], dependencies=[Depends(require_player)])
 async def search_teams(
@@ -58,15 +55,20 @@ async def search_teams(
 @router.post("", status_code=201, response_model=TeamSummaryResponse, dependencies=[Depends(require_player)])
 async def create_team(
     payload: CreateTeamRequest,
+    team_icon: Optional[UploadFile] = File(None, description="Archivo de imagen del ícono del equipo"),
     user_id: int = Depends(get_current_user_id),
 ):
-    uow = uow_factory()
-    use_case = CreateTeam(uow)
 
-    created_team_data = await run_in_threadpool(use_case.execute, user_id, payload)
+    file_obj = team_icon.file if team_icon else None
+
+    uow = uow_factory()
+    storage_service = get_storage_service()
+    use_case = CreateTeam(uow, storage_service)
+
+    created_team_data: TeamSummaryResponse = await run_in_threadpool(use_case.execute, user_id, payload, file_obj)
 
     # Para los WebSockets debemos convertir la respuesta en un diccionario (sin datos propios del creador)
-    await teams_feed_manager.broadcast_event(TeamEventTypeEnum.TEAM_CREATED, _public_payload(created_team_data))
+    await teams_feed_manager.broadcast_event(TeamEventTypeEnum.TEAM_CREATED, created_team_data.public_payload())
 
     return created_team_data
 
@@ -97,7 +99,7 @@ async def join_lobby(
     team = result.data
 
     # Notificamos a todos los que tienen la lista de salas abierta en el navegador
-    await teams_feed_manager.broadcast_event(TeamEventTypeEnum.TEAM_MEMBER_JOINED, _public_payload(team))
+    await teams_feed_manager.broadcast_event(TeamEventTypeEnum.TEAM_MEMBER_JOINED, team.public_payload())
 
     # Confirmación personal para quien se unió, por el websocket de notificaciones del usuario
     await notification_manager.send_to_user(user_id, {

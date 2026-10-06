@@ -1,3 +1,4 @@
+from app.application.ports.i_storage_service import IStorageService
 from app.application.ports.i_unit_of_work import IUnitOfWork
 from app.domain.models.conversation_member_role_enum import ConversationMemberRoleEnum
 from app.domain.models.team import Team
@@ -15,7 +16,7 @@ from app.domain.exceptions.team.InvalidRegionException import InvalidRegionExcep
 from app.domain.exceptions.team.invalid_rank_range_exception import InvalidRankRangeException
 from app.domain.exceptions.team.catalog_item_videogame_mismatch_exception import CatalogItemVideogameMismatchException
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Optional, BinaryIO
 from app.domain.services.create_team_summary_service import CreateTeamSummaryService
 from app.infrastructure.api.dto.request.create_team_request import CreateTeamRequest
 
@@ -23,18 +24,22 @@ if TYPE_CHECKING:
     from app.infrastructure.api.dto.response.team_summary import TeamSummaryResponse
 
 class CreateTeam:
-    def __init__(self, uow: IUnitOfWork):
+    def __init__(self, uow: IUnitOfWork, storage_service: IStorageService):
         self._uow = uow
+        self.storage_service: IStorageService = storage_service
 
-    def execute(self, user_id: int, request: CreateTeamRequest) -> 'TeamSummaryResponse':
+    def execute(self, user_id: int, request: CreateTeamRequest, icon_file: Optional[BinaryIO] = None) -> 'TeamSummaryResponse':
         with self._uow as uow:
+            # obtener el usuario, videojuego, rango mínimo y rango máximo del equipo y validar que existan
             current_user = CatalogValidationService.get_and_validate_exist_user(user_id, uow)
             videogame = CatalogValidationService.get_and_validate_exist_videogame(request.videogame_id, uow)
             min_rank = CatalogValidationService.get_and_validate_exist_rank(request.min_rank_id, uow)
             max_rank = CatalogValidationService.get_and_validate_exist_rank(request.max_rank_id, uow)
 
+            # tiene que estar declarado para poder usarlo después sin que de error, pero, si el id es none, conviene no buscarlo en bdd
             region = None
             if request.region_id is not None:
+                # si se nos pasó un ID de región, validar que exista y obtener la región
                 region = CatalogValidationService.get_and_validate_exist_region(request.region_id, uow)
 
             # Los rangos deben pertenecer al videojuego del equipo
@@ -42,7 +47,8 @@ class CreateTeam:
                 if rank.videogame != videogame:
                     raise CatalogItemVideogameMismatchException("rango", rank.rank_id, videogame.videogame_id)
 
-            if min_rank.value > max_rank.value:
+            # validar que el rango mínimo no sea mayor al rango máximo (lógico)
+            if min_rank.value > max_rank.value: # está totalmente permitido que el minimo y el maximo sean iguales (osea se permite un solo rango en ese team)
                 raise InvalidRankRangeException(min_rank.value, max_rank.value)
 
             # Revisar si el usuario ya pertenece a un equipo activo
@@ -60,24 +66,29 @@ class CreateTeam:
                 if player_region is None or player_region.region_id != region.region_id:
                     raise InvalidRegionException(region.region_id, player_region.region_id if player_region else None)
 
-            # Validar el rango del perfil de juego del usuario con el rango mínimo y máximo del equipo
+
             creator_role = CatalogValidationService.get_and_validate_exist_role(request.creator_game_role_id, uow)
+            # verificar que el rol del creador pertenezca al mismo videojuego del equipo
             if creator_role.videogame != videogame:
                 raise CatalogItemVideogameMismatchException("rol", creator_role.role_id, videogame.videogame_id)
+
+            # obtener el perfil de rol del usuario para el rol especificado y validar que exista
             creator_role_profile = user_game_profile.get_role_profile_by_role(creator_role)
             if not creator_role_profile:
                 raise InvalidRoleProfileException(creator_role.role_id, user_game_profile.game_profile_id)
 
+            # Validar el rango del perfil de juego del usuario con el rango mínimo y máximo del equipo
             if creator_role_profile.rank.value < min_rank.value or creator_role_profile.rank.value > max_rank.value:
                 raise InvalidrankException(0, creator_role_profile.rank.rank_id, creator_role_profile.rank.value, min_rank.value, max_rank.value)
 
-            # Crear la conversación del equipo
+            # crear el miembro de la conversación para el creador del equipo (será el admin del chat)
             conv_member = ConversationMember(
                 conversation_member_id=None,
                 conversation_id=None,
                 user=current_user,
                 role=ConversationMemberRoleEnum.ADMIN
             )
+            # Crear la conversación del equipo
             conversation = Conversation(
                 conversation_id=None,
                 members=[conv_member],
@@ -88,7 +99,8 @@ class CreateTeam:
 
             team_members = []
             
-            # 1. Crear el primer miembro (Owner)
+            # Crear el primer miembro (Owner)
+            # noinspection bad-argument-type
             creator_member = TeamMemberRole(
                 team_member_role_id=None,
                 team_role=TeamRoleEnum.OWNER,
@@ -100,23 +112,44 @@ class CreateTeam:
 
             # 2. Crear los miembros vacantes (Vacancies)
             for role_id in request.vacant_game_role_ids:
+                # obtenemos el rol de juego y validamos que exista y que pertenezca al mismo videojuego del equipo
                 game_role = CatalogValidationService.get_and_validate_exist_role(role_id, uow)
                 if game_role.videogame != videogame:
                     raise CatalogItemVideogameMismatchException("rol", game_role.role_id, videogame.videogame_id)
+                # creamos el miembro vacante (sin usuario asignado) y lo agregamos a la lista de miembros del equipo
+                # noinspection bad-argument-type
                 vacancy = TeamMemberRole(
                     team_member_role_id=None,
                     team_role=TeamRoleEnum.MEMBER,
-                    team_id=None,
+                    team_id=None, # se encarga el orm
                     user=None,
                     game_role=game_role
                 )
                 team_members.append(vacancy)
 
+            # recién en este punto, que es cuando ya validamos lo necesario y sabemos que el equipo puede crearse
+            # se trabaja la imagen del equipo que es la tarea más pesada
+            if icon_file:
+                try:
+                    # Guardo la nueva imagen a través del puerto
+                    new_icon_url = self.storage_service.save_image_file(
+                        file_content=icon_file,
+                        filename='do_not_use_original_name',  # no uso el nombre original para evitar colisiones
+                        subfolder=f"teams/icons",
+                        preserve_original_name=False
+                    )
+                except Exception as e:
+                    # Si hay un error al subir la imagen, se lanza una excepción
+                    raise Exception(f"Error inesperado al subir la nueva imagen del equipo: {str(e)}")
+            else:
+                new_icon_url = None
+
+
             new_team = Team(
                 team_id=None,
                 name=request.name,
                 description=request.description,
-                icon_url=request.icon_url,
+                icon_url=new_icon_url,
                 is_active=True,
                 allow_other_regions=request.allow_other_regions,
                 videogame=videogame,

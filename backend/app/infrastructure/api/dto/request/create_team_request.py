@@ -4,7 +4,6 @@ from typing import List, Optional
 class CreateTeamRequest(BaseModel):
     name: str = Field(..., min_length=1, max_length=100, description="El nombre del equipo")
     description: Optional[str] = Field(None, max_length=500, description="Mensaje descriptivo del equipo")
-    icon_url: Optional[str] = Field(None, description="URL del ícono del equipo (también se usa como ícono del chatroom)")
     allow_other_regions: bool = Field(..., description="Indica si se permiten jugadores de otras regiones")
     videogame_id: int = Field(..., description="El ID del videojuego para el cual se está creando el equipo")
     region_id: Optional[int] = Field(None, description="El ID de la región del equipo")
