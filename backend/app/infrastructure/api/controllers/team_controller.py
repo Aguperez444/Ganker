@@ -4,7 +4,7 @@ from pydantic import ValidationError
 from starlette.concurrency import run_in_threadpool
 from typing import Optional
 
-from app.application.use_cases.get_team import GetTeam
+from app.application.use_cases.query_teams import QueryTeams
 from app.application.use_cases.join_team import JoinTeam
 from app.application.use_cases.create_team import CreateTeam
 from app.application.use_cases.search_teams import SearchTeams
@@ -111,13 +111,13 @@ async def create_team(
 async def get_my_team(user_id: int = Depends(get_current_user_id)):
     """Equipo activo del jugador (null si no pertenece a ninguno)."""
     uow = uow_factory()
-    return await run_in_threadpool(GetTeam(uow).my_active_team, user_id)
+    return await run_in_threadpool(QueryTeams(uow).my_active_team, user_id)
 
 
 @router.get("/{team_id}", status_code=200, response_model=TeamSummaryResponse, dependencies=[Depends(require_player)])
 async def get_team(team_id: int, user_id: int = Depends(get_current_user_id)):
     uow = uow_factory()
-    return await run_in_threadpool(GetTeam(uow).by_id, team_id, user_id)
+    return await run_in_threadpool(QueryTeams(uow).by_id, team_id, user_id)
 
 
 @router.post("/{team_id}/join", status_code=200, response_model=JoinTeamResponse, dependencies=[Depends(require_player)])
