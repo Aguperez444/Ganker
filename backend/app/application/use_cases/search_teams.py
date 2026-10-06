@@ -1,8 +1,11 @@
-from typing import List, Optional
+from typing import List, Optional, TYPE_CHECKING
 from app.application.ports.i_unit_of_work import IUnitOfWork
 from app.infrastructure.api.dto.response.team_summary import TeamSummaryResponse
 from app.domain.services.catalog_validation_service import CatalogValidationService
 from app.domain.services.create_team_summary_service import CreateTeamSummaryService
+
+if TYPE_CHECKING:
+    from app.domain.models.user import User
 
 class SearchTeams:
     def __init__(self, uow: IUnitOfWork):
@@ -16,8 +19,8 @@ class SearchTeams:
         Busca equipos activos con vacantes. Si se recibe user_id, cada equipo indica si ese jugador cumple los requisitos para unirse.
         """
         with self._uow as uow:
-            viewer = None
-            viewer_in_other_team = False
+            viewer: 'User|None' = None
+            viewer_in_other_team: bool = False
             if user_id is not None:
                 viewer = CatalogValidationService.get_and_validate_exist_user(user_id, uow)
                 viewer_in_other_team = uow.team_repo.is_user_in_any_active_team(user_id) if viewer is not None else False

@@ -117,16 +117,14 @@ class TeamRepositoryImpl(ITeamRepository):
         if region_id:
             query = query.filter(TeamORM.region_id == region_id)
 
-        if rank_id:
-            search_rank_value = self.session.query(RankORM.value).filter(RankORM.rank_id == rank_id).scalar()
-
-            if search_rank_value is not None:
-                MinRank = aliased(RankORM)
-                MaxRank = aliased(RankORM)
-                query = query.join(MinRank, TeamORM.min_rank_id == MinRank.rank_id)
-                query = query.join(MaxRank, TeamORM.max_rank_id == MaxRank.rank_id)
-                query = query.filter(MinRank.value <= search_rank_value)
-                query = query.filter(MaxRank.value >= search_rank_value)
+        if rank_id is not None:
+            rank_value = select(RankORM.value).where(RankORM.rank_id == rank_id).scalar_subquery()
+            MinRank, MaxRank = aliased(RankORM), aliased(RankORM)
+            query = (
+                 query.join(MinRank, TeamORM.min_rank_id == MinRank.rank_id)
+                .join(MaxRank, TeamORM.max_rank_id == MaxRank.rank_id)
+                .where(MinRank.value <= rank_value, MaxRank.value >= rank_value)
+            )
 
         if role_id:
             query = query.filter(TeamORM.members_roles.any(and_(
@@ -146,6 +144,8 @@ class TeamRepositoryImpl(ITeamRepository):
         query = query.order_by(TeamORM.team_id.desc()).offset(offset)
         if limit is not None:
             query = query.limit(limit)
+        else:
+            query = query.limit(20)  # Valor predeterminado si no se proporciona un límite
 
         return [TeamMapper.orm_to_domain(team) for team in query.all()]
 
