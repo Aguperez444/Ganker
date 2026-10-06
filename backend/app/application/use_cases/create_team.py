@@ -15,6 +15,7 @@ from app.domain.exceptions.team.invalid_role_profile_exception import InvalidRol
 from app.domain.exceptions.team.InvalidRegionException import InvalidRegionException
 from app.domain.exceptions.team.invalid_rank_range_exception import InvalidRankRangeException
 from app.domain.exceptions.team.catalog_item_videogame_mismatch_exception import CatalogItemVideogameMismatchException
+from app.domain.exceptions.file.file_name_not_null_exception import FileNameNotNullException
 
 from typing import TYPE_CHECKING, Optional, BinaryIO
 from app.domain.services.create_team_summary_service import CreateTeamSummaryService
@@ -28,7 +29,13 @@ class CreateTeam:
         self._uow = uow
         self.storage_service: IStorageService = storage_service
 
-    def execute(self, user_id: int, request: CreateTeamRequest, icon_file: Optional[BinaryIO] = None) -> 'TeamSummaryResponse':
+    def execute(
+        self,
+        user_id: int,
+        request: CreateTeamRequest,
+        icon_file: Optional[BinaryIO] = None,
+        icon_filename: Optional[str] = None,
+    ) -> 'TeamSummaryResponse':
         with self._uow as uow:
             # obtener el usuario, videojuego, rango mínimo y rango máximo del equipo y validar que existan
             current_user = CatalogValidationService.get_and_validate_exist_user(user_id, uow)
@@ -130,11 +137,13 @@ class CreateTeam:
             # recién en este punto, que es cuando ya validamos lo necesario y sabemos que el equipo puede crearse
             # se trabaja la imagen del equipo que es la tarea más pesada
             if icon_file:
+                if not icon_filename:
+                    raise FileNameNotNullException()
                 try:
                     # Guardo la nueva imagen a través del puerto
                     new_icon_url = self.storage_service.save_image_file(
                         file_content=icon_file,
-                        filename='do_not_use_original_name',  # no uso el nombre original para evitar colisiones
+                        filename=icon_filename,
                         subfolder=f"teams/icons",
                         preserve_original_name=False
                     )

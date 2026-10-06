@@ -1,4 +1,6 @@
-from fastapi import APIRouter, Depends, Query, UploadFile, File
+from fastapi import APIRouter, Depends, Query, UploadFile, File, Form, HTTPException
+from fastapi.encoders import jsonable_encoder
+from pydantic import ValidationError
 from starlette.concurrency import run_in_threadpool
 from typing import Optional
 
@@ -54,18 +56,50 @@ async def search_teams(
 
 @router.post("", status_code=201, response_model=TeamSummaryResponse, dependencies=[Depends(require_player)])
 async def create_team(
-    payload: CreateTeamRequest,
+    name: str = Form(...),
+    description: Optional[str] = Form(None),
+    allow_other_regions: bool = Form(...),
+    videogame_id: int = Form(...),
+    region_id: Optional[int] = Form(None),
+    min_rank_id: int = Form(...),
+    max_rank_id: int = Form(...),
+    creator_game_role_id: int = Form(...),
+    vacant_game_role_ids: list[int] = Form(...),
     team_icon: Optional[UploadFile] = File(None, description="Archivo de imagen del ícono del equipo"),
     user_id: int = Depends(get_current_user_id),
 ):
 
+    try:
+        payload = CreateTeamRequest(
+            name=name,
+            description=description,
+            allow_other_regions=allow_other_regions,
+            videogame_id=videogame_id,
+            region_id=region_id,
+            min_rank_id=min_rank_id,
+            max_rank_id=max_rank_id,
+            creator_game_role_id=creator_game_role_id,
+            vacant_game_role_ids=vacant_game_role_ids,
+        )
+    except ValidationError as exc:
+        raise HTTPException(status_code=422, detail=jsonable_encoder(exc.errors())) from exc
     file_obj = team_icon.file if team_icon else None
+    file_name = team_icon.filename if team_icon else None
+
+    if file_obj and not file_name:
+        raise HTTPException(status_code=400, detail="El archivo de ícono del equipo debe tener un nombre válido.")
 
     uow = uow_factory()
     storage_service = get_storage_service()
     use_case = CreateTeam(uow, storage_service)
 
-    created_team_data: TeamSummaryResponse = await run_in_threadpool(use_case.execute, user_id, payload, file_obj)
+    created_team_data: TeamSummaryResponse = await run_in_threadpool(
+        use_case.execute,
+        user_id,
+        payload,
+        file_obj,
+        file_name,
+    )
 
     # Para los WebSockets debemos convertir la respuesta en un diccionario (sin datos propios del creador)
     await teams_feed_manager.broadcast_event(TeamEventTypeEnum.TEAM_CREATED, created_team_data.public_payload())

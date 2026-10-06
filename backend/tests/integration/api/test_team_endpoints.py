@@ -1,4 +1,5 @@
 from datetime import datetime
+import io
 import pytest
 
 from app.domain.models.user_role import UserRole
@@ -13,6 +14,13 @@ from app.infrastructure.database.models.videogame_orm import VideogameORM
 
 
 class TestTeamEndpointsIntegration:
+
+    @staticmethod
+    def _team_form(payload):
+        return {
+            **payload,
+            "vacant_game_role_ids": [str(role_id) for role_id in payload["vacant_game_role_ids"]],
+        }
 
     def _create_player(self, session, password_hasher, username):
         user = UserORM(
@@ -125,7 +133,6 @@ class TestTeamEndpointsIntegration:
         payload = {
             "name": "Los Vengadores",
             "description": "Buscamos subir a Diamante",
-            "icon_url": "/media/teams/vengadores.png",
             "allow_other_regions": False,
             "videogame_id": vg.videogame_id,
             "region_id": reg.region_id,
@@ -135,18 +142,23 @@ class TestTeamEndpointsIntegration:
             "vacant_game_role_ids": [roles["controller"].role_id, roles["initiator"].role_id]
         }
 
-        response = client.post("/api/v1/teams", json=payload, headers=player_auth_headers)
+        response = client.post(
+            "/api/v1/teams",
+            data=self._team_form(payload),
+            files={"team_icon": ("vengadores.png", io.BytesIO(b"fake-team-icon"), "image/png")},
+            headers=player_auth_headers,
+        )
         assert response.status_code == 201
         data = response.json()
 
         assert data["team_name"] == "Los Vengadores"
         assert data["player_count"] == 1
         assert data["max_players"] == 3
-        assert data["vacant_slots"] == 2
-        assert data["is_leader"] is True
-        assert data["is_member"] is True
+        assert data["max_players"] - data["player_count"] == 2
+        assert data["consultant_player_info"]["is_leader"] is True
+        assert data["consultant_player_info"]["is_member"] is True
         assert data["conversation_id"] is not None
-        assert data["icon_url"] == "/media/teams/vengadores.png"
+        assert data["icon_url"].startswith("/media/teams/icons/")
 
         # Verificar que el creador ocupa el primer slot como líder
         leader_member = data["members"][0]
@@ -188,13 +200,13 @@ class TestTeamEndpointsIntegration:
             "creator_game_role_id": roles["duelist"].role_id,
             "vacant_game_role_ids": [roles["controller"].role_id]
         }
-        res = client.post("/api/v1/teams", json=payload, headers=player_auth_headers)
+        res = client.post("/api/v1/teams", data=self._team_form(payload), headers=player_auth_headers)
         assert res.status_code == 422
 
         # Sin vacantes (vacant_game_role_ids vacío)
         payload["name"] = "Team Valido"
         payload["vacant_game_role_ids"] = []
-        res = client.post("/api/v1/teams", json=payload, headers=player_auth_headers)
+        res = client.post("/api/v1/teams", data=self._team_form(payload), headers=player_auth_headers)
         assert res.status_code == 422
 
     def test_create_team_min_rank_superior_to_max_rank_fails(self, client, player_auth_headers, setup_data):
@@ -213,7 +225,7 @@ class TestTeamEndpointsIntegration:
             "creator_game_role_id": roles["duelist"].role_id,
             "vacant_game_role_ids": [roles["controller"].role_id]
         }
-        res = client.post("/api/v1/teams", json=payload, headers=player_auth_headers)
+        res = client.post("/api/v1/teams", data=self._team_form(payload), headers=player_auth_headers)
         assert res.status_code == 400
         assert "no puede ser superior al rango máximo" in res.json()["error"]
 
@@ -234,7 +246,7 @@ class TestTeamEndpointsIntegration:
             "creator_game_role_id": roles["duelist"].role_id,
             "vacant_game_role_ids": [roles["controller"].role_id]
         }
-        res = client.post("/api/v1/teams", json=payload, headers=player_auth_headers)
+        res = client.post("/api/v1/teams", data=self._team_form(payload), headers=player_auth_headers)
         assert res.status_code == 400
         assert "no es válido para el equipo" in res.json()["error"]
 
@@ -254,12 +266,12 @@ class TestTeamEndpointsIntegration:
             "creator_game_role_id": roles["duelist"].role_id,
             "vacant_game_role_ids": [roles["controller"].role_id]
         }
-        res1 = client.post("/api/v1/teams", json=payload, headers=player_auth_headers)
+        res1 = client.post("/api/v1/teams", data=self._team_form(payload), headers=player_auth_headers)
         assert res1.status_code == 201
 
         # Segundo intento con el mismo usuario estando ya en un equipo activo
         payload["name"] = "Segundo Team"
-        res2 = client.post("/api/v1/teams", json=payload, headers=player_auth_headers)
+        res2 = client.post("/api/v1/teams", data=self._team_form(payload), headers=player_auth_headers)
         assert res2.status_code == 409
         assert "ya forma parte de un equipo activo" in res2.json()["error"]
 
@@ -283,7 +295,7 @@ class TestTeamEndpointsIntegration:
             "creator_game_role_id": roles["duelist"].role_id,
             "vacant_game_role_ids": [roles["controller"].role_id]
         }
-        res = client.post("/api/v1/teams", json=payload, headers=player_auth_headers)
+        res = client.post("/api/v1/teams", data=self._team_form(payload), headers=player_auth_headers)
         assert res.status_code == 201
         return res.json()
 
@@ -303,7 +315,7 @@ class TestTeamEndpointsIntegration:
         assert body["status"] == "success"
         assert body["chatroom_id"] == team_data["conversation_id"]
         assert body["data"]["player_count"] == 2
-        assert body["data"]["vacant_slots"] == 0
+        assert body["data"]["max_players"] - body["data"]["player_count"] == 0
 
         # El jugador ahora tiene acceso al chatroom del equipo
         chat_res = client.get(f"/api/v1/chat/chatroom/{body['chatroom_id']}/messages", headers=headers_p2)
@@ -378,7 +390,11 @@ class TestTeamEndpointsIntegration:
             "creator_game_role_id": roles["initiator"].role_id,
             "vacant_game_role_ids": [roles["controller"].role_id]
         }
-        team_open = client.post("/api/v1/teams", json=payload_open, headers=headers_jane).json()
+        team_open = client.post(
+            "/api/v1/teams",
+            data=self._team_form(payload_open),
+            headers=headers_jane,
+        ).json()
         open_slot = team_open["members"][1]["team_member_role_id"]
 
         res_open = client.post(f"/api/v1/teams/{team_open['team_id']}/join",
@@ -396,15 +412,19 @@ class TestTeamEndpointsIntegration:
         vg = setup_data["videogame"]
         ranks = setup_data["ranks"]
         roles = setup_data["roles"]
-        team_b = client.post("/api/v1/teams", json={
-            "name": "Team B",
-            "allow_other_regions": True,
-            "videogame_id": vg.videogame_id,
-            "min_rank_id": ranks["silver"].rank_id,
-            "max_rank_id": ranks["gold"].rank_id,
-            "creator_game_role_id": roles["initiator"].role_id,
-            "vacant_game_role_ids": [roles["controller"].role_id]
-        }, headers=headers_jane).json()
+        team_b = client.post(
+            "/api/v1/teams",
+            data=self._team_form({
+                "name": "Team B",
+                "allow_other_regions": True,
+                "videogame_id": vg.videogame_id,
+                "min_rank_id": ranks["silver"].rank_id,
+                "max_rank_id": ranks["gold"].rank_id,
+                "creator_game_role_id": roles["initiator"].role_id,
+                "vacant_game_role_ids": [roles["controller"].role_id]
+            }),
+            headers=headers_jane,
+        ).json()
 
         # janedoe intenta unirse a Team A estando ya en Team B
         slot_a = team_a["members"][1]["team_member_role_id"]
@@ -425,17 +445,21 @@ class TestTeamEndpointsIntegration:
         roles = setup_data["roles"]
 
         # Crear Team 1
-        client.post("/api/v1/teams", json={
-            "name": "Team Bravo",
-            "description": "Buscamos support",
-            "allow_other_regions": True,
-            "videogame_id": vg.videogame_id,
-            "region_id": reg_las.region_id,
-            "min_rank_id": ranks["silver"].rank_id,
-            "max_rank_id": ranks["gold"].rank_id,
-            "creator_game_role_id": roles["duelist"].role_id,
-            "vacant_game_role_ids": [roles["controller"].role_id, roles["initiator"].role_id]
-        }, headers=player_auth_headers)
+        client.post(
+            "/api/v1/teams",
+            data=self._team_form({
+                "name": "Team Bravo",
+                "description": "Buscamos support",
+                "allow_other_regions": True,
+                "videogame_id": vg.videogame_id,
+                "region_id": reg_las.region_id,
+                "min_rank_id": ranks["silver"].rank_id,
+                "max_rank_id": ranks["gold"].rank_id,
+                "creator_game_role_id": roles["duelist"].role_id,
+                "vacant_game_role_ids": [roles["controller"].role_id, roles["initiator"].role_id]
+            }),
+            headers=player_auth_headers,
+        )
 
         # 1. Búsqueda general: debe incluir datos, vacantes, representative_rank y join_eligibility
         headers_jane, _ = self._headers(jwt_service, setup_data["players"]["janedoe"])
@@ -446,9 +470,9 @@ class TestTeamEndpointsIntegration:
         t = next(x for x in teams if x["team_name"] == "Team Bravo")
         assert t["player_count"] == 1
         assert t["max_players"] == 3
-        assert t["vacant_slots"] == 2
+        assert t["max_players"] - t["player_count"] == 2
         assert t["representative_rank"] is not None
-        assert t["join_eligibility"]["can_join"] is True
+        assert t["consultant_player_info"]["join_eligibility"]["can_join"] is True
 
         # 2. Filtro por videojuego
         res_vg = client.get(f"/api/v1/teams?videogame_id={vg.videogame_id}", headers=headers_jane)
