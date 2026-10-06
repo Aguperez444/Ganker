@@ -27,8 +27,12 @@ def mock_uow():
     uow.role_repo = MagicMock()
     return uow
 
-def test_create_team_success(mock_uow):
-    use_case = CreateTeam(mock_uow)
+@pytest.fixture
+def mock_storage():
+    return MagicMock()
+
+def test_create_team_success(mock_uow, mock_storage):
+    use_case = CreateTeam(mock_uow, mock_storage)
     
     vg = Videogame(1, "LoL", "/icon", True)
     region = Region(1, "LAS", vg)
@@ -70,8 +74,8 @@ def test_create_team_success(mock_uow):
     assert result.player_count == 1
     assert result.max_players == 2
 
-def test_create_team_already_in_team(mock_uow):
-    use_case = CreateTeam(mock_uow)
+def test_create_team_already_in_team(mock_uow, mock_storage):
+    use_case = CreateTeam(mock_uow, mock_storage)
     mock_uow.user_repo.get_user_by_id.return_value = User(1, "u", "u", "a", "p", UserRole.PLAYER, [])
     mock_uow.videogame_repo.get_videogame_by_id.return_value = Videogame(1, "LoL", "/icon", True)
     mock_uow.region_repo.get_region_by_id.return_value = Region(1, "LAS", Videogame(1, "LoL", "/icon", True))

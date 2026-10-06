@@ -7,7 +7,7 @@ from app.domain.services.create_team_summary_service import CreateTeamSummarySer
 from app.infrastructure.api.dto.response.team_summary import TeamSummaryResponse
 
 
-class GetTeam:
+class QueryTeams:
     """Obtiene la vista de un equipo (por ID, o el equipo activo del propio jugador)."""
 
     def __init__(self, uow: IUnitOfWork):
