@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import ModalConfirmacionComponent from "../../components/common/ModalConfirmaciongitComponent.jsx";
+import ModalConfirmacionComponent from "../../components/common/ModalConfirmacionComponent.jsx";
 import RegionForm from "../../components/region/RegionFormComponent";
 import RegionsListComponent from "../../components/region/RegionsListComponent";
 import useGames from "../../hooks/useGames";
