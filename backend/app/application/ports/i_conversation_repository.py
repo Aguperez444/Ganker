@@ -14,7 +14,7 @@ class IConversationRepository(ABC):
 
     @abstractmethod
     def find_by_participants_ids(self, user_1_id: int, user_2_id: int) -> Optional['Conversation']:
-        """Busca una conversación existente entre dos usuarios dados sus IDs."""
+        """Busca una conversación existente entre dos usuarios dados sus ID."""
         raise NotImplementedError("Este método debe ser implementado por la clase hija.")
 
     @abstractmethod

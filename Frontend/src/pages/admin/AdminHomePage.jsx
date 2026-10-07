@@ -31,6 +31,13 @@ const AdminHomePage = () => {
       badge: "Disponible",
     },
     {
+      titulo: "Regiones",
+      descripcion: "Administrá las regiones disponibles por videojuego.",
+      path: "/app/admin/regions",
+      botonTexto: "Gestionar regiones",
+      badge: "Disponible",
+    },
+    {
       titulo: "Moderación",
       descripcion: "Supervisá reportes, conductas y sanciones de usuarios.",
       path: "/app/admin/moderacion",

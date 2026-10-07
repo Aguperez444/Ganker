@@ -41,6 +41,7 @@ def create_db_engine(db_url: Optional[str] = None, **overrides) -> Engine:
 
     # Forzar Foreign Keys en SQLite (PostgreSQL las valida por defecto)
     if url.startswith("sqlite"):
+        # noinspection unused-parameter
         @event.listens_for(engine, "connect")
         def _set_sqlite_pragma(dbapi_connection, connection_record):
             cursor = dbapi_connection.cursor()

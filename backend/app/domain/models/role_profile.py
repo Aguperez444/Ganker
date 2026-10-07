@@ -1,6 +1,9 @@
 
 from typing import TYPE_CHECKING, Optional
 
+from app.domain.exceptions.entity_not_persited_exception import EntityNotPersistedException
+from app.domain.exceptions.invalid_id_exception import InvalidIdException
+
 if TYPE_CHECKING:
     from app.domain.models.rank import Rank
     from app.domain.models.role import Role
@@ -27,11 +30,18 @@ class RoleProfile:
         self._rank = value
 
     @property
-    def role_profile_id(self) -> Optional[int]:
+    def role_profile_id(self) -> int:
+        if self._role_profile_id is None:
+            raise EntityNotPersistedException("RoleProfile")
         return self._role_profile_id
     @role_profile_id.setter
     def role_profile_id(self, value: Optional[int]) -> None:
+        if isinstance(value, bool) or not isinstance(value, int):
+            raise InvalidIdException(value)
         self._role_profile_id = value
+
+    def is_persisted(self) -> bool:
+        return self._role_profile_id is not None
 
     def __repr__(self) -> str:
         return (f"RoleProfile(role_profile_id={self.role_profile_id or 'sin_id'},"

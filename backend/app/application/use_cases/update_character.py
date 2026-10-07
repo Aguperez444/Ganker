@@ -1,82 +1,69 @@
+from typing import TYPE_CHECKING
+
 from app.application.ports.i_storage_service import IStorageService
-from app.application.ports.i_unit_of_work import IUnitOfWork
-from app.domain.exceptions.character.invalid_character_name_exception import InvalidCharacterNameException
-from app.domain.exceptions.character.character_not_found_exception import CharacterNotFoundException
-from app.domain.exceptions.character.duplicated_character_name_exception import DuplicatedCharacterNameException
-from app.domain.exceptions.videogame.videogame_not_found_exception import VideogameNotFoundException
+from app.domain.services.catalog_validation_service import CatalogValidationService
 from app.domain.services.slug_service import SlugService
-
-
-from typing import TYPE_CHECKING, cast
-
+from app.domain.services.static_validation_service import StaticValidationService
 from app.infrastructure.api.dto.response.base_classes.character_object_response import CharacterObjectResponse
 
 if TYPE_CHECKING:
-    from app.domain.models.videogame import Videogame
+    from app.application.ports.i_unit_of_work import IUnitOfWork
 
 
 class UpdateCharacter:
-    def __init__(self, storage_service: IStorageService, uow: IUnitOfWork):
+    def __init__(self, storage_service: IStorageService, uow: 'IUnitOfWork'):
         self.storage_service: IStorageService = storage_service
-        self.uow: IUnitOfWork = uow
+        self.uow: 'IUnitOfWork' = uow
 
     def execute(self, character_id: int, name: str, videogame_id: int, icon) -> CharacterObjectResponse:
-
         # Validar que el nombre no esté vacío
-        if not name.strip():
-            raise InvalidCharacterNameException(name)
+        StaticValidationService.validate_character_name_format(name)
 
-        # Validar existencia del juego
-        videogame = self.validate_videogame_exist(videogame_id)
+        cleaned_name = name.strip()
 
-        # Validar que otro personaje no tenga el mismo nombre
-        self.validate_name_uniqueness(character_id, name, videogame_id)
-
-
-        # Actualizar el personaje en la base de datos
         with self.uow as uow:
-            character_repo = uow.character_repo
-            character = character_repo.get_character_by_id(character_id)
-            if not character:
-                raise CharacterNotFoundException(character_id)
+            videogame = CatalogValidationService.get_and_validate_exist_videogame(videogame_id, uow)
+            CatalogValidationService.validate_character_name_uniqueness(character_id, cleaned_name, videogame_id, uow=uow)
 
-            game_folder = SlugService.to_slug(videogame.name)
+            character = CatalogValidationService.get_and_validate_exist_character(character_id, uow)
 
-            new_icon_url = character.icon_url  # Mantener la URL del icono actual si no se proporciona un nuevo icono
+            new_icon_url = None
             if icon and icon.filename:
-                # Guardar la nueva imagen a través del puerto
+                game_folder = SlugService.to_slug(videogame.name)
                 new_icon_url = self.storage_service.save_image_file(
                     file_content=icon.file,
                     filename=icon.filename,
                     subfolder=f"games/{game_folder}/characters",
                     preserve_original_name=True
                 )
+                old_icon_url = character.icon_url
+                character.icon_url = new_icon_url
+            else:
+                old_icon_url = None
 
-            character.name = name
+            character.name = cleaned_name
             character.videogame = videogame
-            character.icon_url = new_icon_url
 
             try:
-                updated_character = character_repo.update_character(character)
+                updated_character = uow.character_repo.update_character(character)
             except Exception as e:
-                # Si hay un error al actualizar, se lanza una excepción
-                raise Exception(f"Error al actualizar el personaje: {str(e)}")
+                if new_icon_url:
+                    self.storage_service.delete_file(new_icon_url)
+                raise e
+
+            if old_icon_url:
+                # noinspection broad-exception
+                try:
+                    self.storage_service.delete_file(old_icon_url)
+                except Exception:
+                    # Si hay un error al borrar la imagen anterior, se informa por consola, pero no se lanza una excepción
+                    # porque el usuario ya fue actualizado correctamente y no quiero que eso afecte la respuesta al cliente
+                    from colorama import Fore, Style
+                    print(Fore.RED + "-" * 70 + "\n" + f"Error inesperado al borrar la imagen anterior del usuario: {old_icon_url} \n" + "-" * 70 + "\n" + Style.RESET_ALL)
 
         return CharacterObjectResponse(
-            character_id=cast(int, updated_character.character_id),
+            character_id=updated_character.character_id,
             name=updated_character.name,
             icon_url=updated_character.icon_url or "Sin icono",
         )
 
-    def validate_name_uniqueness(self, character_id: int, name: str, videogame_id: int):
-        with self.uow as uow:
-            existing_character = uow.character_repo.get_character_by_name_and_videogame(name, videogame_id)
-            if existing_character and existing_character.character_id != character_id:
-                raise DuplicatedCharacterNameException(name, videogame_id)
-
-    def validate_videogame_exist(self, videogame_id: int) -> 'Videogame':
-        with self.uow as uow:
-            existing_videogame = uow.videogame_repo.get_videogame_by_id(videogame_id)
-            if not existing_videogame:
-                raise VideogameNotFoundException(videogame_id)
-            return existing_videogame

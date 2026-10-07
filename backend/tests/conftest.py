@@ -213,18 +213,27 @@ def client(monkeypatch, test_session_factory, jwt_service, tmp_path):
 
     # Monkeypatch uow_factory in factory and all controllers
     monkeypatch.setattr(uow_factory_module, "uow_factory", test_uow_factory)
+    # noinspection PyUnresolvedReferences
     monkeypatch.setattr(user_ctrl_module, "uow_factory", test_uow_factory)
+    # noinspection PyUnresolvedReferences
     monkeypatch.setattr(auth_ctrl_module, "uow_factory", test_uow_factory)
+    # noinspection PyUnresolvedReferences
     monkeypatch.setattr(gp_ctrl_module, "uow_factory", test_uow_factory)
+    # noinspection PyUnresolvedReferences
     monkeypatch.setattr(vg_ctrl_module, "uow_factory", test_uow_factory)
+    # noinspection PyUnresolvedReferences
     monkeypatch.setattr(char_ctrl_module, "uow_factory", test_uow_factory)
+    # noinspection PyUnresolvedReferences
     monkeypatch.setattr(role_ctrl_module, "uow_factory", test_uow_factory)
+    # noinspection PyUnresolvedReferences
     monkeypatch.setattr(rank_ctrl_module, "uow_factory", test_uow_factory)
 
     import app.infrastructure.api.controllers.chat_controller as chat_ctrl_module
     import app.infrastructure.api.controllers.chat_websocket as chat_ws_module
     import app.infrastructure.api.dependencies.web_socket_auth as ws_auth_dep
+    # noinspection PyUnresolvedReferences
     monkeypatch.setattr(chat_ctrl_module, "uow_factory", test_uow_factory)
+    # noinspection PyUnresolvedReferences
     monkeypatch.setattr(chat_ws_module, "uow_factory", test_uow_factory)
     monkeypatch.setattr(ws_auth_dep, "token_service", jwt_service)
 
@@ -232,7 +241,9 @@ def client(monkeypatch, test_session_factory, jwt_service, tmp_path):
     temp_media = tmp_path / "media"
     temp_media.mkdir(parents=True, exist_ok=True)
     from app.infrastructure.config.settings import settings
+    # noinspection PyUnresolvedReferences
     monkeypatch.setattr(settings, "jwt_secret_key", TEST_JWT_SECRET)
+    # noinspection PyUnresolvedReferences
     monkeypatch.setattr(settings, "media_dir", temp_media)
 
     import app.infrastructure.api.dependencies.auth as auth_dep

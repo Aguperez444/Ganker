@@ -2,14 +2,8 @@ import pytest
 from app.domain.models.user import User
 from app.domain.models.user_role import UserRole
 from app.domain.models.videogame import Videogame
-from app.domain.models.character import Character
-from app.domain.models.role import Role
-from app.domain.models.rank import Rank
-from app.domain.models.character_priority import CharacterPriority
-from app.domain.models.role_profile import RoleProfile
-from app.domain.models.game_profile import GameProfile
 
-from app.infrastructure.database.models.user_orm import UserORM
+
 from app.infrastructure.database.models.videogame_orm import VideogameORM
 from app.infrastructure.database.models.character_orm import CharacterORM
 from app.infrastructure.database.models.role_orm import RoleORM
@@ -102,11 +96,10 @@ class TestDatabaseMappers:
         assert cp_domain.priority == 1
         assert cp_domain.character.character_id == 10
 
-        converted_orm = CharacterPriorityMapper.domain_to_orm(cp_domain, game_profile_id=50)
+        converted_orm = CharacterPriorityMapper.domain_to_orm(cp_domain)
         assert converted_orm.character_priority_id == 1
         assert converted_orm.character_id == 10
         assert converted_orm.priority == 1
-        assert converted_orm.game_profile_id == 50
 
     def test_role_mapper(self):
         vg_orm = VideogameORM(videogame_id=1, name="LoL", icon_url="/lol.png", rank_per_role=True)
@@ -153,9 +146,8 @@ class TestDatabaseMappers:
         assert rp_domain.role.name == "Mid"
         assert rp_domain.rank.name == "Challenger"
 
-        converted_orm = RoleProfileMapper.domain_to_orm(rp_domain, game_profile_id=100)
+        converted_orm = RoleProfileMapper.domain_to_orm(rp_domain)
         assert converted_orm.role_profile_id == 10
-        assert converted_orm.game_profile_id == 100
         assert converted_orm.role_id == 1
         assert converted_orm.rank_id == 1
 

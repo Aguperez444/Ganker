@@ -1,4 +1,7 @@
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Optional
+
+from app.domain.exceptions.entity_not_persited_exception import EntityNotPersistedException
+from app.domain.exceptions.invalid_id_exception import InvalidIdException
 
 if TYPE_CHECKING:
     from app.domain.models.character import Character
@@ -6,8 +9,8 @@ if TYPE_CHECKING:
 
 
 class CharacterPriority:
-    def __init__(self, priority_id: int|None, character: Character, priority: int):
-        self._priority_id: int|None = priority_id
+    def __init__(self, priority_id: Optional[int], character: Character, priority: int):
+        self._priority_id: Optional[int] = priority_id
         self._character: Character = character
         self._priority: int = priority
 
@@ -26,12 +29,18 @@ class CharacterPriority:
         self._priority = value
 
     @property
-    def priority_id(self) -> int|None:
+    def priority_id(self) -> int:
+        if self._priority_id is None:
+            raise EntityNotPersistedException("CharacterPriority")
         return self._priority_id
     @priority_id.setter
-    def priority_id(self, value: int|None) -> None:
+    def priority_id(self, value: int) -> None:
+        if isinstance(value, bool) or not isinstance(value, int):
+            raise InvalidIdException(value)
         self._priority_id = value
 
+    def is_persisted(self) -> bool:
+        return self._priority_id is not None
 
     def __repr__(self) -> str:
         return f"CharacterPriority(priority_id={self.priority_id or 'sin_id'}, character={self.character}, priority={self.priority})"

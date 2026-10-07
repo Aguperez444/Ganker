@@ -38,6 +38,7 @@ class ConversationConnectionManager:
         for user_sockets in list(users_in_room.values()):
             # a cada socket de cada usuario de esta conversación le enviamos el mensaje
             for socket in list(user_sockets):
+                # noinspection broad-exception
                 try:
                     await socket.send_text(payload)
                 except Exception:

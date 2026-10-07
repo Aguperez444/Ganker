@@ -21,6 +21,7 @@ class TestCreateRoleUseCase:
         uow.__exit__.return_value = None
         uow.videogame_repo = MagicMock()
         uow.role_repo = MagicMock()
+        uow.role_repo.get_role_by_name_and_videogame.return_value = None
 
         storage_service = MagicMock(spec=IStorageService)
         storage_service.save_image_file = MagicMock(return_value="/media/games/lol/roles/mid.png")
@@ -34,7 +35,6 @@ class TestCreateRoleUseCase:
 
         vg = Videogame(videogame_id=1, name="LoL", icon_url="/icon.png", rank_per_role=True)
         uow.videogame_repo.get_videogame_by_id.return_value = vg
-        uow.role_repo.get_roles_by_game_id.return_value = []
 
         saved = Role(role_id=10, name="Mid", videogame=vg, icon_url="/media/games/lol/roles/mid.png")
         uow.role_repo.save_role.return_value = saved
@@ -71,7 +71,7 @@ class TestCreateRoleUseCase:
         vg = Videogame(videogame_id=1, name="LoL", icon_url="/icon.png", rank_per_role=True)
         uow.videogame_repo.get_videogame_by_id.return_value = vg
         existing_role = Role(role_id=1, name="Mid", videogame=vg, icon_url="/mid.png")
-        uow.role_repo.get_roles_by_game_id.return_value = [existing_role]
+        uow.role_repo.get_role_by_name_and_videogame.return_value = existing_role
 
         with pytest.raises(DuplicateRoleNameException) as exc_info:
             use_case.execute(game_id=1, name="Mid", icon_stream=MagicMock(), filename="mid.png")
@@ -83,7 +83,6 @@ class TestCreateRoleUseCase:
 
         vg = Videogame(videogame_id=1, name="LoL", icon_url="/icon.png", rank_per_role=True)
         uow.videogame_repo.get_videogame_by_id.return_value = vg
-        uow.role_repo.get_roles_by_game_id.return_value = []
 
         with pytest.raises(FileNotNullException) as exc_info:
             use_case.execute(game_id=1, name="Mid", icon_stream=None, filename="mid.png")
@@ -95,7 +94,6 @@ class TestCreateRoleUseCase:
 
         vg = Videogame(videogame_id=1, name="LoL", icon_url="/icon.png", rank_per_role=True)
         uow.videogame_repo.get_videogame_by_id.return_value = vg
-        uow.role_repo.get_roles_by_game_id.return_value = []
 
         with pytest.raises(FileNameNotNullException) as exc_info:
             use_case.execute(game_id=1, name="Mid", icon_stream=MagicMock(), filename="")
@@ -107,7 +105,6 @@ class TestCreateRoleUseCase:
 
         vg = Videogame(videogame_id=1, name="LoL", icon_url="/icon.png", rank_per_role=True)
         uow.videogame_repo.get_videogame_by_id.return_value = vg
-        uow.role_repo.get_roles_by_game_id.return_value = []
         uow.role_repo.save_role.side_effect = RuntimeError("DB error")
 
         with pytest.raises(RuntimeError):

@@ -16,5 +16,21 @@ class IRankRepository(ABC):
         raise NotImplementedError
 
     @abstractmethod
+    def get_rank_by_name_and_videogame(self, name: str, videogame_id: int) -> Optional['Rank']:
+        raise NotImplementedError
+
+    @abstractmethod
+    def get_rank_by_value_and_videogame(self, value: int, videogame_id: int) -> Optional['Rank']:
+        raise NotImplementedError
+
+    @abstractmethod
     def save_rank(self, rank: 'Rank') -> 'Rank':
+        raise NotImplementedError
+
+    @abstractmethod
+    def update_rank(self, rank: 'Rank') -> 'Rank':
+        raise NotImplementedError
+
+    @abstractmethod
+    def delete_rank(self, rank_id: int) -> bool:
         raise NotImplementedError

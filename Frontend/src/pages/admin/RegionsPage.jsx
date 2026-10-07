@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import ConfirmDeleteModal from "../../components/common/ConfirmDeleteModal";
+import ModalConfirmacionComponent from "../../components/common/ModalConfirmaciongitComponent.jsx";
 import RegionForm from "../../components/region/RegionFormComponent";
 import RegionsListComponent from "../../components/region/RegionsListComponent";
 import useGames from "../../hooks/useGames";
@@ -286,29 +286,31 @@ const RegionsPage = () => {
         </div>
       </section>
 
-      <ConfirmDeleteModal
+      <ModalConfirmacionComponent
         isOpen={Boolean(regionToDelete)}
         title="Eliminar región"
         confirmLabel="Eliminar región"
         isLoading={isDeleting}
+        error={actionError}
         onConfirm={handleConfirmDelete}
         onCancel={handleCancelDelete}
-      >
-        <p>
-          ¿Seguro que querés eliminar la región{" "}
-          <span className="font-semibold text-ganker-text">
-            “{regionToDelete?.name}”
-          </span>
-          ?
-        </p>
+        message={
+          <>
+            <p>
+              ¿Seguro que querés eliminar la región{" "}
+              <span className="font-semibold text-ganker-text">
+                “{regionToDelete?.name}”
+              </span>
+              ?
+            </p>
 
-        <p className="mt-3">
-          Los perfiles de jugadores asociados a esta región quedarán sin una
-          región asignada.
-        </p>
-
-        {actionError && <p className="mt-3 text-ganker-error">{actionError}</p>}
-      </ConfirmDeleteModal>
+            <p className="mt-3">
+              Los perfiles de jugadores asociados a esta región quedarán sin una
+              región asignada.
+            </p>
+          </>
+        }
+      />
     </>
   );
 };

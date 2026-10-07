@@ -1,11 +1,9 @@
 from app.application.ports.i_unit_of_work import IUnitOfWork
 from app.domain.exceptions.chat.conversation_not_found_exception import ConversationNotFoundException
+from app.domain.exceptions.chat.user_does_not_belong_to_conversation_exception import \
+    UserDoesNotBelongToConversationException
 from app.infrastructure.api.dto.response.base_classes.message_object_response import MessageObjectResponse
-
-from typing import cast
-
-from app.infrastructure.api.dto.response.get_messages_response import GetMessagesResponse
-from app.domain.exceptions.chat.user_does_not_belong_to_conversation_exception import UserDoesNotBelongToConversationException
+from app.infrastructure.api.dto.response.get.get_messages_response import GetMessagesResponse
 
 
 class GetMessages:
@@ -35,9 +33,9 @@ class GetMessages:
 
             # mapear los mensajes a la respuesta
             messages_list = [MessageObjectResponse(
-                message_id=cast(int, message.message_id),
+                message_id=message.message_id,
                 conversation_id=message.conversation_id,
-                sender_id=cast(int, message.sender.user_id),
+                sender_id=message.sender.user_id,
                 content=message.content,
                 timestamp=message.timestamp,
                 is_read=message.is_read

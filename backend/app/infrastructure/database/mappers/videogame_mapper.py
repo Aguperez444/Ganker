@@ -14,6 +14,12 @@ class VideogameMapper:
 
     @staticmethod
     def domain_to_orm(videogame: Videogame) -> VideogameORM:
+        if not videogame.is_persisted():
+            return VideogameORM(
+                name = videogame.name,
+                icon_url = videogame.icon_url,
+                rank_per_role = videogame.rank_per_role
+            )
         return VideogameORM(
             videogame_id = videogame.videogame_id,
             name = videogame.name,

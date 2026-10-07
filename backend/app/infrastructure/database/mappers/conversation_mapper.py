@@ -14,6 +14,14 @@ class ConversationMapper:
         )
     @staticmethod
     def domain_to_orm(conversation: Conversation) -> ConversationORM:
+        if not conversation.is_persisted():
+            return ConversationORM(
+                user_1_id=conversation.user_1.user_id,
+                user_2_id=conversation.user_2.user_id,
+                user_1=UserMapper.domain_to_orm(conversation.user_1),
+                user_2=UserMapper.domain_to_orm(conversation.user_2),
+                messages=[MessageMapper.domain_to_orm(message) for message in conversation.messages]
+            )
         return ConversationORM(
             conversation_id=conversation.conversation_id,
             user_1_id=conversation.user_1.user_id,
@@ -22,6 +30,7 @@ class ConversationMapper:
             user_2=UserMapper.domain_to_orm(conversation.user_2),
             messages=[MessageMapper.domain_to_orm(message) for message in conversation.messages]
         )
+
 
     @staticmethod
     def orm_to_domain_no_messages(conversation_orm: ConversationORM) -> Conversation:

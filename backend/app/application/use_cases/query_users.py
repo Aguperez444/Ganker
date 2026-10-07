@@ -1,5 +1,5 @@
 from app.application.ports.i_unit_of_work import IUnitOfWork
-from app.infrastructure.api.dto.response.get_user_response import GetUserResponse
+from app.infrastructure.api.dto.response.get.get_user_response import GetUserResponse
 from app.domain.exceptions.user.user_not_found_exception import UserNotFoundException
 from app.domain.services.create_game_profile_dto_service import CreateGameProfileDTOService
 
@@ -22,7 +22,7 @@ class QueryUsers:
                 mail=user.mail,
                 profiles=[CreateGameProfileDTOService.create_game_profile_response(profile) for profile in user.profiles],
                 role=user.role,
-                icon_url=user.icon_url or "/media/users/icons/icon_example_1.png",
+                icon_url=user.icon_url,
                 last_connection=user.last_connection
             )
 

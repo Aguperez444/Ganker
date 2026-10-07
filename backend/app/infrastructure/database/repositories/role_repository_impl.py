@@ -1,5 +1,6 @@
 from typing import TYPE_CHECKING, Optional
 
+from sqlalchemy import func
 from app.application.ports.i_role_repository import IRoleRepository
 from app.infrastructure.database.models.role_orm import RoleORM
 from app.infrastructure.database.mappers.role_mapper import RoleMapper
@@ -22,6 +23,13 @@ class RoleRepositoryImpl(IRoleRepository):
         domain_found = [RoleMapper.orm_to_domain(role) for role in found]
         return domain_found
 
+    def get_role_by_name_and_videogame(self, name: str, videogame_id: int) -> Optional['Role']:
+        found = self.session.query(RoleORM).filter(
+            func.lower(RoleORM.name) == func.lower(name.strip()),
+            RoleORM.videogame_id == videogame_id
+        ).first()
+        return RoleMapper.orm_to_domain(found) if found else None
+
 
     def save_role(self, role: 'Role') -> 'Role':
         orm_role = RoleMapper.domain_to_orm(role)
@@ -29,3 +37,14 @@ class RoleRepositoryImpl(IRoleRepository):
         self.session.flush()
         self.session.refresh(orm_role)
         return RoleMapper.orm_to_domain(orm_role)
+
+    def update_role(self, role: 'Role') -> 'Role':
+        orm_role = self.session.query(RoleORM).filter(RoleORM.role_id == role.role_id).first()
+        if orm_role:
+            orm_role.name = role.name
+            orm_role.icon_url = role.icon_url
+            self.session.flush()
+            self.session.refresh(orm_role)
+            return RoleMapper.orm_to_domain(orm_role)
+        return role
+

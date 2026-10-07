@@ -1,5 +1,7 @@
 import io
 import pytest
+from app.infrastructure.database.models.game_profile_orm import GameProfileORM
+from app.infrastructure.database.models.role_profile_orm import RoleProfileORM
 
 
 class TestRankEndpointsIntegration:
@@ -187,3 +189,278 @@ class TestRankEndpointsIntegration:
 
         response = client.get(f"/api/v1/ranks/{vg_id}")
         assert response.status_code == 401
+
+    # ---------------------------------------------------------
+    # PUT /api/v1/ranks/{rank_id}
+    # ---------------------------------------------------------
+
+    def test_update_rank_admin_success(self, client, admin_auth_headers, seed_catalog_data):
+        rank = seed_catalog_data["ranks"][0]
+        file = ("emerald.png", io.BytesIO(b"new-emerald-icon"), "image/png")
+        data = {
+            "name": "Emerald",
+            "value": 1500
+        }
+
+        response = client.put(
+            f"/api/v1/ranks/{rank.rank_id}",
+            data=data,
+            files={"icon": file},
+            headers=admin_auth_headers
+        )
+
+        assert response.status_code == 200
+        res_data = response.json()
+        assert res_data["rank_id"] == rank.rank_id
+        assert res_data["name"] == "Emerald"
+        assert res_data["value"] == 1500
+        assert "ranks" in res_data["icon_url"]
+
+    def test_update_rank_without_icon_success(self, client, admin_auth_headers, seed_catalog_data):
+        # Probar modificar un rango manteniendo su nombre actual y cambiando únicamente su orden (pasa)
+        rank = seed_catalog_data["ranks"][0]
+        original_name = rank.name
+        original_icon = rank.icon_url
+        data = {
+            "name": original_name,
+            "value": 1100
+        }
+
+        response = client.put(
+            f"/api/v1/ranks/{rank.rank_id}",
+            data=data,
+            headers=admin_auth_headers
+        )
+
+        assert response.status_code == 200
+        res_data = response.json()
+        assert res_data["rank_id"] == rank.rank_id
+        assert res_data["name"] == original_name
+        assert res_data["value"] == 1100
+        assert res_data["icon_url"] == original_icon
+
+    def test_update_rank_change_only_icon_success(self, client, admin_auth_headers, seed_catalog_data):
+        # Probar modificar un rango manteniendo su nombre y orden y cambiando únicamente su ícono (pasa)
+        rank = seed_catalog_data["ranks"][0]
+        file = ("gold_shiny.png", io.BytesIO(b"shiny-icon-data"), "image/png")
+        data = {
+            "name": rank.name,
+            "value": rank.value
+        }
+
+        response = client.put(
+            f"/api/v1/ranks/{rank.rank_id}",
+            data=data,
+            files={"icon": file},
+            headers=admin_auth_headers
+        )
+
+        assert response.status_code == 200
+        res_data = response.json()
+        assert res_data["rank_id"] == rank.rank_id
+        assert res_data["name"] == rank.name
+        assert res_data["value"] == rank.value
+        assert "ranks" in res_data["icon_url"]
+
+    def test_update_rank_empty_name(self, client, admin_auth_headers, seed_catalog_data):
+        # Probar modificar el nombre de un rango dejando el campo vacío (falla)
+        rank = seed_catalog_data["ranks"][0]
+        data = {
+            "name": "   ",
+            "value": 1200
+        }
+
+        response = client.put(
+            f"/api/v1/ranks/{rank.rank_id}",
+            data=data,
+            headers=admin_auth_headers
+        )
+
+        assert response.status_code == 400
+        assert "inválido" in response.json().get("error", "").lower()
+
+    def test_update_rank_duplicate_name(self, client, admin_auth_headers, seed_catalog_data):
+        # Probar modificar el nombre de un rango ingresando uno que ya existe en el mismo videojuego (falla)
+        rank1 = seed_catalog_data["ranks"][0]
+        rank2 = seed_catalog_data["ranks"][1]
+        data = {
+            "name": rank2.name,
+            "value": 1200
+        }
+
+        response = client.put(
+            f"/api/v1/ranks/{rank1.rank_id}",
+            data=data,
+            headers=admin_auth_headers
+        )
+
+        assert response.status_code == 409
+        assert "ya existe" in response.json().get("error", "").lower()
+
+    def test_update_rank_duplicate_value(self, client, admin_auth_headers, seed_catalog_data):
+        # Probar modificar el orden jerárquico asignando uno ya utilizado por otro rango del mismo videojuego (falla)
+        rank1 = seed_catalog_data["ranks"][0]
+        rank2 = seed_catalog_data["ranks"][1]
+        data = {
+            "name": "Different Name",
+            "value": rank2.value
+        }
+
+        response = client.put(
+            f"/api/v1/ranks/{rank1.rank_id}",
+            data=data,
+            headers=admin_auth_headers
+        )
+
+        assert response.status_code == 409
+        assert "ya existe" in response.json().get("error", "").lower()
+
+    def test_update_rank_negative_value(self, client, admin_auth_headers, seed_catalog_data):
+        rank = seed_catalog_data["ranks"][0]
+        data = {
+            "name": "Negative Rank",
+            "value": -10
+        }
+
+        response = client.put(
+            f"/api/v1/ranks/{rank.rank_id}",
+            data=data,
+            headers=admin_auth_headers
+        )
+
+        assert response.status_code == 400
+
+    def test_update_rank_not_found(self, client, admin_auth_headers):
+        data = {
+            "name": "Nonexistent",
+            "value": 1000
+        }
+
+        response = client.put(
+            "/api/v1/ranks/99999",
+            data=data,
+            headers=admin_auth_headers
+        )
+
+        assert response.status_code == 404
+
+    def test_update_rank_invalid_icon_filename(self, client, admin_auth_headers, seed_catalog_data):
+        rank = seed_catalog_data["ranks"][0]
+        file = ("", io.BytesIO(b"data"), "image/png")
+        data = {
+            "name": "Some Rank",
+            "value": 1000
+        }
+
+        response = client.put(
+            f"/api/v1/ranks/{rank.rank_id}",
+            data=data,
+            files={"icon": file},
+            headers=admin_auth_headers
+        )
+
+        assert response.status_code in [400, 422]
+
+    def test_update_rank_forbidden_for_player(self, client, player_auth_headers, seed_catalog_data):
+        rank = seed_catalog_data["ranks"][0]
+        data = {
+            "name": "Hacked Rank",
+            "value": 9999
+        }
+
+        response = client.put(
+            f"/api/v1/ranks/{rank.rank_id}",
+            data=data,
+            headers=player_auth_headers
+        )
+
+        assert response.status_code == 403
+
+    def test_update_rank_unauthorized(self, client, seed_catalog_data):
+        rank = seed_catalog_data["ranks"][0]
+        data = {
+            "name": "No Auth Rank",
+            "value": 1000
+        }
+
+        response = client.put(f"/api/v1/ranks/{rank.rank_id}", data=data)
+        assert response.status_code == 401
+
+    # ---------------------------------------------------------
+    # DELETE /api/v1/ranks/{rank_id}
+    # ---------------------------------------------------------
+
+    def test_delete_rank_without_dependencies_success(self, client, admin_auth_headers, seed_catalog_data):
+        # Probar eliminar un rango existente sin registros o usuarios asociados y confirmar la acción (pasa)
+        rank3 = seed_catalog_data["ranks"][2]
+
+        response = client.delete(
+            f"/api/v1/ranks/{rank3.rank_id}",
+            headers=admin_auth_headers
+        )
+
+        assert response.status_code == 200
+        assert "exitosamente" in response.json().get("message", "").lower()
+
+        # Probar eliminar un rango previamente eliminado (falla)
+        second_response = client.delete(
+            f"/api/v1/ranks/{rank3.rank_id}",
+            headers=admin_auth_headers
+        )
+        assert second_response.status_code == 404
+
+    def test_delete_rank_with_associated_player_profile(self, client, admin_auth_headers, seed_catalog_data, seed_player, test_db_session):
+        # Probar eliminar un rango que se encuentra asignado a uno o más jugadores, y actualiza sus perfiles (pasa)
+        rank1 = seed_catalog_data["ranks"][0]  # Gold (1000)
+        rank2 = seed_catalog_data["ranks"][1]  # Platinum (2000)
+        vg = seed_catalog_data["videogame"]
+        role = seed_catalog_data["roles"][0]
+
+        # Crear perfil asociado a rank2 (Platinum)
+        gp = GameProfileORM(player_id=seed_player.user_id, videogame_id=vg.videogame_id)
+        test_db_session.add(gp)
+        test_db_session.flush()
+
+        rp = RoleProfileORM(
+            game_profile_id=gp.game_profile_id,
+            role_id=role.role_id,
+            rank_id=rank2.rank_id
+        )
+        test_db_session.add(rp)
+        test_db_session.commit()
+
+        # Eliminar rank2 (Platinum). Debe actualizar el perfil para que apunte al inmediatamente inferior (Gold)
+        response = client.delete(
+            f"/api/v1/ranks/{rank2.rank_id}",
+            headers=admin_auth_headers
+        )
+
+        assert response.status_code == 200
+        assert "exitosamente" in response.json().get("message", "").lower()
+
+        # Verificar en BD que el rol del perfil fue actualizado al rango inferior (Gold)
+        test_db_session.refresh(rp)
+        assert rp.rank_id == rank1.rank_id
+
+    def test_delete_rank_not_found(self, client, admin_auth_headers):
+        # Probar eliminar un rango inexistente (falla)
+        response = client.delete(
+            "/api/v1/ranks/99999",
+            headers=admin_auth_headers
+        )
+        assert response.status_code == 404
+
+    def test_delete_rank_forbidden_for_player(self, client, player_auth_headers, seed_catalog_data):
+        rank = seed_catalog_data["ranks"][0]
+        response = client.delete(
+            f"/api/v1/ranks/{rank.rank_id}",
+            headers=player_auth_headers
+        )
+        assert response.status_code == 403
+
+    def test_delete_rank_unauthorized(self, client, seed_catalog_data):
+        rank = seed_catalog_data["ranks"][0]
+        response = client.delete(f"/api/v1/ranks/{rank.rank_id}")
+        assert response.status_code == 401
+
+

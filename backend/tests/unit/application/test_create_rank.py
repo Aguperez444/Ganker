@@ -21,6 +21,8 @@ class TestCreateRankUseCase:
         uow.__exit__.return_value = None
         uow.videogame_repo = MagicMock()
         uow.rank_repo = MagicMock()
+        uow.rank_repo.get_rank_by_name_and_videogame.return_value = None
+        uow.rank_repo.get_rank_by_value_and_videogame.return_value = None
 
         storage_service = MagicMock(spec=IStorageService)
         storage_service.save_image_file = MagicMock(return_value="/media/league_of_legends/ranks/gold.png")
@@ -34,7 +36,6 @@ class TestCreateRankUseCase:
 
         vg = Videogame(videogame_id=1, name="League of Legends", icon_url="/icon.png", rank_per_role=True)
         uow.videogame_repo.get_videogame_by_id.return_value = vg
-        uow.rank_repo.get_ranks_by_game_id.return_value = []
 
         saved = Rank(rank_id=1, name="Gold", value=1000, videogame=vg, icon_url="/media/league_of_legends/ranks/gold.png")
         uow.rank_repo.save_rank.return_value = saved
@@ -80,7 +81,7 @@ class TestCreateRankUseCase:
         vg = Videogame(videogame_id=1, name="LoL", icon_url="/icon.png", rank_per_role=True)
         uow.videogame_repo.get_videogame_by_id.return_value = vg
         existing = Rank(rank_id=1, name="Gold", value=1000, videogame=vg, icon_url="/gold.png")
-        uow.rank_repo.get_ranks_by_game_id.return_value = [existing]
+        uow.rank_repo.get_rank_by_name_and_videogame.return_value = existing
 
         with pytest.raises(DuplicatedRankNameException) as exc_info:
             use_case.execute(game_id=1, name="Gold", icon_stream=MagicMock(), filename="gold.png", value=2000)
@@ -93,7 +94,7 @@ class TestCreateRankUseCase:
         vg = Videogame(videogame_id=1, name="LoL", icon_url="/icon.png", rank_per_role=True)
         uow.videogame_repo.get_videogame_by_id.return_value = vg
         existing = Rank(rank_id=1, name="Gold", value=1000, videogame=vg, icon_url="/gold.png")
-        uow.rank_repo.get_ranks_by_game_id.return_value = [existing]
+        uow.rank_repo.get_rank_by_value_and_videogame.return_value = existing
 
         with pytest.raises(DuplicatedRankValueException) as exc_info:
             use_case.execute(game_id=1, name="Silver", icon_stream=MagicMock(), filename="silver.png", value=1000)
@@ -105,7 +106,6 @@ class TestCreateRankUseCase:
 
         vg = Videogame(videogame_id=1, name="League of Legends", icon_url="/icon.png", rank_per_role=True)
         uow.videogame_repo.get_videogame_by_id.return_value = vg
-        uow.rank_repo.get_ranks_by_game_id.return_value = []
         uow.rank_repo.save_rank.side_effect = RuntimeError("DB error")
 
         with pytest.raises(RuntimeError):

@@ -71,8 +71,8 @@ class TestChatEndpointsIntegration:
         conv_id = create_res.json()["conversation_id"]
 
         # 2. Conectar dos clientes por WebSocket
-        with client.websocket_connect(f"/api/v1/ws/conversations/{conv_id}?token={token1}") as ws1:
-            with client.websocket_connect(f"/api/v1/ws/conversations/{conv_id}?token={token2}") as ws2:
+        with client.websocket_connect(f"/api/v1/ws/chat/conversations/{conv_id}?token={token1}") as ws1:
+            with client.websocket_connect(f"/api/v1/ws/chat/conversations/{conv_id}?token={token2}") as ws2:
                 # ws1 envía mensaje
                 ws1.send_json({"content": "Hola Jane!"})
 
