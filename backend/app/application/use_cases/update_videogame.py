@@ -5,6 +5,7 @@ from fastapi import UploadFile
 from app.application.ports.i_storage_service import IStorageService
 from app.domain.services.catalog_validation_service import CatalogValidationService
 from app.domain.services.slug_service import SlugService
+from app.domain.services.static_validation_service import StaticValidationService
 from app.infrastructure.api.dto.response.base_classes.videogame_object_response import VideogameObjectResponse
 
 if TYPE_CHECKING:
@@ -17,9 +18,10 @@ class UpdateVideogame:
         self.uow: 'IUnitOfWork' = unit_of_work
 
     def execute(self, videogame_id: int, name: str, icon: UploadFile | None, rank_per_role: bool) -> VideogameObjectResponse:
+        cleaned_name = StaticValidationService.validate_videogame_name_format(name)
+
         with self.uow as uow:
             existing_game = CatalogValidationService.get_and_validate_exist_videogame(videogame_id, uow)
-            cleaned_name = name.strip() if name else existing_game.name
             CatalogValidationService.validate_videogame_name_uniqueness(cleaned_name, videogame_id, uow=uow)
 
             # actualizar juego

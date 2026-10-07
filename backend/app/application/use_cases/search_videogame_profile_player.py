@@ -1,5 +1,5 @@
 from app.application.ports.i_unit_of_work import IUnitOfWork
-from app.infrastructure.api.dto.request.Search_videogame_profiles_request import SearchVideogameProfilesRequest
+from app.infrastructure.api.dto.request.search_videogame_profiles_request import SearchVideogameProfilesRequest
 from app.infrastructure.api.dto.response.get.get_videogame_profiles_response import GetVideogameProfilesResponse
 from app.domain.specifications.base import Specification
 from app.domain.specifications.videogame_profiles.characters_specification import ByCharactersSpecification
@@ -9,7 +9,7 @@ from app.domain.specifications.videogame_profiles.roles_specification import ByR
 from app.domain.specifications.videogame_profiles.videogame_specification import ByVideogameSpecification
 from app.domain.specifications.videogame_profiles.different_player_id_specification import ByDifferentPlayerIDSpecification
 from app.domain.specifications.videogame_profiles.last_connection_specification import ByLastConnectionSpecification
-
+from app.domain.specifications.videogame_profiles.regions_specification import ByRegionsSpecification
 
 from app.domain.services.catalog_validation_service import CatalogValidationService
 
@@ -51,6 +51,9 @@ class SearchVideogameProfilePlayer:
                 specs.append(ByCharactersSpecification(filters.characters))
             if filters.name and filters.name.strip() != "":
                 specs.append(ByNamePlayerSpecification(filters.name))
+            if filters.regions:
+                specs.append(ByRegionsSpecification(filters.regions))
+
 
             # Combino los filtros
             combined_spec = specs[0]

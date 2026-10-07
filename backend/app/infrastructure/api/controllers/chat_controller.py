@@ -9,11 +9,9 @@ from app.infrastructure.api.chat.connection_manager import chat_manager
 from app.infrastructure.api.dependencies.auth import get_current_user_id, require_player
 from app.infrastructure.api.dto.request.start_conversation_request import StartConversationRequest
 from app.infrastructure.api.dto.response.conversation_summary_response import ConversationSummaryResponse
-from app.infrastructure.api.dto.response.create_register.create_conversation_summary_response import \
-    CreateConversationSummaryResponse
+from app.infrastructure.api.dto.response.create_register.create_conversation_summary_response import CreateConversationSummaryResponse
 from app.infrastructure.api.dto.response.get.get_messages_response import GetMessagesResponse
-from app.infrastructure.api.dto.response.notification.messages_read_notification_response import \
-    MessagesReadNotificationResponse
+from app.infrastructure.api.dto.response.notification.messages_read_notification_response import MessagesReadNotificationResponse
 from app.infrastructure.api.dto.response.notification.notification_type_enum import NotificationType
 from app.infrastructure.database.unit_of_work.uow_factory import uow_factory
 
@@ -31,8 +29,8 @@ def start_or_get_conversation(payload: StartConversationRequest, current_user_id
 
     return CreateConversationSummaryResponse(
         conversation_id=conversation.conversation_id,
-        player_1_id=conversation.user_1.user_id,
-        player_2_id=conversation.user_2.user_id
+        player_1_id=conversation.members[0].user.user_id,
+        player_2_id=conversation.members[1].user.user_id
     )
 
 

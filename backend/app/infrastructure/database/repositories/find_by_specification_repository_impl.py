@@ -1,16 +1,17 @@
 from sqlalchemy.orm import Session, joinedload
-
 from app.application.ports.i_find_by_specifications_service import IFindBySpecificationRepository
 from app.domain.specifications.base import Specification, AndSpecification
 from app.domain.specifications.videogame_profiles.characters_specification import ByCharactersSpecification
 from app.domain.specifications.videogame_profiles.different_player_id_specification import \
     ByDifferentPlayerIDSpecification
 from app.domain.specifications.videogame_profiles.last_connection_specification import ByLastConnectionSpecification
+from app.domain.specifications.videogame_profiles.name_player_specification import ByNamePlayerSpecification
 from app.domain.specifications.videogame_profiles.ranks_specification import ByRanksSpecification
 from app.domain.specifications.videogame_profiles.roles_specification import ByRolesSpecification
 from app.domain.specifications.videogame_profiles.videogame_specification import ByVideogameSpecification
 from app.infrastructure.api.dto.response.base_classes.character_object_response import CharacterObjectResponse
 from app.infrastructure.api.dto.response.base_classes.rank_object_response import RankObjectResponse
+from app.infrastructure.api.dto.response.base_classes.region_object_response import RegionObjectResponse
 from app.infrastructure.api.dto.response.base_classes.role_object_response import RoleObjectResponse
 from app.infrastructure.api.dto.response.base_classes.role_profile_object_response import RoleProfileObjectResponse
 from app.infrastructure.api.dto.response.base_classes.videogame_object_response import VideogameObjectResponse
@@ -18,6 +19,7 @@ from app.infrastructure.api.dto.response.get.get_game_profile_response import Ge
     PlayerObjectResponse
 from app.infrastructure.database.mappers.game_profile_mapper import GameProfileMapper
 from app.infrastructure.database.models import GameProfileORM, CharacterPriorityORM, RoleProfileORM, UserORM
+from app.domain.specifications.videogame_profiles.regions_specification import ByRegionsSpecification
 
 
 class FindBySpecificationRepositoryImpl(IFindBySpecificationRepository):
@@ -36,8 +38,12 @@ class FindBySpecificationRepositoryImpl(IFindBySpecificationRepository):
         if isinstance(spec, ByDifferentPlayerIDSpecification):
             return query.filter(GameProfileORM.player_id != spec.to_expression())
 
+
         if isinstance(spec, ByVideogameSpecification):
             return query.filter(GameProfileORM.videogame_id == spec.to_expression())
+
+        if isinstance(spec, ByRegionsSpecification):
+            return query.filter(GameProfileORM.region_id.in_(spec.to_expression()))
 
         if isinstance(spec, ByCharactersSpecification):
             return query.filter(
@@ -52,6 +58,15 @@ class FindBySpecificationRepositoryImpl(IFindBySpecificationRepository):
         # TODO Deberíamos hacer un índice para que esta no destruya el rendimiento recorriendo todos los registros
         if isinstance(spec, ByLastConnectionSpecification):
             return query.join(GameProfileORM.user).filter(UserORM.last_connection >= spec.to_expression())
+
+        if isinstance(spec, ByNamePlayerSpecification):
+            name_pattern = f"%{spec.to_expression()}%"
+            return query.filter(
+                GameProfileORM.user.has(
+                    (UserORM.username.ilike(name_pattern)) | (UserORM.name.ilike(name_pattern))
+                )
+            )
+
 
         return query
 
@@ -104,5 +119,9 @@ class FindBySpecificationRepositoryImpl(IFindBySpecificationRepository):
                 rank=RankObjectResponse(
                     rank_id=role_profile.rank.rank_id, name=role_profile.rank.name,
                     icon_url=role_profile.rank.icon_url, value=role_profile.rank.value)
-            ) for role_profile in game_profile_domain.role_profiles]
+            ) for role_profile in game_profile_domain.role_profiles],
+            region=RegionObjectResponse(
+                region_id=game_profile_domain.region.region_id,
+                name=game_profile_domain.region.name
+            ) if game_profile_domain.region else "Sin Especificar"
         )

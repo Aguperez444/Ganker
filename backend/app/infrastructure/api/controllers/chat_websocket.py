@@ -14,6 +14,7 @@ from app.infrastructure.api.dto.response.notification.notification_response impo
 
 from app.infrastructure.api.chat.connection_manager import chat_manager
 from app.infrastructure.api.dependencies.web_socket_auth import get_current_user_id_ws
+from app.domain.exceptions.chat.message_is_empty_exception import MessageIsEmptyException
 from app.domain.exceptions.chat.recipient_not_found_exception import RecipientNotFoundException
 
 router = APIRouter(prefix="/api/v1/ws/chat", tags=["Websocket Chat"])
@@ -50,21 +51,25 @@ async def websocket_chat_endpoint(
             # 3. Validación del DTO entrante con Pydantic
             try:
                 request_dto = SendMessageRequest.model_validate_json(raw_text)
-            except ValidationError as err:
-                await websocket.send_json({"error": "Payload inválido", "details": err.errors()})
+            except (ValidationError, MessageIsEmptyException) as err:
+                await websocket.send_json({"error": "El mensaje enviado no puede estar vacío", "details": str(err)})
                 continue
 
             # 4. Comprobamos en RAM si el destinatario está con el chat abierto para marcar el mensaje como leído o no
             is_recipient_present = chat_manager.is_user_online_in_conversation(conversation_id, recipient_id)
 
             # 5. Guardar mensaje de forma síncrona en hilo separado
-            saved_message: MessageResponse = await run_in_threadpool(
-                save_message_use_case.execute,
-                conversation_id = conversation_id,
-                sender_id = user_id,
-                content = request_dto.content,
-                is_read = is_recipient_present
-            )
+            try:
+                saved_message: MessageResponse = await run_in_threadpool(
+                    save_message_use_case.execute,
+                    conversation_id = conversation_id,
+                    sender_id = user_id,
+                    content = request_dto.content,
+                    is_read = is_recipient_present
+                )
+            except MessageIsEmptyException as err:
+                await websocket.send_json({"error": err.message})
+                continue
 
             # 6. Broadcast a ambos participantes
             await chat_manager.broadcast_to_conversation(conversation_id, saved_message)

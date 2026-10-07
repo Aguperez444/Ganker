@@ -10,6 +10,8 @@ from app.domain.exceptions.game_profile.game_profile_already_exist_exception imp
 from app.domain.exceptions.mail.email_already_exists_exception import EmailAlreadyExistsException
 from app.domain.exceptions.user.username_already_exists_exception import UsernameAlreadyExistsException
 from app.domain.exceptions.videogame.videogame_already_exists_exception import VideogameAlreadyExistsException
+from app.domain.exceptions.region.region_not_found_exception import RegionNotFoundException
+from app.domain.exceptions.region.duplicated_region_name_exception import DuplicatedRegionNameException
 
 if TYPE_CHECKING:
     from app.application.ports.i_unit_of_work import IUnitOfWork
@@ -60,6 +62,13 @@ class CatalogValidationService:
         return game_profile
 
     @staticmethod
+    def get_and_validate_exists_region(region_id: int, uow: 'IUnitOfWork'):
+        region = uow.region_repo.get_region_by_id(region_id)
+        if not region:
+            raise RegionNotFoundException(region_id)
+        return region
+
+    @staticmethod
     def validate_new_character_name_uniqueness(name: str, videogame_id: int, uow: 'IUnitOfWork'):
         existing_character = uow.character_repo.get_character_by_name_and_videogame(name, videogame_id)
         if existing_character:
@@ -71,6 +80,13 @@ class CatalogValidationService:
         existing_character = uow.character_repo.get_character_by_name_and_videogame(name, videogame_id)
         if existing_character and existing_character.character_id != character_id:
             raise DuplicatedCharacterNameException(name, videogame_id)
+        return True
+
+    @staticmethod
+    def validate_region_name_uniqueness(name: str, videogame_id: int, uow: 'IUnitOfWork'):
+        existing_region = uow.region_repo.get_region_by_name_and_videogame(name, videogame_id)
+        if existing_region:
+            raise DuplicatedRegionNameException(name, videogame_id)
         return True
 
     @staticmethod
@@ -109,10 +125,18 @@ class CatalogValidationService:
 
     @staticmethod
     def is_duplicated_username(username: str, uow: 'IUnitOfWork') -> bool:
-        usuario_con_ese_username = uow.user_repo.get_user_by_username(username)
-        return usuario_con_ese_username is not None
+        found_user = uow.user_repo.get_user_by_username(username)
+        return found_user is not None
 
     @staticmethod
     def is_duplicated_mail(mail: str, uow: IUnitOfWork) -> bool:
-        usuario_con_ese_mail = uow.user_repo.get_user_by_mail(mail)
-        return usuario_con_ese_mail is not None
+        found_user = uow.user_repo.get_user_by_mail(mail)
+        return found_user is not None
+
+    @staticmethod
+    def validate_region_are_videogame_regions(region_id: int, videogame_id: int, uow: 'IUnitOfWork'):
+        region = uow.region_repo.get_region_by_id(region_id)
+        if not region:
+            raise RegionNotFoundException(region_id)
+        if region.videogame.videogame_id != videogame_id:
+            raise DoesNotBelongToProfileException("region", f"{region_id}")

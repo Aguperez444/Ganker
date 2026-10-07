@@ -3,12 +3,14 @@ import CharacterForm from "../../components/characters/CharacterFormComponent";
 import CharactersListComponent from "../../components/characters/CharactersListComponent";
 import useGames from "../../hooks/useGames";
 import useCharacters from "../../hooks/useCharacters";
+import ModalConfirmacionComponent from "../../components/common/ModalConfirmacionComponent";
 
 const CharactersPage = () => {
   const [selectedGameId, setSelectedGameId] = useState("");
   const [mode, setMode] = useState(null);
   const [selectedCharacter, setSelectedCharacter] = useState(null);
   const [successMessage, setSuccessMessage] = useState("");
+  const [characterToDelete, setCharacterToDelete] = useState(null);
 
   const { games, isLoading: isLoadingGames } = useGames();
 
@@ -21,6 +23,7 @@ const CharactersPage = () => {
     loadCharacters,
     registerCharacter,
     editCharacter,
+    removeCharacter,
     clearActionError,
   } = useCharacters();
 
@@ -90,6 +93,38 @@ const CharactersPage = () => {
     if (String(characterData.videogame_id) !== String(selectedGameId)) {
       setSelectedGameId(String(characterData.videogame_id));
     }
+  };
+
+  const handleOpenDelete = (character) => {
+    clearActionError();
+    setSuccessMessage("");
+    // Cerramos el formulario abierto para que no comparta el mensaje de
+    // error con el modal ni quede editando un personaje que se va a borrar.
+    setMode(null);
+    setSelectedCharacter(null);
+    setCharacterToDelete(character);
+  };
+
+  const handleCancelDelete = () => {
+    clearActionError();
+    setCharacterToDelete(null);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!characterToDelete) {
+      return;
+    }
+
+    const success = await removeCharacter(characterToDelete.id, selectedGameId);
+
+    if (!success) {
+      return;
+    }
+
+    setSuccessMessage(
+      `Personaje "${characterToDelete.name}" eliminado correctamente.`
+    );
+    setCharacterToDelete(null);
   };
 
   return (
@@ -168,6 +203,7 @@ const CharactersPage = () => {
                 error={charactersError}
                 selectedCharacterId={selectedCharacter?.id}
                 onEdit={handleOpenEdit}
+                onDelete={handleOpenDelete}
               />
             ) : (
               <div className="rounded-xl border border-white/10 bg-ganker-surface-light p-6">
@@ -207,7 +243,33 @@ const CharactersPage = () => {
           )}
         </div>
       </div>
+            <ModalConfirmacionComponent
+        isOpen={Boolean(characterToDelete)}
+        title="Eliminar personaje"
+        message={
+          <>
+            <p>
+              ¿Seguro que querés eliminar a{" "}
+              <span className="font-semibold text-ganker-text">
+                {characterToDelete?.name}
+              </span>
+              ?
+            </p>
+            <p className="mt-2">
+              Si algún jugador lo tiene entre sus personajes preferidos, se
+              quitará de su perfil y se reordenarán las prioridades. Esta
+              acción no se puede deshacer.
+            </p>
+          </>
+        }
+        confirmLabel="Eliminar"
+        isLoading={isSaving}
+        error={actionError}
+        onConfirm={handleConfirmDelete}
+        onCancel={handleCancelDelete}
+      />
     </section>
+    
   );
 };
 

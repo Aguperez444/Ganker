@@ -17,7 +17,7 @@ class UserLogout:
         with self.uow:
             revoked = self.uow.refresh_token_repo.revoke_by_jti(jti) # type: ignore
             if not revoked:
-                raise InvalidTokenException("Token revoked")
+                raise InvalidTokenException("El token ya fue revocado.")
 
             user = self.uow.user_repo.get_user_by_id(int(user_id))
             if user:

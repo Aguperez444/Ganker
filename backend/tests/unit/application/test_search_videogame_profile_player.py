@@ -10,7 +10,7 @@ from app.domain.exceptions.videogame.videogame_not_found_exception import Videog
 from app.domain.exceptions.role.role_not_found_exception import RoleNotFoundException
 from app.domain.exceptions.rank.rank_not_found_exception import RankNotFoundException
 from app.domain.exceptions.character.character_not_found_exception import CharacterNotFoundException
-from app.infrastructure.api.dto.request.Search_videogame_profiles_request import SearchVideogameProfilesRequest
+from app.infrastructure.api.dto.request.search_videogame_profiles_request import SearchVideogameProfilesRequest
 
 
 class TestSearchVideogameProfilePlayerUseCase:

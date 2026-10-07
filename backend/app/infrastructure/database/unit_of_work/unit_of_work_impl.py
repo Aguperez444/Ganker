@@ -7,6 +7,7 @@ from app.application.ports.i_conversation_repository import IConversationReposit
 from app.application.ports.i_find_by_specifications_service import IFindBySpecificationRepository
 from app.application.ports.i_game_profile_repository import IGameProfileRepository
 from app.application.ports.i_message_repository import IMessageRepository
+from app.application.ports.i_region_repository import IRegionRepository
 from app.application.ports.i_role_profile_repository import IRoleProfileRepository
 from app.application.ports.i_user_repository import IUserRepository
 from app.application.ports.i_rank_repository import IRankRepository
@@ -20,6 +21,7 @@ from app.infrastructure.database.repositories.conversation_repo_impl import Conv
 from app.infrastructure.database.repositories.find_by_specification_repository_impl import FindBySpecificationRepositoryImpl
 from app.infrastructure.database.repositories.game_profile_repository_impl import GameProfileRepositoryImpl
 from app.infrastructure.database.repositories.message_repo_impl import MessageRepoImpl
+from app.infrastructure.database.repositories.region_repository_impl import RegionRepositoryImpl
 from app.infrastructure.database.repositories.role_profile_repository_impl import RoleProfileRepositoryImpl
 from app.infrastructure.database.repositories.user_repository_impl import UserRepositoryImpl
 from app.infrastructure.database.repositories.rank_repository_impl import RankRepositoryImpl
@@ -51,6 +53,7 @@ class SqlAlchemyUnitOfWork(IUnitOfWork):
         self.find_by_specification_repo: 'IFindBySpecificationRepository'
         self.role_profile_repo: 'IRoleProfileRepository'
         self.character_priority_repo: 'ICharacterPriorityRepository'
+        self.region_repo: 'IRegionRepository'
     # Context manager
     def __enter__(self) -> 'SqlAlchemyUnitOfWork':
         self.session: Session = self._sf()  # nueva Session por acción
@@ -66,6 +69,7 @@ class SqlAlchemyUnitOfWork(IUnitOfWork):
         self.role_profile_repo: 'IRoleProfileRepository' = RoleProfileRepositoryImpl(self.session)
         self.character_priority_repo: 'ICharacterPriorityRepository' = CharacterPriorityRepositoryImpl(self.session)
         self.find_by_specification_repo: 'IFindBySpecificationRepository' = FindBySpecificationRepositoryImpl(self.session)
+        self.region_repo: 'IRegionRepository' = RegionRepositoryImpl(self.session)
         return self
 
 
