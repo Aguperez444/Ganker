@@ -9,6 +9,8 @@ from app.application.use_cases.join_team import JoinTeam
 from app.application.use_cases.create_team import CreateTeam
 from app.application.use_cases.search_teams import SearchTeams
 from app.application.use_cases.update_team import UpdateTeam
+from app.application.use_cases.leave_team import LeaveTeam
+from app.application.use_cases.kick_member import KickMember
 from app.infrastructure.api.chat.user_notification_manager import notification_manager
 from app.infrastructure.api.dependencies.auth import get_current_user_id, require_player
 from app.infrastructure.api.dto.request.join_team_request import JoinTeamRequest
@@ -16,7 +18,13 @@ from app.infrastructure.api.dto.request.create_team_request import CreateTeamReq
 from app.infrastructure.api.dto.request.update_team_request import UpdateTeamRequest
 from app.infrastructure.api.dto.response.notification.notification_type_enum import NotificationType
 from app.infrastructure.api.dto.response.team.event_type_enum import TeamEventTypeEnum
-from app.infrastructure.api.dto.response.team_summary import TeamSummaryResponse, JoinTeamResponse, UpdateTeamResponse
+from app.infrastructure.api.dto.response.team_summary import (
+    TeamSummaryResponse,
+    JoinTeamResponse,
+    UpdateTeamResponse,
+    LeaveTeamResponse,
+    KickMemberResponse
+)
 from app.infrastructure.api.teams.teams_feed_connection_manager import teams_feed_manager
 from app.infrastructure.database.unit_of_work.uow_factory import uow_factory
 from app.infrastructure.storage.local_disk_storage_service import LocalDiskStorageService
@@ -178,4 +186,75 @@ async def update_team(
     await teams_feed_manager.broadcast_event(TeamEventTypeEnum.TEAM_UPDATED, result.data.public_payload())
 
     return result
+
+
+@router.delete("/{team_id}/leave", status_code=200, response_model=LeaveTeamResponse, dependencies=[Depends(require_player)])
+async def leave_team(
+    team_id: int,
+    user_id: int = Depends(get_current_user_id),
+):
+    uow = uow_factory()
+    use_case = LeaveTeam(uow)
+
+    result: LeaveTeamResponse = await run_in_threadpool(use_case.execute, team_id, user_id)
+    team = result.data
+
+    await teams_feed_manager.broadcast_event(TeamEventTypeEnum.TEAM_MEMBER_LEFT, team.public_payload())
+
+    # Notificar al resto de integrantes del equipo
+    for member in team.members:
+        if member.user_id is not None and member.user_id != user_id:
+            await notification_manager.send_to_user(member.user_id, {
+                "type": NotificationType.TEAM_MEMBER_LEFT,
+                "team_id": team.team_id,
+                "team_name": team.team_name,
+                "user_id": user_id,
+                "message": f"Un jugador salió del equipo {team.team_name}"
+            })
+
+    return result
+
+
+@router.delete("/{team_id}/kick/{target_user_id}", status_code=200, response_model=KickMemberResponse, dependencies=[Depends(require_player)])
+async def kick_team_member_by_path(
+    team_id: int,
+    target_user_id: int,
+    current_user_id: int = Depends(get_current_user_id),
+):
+    uow = uow_factory()
+    use_case = KickMember(uow)
+
+    result: KickMemberResponse = await run_in_threadpool(use_case.execute, team_id, current_user_id, target_user_id)
+    team = result.data
+
+    await teams_feed_manager.broadcast_event(TeamEventTypeEnum.TEAM_MEMBER_KICKED, team.public_payload())
+
+    # Notificación al jugador expulsado
+    await notification_manager.send_to_user(target_user_id, {
+        "type": NotificationType.TEAM_MEMBER_KICKED,
+        "team_id": team.team_id,
+        "team_name": team.team_name,
+        "message": f"Has sido expulsado del equipo {team.team_name}"
+    })
+
+    # Notificación al líder del equipo
+    await notification_manager.send_to_user(current_user_id, {
+        "type": NotificationType.TEAM_MEMBER_KICKED,
+        "team_id": team.team_id,
+        "team_name": team.team_name,
+        "message": f"Has expulsado existosamente a un jugador del equipo {team.team_name}"
+    })
+
+    # Notificación al resto de integrantes
+    for member in team.members:
+        if member.user_id is not None and member.user_id != current_user_id and member.user_id != target_user_id:
+            await notification_manager.send_to_user(member.user_id, {
+                "type": NotificationType.TEAM_MEMBER_KICKED,
+                "team_id": team.team_id,
+                "team_name": team.team_name,
+                "message": f"Un jugador fue expulsado del equipo {team.team_name}"
+            })
+
+    return result
+
 
