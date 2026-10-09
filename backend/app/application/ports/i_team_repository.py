@@ -21,6 +21,14 @@ class ITeamRepository(ABC):
         Actualiza los miembros de un equipo.
         """
         raise NotImplementedError
+
+    @abstractmethod
+    def update_team(self, team: 'Team') -> 'Team':
+        """
+        Actualiza los datos básicos y requisitos de un equipo.
+        """
+        raise NotImplementedError
+
         
     @abstractmethod
     def search_teams(self, videogame_id: Optional[int] = None, region_id: Optional[int] = None, 
