@@ -64,6 +64,26 @@ class TeamRepositoryImpl(ITeamRepository):
         self.session.expire(team_orm, ["members_roles"])
         return TeamMapper.orm_to_domain(team_orm)
 
+    def update_team(self, team: 'Team') -> 'Team':
+        team_orm = self.session.query(TeamORM).filter(TeamORM.team_id == team.team_id).first()
+        if team_orm is None:
+            raise TeamNotFoundException(team.team_id)
+
+        team_orm.name = team.name
+        team_orm.description = team.description
+        team_orm.allow_other_regions = team.allow_other_regions
+        team_orm.region_id = team.region.region_id if team.region else None
+        team_orm.min_rank_id = team.min_rank.rank_id
+        team_orm.max_rank_id = team.max_rank.rank_id
+
+        if team_orm.conversation:
+            team_orm.conversation.name = f"Chat del equipo {team.name}"
+
+        self.session.flush()
+        self.session.expire(team_orm)
+        return TeamMapper.orm_to_domain(team_orm)
+
+
     def get_by_id(self, team_id: int) -> Optional['Team']:
         team_orm = self.session.query(TeamORM).filter(TeamORM.team_id == team_id).first()
         return TeamMapper.orm_to_domain(team_orm) if team_orm else None

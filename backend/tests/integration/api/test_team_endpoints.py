@@ -509,3 +509,184 @@ class TestTeamEndpointsIntegration:
         # Creamos un equipo con restricción de región por seed_player
         res_br_view = client.get("/api/v1/teams", headers=headers_br)
         assert res_br_view.status_code == 200
+
+    # =========================================================================
+    # USER STORY 4: Modificar información del equipo
+    # =========================================================================
+
+    def test_update_team_success_as_creator(self, client, player_auth_headers, setup_data):
+        team_data = self._create_sample_team(client, player_auth_headers, setup_data)
+        team_id = team_data["team_id"]
+        ranks = setup_data["ranks"]
+        regions = setup_data["regions"]
+
+        payload = {
+            "name": "Alpha Team Renamed",
+            "description": "Nueva descripcion del equipo",
+            "allow_other_regions": True,
+            "region_id": regions["br"].region_id,
+            "min_rank_id": ranks["silver"].rank_id,
+            "max_rank_id": ranks["diamond"].rank_id,
+        }
+
+        response = client.put(f"/api/v1/teams/{team_id}", json=payload, headers=player_auth_headers)
+        assert response.status_code == 200
+        body = response.json()
+
+        assert body["status"] == "success"
+        assert "Alpha Team Renamed" in body["message"]
+        data = body["data"]
+        assert data["team_name"] == "Alpha Team Renamed"
+        assert data["description"] == "Nueva descripcion del equipo"
+        assert data["allow_other_regions"] is True
+        assert data["region"]["region_id"] == regions["br"].region_id
+        assert data["min_rank"]["rank_id"] == ranks["silver"].rank_id
+        assert data["max_rank"]["rank_id"] == ranks["diamond"].rank_id
+
+        # Verificar que se actualizó en la consulta individual
+        get_res = client.get(f"/api/v1/teams/{team_id}", headers=player_auth_headers)
+        assert get_res.status_code == 200
+        assert get_res.json()["team_name"] == "Alpha Team Renamed"
+
+        # Verificar que se actualizó en la lista general de equipos
+        feed_res = client.get("/api/v1/teams", headers=player_auth_headers)
+        assert feed_res.status_code == 200
+        feed_teams = feed_res.json()
+        matching = [t for t in feed_teams if t["team_id"] == team_id]
+        assert len(matching) == 1
+        assert matching[0]["team_name"] == "Alpha Team Renamed"
+        assert matching[0]["description"] == "Nueva descripcion del equipo"
+
+    def test_update_team_not_creator_or_outsider_fails(self, client, jwt_service, player_auth_headers, setup_data):
+        team_data = self._create_sample_team(client, player_auth_headers, setup_data)
+        team_id = team_data["team_id"]
+        ranks = setup_data["ranks"]
+        target_slot_id = team_data["members"][1]["team_member_role_id"]
+
+        # 1. Unirse como miembro (janedoe)
+        headers_jane, _ = self._headers(jwt_service, setup_data["players"]["janedoe"])
+        join_res = client.post(f"/api/v1/teams/{team_id}/join",
+                               json={"target_team_member_role_id": target_slot_id},
+                               headers=headers_jane)
+        assert join_res.status_code == 200
+
+        payload = {
+            "name": "Intento de Miembro",
+            "description": "Desc",
+            "allow_other_regions": True,
+            "region_id": None,
+            "min_rank_id": ranks["silver"].rank_id,
+            "max_rank_id": ranks["gold"].rank_id,
+        }
+
+        # Probar acceder a la modificación del equipo siendo un miembro sin rol de creador (falla con 403)
+        res_member = client.put(f"/api/v1/teams/{team_id}", json=payload, headers=headers_jane)
+        assert res_member.status_code == 403
+        assert "no es el líder del equipo" in res_member.json()["error"]
+
+        # Probar acceder a la modificación del equipo siendo un usuario ajeno (falla con 403)
+        headers_outsider, _ = self._headers(jwt_service, setup_data["players"]["high"])
+        res_outsider = client.put(f"/api/v1/teams/{team_id}", json=payload, headers=headers_outsider)
+        assert res_outsider.status_code == 403
+        assert "no es el líder del equipo" in res_outsider.json()["error"]
+
+    def test_update_team_empty_name_fails(self, client, player_auth_headers, setup_data):
+        team_data = self._create_sample_team(client, player_auth_headers, setup_data)
+        team_id = team_data["team_id"]
+        ranks = setup_data["ranks"]
+
+        payload = {
+            "name": "   ",
+            "description": "Desc",
+            "allow_other_regions": True,
+            "region_id": None,
+            "min_rank_id": ranks["silver"].rank_id,
+            "max_rank_id": ranks["gold"].rank_id,
+        }
+        res = client.put(f"/api/v1/teams/{team_id}", json=payload, headers=player_auth_headers)
+        assert res.status_code == 422
+
+    def test_update_team_min_rank_superior_to_max_rank_fails(self, client, player_auth_headers, setup_data):
+        team_data = self._create_sample_team(client, player_auth_headers, setup_data)
+        team_id = team_data["team_id"]
+        ranks = setup_data["ranks"]
+
+        payload = {
+            "name": "Alpha Team Rango Invertido",
+            "description": "Desc",
+            "allow_other_regions": True,
+            "region_id": None,
+            "min_rank_id": ranks["diamond"].rank_id,  # 2000
+            "max_rank_id": ranks["silver"].rank_id,   # 500
+        }
+        res = client.put(f"/api/v1/teams/{team_id}", json=payload, headers=player_auth_headers)
+        assert res.status_code == 400
+        assert "no puede ser superior al rango máximo" in res.json()["error"]
+
+    def test_update_team_excludes_active_member_rank_fails(self, client, jwt_service, player_auth_headers, setup_data):
+        # 1. Crear equipo con vacante para Iniciador
+        vg = setup_data["videogame"]
+        reg = setup_data["regions"]["las"]
+        ranks = setup_data["ranks"]
+        roles = setup_data["roles"]
+
+        create_payload = {
+            "name": "Team Con Miembro Plata",
+            "description": "Desc",
+            "allow_other_regions": False,
+            "videogame_id": vg.videogame_id,
+            "region_id": reg.region_id,
+            "min_rank_id": ranks["silver"].rank_id,  # 500
+            "max_rank_id": ranks["gold"].rank_id,    # 1000
+            "creator_game_role_id": roles["duelist"].role_id,  # Creador es Duelista = Oro (1000)
+            "vacant_game_role_ids": [roles["initiator"].role_id]
+        }
+        create_res = client.post("/api/v1/teams", data=self._team_form(create_payload), headers=player_auth_headers)
+        assert create_res.status_code == 201
+        team_id = create_res.json()["team_id"]
+        target_slot_id = create_res.json()["members"][1]["team_member_role_id"]
+
+        # 2. janedoe se une en el rol Iniciador (su rango es Plata, 500)
+        headers_jane, _ = self._headers(jwt_service, setup_data["players"]["janedoe"])
+        join_res = client.post(f"/api/v1/teams/{team_id}/join",
+                               json={"target_team_member_role_id": target_slot_id},
+                               headers=headers_jane)
+        assert join_res.status_code == 200
+
+        # 3. El creador intenta cambiar los rangos a Oro (1000) - Diamante (2000).
+        # El creador (Oro 1000) sí entra, pero la integrante Jane Doe (Plata 500) queda excluida (< 1000).
+        update_payload = {
+            "name": "Team Con Miembro Plata",
+            "description": "Desc actualizada",
+            "allow_other_regions": False,
+            "region_id": reg.region_id,
+            "min_rank_id": ranks["gold"].rank_id,     # 1000
+            "max_rank_id": ranks["diamond"].rank_id,  # 2000
+        }
+        res = client.put(f"/api/v1/teams/{team_id}", json=update_payload, headers=player_auth_headers)
+        assert res.status_code == 400
+        assert "no es válido para el equipo" in res.json()["error"]
+
+    def test_update_team_only_description_and_region_permission_preserves_ranks(self, client, player_auth_headers, setup_data):
+        team_data = self._create_sample_team(client, player_auth_headers, setup_data)
+        team_id = team_data["team_id"]
+        ranks = setup_data["ranks"]
+        regions = setup_data["regions"]
+
+        payload = {
+            "name": team_data["team_name"],
+            "description": "Solo cambio descripcion y permiso de region",
+            "allow_other_regions": True,
+            "region_id": regions["las"].region_id,
+            "min_rank_id": ranks["silver"].rank_id,
+            "max_rank_id": ranks["gold"].rank_id,
+        }
+
+        res = client.put(f"/api/v1/teams/{team_id}", json=payload, headers=player_auth_headers)
+        assert res.status_code == 200
+        data = res.json()["data"]
+        assert data["description"] == "Solo cambio descripcion y permiso de region"
+        assert data["allow_other_regions"] is True
+        assert data["min_rank"]["rank_id"] == ranks["silver"].rank_id
+        assert data["max_rank"]["rank_id"] == ranks["gold"].rank_id
+

@@ -8,13 +8,15 @@ from app.application.use_cases.query_teams import QueryTeams
 from app.application.use_cases.join_team import JoinTeam
 from app.application.use_cases.create_team import CreateTeam
 from app.application.use_cases.search_teams import SearchTeams
+from app.application.use_cases.update_team import UpdateTeam
 from app.infrastructure.api.chat.user_notification_manager import notification_manager
 from app.infrastructure.api.dependencies.auth import get_current_user_id, require_player
 from app.infrastructure.api.dto.request.join_team_request import JoinTeamRequest
 from app.infrastructure.api.dto.request.create_team_request import CreateTeamRequest
+from app.infrastructure.api.dto.request.update_team_request import UpdateTeamRequest
 from app.infrastructure.api.dto.response.notification.notification_type_enum import NotificationType
 from app.infrastructure.api.dto.response.team.event_type_enum import TeamEventTypeEnum
-from app.infrastructure.api.dto.response.team_summary import TeamSummaryResponse, JoinTeamResponse
+from app.infrastructure.api.dto.response.team_summary import TeamSummaryResponse, JoinTeamResponse, UpdateTeamResponse
 from app.infrastructure.api.teams.teams_feed_connection_manager import teams_feed_manager
 from app.infrastructure.database.unit_of_work.uow_factory import uow_factory
 from app.infrastructure.storage.local_disk_storage_service import LocalDiskStorageService
@@ -159,3 +161,21 @@ async def join_lobby(
             })
 
     return result
+
+
+@router.put("/{team_id}", status_code=200, response_model=UpdateTeamResponse, dependencies=[Depends(require_player)])
+async def update_team(
+    team_id: int,
+    payload: UpdateTeamRequest,
+    user_id: int = Depends(get_current_user_id),
+):
+    uow = uow_factory()
+    use_case = UpdateTeam(uow)
+
+    result: UpdateTeamResponse = await run_in_threadpool(use_case.execute, team_id, user_id, payload)
+
+    # Notificamos a todos los que tienen la lista de salas abierta en el navegador
+    await teams_feed_manager.broadcast_event(TeamEventTypeEnum.TEAM_UPDATED, result.data.public_payload())
+
+    return result
+

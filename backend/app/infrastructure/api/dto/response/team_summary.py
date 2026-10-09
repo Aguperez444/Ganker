@@ -95,3 +95,10 @@ class JoinTeamResponse(BaseModel):
     message: str = Field(..., description="Mensaje de confirmación para el jugador")
     chatroom_id: int = Field(..., description="ID del chatroom del equipo al que se incorporó el jugador")
     data: TeamSummaryResponse = Field(..., description="Estado actualizado del equipo")
+
+
+class UpdateTeamResponse(BaseModel):
+    status: str = Field("success", description="Resultado de la operación")
+    message: str = Field(..., description="Mensaje de confirmación para el creador")
+    data: TeamSummaryResponse = Field(..., description="Estado actualizado del equipo")
+

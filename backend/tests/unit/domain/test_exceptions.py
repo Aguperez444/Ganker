@@ -181,3 +181,11 @@ class TestDomainExceptions:
 
         inv_fn = InvalidNameFileException(filename="invalid:file.png")
         assert inv_fn.status_code == 400
+
+    def test_user_not_team_leader_exception(self):
+        from app.domain.exceptions.team.user_not_team_leader_exception import UserNotTeamLeaderException
+        exc = UserNotTeamLeaderException(user_id=5, team_id=10)
+        assert exc.status_code == 403
+        assert "5" in exc.message
+        assert "10" in exc.message
+

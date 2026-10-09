@@ -1,4 +1,5 @@
 import pytest
+
 from app.domain.models.team import Team
 from app.domain.models.user import User
 from app.domain.models.videogame import Videogame
@@ -17,7 +18,7 @@ from app.domain.exceptions.team.invalid_rank_exception import InvalidrankExcepti
 from app.domain.exceptions.team.InvalidRegionException import InvalidRegionException
 from app.domain.exceptions.team.team_is_full_exception import TeamIsAlreadyFullException
 from app.domain.exceptions.team.user_already_in_team_exception import UserAlreadyInTeamException
-
+from app.domain.exceptions.videogame.invalid_videogame_name_exception import InvalidVideogameNameException
 
 @pytest.fixture
 def base_setup():
@@ -123,3 +124,89 @@ def test_add_member_already_in_team(base_setup):
 
     with pytest.raises(UserAlreadyInTeamException):
         team.add_member(user, 2)
+
+
+def test_update_information_success(base_setup):
+    team, user, vg, region_team, region_other, role, min_r, max_r = base_setup
+    rank_silver = Rank(2, "Silver", 2000, vg, "/s")
+    gp = GameProfile(1, 1, vg, [], [RoleProfile(1, role, rank_silver)], region_team)
+    user.profiles.append(gp)
+    team.members[0].user = user
+
+    team.update_information(
+        name="Team Renamed",
+        description="New description",
+        allow_other_regions=True,
+        region=region_other,
+        min_rank=min_r,
+        max_rank=max_r
+    )
+
+    assert team.name == "Team Renamed"
+    assert team.description == "New description"
+    assert team.allow_other_regions is True
+    assert team.region == region_other
+    assert team.conversation.name == "Chat del equipo Team Renamed"
+
+
+def test_update_information_empty_name(base_setup):
+    team, user, vg, region_team, _, role, min_r, max_r = base_setup
+    with pytest.raises(InvalidVideogameNameException):
+        team.update_information(
+            name="   ",
+            description="Desc",
+            allow_other_regions=True,
+            region=region_team,
+            min_rank=min_r,
+            max_rank=max_r
+        )
+
+
+def test_update_information_min_greater_than_max(base_setup):
+    from app.domain.exceptions.team.invalid_rank_range_exception import InvalidRankRangeException
+    team, user, vg, region_team, _, role, min_r, max_r = base_setup
+    with pytest.raises(InvalidRankRangeException):
+        team.update_information(
+            name="Team",
+            description="Desc",
+            allow_other_regions=True,
+            region=region_team,
+            min_rank=max_r,  # 3000
+            max_rank=min_r   # 1000
+        )
+
+
+def test_update_information_excludes_member_rank(base_setup):
+    team, user, vg, region_team, _, role, min_r, max_r = base_setup
+    # Member tiene rank Silver (2000)
+    rank_silver = Rank(2, "Silver", 2000, vg, "/s")
+    gp = GameProfile(1, 1, vg, [], [RoleProfile(1, role, rank_silver)], region_team)
+    user.profiles.append(gp)
+    team.members[0].user = user
+
+    # Nuevo rango: Gold (3000) a Diamond (4000) -> excluye Silver (2000)
+    rank_diamond = Rank(4, "Diamond", 4000, vg, "/d")
+    with pytest.raises(InvalidrankException):
+        team.update_information(
+            name="Team High Rank",
+            description="Desc",
+            allow_other_regions=True,
+            region=region_team,
+            min_rank=max_r,        # 3000
+            max_rank=rank_diamond  # 4000
+        )
+
+
+def test_update_information_without_region_and_not_allow_others(base_setup):
+    from app.domain.exceptions.team.team_without_region_must_allow_others_exception import TeamWithoutRegionMustAllowOthersException
+    team, user, vg, _, _, role, min_r, max_r = base_setup
+    with pytest.raises(TeamWithoutRegionMustAllowOthersException):
+        team.update_information(
+            name="Team No Region",
+            description="Desc",
+            allow_other_regions=False,
+            region=None,
+            min_rank=min_r,
+            max_rank=max_r
+        )
+
