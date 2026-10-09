@@ -15,6 +15,8 @@ import PublicOnlyRoute from "./PublicOnlyRoute.jsx";
 import ProfilePage from "../pages/ProfilePage.jsx";
 import BuscarJugadoresPage from "../pages/BuscarJugadoresPage.jsx";
 import EquiposPage from "../pages/EquiposPage.jsx";
+import CrearEquipoPage from "../pages/CrearEquipoPage.jsx";
+import MiEquipoPage from "../pages/MiEquipoPage.jsx";
 import CharactersPage from "../pages/admin/CharactersPage.jsx";
 import ModeracionPage from "../pages/admin/ModeracionPage.jsx";
 import RegionsPage from "../pages/admin/RegionsPage.jsx";
@@ -51,6 +53,9 @@ function AppRouter() {
               element={<Navigate to="/app/jugadores" replace />}
             />
             <Route path="equipos" element={<EquiposPage />} />
+            {/* US 14 - Crear equipo, y la vista a la que redirige al crearlo. */}
+            <Route path="equipos/crear" element={<CrearEquipoPage />} />
+            <Route path="equipos/mi-equipo" element={<MiEquipoPage />} />
           </Route>
         </Route>
 
