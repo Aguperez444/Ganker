@@ -1,13 +1,17 @@
 from fastapi import APIRouter, Depends, status
 from starlette.concurrency import run_in_threadpool
 
+from app.application.use_cases.get_chatroom_messages import GetChatroomMessages
 from app.application.use_cases.get_messages import GetMessages
+from app.application.use_cases.mark_chatroom_as_read import MarkChatroomAsRead
+from app.application.use_cases.query_chatrooms import QueryChatrooms
 from app.application.use_cases.get_or_create_conversation import GetOrCreateConversation
 from app.application.use_cases.mark_as_read import MarkAsRead
 from app.application.use_cases.query_conversation import QueryConversations
 from app.infrastructure.api.chat.connection_manager import chat_manager
 from app.infrastructure.api.dependencies.auth import get_current_user_id, require_player
 from app.infrastructure.api.dto.request.start_conversation_request import StartConversationRequest
+from app.infrastructure.api.dto.response.chatroom_response import ChatroomSummaryResponse, GetChatroomMessagesResponse
 from app.infrastructure.api.dto.response.conversation_summary_response import ConversationSummaryResponse
 from app.infrastructure.api.dto.response.create_register.create_conversation_summary_response import CreateConversationSummaryResponse
 from app.infrastructure.api.dto.response.get.get_messages_response import GetMessagesResponse
@@ -59,4 +63,27 @@ async def mark_conversation_as_read(conversation_id: int, current_user_id: int =
         notification = MessagesReadNotificationResponse(type=NotificationType.MESSAGES_READ, conversation_id=conversation_id, read_by=current_user_id)
         await chat_manager.broadcast_to_conversation(conversation_id, notification)
 
+    return {"status": "ok", "messages_marked": updated_count}
+
+
+# ---------------------------------------------------------
+# CHATROOMS (conversaciones grupales asociadas a un equipo)
+# ---------------------------------------------------------
+
+@router.get("/chatroom", response_model=ChatroomSummaryResponse, dependencies=[Depends(require_player)])
+def get_my_chatrooms(current_user_id: int = Depends(get_current_user_id)):
+    uow = uow_factory()
+    return QueryChatrooms(uow).by_user_id(current_user_id)
+
+
+@router.get("/chatroom/{chatroom_id}/messages", response_model=GetChatroomMessagesResponse, dependencies=[Depends(require_player)])
+def get_chatroom_messages(chatroom_id: int, size: int = 30, page: int = 1, current_user_id: int = Depends(get_current_user_id)):
+    uow = uow_factory()
+    return GetChatroomMessages(uow).execute(chatroom_id, current_user_id, page, size)
+
+
+@router.patch("/chatroom/{chatroom_id}/read", status_code=status.HTTP_200_OK, dependencies=[Depends(require_player)])
+async def mark_chatroom_as_read(chatroom_id: int, current_user_id: int = Depends(get_current_user_id)):
+    uow = uow_factory()
+    updated_count = await run_in_threadpool(MarkChatroomAsRead(uow).execute, chatroom_id, current_user_id)
     return {"status": "ok", "messages_marked": updated_count}

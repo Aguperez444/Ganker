@@ -1,5 +1,5 @@
 from pydantic import BaseModel, Field
-from typing import List
+from typing import List, Optional
 
 class RoleRankInput(BaseModel):
     role_id: int = Field(..., description="ID del rol seleccionado")
@@ -17,4 +17,4 @@ class CreateGameProfileRequest(BaseModel):
         min_length=1,
         description="Lista de roles con su rango (debe indicar al menos un rol)"
     )
-    region_id: int  = Field(description='ID de la región del jugador')
+    region_id: Optional[int] = Field(None, description='ID de la región del jugador')

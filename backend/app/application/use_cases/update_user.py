@@ -2,6 +2,7 @@ from typing import Optional, BinaryIO
 
 from app.application.ports.i_storage_service import IStorageService
 from app.application.ports.i_unit_of_work import IUnitOfWork
+from app.domain.exceptions.file.file_name_not_null_exception import FileNameNotNullException
 from app.domain.exceptions.user.user_not_found_exception import UserNotFoundException
 from app.domain.services.catalog_validation_service import CatalogValidationService
 from app.infrastructure.api.dto.response.update.update_user_response import UpdateUserResponse
@@ -34,7 +35,9 @@ class UpdateUser:
 
             new_icon_url = user.icon_url  # por defecto persisto la url anterior
             # compruebo si me llegó una imagen nueva
-            if icon_file and icon_filename:
+            if icon_file:
+                if not icon_filename:
+                    raise FileNameNotNullException()
                 try:
                     # actualizo la bandera de cambio de icono
                     icon_changed = True
@@ -42,7 +45,7 @@ class UpdateUser:
                     # Guardo la nueva imagen a través del puerto
                     new_icon_url = self.storage_service.save_image_file(
                         file_content=icon_file,
-                        filename=icon_filename,
+                        filename=icon_filename,  # no uso el nombre original para evitar colisiones, pero lo paso para mantener la extensión del archivo
                         subfolder=f"users/icons",
                         preserve_original_name=False
                     )

@@ -19,14 +19,15 @@ class ConversationRepositoryImpl(IConversationRepository):
         self.session.refresh(merged)
         return ConversationMapper.orm_to_domain(merged)
 
-    def list_by_user_id(self, user_id: int) -> list["Conversation"]:
-        conversations = (
+    def list_by_user_id(self, user_id: int, conversation_type=None) -> list["Conversation"]:
+        query = (
             self.session.query(ConversationORM)
             .join(ConversationMemberORM)
             .filter(ConversationMemberORM.user_id == user_id)
-            .distinct()
-            .all()
         )
+        if conversation_type is not None:
+            query = query.filter(ConversationORM.type == int(conversation_type))
+        conversations = query.distinct().all()
 
         return [
             ConversationMapper.orm_to_domain_last_message_only(c)
@@ -59,3 +60,10 @@ class ConversationRepositoryImpl(IConversationRepository):
         if not conversation:
             return None
         return ConversationMapper.orm_to_domain_no_messages(conversation)
+
+    def update_last_read_message(self, conversation_id: int, user_id: int, message_id: int) -> None:
+        self.session.query(ConversationMemberORM).filter(
+            ConversationMemberORM.conversation_id == conversation_id,
+            ConversationMemberORM.user_id == user_id
+        ).update({ConversationMemberORM.last_read_message_id: message_id}, synchronize_session='fetch')
+        self.session.flush()

@@ -1,5 +1,5 @@
 from pydantic import BaseModel, Field
-from typing import List
+from typing import List, Optional
 
 class RoleRankInput(BaseModel):
     role_id: int = Field(..., description="ID del rol seleccionado")
@@ -14,4 +14,4 @@ class UpdateGameProfileRequest(BaseModel):
         default_factory=list,
         description="Lista actualizada de roles con su rango"
     )
-    region_id: int = Field(..., description="Id de la region")
+    region_id: Optional[int] = Field(None, description="Id de la region")

@@ -230,11 +230,17 @@ def client(monkeypatch, test_session_factory, jwt_service, tmp_path):
 
     import app.infrastructure.api.controllers.chat_controller as chat_ctrl_module
     import app.infrastructure.api.controllers.chat_websocket as chat_ws_module
+    import app.infrastructure.api.controllers.team_controller as team_ctrl_module
+    import app.infrastructure.api.controllers.region_controller as region_ctrl_module
     import app.infrastructure.api.dependencies.web_socket_auth as ws_auth_dep
     # noinspection PyUnresolvedReferences
     monkeypatch.setattr(chat_ctrl_module, "uow_factory", test_uow_factory)
     # noinspection PyUnresolvedReferences
     monkeypatch.setattr(chat_ws_module, "uow_factory", test_uow_factory)
+    # noinspection PyUnresolvedReferences
+    monkeypatch.setattr(team_ctrl_module, "uow_factory", test_uow_factory)
+    # noinspection PyUnresolvedReferences
+    monkeypatch.setattr(region_ctrl_module, "uow_factory", test_uow_factory)
     monkeypatch.setattr(ws_auth_dep, "token_service", jwt_service)
 
     # Isolated temp directory for media uploads during tests

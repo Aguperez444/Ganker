@@ -2,6 +2,7 @@ from typing import TYPE_CHECKING
 from app.domain.exceptions.character.character_not_found_exception import CharacterNotFoundException
 from app.domain.exceptions.rank.rank_not_found_exception import RankNotFoundException
 from app.domain.exceptions.role.role_not_found_exception import RoleNotFoundException
+from app.domain.exceptions.user.user_not_found_exception import UserNotFoundException
 from app.domain.exceptions.videogame.videogame_not_found_exception import VideogameNotFoundException
 from app.domain.exceptions.game_profile.does_not_belong_to_profile_exception import DoesNotBelongToProfileException
 from app.domain.exceptions.game_profile.game_profile_not_found_exception import GameProfileNotFoundException
@@ -13,7 +14,10 @@ from app.domain.exceptions.videogame.videogame_already_exists_exception import V
 from app.domain.exceptions.region.region_not_found_exception import RegionNotFoundException
 from app.domain.exceptions.region.duplicated_region_name_exception import DuplicatedRegionNameException
 
+
 if TYPE_CHECKING:
+    from app.domain.models.region import Region
+    from app.domain.models.user import User
     from app.application.ports.i_unit_of_work import IUnitOfWork
     from app.domain.models.character import Character
     from app.domain.models.rank import Rank
@@ -23,6 +27,20 @@ if TYPE_CHECKING:
 
 
 class CatalogValidationService:
+
+    @staticmethod
+    def get_and_validate_exist_region(region_id: int, uow: 'IUnitOfWork') -> 'Region':
+        region = uow.region_repo.get_region_by_id(region_id)
+        if not region:
+            raise RegionNotFoundException(region_id)
+        return region
+
+    @staticmethod
+    def get_and_validate_exist_user(user_id: int, uow: 'IUnitOfWork') -> 'User':
+        user = uow.user_repo.get_user_by_id(user_id)
+        if not user:
+            raise UserNotFoundException(user_id)
+        return user
 
     @staticmethod
     def get_and_validate_exist_videogame(videogame_id: int, uow: 'IUnitOfWork') -> 'Videogame':
@@ -59,6 +77,13 @@ class CatalogValidationService:
             raise GameProfileNotFoundException(game_profile_id)
         if game_profile.player_id != player_id:
             raise DoesNotBelongToProfileException("perfil de juego", f"{game_profile_id}")
+        return game_profile
+
+    @staticmethod
+    def get_game_profile_by_player_and_videogame_ids(player_id: int, videogame_id: int, uow: 'IUnitOfWork') -> 'GameProfile':
+        game_profile = uow.game_profile_repo.get_game_profile_by_player_and_videogame(player_id, videogame_id)
+        if not game_profile:
+            raise GameProfileNotFoundException(game_id=videogame_id, user_id=player_id)
         return game_profile
 
     @staticmethod

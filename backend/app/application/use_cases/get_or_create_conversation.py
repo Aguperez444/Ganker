@@ -2,7 +2,7 @@ from typing import TYPE_CHECKING
 
 from app.domain.models.conversation import Conversation
 from app.domain.models.conversation_member import ConversationMember
-from app.domain.models.conversation_type import ConversationType
+from app.domain.models.conversation_type_enum import ConversationTypeEnum
 from app.domain.exceptions.user.user_not_found_exception import UserNotFoundException
 from app.domain.exceptions.chat.cannot_start_conversation_with_self_exception import CannotStartConversationWithSelfException
 
@@ -44,7 +44,7 @@ class GetOrCreateConversation:
                 conversation_id=None,
                 members=[member_1, member_2],
                 messages=[],
-                conversation_type=ConversationType.PRIVATE,
+                conversation_type=ConversationTypeEnum.PRIVATE,
                 name=None
             )
 

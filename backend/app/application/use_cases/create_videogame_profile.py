@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Optional
 
 from app.application.ports.i_unit_of_work import IUnitOfWork
 from app.domain.exceptions.character.duplicated_character_in_request import DuplicatedCharacterInRequest
@@ -66,8 +66,10 @@ class CreateVideogameProfile:
                     rank=rank
                 )
                 new_role_profiles.append(role_profile)
-            # Busco la region en la base de datos
-            region: 'Region' = CatalogValidationService.get_and_validate_exists_region(create_videogame_profile_request.region_id, uow)
+            # Busco la region en la base de datos si existe
+            region: Optional['Region'] = None
+            if create_videogame_profile_request.region_id is not None:
+                region = CatalogValidationService.get_and_validate_exists_region(create_videogame_profile_request.region_id, uow)
 
             # Creo la lista de CharacterPriority a partir de la lista de personajes, asignando prioridad según el orden del array.
             prioritized_characters = [CharacterPriority(priority_id=None,priority=index,character=char) for index, char in enumerate(characters, start=1)]
