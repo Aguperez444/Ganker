@@ -15,6 +15,10 @@ from app.domain.exceptions.team.team_not_active_exception import TeamNotActiveEx
 from app.domain.exceptions.team.team_without_region_must_allow_others_exception import TeamWithoutRegionMustAllowOthersException
 from app.domain.exceptions.team.invalid_rank_range_exception import InvalidRankRangeException
 from app.domain.exceptions.team.catalog_item_videogame_mismatch_exception import CatalogItemVideogameMismatchException
+from app.domain.exceptions.team.leader_cannot_leave_team_exception import LeaderCannotLeaveTeamException
+from app.domain.exceptions.team.leader_cannot_kick_self_exception import LeaderCannotKickSelfException
+from app.domain.exceptions.team.user_not_in_team_exception import UserNotInTeamException
+from app.domain.exceptions.team.user_not_team_leader_exception import UserNotTeamLeaderException
 from app.domain.exceptions.domain_exception import DomainException
 from app.domain.models.conversation_member import ConversationMember
 from app.domain.models.conversation_member_role_enum import ConversationMemberRoleEnum
@@ -305,3 +309,47 @@ class Team:
         if self._conversation:
             self._conversation.name = f"Chat del equipo {self._name}"
 
+    def leave_team(self, user_id: int) -> None:
+        """Permite a un miembro regular abandonar el equipo, liberando su cupo y revocando su acceso al chatroom."""
+        if not self.is_active:
+            raise TeamNotActiveException(self.team_id)
+
+        if self.is_leader(user_id):
+            raise LeaderCannotLeaveTeamException(self.team_id)
+
+        self._remove_member(user_id)
+
+    def kick_member(self, requester_id: int, target_user_id: int) -> None:
+        """Permite al líder expulsar a un integrante activo del equipo, liberando su cupo y revocando su acceso al chatroom."""
+        if not self.is_active:
+            raise TeamNotActiveException(self.team_id)
+
+        if not self.is_leader(requester_id):
+            raise UserNotTeamLeaderException(requester_id, self.team_id)
+
+        if requester_id == target_user_id:
+            raise LeaderCannotKickSelfException(self.team_id)
+
+        self._remove_member(target_user_id)
+
+
+    def _remove_member(self, target_user_id: int) -> None:
+        """Mét.odo interno para remover a un miembro del equipo sin validaciones de permisos."""
+        target_slot = None
+        for member in self._members:
+            if member.user is not None and member.user.user_id == target_user_id:
+                target_slot = member
+                break
+
+        if not target_slot:
+            raise UserNotInTeamException(target_user_id, self.team_id)
+
+        # Liberar el cupo
+        target_slot.user = None
+
+        # Remover de la conversación del equipo
+        if self._conversation:
+            self._conversation.members = [
+                member for member in self._conversation.members
+                if member.user is not None and member.user.user_id != target_user_id
+            ]

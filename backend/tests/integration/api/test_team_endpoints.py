@@ -690,3 +690,187 @@ class TestTeamEndpointsIntegration:
         assert data["min_rank"]["rank_id"] == ranks["silver"].rank_id
         assert data["max_rank"]["rank_id"] == ranks["gold"].rank_id
 
+    # =========================================================================
+    # USER STORY 5 (US 19): Salirse de un equipo
+    # =========================================================================
+
+    def test_leave_team_success_as_regular_member(self, client, jwt_service, player_auth_headers, setup_data):
+        team_data = self._create_sample_team(client, player_auth_headers, setup_data)
+        team_id = team_data["team_id"]
+        target_slot_id = team_data["members"][1]["team_member_role_id"]
+
+        # 1. janedoe se une al equipo
+        headers_jane, _ = self._headers(jwt_service, setup_data["players"]["janedoe"])
+        join_res = client.post(f"/api/v1/teams/{team_id}/join",
+                               json={"target_team_member_role_id": target_slot_id},
+                               headers=headers_jane)
+        assert join_res.status_code == 200
+        assert join_res.json()["data"]["player_count"] == 2
+
+        # 2. janedoe sale del equipo
+        leave_res = client.delete(f"/api/v1/teams/{team_id}/leave", headers=headers_jane)
+        assert leave_res.status_code == 200
+        body = leave_res.json()
+        assert body["status"] == "success"
+        assert "con éxito" in body["message"]
+
+        # Verificar que el contador disminuyó y el cupo se liberó a vacante
+        assert body["data"]["player_count"] == 1
+        vacant_slot = next(m for m in body["data"]["members"] if m["team_member_role_id"] == target_slot_id)
+        assert vacant_slot["is_vacant"] is True
+        assert vacant_slot["user_id"] is None
+
+        # Verificar en la lista general de equipos
+        feed_res = client.get("/api/v1/teams", headers=player_auth_headers)
+        feed_team = next(t for t in feed_res.json() if t["team_id"] == team_id)
+        assert feed_team["player_count"] == 1
+
+    def test_leave_team_revokes_chatroom_access(self, client, jwt_service, player_auth_headers, setup_data):
+        team_data = self._create_sample_team(client, player_auth_headers, setup_data)
+        team_id = team_data["team_id"]
+        target_slot_id = team_data["members"][1]["team_member_role_id"]
+        chatroom_id = team_data["conversation_id"]
+
+        headers_jane, _ = self._headers(jwt_service, setup_data["players"]["janedoe"])
+        client.post(f"/api/v1/teams/{team_id}/join",
+                    json={"target_team_member_role_id": target_slot_id},
+                    headers=headers_jane)
+
+        # Acceso antes de salir: pasa (200)
+        chat_before = client.get(f"/api/v1/chat/chatroom/{chatroom_id}/messages", headers=headers_jane)
+        assert chat_before.status_code == 200
+
+        # Sale del equipo
+        client.delete(f"/api/v1/teams/{team_id}/leave", headers=headers_jane)
+
+        # Acceso después de salir: denegado (403)
+        chat_after = client.get(f"/api/v1/chat/chatroom/{chatroom_id}/messages", headers=headers_jane)
+        assert chat_after.status_code == 403
+
+    def test_leave_team_allows_immediate_join_or_create_another_team(self, client, jwt_service, player_auth_headers, setup_data):
+        team_data = self._create_sample_team(client, player_auth_headers, setup_data)
+        team_id = team_data["team_id"]
+        target_slot_id = team_data["members"][1]["team_member_role_id"]
+
+        headers_jane, _ = self._headers(jwt_service, setup_data["players"]["janedoe"])
+        client.post(f"/api/v1/teams/{team_id}/join",
+                    json={"target_team_member_role_id": target_slot_id},
+                    headers=headers_jane)
+
+        # Sale del equipo
+        client.delete(f"/api/v1/teams/{team_id}/leave", headers=headers_jane)
+
+        # Ahora puede crear un nuevo equipo inmediatamente
+        vg = setup_data["videogame"]
+        reg = setup_data["regions"]["las"]
+        ranks = setup_data["ranks"]
+        roles = setup_data["roles"]
+
+        create_payload = {
+            "name": "Jane Doe Nuevo Team",
+            "allow_other_regions": True,
+            "videogame_id": vg.videogame_id,
+            "region_id": reg.region_id,
+            "min_rank_id": ranks["silver"].rank_id,
+            "max_rank_id": ranks["gold"].rank_id,
+            "creator_game_role_id": roles["controller"].role_id,
+            "vacant_game_role_ids": [roles["initiator"].role_id]
+        }
+        res_create = client.post("/api/v1/teams", data=self._team_form(create_payload), headers=headers_jane)
+        assert res_create.status_code == 201
+
+    def test_leave_team_as_leader_fails(self, client, player_auth_headers, setup_data):
+        team_data = self._create_sample_team(client, player_auth_headers, setup_data)
+        team_id = team_data["team_id"]
+
+        res = client.delete(f"/api/v1/teams/{team_id}/leave", headers=player_auth_headers)
+        assert res.status_code == 400
+        assert "El líder del equipo no puede salir directamente" in res.json()["error"]
+
+    # =========================================================================
+    # USER STORY 6 (US 20): Expulsar a un jugador del equipo
+    # =========================================================================
+
+    def test_kick_member_success_as_leader(self, client, jwt_service, player_auth_headers, setup_data):
+        team_data = self._create_sample_team(client, player_auth_headers, setup_data)
+        team_id = team_data["team_id"]
+        target_slot_id = team_data["members"][1]["team_member_role_id"]
+
+        # janedoe se une al equipo
+        jane_user = setup_data["players"]["janedoe"]
+        headers_jane, _ = self._headers(jwt_service, jane_user)
+        client.post(f"/api/v1/teams/{team_id}/join",
+                    json={"target_team_member_role_id": target_slot_id},
+                    headers=headers_jane)
+
+        # Líder expulsa a janedoe
+        kick_res = client.delete(f"/api/v1/teams/{team_id}/kick/{jane_user.user_id}", headers=player_auth_headers)
+        assert kick_res.status_code == 200
+        body = kick_res.json()
+        assert body["status"] == "success"
+        assert "fue expulsado exitosamente" in body["message"]
+
+        # Verificar que el cupo quedó vacante y el contador disminuyó
+        assert body["data"]["player_count"] == 1
+        vacant_slot = next(m for m in body["data"]["members"] if m["team_member_role_id"] == target_slot_id)
+        assert vacant_slot["is_vacant"] is True
+        assert vacant_slot["user_id"] is None
+
+    def test_kick_member_as_regular_member_fails(self, client, jwt_service, player_auth_headers, setup_data):
+        team_data = self._create_sample_team(client, player_auth_headers, setup_data)
+        team_id = team_data["team_id"]
+        target_slot_id = team_data["members"][1]["team_member_role_id"]
+
+        # janedoe se une al equipo
+        headers_jane, _ = self._headers(jwt_service, setup_data["players"]["janedoe"])
+        client.post(f"/api/v1/teams/{team_id}/join",
+                    json={"target_team_member_role_id": target_slot_id},
+                    headers=headers_jane)
+
+        # janedoe (miembro regular) intenta expulsar al creador
+        seed_user = setup_data["players"]["seed"]
+        res = client.delete(f"/api/v1/teams/{team_id}/kick/{seed_user.user_id}", headers=headers_jane)
+        assert res.status_code == 403
+        assert "no es el líder del equipo" in res.json()["error"]
+
+    def test_kick_member_self_as_leader_fails(self, client, player_auth_headers, setup_data):
+        team_data = self._create_sample_team(client, player_auth_headers, setup_data)
+        team_id = team_data["team_id"]
+        seed_user = setup_data["players"]["seed"]
+
+        res = client.delete(f"/api/v1/teams/{team_id}/kick/{seed_user.user_id}", headers=player_auth_headers)
+        assert res.status_code == 400
+        assert "no puede autoexpulsarse" in res.json()["error"]
+
+    def test_kicked_member_revokes_chatroom_access_and_can_rejoin(self, client, jwt_service, player_auth_headers, setup_data):
+        team_data = self._create_sample_team(client, player_auth_headers, setup_data)
+        team_id = team_data["team_id"]
+        target_slot_id = team_data["members"][1]["team_member_role_id"]
+        chatroom_id = team_data["conversation_id"]
+
+        jane_user = setup_data["players"]["janedoe"]
+        headers_jane, _ = self._headers(jwt_service, jane_user)
+        client.post(f"/api/v1/teams/{team_id}/join",
+                    json={"target_team_member_role_id": target_slot_id},
+                    headers=headers_jane)
+
+        # Acceso antes de expulsión: pasa (200)
+        chat_before = client.get(f"/api/v1/chat/chatroom/{chatroom_id}/messages", headers=headers_jane)
+        assert chat_before.status_code == 200
+
+        # Líder expulsa a janedoe mediante DELETE
+        del_res = client.delete(f"/api/v1/teams/{team_id}/kick/{jane_user.user_id}", headers=player_auth_headers)
+        assert del_res.status_code == 200
+
+        # Acceso al chatroom tras ser expulsada: denegado (403)
+        chat_after = client.get(f"/api/v1/chat/chatroom/{chatroom_id}/messages", headers=headers_jane)
+        assert chat_after.status_code == 403
+
+        # Puede unirse nuevamente o a otro equipo disponible
+        rejoin_res = client.post(f"/api/v1/teams/{team_id}/join",
+                                 json={"target_team_member_role_id": target_slot_id},
+                                 headers=headers_jane)
+        assert rejoin_res.status_code == 200
+        assert rejoin_res.json()["status"] == "success"
+
+

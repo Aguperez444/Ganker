@@ -102,3 +102,16 @@ class UpdateTeamResponse(BaseModel):
     message: str = Field(..., description="Mensaje de confirmación para el creador")
     data: TeamSummaryResponse = Field(..., description="Estado actualizado del equipo")
 
+
+class LeaveTeamResponse(BaseModel):
+    status: str = Field("success", description="Resultado de la operación")
+    message: str = Field(..., description="Mensaje de confirmación para el jugador")
+    data: TeamSummaryResponse = Field(..., description="Estado actualizado del equipo")
+
+
+class KickMemberResponse(BaseModel):
+    status: str = Field("success", description="Resultado de la operación")
+    message: str = Field(..., description="Notificación de confirmación de expulsión")
+    data: TeamSummaryResponse = Field(..., description="Estado actualizado del equipo")
+
+
