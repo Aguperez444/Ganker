@@ -49,7 +49,7 @@ def update_game_region (
         name=name
     )
 
-@router.delete("/{region_id}", status_code=200, response_model=DeleteRegionResponse,dependencies=[Depends(require_player)])
+@router.delete("/{region_id}", status_code=200, response_model=DeleteRegionResponse,dependencies=[Depends(require_admin)])
 def delete_game_region(region_id: int):
     uow = uow_factory()
     storage_service = get_storage_service()
