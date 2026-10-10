@@ -1,13 +1,13 @@
 from sqlalchemy.orm import Session, joinedload
 from app.application.ports.i_find_by_specifications_service import IFindBySpecificationRepository
 from app.domain.specifications.base import Specification, AndSpecification
-from specifications.characters_specification import ByCharactersSpecification
-from specifications.different_player_id_specification import \
+from app.domain.specifications.characters_specification import ByCharactersSpecification
+from app.domain.specifications.different_player_id_specification import \
     ByDifferentPlayerIDSpecification
-from specifications.last_connection_specification import ByLastConnectionSpecification
-from specifications.ranks_specification import ByRanksSpecification
-from specifications.roles_specification import ByRolesSpecification
-from specifications.videogame_specification import ByVideogameSpecification
+from app.domain.specifications.last_connection_specification import ByLastConnectionSpecification
+from app.domain.specifications.ranks_specification import ByRanksSpecification
+from app.domain.specifications.roles_specification import ByRolesSpecification
+from app.domain.specifications.videogame_specification import ByVideogameSpecification
 from app.infrastructure.api.dto.response.base_classes.character_object_response import CharacterObjectResponse
 from app.infrastructure.api.dto.response.base_classes.rank_object_response import RankObjectResponse
 from app.infrastructure.api.dto.response.base_classes.region_object_response import RegionObjectResponse
@@ -18,7 +18,7 @@ from app.infrastructure.api.dto.response.get.get_game_profile_response import Ge
     PlayerObjectResponse
 from app.infrastructure.database.mappers.game_profile_mapper import GameProfileMapper
 from app.infrastructure.database.models import GameProfileORM, CharacterPriorityORM, RoleProfileORM, UserORM
-from specifications.regions_specification import ByRegionsSpecification
+from app.domain.specifications.regions_specification import ByRegionsSpecification
 
 
 class FindBySpecificationRepositoryImpl(IFindBySpecificationRepository):
