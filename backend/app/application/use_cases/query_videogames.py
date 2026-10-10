@@ -16,6 +16,7 @@ class QueryVideogames:
                     name=game.name,
                     icon_url=game.icon_url or "Sin icono",
                     rank_per_role=game.rank_per_role,
+                    has_characters=game.has_characters,
                 )
                 for game in videogames
             ]

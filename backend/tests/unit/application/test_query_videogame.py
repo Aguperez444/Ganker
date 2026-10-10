@@ -33,10 +33,12 @@ class TestQueryVideogamesUseCase:
         assert result.videogames[0].name == "LoL"
         assert result.videogames[0].icon_url == "/media/lol.png"
         assert result.videogames[0].rank_per_role is True
+        assert result.videogames[0].has_characters is True
         assert result.videogames[1].id == 2
         assert result.videogames[1].name == "Valorant"
         assert result.videogames[1].icon_url == "Sin icono"
         assert result.videogames[1].rank_per_role is False
+        assert result.videogames[1].has_characters is True
 
     def test_get_all_videogames_empty(self, mock_deps):
         use_case, uow = mock_deps

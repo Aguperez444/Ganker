@@ -14,7 +14,7 @@ class RegisterVideogame:
         self.storage_service: IStorageService = storage_service
         self.uow: IUnitOfWork = unit_of_work
 
-    def execute(self, name: str, icon_file, icon_filename, rank_per_role: bool) -> VideogameObjectResponse:
+    def execute(self, name: str, icon_file, icon_filename, rank_per_role: bool, has_characters: bool = True) -> VideogameObjectResponse:
         cleaned_name = StaticValidationService.validate_videogame_name_format(name)
 
         with self.uow as uow:
@@ -40,6 +40,7 @@ class RegisterVideogame:
                 name=cleaned_name,
                 icon_url=icon_url,
                 rank_per_role=rank_per_role,
+                has_characters=has_characters,
             )
 
             try:
@@ -55,4 +56,5 @@ class RegisterVideogame:
             name=saved_videogame.name,
             icon_url=saved_videogame.icon_url or "Sin icono",
             rank_per_role=saved_videogame.rank_per_role,
+            has_characters=saved_videogame.has_characters,
         )

@@ -17,7 +17,7 @@ class UpdateVideogame:
         self.storage_service: IStorageService = storage_service
         self.uow: 'IUnitOfWork' = unit_of_work
 
-    def execute(self, videogame_id: int, name: str, icon: UploadFile | None, rank_per_role: bool) -> VideogameObjectResponse:
+    def execute(self, videogame_id: int, name: str, icon: UploadFile | None, rank_per_role: bool, has_characters: bool = True) -> VideogameObjectResponse:
         cleaned_name = StaticValidationService.validate_videogame_name_format(name)
 
         with self.uow as uow:
@@ -27,6 +27,7 @@ class UpdateVideogame:
             # actualizar juego
             existing_game.name = cleaned_name
             existing_game.rank_per_role = rank_per_role
+            existing_game.has_characters = has_characters
 
             new_icon_url = None
             if icon and icon.filename:
@@ -64,6 +65,7 @@ class UpdateVideogame:
             name=updated_game.name,
             icon_url=updated_game.icon_url or "Sin icono",
             rank_per_role=updated_game.rank_per_role,
+            has_characters=updated_game.has_characters,
         )
 
 
