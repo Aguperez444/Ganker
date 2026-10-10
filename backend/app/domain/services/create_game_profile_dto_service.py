@@ -23,6 +23,7 @@ class CreateGameProfileDTOService:
                 name=domain_game_profile.videogame.name,
                 icon_url=domain_game_profile.videogame.icon_url,
                 rank_per_role=domain_game_profile.videogame.rank_per_role,
+                has_characters=domain_game_profile.videogame.has_characters,
             ),
             characters=[CharacterObjectResponse(character_id=character.character_id, name=character.name, icon_url=character.icon_url) for character in ordered_characters],
             role_profiles=[RoleProfileObjectResponse(
@@ -51,6 +52,7 @@ class CreateGameProfileDTOService:
                 name=domain_game_profile.videogame.name,
                 icon_url=domain_game_profile.videogame.icon_url,
                 rank_per_role=domain_game_profile.videogame.rank_per_role,
+                has_characters=domain_game_profile.videogame.has_characters,
             ),
             characters=[CharacterObjectResponse(character_id=character.character_id, name=character.name, icon_url=character.icon_url) for character in ordered_characters],
             role_profiles=[RoleProfileObjectResponse(

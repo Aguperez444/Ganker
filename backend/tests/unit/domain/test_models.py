@@ -74,17 +74,22 @@ class TestDomainModels:
         assert vg.name == "Dota 2"
         assert vg.icon_url == "/media/games/dota2/icon.png"
         assert vg.rank_per_role is False
+        assert vg.has_characters is True
         assert "rank_per_role=False" in repr(vg)
+        assert "has_characters=True" in repr(vg)
 
         vg.videogame_id = 20
         vg.name = "Counter Strike"
         vg.icon_url = "/media/games/cs/icon.png"
         vg.rank_per_role = True
+        vg.has_characters = False
         assert vg.videogame_id == 20
         assert vg.name == "Counter Strike"
         assert vg.icon_url == "/media/games/cs/icon.png"
         assert vg.rank_per_role is True
+        assert vg.has_characters is False
         assert "rank_per_role=True" in repr(vg)
+        assert "has_characters=False" in repr(vg)
 
     def test_character_instantiation_and_properties(self):
         vg = Videogame(videogame_id=1, name="LoL", icon_url="/icon.png", rank_per_role=True)
