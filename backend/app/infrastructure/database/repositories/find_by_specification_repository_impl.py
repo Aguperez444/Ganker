@@ -1,13 +1,13 @@
 from sqlalchemy.orm import Session, joinedload
 from app.application.ports.i_find_by_specifications_service import IFindBySpecificationRepository
 from app.domain.specifications.base import Specification, AndSpecification
-from app.domain.specifications.videogame_profiles.characters_specification import ByCharactersSpecification
-from app.domain.specifications.videogame_profiles.different_player_id_specification import \
+from specifications.characters_specification import ByCharactersSpecification
+from specifications.different_player_id_specification import \
     ByDifferentPlayerIDSpecification
-from app.domain.specifications.videogame_profiles.last_connection_specification import ByLastConnectionSpecification
-from app.domain.specifications.videogame_profiles.ranks_specification import ByRanksSpecification
-from app.domain.specifications.videogame_profiles.roles_specification import ByRolesSpecification
-from app.domain.specifications.videogame_profiles.videogame_specification import ByVideogameSpecification
+from specifications.last_connection_specification import ByLastConnectionSpecification
+from specifications.ranks_specification import ByRanksSpecification
+from specifications.roles_specification import ByRolesSpecification
+from specifications.videogame_specification import ByVideogameSpecification
 from app.infrastructure.api.dto.response.base_classes.character_object_response import CharacterObjectResponse
 from app.infrastructure.api.dto.response.base_classes.rank_object_response import RankObjectResponse
 from app.infrastructure.api.dto.response.base_classes.region_object_response import RegionObjectResponse
@@ -18,7 +18,7 @@ from app.infrastructure.api.dto.response.get.get_game_profile_response import Ge
     PlayerObjectResponse
 from app.infrastructure.database.mappers.game_profile_mapper import GameProfileMapper
 from app.infrastructure.database.models import GameProfileORM, CharacterPriorityORM, RoleProfileORM, UserORM
-from app.domain.specifications.videogame_profiles.regions_specification import ByRegionsSpecification
+from specifications.regions_specification import ByRegionsSpecification
 
 
 class FindBySpecificationRepositoryImpl(IFindBySpecificationRepository):
@@ -74,10 +74,10 @@ class FindBySpecificationRepositoryImpl(IFindBySpecificationRepository):
         db_models = query.offset(skip).limit(limit).all()
 
         # Lo pasamos de GameProfileORM a GameProfile
-        return [self.map_orm_to_search_response(db_model) for db_model in db_models]
+        return [self.map_orm_gameprofile_to_search_gameprofile_response(db_model) for db_model in db_models]
 
     @staticmethod
-    def map_orm_to_search_response(orm_model: GameProfileORM) -> GetGameProfileResponse:
+    def map_orm_gameprofile_to_search_gameprofile_response(orm_model: GameProfileORM) -> GetGameProfileResponse:
 
 
         player = PlayerObjectResponse(
