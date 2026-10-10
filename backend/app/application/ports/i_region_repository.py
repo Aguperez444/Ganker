@@ -1,11 +1,13 @@
 from abc import ABC, abstractmethod
+from typing import Optional, TYPE_CHECKING
 from typing import Optional
 
-from app.domain.models.region import Region
+if TYPE_CHECKING:
+    from app.domain.models.region import Region
 
 
 class IRegionRepository(ABC):
-    
+
     @abstractmethod
     def get_region_by_id(self, region_id: int) -> Optional['Region']:
         raise NotImplementedError()

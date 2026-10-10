@@ -1,9 +1,10 @@
 from datetime import datetime
 from typing import TYPE_CHECKING, Optional
 
-from app.domain.exceptions.entity_not_persited_exception import EntityNotPersistedException
+from app.domain.exceptions.entity_not_persisted_exception import EntityNotPersistedException
 from app.domain.exceptions.invalid_id_exception import InvalidIdException
 from app.domain.models.user_role import UserRole
+from app.domain.models.videogame import Videogame
 
 if TYPE_CHECKING:
     from app.domain.models.game_profile import GameProfile
@@ -110,3 +111,9 @@ class User:
 
     def is_persisted(self) -> bool:
         return self._user_id is not None
+
+    def get_game_profile_by_videogame(self, videogame: 'Videogame') -> Optional['GameProfile']:
+        for gameprofile in self._profiles:
+            if gameprofile.videogame == videogame:
+                return gameprofile
+        return None

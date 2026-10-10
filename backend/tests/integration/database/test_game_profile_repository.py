@@ -101,3 +101,28 @@ class TestGameProfileRepositoryIntegration:
         repo = GameProfileRepositoryImpl(test_db_session)
         assert repo.get_game_profile_by_id(999) is None
         assert repo.get_game_profile_by_player_and_videogame(999, 999) is None
+
+    def test_delete_game_profile(self, test_db_session, seed_catalog_data, seed_player):
+        repo = GameProfileRepositoryImpl(test_db_session)
+        vg_domain = VideogameMapper.orm_to_domain(seed_catalog_data["videogame"])
+        char1 = CharacterMapper.orm_to_domain(seed_catalog_data["characters"][0])
+        role1 = RoleMapper.orm_to_domain(seed_catalog_data["roles"][0])
+        rank1 = RankMapper.orm_to_domain(seed_catalog_data["ranks"][0])
+
+        game_profile = GameProfile(
+            game_profile_id=None,
+            player_id=seed_player.user_id,
+            videogame=vg_domain,
+            characters_priority=[CharacterPriority(priority_id=None, character=char1, priority=1)],
+            role_profiles=[RoleProfile(role_profile_id=None, role=role1, rank=rank1)]
+        )
+        created = repo.create_game_profile(game_profile)
+        test_db_session.commit()
+
+        # Delete existing
+        assert repo.delete_game_profile(created.game_profile_id) is True
+        test_db_session.commit()
+        assert repo.get_game_profile_by_id(created.game_profile_id) is None
+
+        # Delete nonexistent
+        assert repo.delete_game_profile(99999) is False

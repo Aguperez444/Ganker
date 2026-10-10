@@ -9,6 +9,7 @@ import AdminLayout from "../components/layout/AdminLayout.jsx";
 import AdminHomePage from "../pages/admin/AdminHomePage.jsx";
 import GamesPage from "../pages/admin/GamesPage.jsx";
 import RanksPage from "../pages/admin/RanksPage.jsx";
+import RolesPage from "../pages/admin/RolesPage.jsx";
 import ProtectedRoute from "./ProtectedRoute.jsx";
 import PublicOnlyRoute from "./PublicOnlyRoute.jsx";
 import ProfilePage from "../pages/ProfilePage.jsx";
@@ -16,6 +17,7 @@ import BuscarJugadoresPage from "../pages/BuscarJugadoresPage.jsx";
 import EquiposPage from "../pages/EquiposPage.jsx";
 import CharactersPage from "../pages/admin/CharactersPage.jsx";
 import ModeracionPage from "../pages/admin/ModeracionPage.jsx";
+import RegionsPage from "../pages/admin/RegionsPage.jsx";
 import { ROLES_ADMIN } from "../utils/rutas.js";
 
 /**
@@ -65,6 +67,8 @@ function AppRouter() {
             <Route index element={<AdminHomePage />} />
             <Route path="games" element={<GamesPage />} />
             <Route path="ranks" element={<RanksPage />} />
+            <Route path="roles" element={<RolesPage />} />
+            <Route path="regions" element={<RegionsPage />} />
             {/* Módulos administrativos placeholder */}
             <Route path="characters" element={<CharactersPage />} />
             <Route

@@ -181,3 +181,29 @@ class TestDomainExceptions:
 
         inv_fn = InvalidNameFileException(filename="invalid:file.png")
         assert inv_fn.status_code == 400
+
+    def test_user_not_team_leader_exception(self):
+        from app.domain.exceptions.team.user_not_team_leader_exception import UserNotTeamLeaderException
+        exc = UserNotTeamLeaderException(user_id=5, team_id=10)
+        assert exc.status_code == 403
+        assert "5" in exc.message
+        assert "10" in exc.message
+
+    def test_leave_and_kick_team_exceptions(self):
+        from app.domain.exceptions.team.leader_cannot_leave_team_exception import LeaderCannotLeaveTeamException
+        from app.domain.exceptions.team.leader_cannot_kick_self_exception import LeaderCannotKickSelfException
+        from app.domain.exceptions.team.user_not_in_team_exception import UserNotInTeamException
+
+        exc_leave = LeaderCannotLeaveTeamException(team_id=1)
+        assert exc_leave.status_code == 400
+        assert "líder" in exc_leave.message
+
+        exc_kick_self = LeaderCannotKickSelfException(team_id=1)
+        assert exc_kick_self.status_code == 400
+        assert "autoexpulsarse" in exc_kick_self.message
+
+        exc_not_in = UserNotInTeamException(user_id=4, team_id=1)
+        assert exc_not_in.status_code == 400
+        assert "4" in exc_not_in.message
+
+

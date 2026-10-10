@@ -17,6 +17,8 @@ if TYPE_CHECKING:
     from app.application.ports.i_role_repository import IRoleRepository
     from app.application.ports.i_videogame_repository import IVideogameRepository
     from app.application.ports.i_conversation_repository import IConversationRepository
+    from app.application.ports.i_region_repository import IRegionRepository
+    from app.application.ports.i_team_repository import ITeamRepository
 
 
 #abstract class
@@ -33,6 +35,7 @@ class IUnitOfWork(ABC):
     find_by_specification_repo: 'IFindBySpecificationRepository'
     role_profile_repo: 'IRoleProfileRepository'
     character_priority_repo: 'ICharacterPriorityRepository'
+    team_repo: 'ITeamRepository'
     region_repo: 'IRegionRepository'
 
 

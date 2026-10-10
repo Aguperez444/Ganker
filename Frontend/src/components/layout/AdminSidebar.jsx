@@ -15,8 +15,16 @@ export const adminNavigationItems = [
     path: "/app/admin/ranks",
   },
   {
+    label: "Roles",
+    path: "/app/admin/roles",
+  },
+  {
     label: "Personajes",
     path: "/app/admin/characters",
+  },
+  {
+    label: "Regiones",
+    path: "/app/admin/regions",
   },
   {
     label: "Moderación",

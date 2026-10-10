@@ -1,6 +1,6 @@
 from typing import Optional, TYPE_CHECKING
 
-from app.domain.exceptions.entity_not_persited_exception import EntityNotPersistedException
+from app.domain.exceptions.entity_not_persisted_exception import EntityNotPersistedException
 from app.domain.exceptions.invalid_id_exception import InvalidIdException
 
 if TYPE_CHECKING:
@@ -15,7 +15,7 @@ class Region:
         self._videogame: 'Videogame' = videogame
 
     @property
-    def region_id (self) -> int:
+    def region_id(self) -> int:
         if self._region_id is None:
             raise EntityNotPersistedException("Region")
         return self._region_id
@@ -26,7 +26,7 @@ class Region:
         self._region_id = value
 
     @property
-    def name (self) -> str:
+    def name(self) -> str:
         return self._name
     @name.setter
     def name (self, name: str) -> None:
@@ -38,6 +38,11 @@ class Region:
     @videogame.setter
     def videogame (self, videogame: Videogame) -> None:
         self._videogame = videogame
+
+    def __eq__(self, other: object) -> bool:
+        if isinstance(other, Region):
+            return self._region_id is not None and self._region_id == other._region_id
+        return False
 
     def is_persisted(self) -> bool:
         return self._region_id is not None

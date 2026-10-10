@@ -1,0 +1,260 @@
+from fastapi import APIRouter, Depends, Query, UploadFile, File, Form, HTTPException
+from fastapi.encoders import jsonable_encoder
+from pydantic import ValidationError
+from starlette.concurrency import run_in_threadpool
+from typing import Optional
+
+from app.application.use_cases.query_teams import QueryTeams
+from app.application.use_cases.join_team import JoinTeam
+from app.application.use_cases.create_team import CreateTeam
+from app.application.use_cases.search_teams import SearchTeams
+from app.application.use_cases.update_team import UpdateTeam
+from app.application.use_cases.leave_team import LeaveTeam
+from app.application.use_cases.kick_member import KickMember
+from app.infrastructure.api.chat.user_notification_manager import notification_manager
+from app.infrastructure.api.dependencies.auth import get_current_user_id, require_player
+from app.infrastructure.api.dto.request.join_team_request import JoinTeamRequest
+from app.infrastructure.api.dto.request.create_team_request import CreateTeamRequest
+from app.infrastructure.api.dto.request.update_team_request import UpdateTeamRequest
+from app.infrastructure.api.dto.response.notification.notification_type_enum import NotificationType
+from app.infrastructure.api.dto.response.team.event_type_enum import TeamEventTypeEnum
+from app.infrastructure.api.dto.response.team_summary import (
+    TeamSummaryResponse,
+    JoinTeamResponse,
+    UpdateTeamResponse,
+    LeaveTeamResponse,
+    KickMemberResponse
+)
+from app.infrastructure.api.teams.teams_feed_connection_manager import teams_feed_manager
+from app.infrastructure.database.unit_of_work.uow_factory import uow_factory
+from app.infrastructure.storage.local_disk_storage_service import LocalDiskStorageService
+
+router = APIRouter(prefix="/api/v1/teams", tags=["teams"])
+
+
+
+def get_storage_service():
+    return LocalDiskStorageService()
+
+@router.get("", status_code=200, response_model=list[TeamSummaryResponse], dependencies=[Depends(require_player)])
+async def search_teams(
+    videogame_id: Optional[int] = Query(None),
+    region_id: Optional[int] = Query(None),
+    rank_id: Optional[int] = Query(None),
+    vacant_slots: Optional[int] = Query(None, ge=1),
+    role_id: Optional[int] = Query(None),
+    search: Optional[str] = Query(None),
+    page: int = Query(1, ge=1),
+    size: int = Query(20, ge=1, le=100),
+    user_id: int = Depends(get_current_user_id),
+):
+    uow = uow_factory()
+    use_case = SearchTeams(uow)
+    return await run_in_threadpool(
+        use_case.execute,
+        videogame_id=videogame_id,
+        region_id=region_id,
+        rank_id=rank_id,
+        vacant_slots=vacant_slots,
+        role_id=role_id,
+        search=search,
+        user_id=user_id,
+        limit=size,
+        offset=(page - 1) * size
+    )
+
+
+@router.post("", status_code=201, response_model=TeamSummaryResponse, dependencies=[Depends(require_player)])
+async def create_team(
+    name: str = Form(...),
+    description: Optional[str] = Form(None),
+    allow_other_regions: bool = Form(...),
+    videogame_id: int = Form(...),
+    region_id: Optional[int] = Form(None),
+    min_rank_id: int = Form(...),
+    max_rank_id: int = Form(...),
+    creator_game_role_id: int = Form(...),
+    vacant_game_role_ids: list[int] = Form(...),
+    team_icon: Optional[UploadFile] = File(None, description="Archivo de imagen del ícono del equipo"),
+    user_id: int = Depends(get_current_user_id),
+):
+
+    try:
+        payload = CreateTeamRequest(
+            name=name,
+            description=description,
+            allow_other_regions=allow_other_regions,
+            videogame_id=videogame_id,
+            region_id=region_id,
+            min_rank_id=min_rank_id,
+            max_rank_id=max_rank_id,
+            creator_game_role_id=creator_game_role_id,
+            vacant_game_role_ids=vacant_game_role_ids,
+        )
+    except ValidationError as exc:
+        raise HTTPException(status_code=422, detail=jsonable_encoder(exc.errors())) from exc
+    file_obj = team_icon.file if team_icon else None
+    file_name = team_icon.filename if team_icon else None
+
+    if file_obj and not file_name:
+        raise HTTPException(status_code=400, detail="El archivo de ícono del equipo debe tener un nombre válido.")
+
+    uow = uow_factory()
+    storage_service = get_storage_service()
+    use_case = CreateTeam(uow, storage_service)
+
+    created_team_data: TeamSummaryResponse = await run_in_threadpool(
+        use_case.execute,
+        user_id,
+        payload,
+        file_obj,
+        file_name,
+    )
+
+    # Para los WebSockets debemos convertir la respuesta en un diccionario (sin datos propios del creador)
+    await teams_feed_manager.broadcast_event(TeamEventTypeEnum.TEAM_CREATED, created_team_data.public_payload())
+
+    return created_team_data
+
+
+@router.get("/me", status_code=200, response_model=Optional[TeamSummaryResponse], dependencies=[Depends(require_player)])
+async def get_my_team(user_id: int = Depends(get_current_user_id)):
+    """Equipo activo del jugador (null si no pertenece a ninguno)."""
+    uow = uow_factory()
+    return await run_in_threadpool(QueryTeams(uow).my_active_team, user_id)
+
+
+@router.get("/{team_id}", status_code=200, response_model=TeamSummaryResponse, dependencies=[Depends(require_player)])
+async def get_team(team_id: int, user_id: int = Depends(get_current_user_id)):
+    uow = uow_factory()
+    return await run_in_threadpool(QueryTeams(uow).by_id, team_id, user_id)
+
+
+@router.post("/{team_id}/join", status_code=200, response_model=JoinTeamResponse, dependencies=[Depends(require_player)])
+async def join_lobby(
+    team_id: int,
+    payload: JoinTeamRequest,
+    user_id: int = Depends(get_current_user_id),
+):
+    uow = uow_factory()
+    use_case = JoinTeam(uow)
+
+    result = await run_in_threadpool(use_case.execute, team_id, user_id, payload.target_team_member_role_id)
+    team = result.data
+
+    # Notificamos a todos los que tienen la lista de salas abierta en el navegador
+    await teams_feed_manager.broadcast_event(TeamEventTypeEnum.TEAM_MEMBER_JOINED, team.public_payload())
+
+    # Confirmación personal para quien se unió, por el websocket de notificaciones del usuario
+    await notification_manager.send_to_user(user_id, {
+        "type": NotificationType.TEAM_JOINED,
+        "team_id": team.team_id,
+        "team_name": team.team_name,
+        "chatroom_id": result.chatroom_id,
+        "message": result.message
+    })
+
+    # Aviso al resto de los integrantes del equipo
+    new_member = next((m for m in team.members if m.user_id == user_id), None)
+    for member in team.members:
+        if member.user_id is not None and member.user_id != user_id:
+            await notification_manager.send_to_user(member.user_id, {
+                "type": NotificationType.TEAM_NEW_MEMBER,
+                "team_id": team.team_id,
+                "team_name": team.team_name,
+                "chatroom_id": result.chatroom_id,
+                "user_id": user_id,
+                "username": new_member.username if new_member else None,
+                "message": f"{new_member.username if new_member else 'Un jugador'} se unió al equipo"
+            })
+
+    return result
+
+
+@router.put("/{team_id}", status_code=200, response_model=UpdateTeamResponse, dependencies=[Depends(require_player)])
+async def update_team(
+    team_id: int,
+    payload: UpdateTeamRequest,
+    user_id: int = Depends(get_current_user_id),
+):
+    uow = uow_factory()
+    use_case = UpdateTeam(uow)
+
+    result: UpdateTeamResponse = await run_in_threadpool(use_case.execute, team_id, user_id, payload)
+
+    # Notificamos a todos los que tienen la lista de salas abierta en el navegador
+    await teams_feed_manager.broadcast_event(TeamEventTypeEnum.TEAM_UPDATED, result.data.public_payload())
+
+    return result
+
+
+@router.delete("/{team_id}/leave", status_code=200, response_model=LeaveTeamResponse, dependencies=[Depends(require_player)])
+async def leave_team(
+    team_id: int,
+    user_id: int = Depends(get_current_user_id),
+):
+    uow = uow_factory()
+    use_case = LeaveTeam(uow)
+
+    result: LeaveTeamResponse = await run_in_threadpool(use_case.execute, team_id, user_id)
+    team = result.data
+
+    await teams_feed_manager.broadcast_event(TeamEventTypeEnum.TEAM_MEMBER_LEFT, team.public_payload())
+
+    # Notificar al resto de integrantes del equipo
+    for member in team.members:
+        if member.user_id is not None and member.user_id != user_id:
+            await notification_manager.send_to_user(member.user_id, {
+                "type": NotificationType.TEAM_MEMBER_LEFT,
+                "team_id": team.team_id,
+                "team_name": team.team_name,
+                "user_id": user_id,
+                "message": f"Un jugador salió del equipo {team.team_name}"
+            })
+
+    return result
+
+
+@router.delete("/{team_id}/kick/{target_user_id}", status_code=200, response_model=KickMemberResponse, dependencies=[Depends(require_player)])
+async def kick_team_member_by_path(
+    team_id: int,
+    target_user_id: int,
+    current_user_id: int = Depends(get_current_user_id),
+):
+    uow = uow_factory()
+    use_case = KickMember(uow)
+
+    result: KickMemberResponse = await run_in_threadpool(use_case.execute, team_id, current_user_id, target_user_id)
+    team = result.data
+
+    await teams_feed_manager.broadcast_event(TeamEventTypeEnum.TEAM_MEMBER_KICKED, team.public_payload())
+
+    # Notificación al jugador expulsado
+    await notification_manager.send_to_user(target_user_id, {
+        "type": NotificationType.TEAM_MEMBER_KICKED,
+        "team_id": team.team_id,
+        "team_name": team.team_name,
+        "message": f"Has sido expulsado del equipo {team.team_name}"
+    })
+
+    # Notificación al líder del equipo
+    await notification_manager.send_to_user(current_user_id, {
+        "type": NotificationType.TEAM_MEMBER_KICKED,
+        "team_id": team.team_id,
+        "team_name": team.team_name,
+        "message": f"Has expulsado existosamente a un jugador del equipo {team.team_name}"
+    })
+
+    # Notificación al resto de integrantes
+    for member in team.members:
+        if member.user_id is not None and member.user_id != current_user_id and member.user_id != target_user_id:
+            await notification_manager.send_to_user(member.user_id, {
+                "type": NotificationType.TEAM_MEMBER_KICKED,
+                "team_id": team.team_id,
+                "team_name": team.team_name,
+                "message": f"Un jugador fue expulsado del equipo {team.team_name}"
+            })
+
+    return result
+
+

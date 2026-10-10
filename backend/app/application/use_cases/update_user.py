@@ -2,6 +2,7 @@ from typing import Optional, BinaryIO
 
 from app.application.ports.i_storage_service import IStorageService
 from app.application.ports.i_unit_of_work import IUnitOfWork
+from app.domain.exceptions.file.file_name_not_null_exception import FileNameNotNullException
 from app.domain.exceptions.user.user_not_found_exception import UserNotFoundException
 from app.domain.services.catalog_validation_service import CatalogValidationService
 from app.infrastructure.api.dto.response.update.update_user_response import UpdateUserResponse
@@ -15,7 +16,7 @@ class UpdateUser:
 
     def execute(self, user_id: int, username: str, name: str, mail: str,
                 icon_file: Optional[BinaryIO] = None, icon_filename: Optional[str] = None) -> UpdateUserResponse:
-        cambio_icono: bool = False
+        icon_changed: bool = False
         old_icon_url: str | None = None
         with self.uow as uow:
             # Valido que el nuevo username y mail no existan en la base de datos para otro jugador
@@ -34,21 +35,23 @@ class UpdateUser:
 
             new_icon_url = user.icon_url  # por defecto persisto la url anterior
             # compruebo si me llegó una imagen nueva
-            if icon_file and icon_filename:
+            if icon_file:
+                if not icon_filename:
+                    raise FileNameNotNullException()
                 try:
                     # actualizo la bandera de cambio de icono
-                    cambio_icono = True
+                    icon_changed = True
                     old_icon_url = user.icon_url
                     # Guardo la nueva imagen a través del puerto
                     new_icon_url = self.storage_service.save_image_file(
                         file_content=icon_file,
-                        filename=icon_filename,
+                        filename=icon_filename,  # no uso el nombre original para evitar colisiones, pero lo paso para mantener la extensión del archivo
                         subfolder=f"users/icons",
                         preserve_original_name=False
                     )
                 except Exception as e:
                     # Si hay un error al subir la imagen, se lanza una excepción
-                    raise Exception(f"Error inesperado al subir la nueva imagen del jugador", str(e))
+                    raise Exception(f"Error inesperado al subir la nueva imagen del jugador: {str(e)}")
 
             # actualizo la url del icono del jugador con la nueva url de la imagen subida, o persisto la anterior si no se subió ninguna nueva imagen
             user.icon_url = new_icon_url
@@ -58,17 +61,17 @@ class UpdateUser:
                 updated_user = uow.user_repo.update_user(user)
             except Exception as e:
                 # compruebo si se había guardado un icono nuevo
-                if cambio_icono:
+                if icon_changed:
                     if new_icon_url is not None:
                         #borrar la imagen que se subio para no persistir basura
                          self.storage_service.delete_file(new_icon_url)
                 # Si hay un error al actualizar, se lanza una excepción
-                raise Exception(f"Error inesperado al actualizar los datos del usuario", str(e))
+                raise Exception(f"Error inesperado al actualizar los datos del usuario: {str(e)}")
 
             # noinspection broad-exception
             try:
                 # si pude guardar correctamente los cambios en la bdd, ahora si debo borrar la imagen anterior si es que se subió una nueva
-                if cambio_icono and old_icon_url is not None:
+                if icon_changed and old_icon_url is not None:
                     #borrar la imagen anterior para no persistir basura
                      self.storage_service.delete_file(old_icon_url)
             except Exception:

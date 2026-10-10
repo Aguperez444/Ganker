@@ -5,6 +5,7 @@ from app.domain.specifications.characters_specification import ByCharactersSpeci
 from app.domain.specifications.different_player_id_specification import \
     ByDifferentPlayerIDSpecification
 from app.domain.specifications.last_connection_specification import ByLastConnectionSpecification
+from app.domain.specifications.name_player_specification import ByNamePlayerSpecification
 from app.domain.specifications.ranks_specification import ByRanksSpecification
 from app.domain.specifications.roles_specification import ByRolesSpecification
 from app.domain.specifications.videogame_specification import ByVideogameSpecification
@@ -57,6 +58,14 @@ class FindBySpecificationRepositoryImpl(IFindBySpecificationRepository):
         # TODO Deberíamos hacer un índice para que esta no destruya el rendimiento recorriendo todos los registros
         if isinstance(spec, ByLastConnectionSpecification):
             return query.join(GameProfileORM.user).filter(UserORM.last_connection >= spec.to_expression())
+
+        if isinstance(spec, ByNamePlayerSpecification):
+            name_pattern = f"%{spec.to_expression()}%"
+            return query.filter(
+                GameProfileORM.user.has(
+                    (UserORM.username.ilike(name_pattern)) | (UserORM.name.ilike(name_pattern))
+                )
+            )
 
 
         return query

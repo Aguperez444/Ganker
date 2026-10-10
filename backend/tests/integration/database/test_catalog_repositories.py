@@ -196,6 +196,14 @@ class TestCatalogRepositoriesIntegration:
         assert reloaded.name == "Jungle Carry"
         assert reloaded.icon_url == "/jungle_carry.png"
 
+        # Delete role
+        deleted = repo.delete_role(saved.role_id)
+        test_db_session.commit()
+        assert deleted is True
+        assert repo.get_role_by_id(saved.role_id) is None
+        assert repo.delete_role(99999) is False
+
+
     def test_rank_repository_crud(self, test_db_session, seed_catalog_data, seed_player):
         repo = RankRepositoryImpl(test_db_session)
         role_porfile_repo = RoleProfileRepositoryImpl(test_db_session)
@@ -295,3 +303,37 @@ class TestCatalogRepositoriesIntegration:
         test_db_session.commit()
         assert deleted is True
         assert repo.get_rank_by_id(cast(int, saved.rank_id)) is None
+
+    def test_role_profile_repository_role_methods(self, test_db_session, seed_catalog_data, seed_player):
+        role_profile_repo = RoleProfileRepositoryImpl(test_db_session)
+        vg_orm = seed_catalog_data["videogame"]
+        role_orm = seed_catalog_data["roles"][0]
+        rank_orm = seed_catalog_data["ranks"][0]
+
+        # Initial count
+        assert role_profile_repo.count_associated_to_role(role_orm.role_id) == 0
+
+        # Create GP and RP
+        gp = GameProfileORM(player_id=seed_player.user_id, videogame_id=vg_orm.videogame_id)
+        test_db_session.add(gp)
+        test_db_session.flush()
+
+        rp = RoleProfileORM(
+            game_profile_id=gp.game_profile_id,
+            role_id=role_orm.role_id,
+            rank_id=rank_orm.rank_id
+        )
+        test_db_session.add(rp)
+        test_db_session.commit()
+
+        assert role_profile_repo.count_associated_to_role(role_orm.role_id) == 1
+        assert role_profile_repo.count_by_game_profile_id(gp.game_profile_id) == 1
+
+        # Delete by role id
+        affected = role_profile_repo.delete_by_role_id(role_orm.role_id)
+        test_db_session.commit()
+
+        assert affected == [gp.game_profile_id]
+        assert role_profile_repo.count_associated_to_role(role_orm.role_id) == 0
+        assert role_profile_repo.count_by_game_profile_id(gp.game_profile_id) == 0
+

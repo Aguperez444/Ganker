@@ -39,7 +39,7 @@ class TestUserLogoutUseCase:
         with pytest.raises(InvalidTokenException) as exc_info:
             use_case.execute("revoked_refresh_token")
 
-        assert "Token revoked" in exc_info.value.message
+        assert "revocado" in exc_info.value.message
         assert exc_info.value.status_code == 401
 
     def test_logout_invalid_refresh_token_raises_invalid_token(self, mock_deps):

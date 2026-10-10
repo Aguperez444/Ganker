@@ -111,3 +111,20 @@ class TestCreateRoleUseCase:
             use_case.execute(game_id=1, name="Mid", icon_stream=MagicMock(), filename="mid.png")
 
         storage_service.delete_file.assert_called_once_with("/media/games/lol/roles/mid.png")
+
+    def test_create_role_same_name_different_videogame(self, mock_deps):
+        # Probar registrar un rol con un nombre ya existente pero en un videojuego diferente (pasa)
+        use_case, uow, storage_service = mock_deps
+
+        vg2 = Videogame(videogame_id=2, name="Valorant", icon_url="/val.png", rank_per_role=False)
+        uow.videogame_repo.get_videogame_by_id.return_value = vg2
+        uow.role_repo.get_role_by_name_and_videogame.return_value = None
+
+        saved = Role(role_id=20, name="Mid", videogame=vg2, icon_url="/media/games/valorant/roles/mid.png")
+        uow.role_repo.save_role.return_value = saved
+
+        result = use_case.execute(game_id=2, name="Mid", icon_stream=MagicMock(), filename="mid.png")
+
+        assert result.role_id == 20
+        assert result.name == "Mid"
+        uow.role_repo.save_role.assert_called_once()

@@ -25,3 +25,16 @@ class IGameProfileRepository(ABC):
     @abstractmethod
     def disassociate_region(self, region_id: int) -> None:
         raise NotImplementedError
+
+    @abstractmethod
+    def delete_game_profile(self, game_profile_id: int) -> bool:
+        """
+        Elimina un perfil de juego por su ID.
+        """
+        raise NotImplementedError
+
+    def get_by_user_id_and_game_id(self, user_id, game_id):
+        """
+        Obtiene un perfil de juego por el ID del usuario asignado y el id del juego asignado.
+        """
+        raise NotImplementedError

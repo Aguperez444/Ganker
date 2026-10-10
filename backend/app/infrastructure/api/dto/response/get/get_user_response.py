@@ -12,5 +12,5 @@ class GetUserResponse(BaseModel):
     mail: str|None = Field(..., description="Correo electrónico del jugador")
     profiles: List[GameProfileObjectResponse] = Field(..., description="Perfiles de juego del jugador")
     role: str = Field(..., description="Rol del jugador")
-    icon_url: str = "/media/users/icons/icon_example_1.png"
+    icon_url: str = Field("/media/users/icons/icon_example_1.png", description="URL del ícono del jugador")
     last_connection: datetime | None = Field(..., description="Última conexión del jugador")
