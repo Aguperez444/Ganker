@@ -51,6 +51,7 @@ class ConsultantPlayerInfo(BaseModel):
 class VideogameInfoSummaryResponse(BaseModel):
     videogame_id: int | None = Field(None, description="ID del videojuego")
     name: str | None = Field(None, description="Nombre del videojuego")
+    has_characters: bool | None = Field(None, description="Indica si el videojuego posee selección de personajes")
 
 
 class RegionInfoSummaryResponse(BaseModel):

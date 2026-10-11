@@ -57,6 +57,7 @@ class CreateTeamSummaryService:
             videogame=VideogameInfoSummaryResponse(
                 videogame_id=team.videogame.videogame_id,
                 name=team.videogame.name,
+                has_characters=team.videogame.has_characters,
             ),
             region=RegionInfoSummaryResponse(
                 region_id=None if not team.region else team.region.region_id,

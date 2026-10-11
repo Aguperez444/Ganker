@@ -1,5 +1,6 @@
 from typing import List
 from sqlalchemy import String, Boolean
+from sqlalchemy.sql import true
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.infrastructure.database.base import Base
@@ -22,6 +23,7 @@ class VideogameORM(Base):
     name: Mapped[str] = mapped_column(String, unique=True, nullable=False)
     icon_url: Mapped[str] = mapped_column(String, nullable=False)
     rank_per_role: Mapped[bool] = mapped_column(Boolean, nullable=True)
+    has_characters: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True, server_default=true())
 
     # Relaciones
     characters: Mapped[List["CharacterORM"]] = relationship(back_populates="videogame")

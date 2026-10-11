@@ -48,6 +48,7 @@ def seed_database(session: Session) -> None:
                     name=row["name"],
                     icon_url=row["icon_url"],
                     rank_per_role=row["rank_per_role"] in ("1", "True", "true"),
+                    has_characters=row.get("has_characters", "1") in ("1", "True", "true"),
                 )
             )
         session.commit()

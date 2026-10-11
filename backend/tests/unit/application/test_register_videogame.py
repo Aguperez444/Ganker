@@ -40,9 +40,24 @@ class TestRegisterVideogameUseCase:
         assert result.name == "Valorant"
         assert result.icon_url == "/media/games/valorant/icon.png"
         assert result.rank_per_role is True
+        assert result.has_characters is True
 
         storage_service.save_image_file.assert_called_once()
         uow.videogame_repo.register_videogame.assert_called_once()
+
+    def test_register_videogame_without_characters_happy_path(self, mock_deps):
+        use_case, uow, storage_service = mock_deps
+
+        uow.videogame_repo.get_videogame_by_name.return_value = None
+        saved_game = Videogame(videogame_id=2, name="Counter Strike 2", icon_url="/media/games/cs2/icon.png", rank_per_role=False, has_characters=False)
+        uow.videogame_repo.register_videogame.return_value = saved_game
+
+        fake_file = MagicMock()
+        result = use_case.execute(name="Counter Strike 2", icon_file=fake_file, icon_filename="logo.png", rank_per_role=False, has_characters=False)
+
+        assert result.id == 2
+        assert result.name == "Counter Strike 2"
+        assert result.has_characters is False
 
     def test_register_videogame_empty_name_raises_invalid_name(self, mock_deps):
         use_case, _, _ = mock_deps

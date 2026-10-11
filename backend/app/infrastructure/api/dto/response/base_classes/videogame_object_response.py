@@ -5,3 +5,4 @@ class VideogameObjectResponse(BaseModel):
     name: str = Field(..., description="Nombre del videojuego")
     icon_url: str = Field(..., description="URL del ícono del videojuego")
     rank_per_role: bool = Field(..., description="Indica si el videojuego rankea a los jugadores por rol")
+    has_characters: bool = Field(True, description="Indica si el videojuego posee selección de personajes distintos")
