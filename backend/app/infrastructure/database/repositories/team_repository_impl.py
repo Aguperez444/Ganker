@@ -1,13 +1,11 @@
 from typing import TYPE_CHECKING, Optional
 
-from sqlalchemy.orm import Session, aliased
-from sqlalchemy import or_, and_, func, select
+from sqlalchemy.orm import Session
 
 from app.application.ports.i_team_repository import ITeamRepository
 from app.domain.exceptions.team.team_not_found_exception import TeamNotFoundException
 from app.infrastructure.database.mappers.team_mapper import TeamMapper
 from app.infrastructure.database.models.team_orm import TeamORM
-from app.infrastructure.database.models.rank_orm import RankORM
 from app.infrastructure.database.models.conversation_member_orm import ConversationMemberORM
 from app.infrastructure.database.models.team_member_role_orm import TeamMemberRoleORM
 from app.infrastructure.database.mappers.conversation_mapper import ConversationMapper
@@ -125,60 +123,6 @@ class TeamRepositoryImpl(ITeamRepository):
         self.session.add(team_orm)
         self.session.flush()
         return TeamMapper.orm_to_domain(team_orm)
-
-    def search_teams(self, videogame_id: Optional[int] = None, region_id: Optional[int] = None,
-                     rank_id: Optional[int] = None, vacant_slots: Optional[int] = None,
-                     role_id: Optional[int] = None, search_term: Optional[str] = None,
-                     limit: Optional[int] = None, offset: int = 0) -> list['Team']:
-        query = self.session.query(TeamORM).filter(TeamORM.is_active.is_(True))
-
-        # Cantidad de vacantes de cada equipo (subconsulta correlacionada)
-        vacant_count = (
-            select(func.count(TeamMemberRoleORM.team_member_role_id))
-            .where(TeamMemberRoleORM.team_id == TeamORM.team_id, TeamMemberRoleORM.user_id.is_(None))
-            .correlate(TeamORM)
-            .scalar_subquery()
-        )
-        # Solo equipos con cupos vacantes (y, si se pide, con al menos esa cantidad)
-        query = query.filter(vacant_count >= max(vacant_slots or 1, 1))
-
-        if videogame_id:
-            query = query.filter(TeamORM.videogame_id == videogame_id)
-
-        if region_id:
-            query = query.filter(TeamORM.region_id == region_id)
-
-        if rank_id is not None:
-            rank_value = select(RankORM.value).where(RankORM.rank_id == rank_id).scalar_subquery()
-            MinRank, MaxRank = aliased(RankORM), aliased(RankORM)
-            query = (
-                 query.join(MinRank, TeamORM.min_rank_id == MinRank.rank_id)
-                .join(MaxRank, TeamORM.max_rank_id == MaxRank.rank_id)
-                .where(MinRank.value <= rank_value, MaxRank.value >= rank_value)
-            )
-
-        if role_id:
-            query = query.filter(TeamORM.members_roles.any(and_(
-                TeamMemberRoleORM.game_role_id == role_id,
-                TeamMemberRoleORM.user_id.is_(None)
-            )))
-
-        if search_term:
-            escaped = search_term.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
-            pattern = f"%{escaped}%"
-            query = query.filter(or_(
-                TeamORM.name.ilike(pattern, escape="\\"),
-                TeamORM.description.ilike(pattern, escape="\\")
-            ))
-
-        # Los equipos más recientes primero
-        query = query.order_by(TeamORM.team_id.desc()).offset(offset)
-        if limit is not None:
-            query = query.limit(limit)
-        else:
-            query = query.limit(20)  # Valor predeterminado si no se proporciona un límite
-
-        return [TeamMapper.orm_to_domain(team) for team in query.all()]
 
     def get_team_info_by_conversation_ids(self, conversation_ids: list[int]) -> dict[int, tuple[int, Optional[str]]]:
         if not conversation_ids:

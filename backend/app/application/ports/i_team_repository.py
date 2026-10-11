@@ -29,15 +29,6 @@ class ITeamRepository(ABC):
         """
         raise NotImplementedError
 
-        
-    @abstractmethod
-    def search_teams(self, videogame_id: Optional[int] = None, region_id: Optional[int] = None, 
-                     rank_id: Optional[int] = None, vacant_slots: Optional[int] = None, 
-                     role_id: Optional[int] = None, search_term: Optional[str] = None,
-                     limit: Optional[int] = None, offset: int = 0) -> List['Team']:
-        """Busca equipos activos con al menos una vacante, aplicando los filtros recibidos."""
-        raise NotImplementedError
-
     @abstractmethod
     def get_by_id(self, team_id: int) -> Optional['Team']:
         raise NotImplementedError
