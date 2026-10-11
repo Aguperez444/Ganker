@@ -19,7 +19,6 @@ from app.application.ports.i_videogame_repository import IVideogameRepository
 from app.infrastructure.database.repositories.character_priority_repository_impl import CharacterPriorityRepositoryImpl
 from app.infrastructure.database.repositories.character_repository_impl import CharacterRepositoryImpl
 from app.infrastructure.database.repositories.conversation_repo_impl import ConversationRepositoryImpl
-from app.infrastructure.database.repositories.find_by_specification_repository_impl import FindBySpecificationRepositoryImpl
 from app.infrastructure.database.repositories.game_profile_repository_impl import GameProfileRepositoryImpl
 from app.infrastructure.database.repositories.message_repo_impl import MessageRepoImpl
 from app.infrastructure.database.repositories.role_profile_repository_impl import RoleProfileRepositoryImpl
@@ -30,6 +29,7 @@ from app.infrastructure.database.repositories.role_repository_impl import RoleRe
 from app.infrastructure.database.repositories.team_repository_impl import TeamRepositoryImpl
 from app.infrastructure.database.repositories.region_repository_impl import RegionRepositoryImpl
 from app.infrastructure.database.repositories.videogame_repository_impl import VideogameRepositoryImpl
+from app.infrastructure.database.repositories.find_by_specification_repository_impl import FindBySpecificationsRepositoryImpl
 
 SessionFactory = Callable[[], Session]
 
@@ -73,7 +73,7 @@ class SqlAlchemyUnitOfWork(IUnitOfWork):
         self.character_priority_repo: ICharacterPriorityRepository = CharacterPriorityRepositoryImpl(self.session)
         self.team_repo: ITeamRepository = TeamRepositoryImpl(self.session)
         self.region_repo: IRegionRepository = RegionRepositoryImpl(self.session)
-        self.find_by_specification_repo: IFindBySpecificationRepository = FindBySpecificationRepositoryImpl(self.session)
+        self.find_by_specification_repo: IFindBySpecificationRepository = FindBySpecificationsRepositoryImpl(self.session)
         return self
 
 
