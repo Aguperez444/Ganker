@@ -4,7 +4,7 @@ from sqlalchemy.orm import Session
 from app.application.ports.i_character_priority_repository import ICharacterPriorityRepository
 from app.application.ports.i_character_repository import ICharacterRepository
 from app.application.ports.i_conversation_repository import IConversationRepository
-from app.application.ports.i_find_by_specifications_service import IFindBySpecificationRepository
+from app.application.ports.i_find_by_specifications_service import IFindBySpecificationsRepository
 from app.application.ports.i_game_profile_repository import IGameProfileRepository
 from app.application.ports.i_message_repository import IMessageRepository
 from app.application.ports.i_role_profile_repository import IRoleProfileRepository
@@ -52,7 +52,7 @@ class SqlAlchemyUnitOfWork(IUnitOfWork):
         self.refresh_token_repo: IRefreshTokenRepository
         self.conversation_repo: IConversationRepository
         self.message_repo: IMessageRepository
-        self.find_by_specification_repo: IFindBySpecificationRepository
+        self.find_by_specification_repo: IFindBySpecificationsRepository
         self.role_profile_repo: IRoleProfileRepository
         self.character_priority_repo: ICharacterPriorityRepository
         self.team_repo: ITeamRepository
@@ -73,7 +73,7 @@ class SqlAlchemyUnitOfWork(IUnitOfWork):
         self.character_priority_repo: ICharacterPriorityRepository = CharacterPriorityRepositoryImpl(self.session)
         self.team_repo: ITeamRepository = TeamRepositoryImpl(self.session)
         self.region_repo: IRegionRepository = RegionRepositoryImpl(self.session)
-        self.find_by_specification_repo: IFindBySpecificationRepository = FindBySpecificationsRepositoryImpl(self.session)
+        self.find_by_specification_repo: IFindBySpecificationsRepository = FindBySpecificationsRepositoryImpl(self.session)
         return self
 
 

@@ -2,7 +2,7 @@ from typing import List
 
 from sqlalchemy import func, select, or_
 from sqlalchemy.orm import Session, joinedload
-from app.application.ports.i_find_by_specifications_service import IFindBySpecificationRepository
+from app.application.ports.i_find_by_specifications_service import IFindBySpecificationsRepository
 from app.domain.models.team import Team
 from app.domain.specifications.base import Specification, AndSpecification
 from app.domain.specifications.characters_specification import ByCharactersSpecification
@@ -31,7 +31,7 @@ from app.infrastructure.database.models import GameProfileORM, CharacterPriority
 from app.domain.specifications.regions_specification import ByRegionsSpecification
 
 
-class FindBySpecificationsRepositoryImpl(IFindBySpecificationRepository):
+class FindBySpecificationsRepositoryImpl(IFindBySpecificationsRepository):
     def __init__(self, session: Session):
         self.session = session
 
