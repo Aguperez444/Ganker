@@ -45,6 +45,7 @@ function AppRouter() {
             {/* US 02 - Modificar mis datos. Es el boton "Cuenta" del sidebar. */}
             <Route path="cuenta" element={<CuentaPage />} />
             {/* Páginas placeholder para funcionalidades en próximos sprints */}
+            <Route path="chat/:conversationId" element={<ChatRoom />} />
             <Route path="jugadores" element={<BuscarJugadoresPage />} />
             <Route
               path="buscar"
