@@ -1,4 +1,5 @@
 from app.application.ports.i_unit_of_work import IUnitOfWork
+from app.domain.models.conversation_type_enum import ConversationTypeEnum
 from app.domain.exceptions.chat.conversation_not_found_exception import ConversationNotFoundException
 from app.domain.exceptions.chat.user_does_not_belong_to_conversation_exception import UserDoesNotBelongToConversationException
 
@@ -12,6 +13,10 @@ class MarkAsRead:
 
             conversation = uow.conversation_repo.get_by_conversation_id(conversation_id)
             if not conversation:
+                raise ConversationNotFoundException(conversation_id)
+
+            # los chatrooms grupales se marcan como leídos por los endpoints /chatroom
+            if conversation.conversation_type == ConversationTypeEnum.GROUP:
                 raise ConversationNotFoundException(conversation_id)
 
             if not conversation.belongs_user_id(user_id):

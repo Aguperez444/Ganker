@@ -1,6 +1,7 @@
 import { useCallback, useState } from "react";
 import {
   createCharacter,
+  deleteCharacter,
   getCharactersByGame,
   updateCharacter,
 } from "../api/characterApi";
@@ -16,7 +17,11 @@ function mapearErrorAccion(error, accion) {
 
   const status = error.response?.status;
   if (status === 400) return "Los datos ingresados no son válidos.";
-  if (status === 404) return "El videojuego seleccionado no existe.";
+    if (status === 404) {
+    return accion === "eliminar"
+      ? "El personaje no existe o ya fue eliminado."
+      : "El videojuego seleccionado no existe.";
+  }
   if (status === 409) {
     return "Ya existe un personaje con ese nombre para este videojuego.";
   }
@@ -79,6 +84,30 @@ const useCharacters = () => {
     }
   };
 
+  const removeCharacter = async (characterId, videogameId) => {
+   try {
+     setIsSaving(true);
+     setActionError("");
+
+     await deleteCharacter(characterId);
+     await loadCharacters(videogameId);
+
+     return true;
+    }catch (error) {
+      setActionError(mapearErrorAccion(error, "eliminar"));
+
+      // Si el personaje ya no existe (otro admin lo borró), refrescamos la
+      // lista para que deje de mostrarse.
+      if (error.response?.status === 404) {
+        await loadCharacters(videogameId);
+      }
+
+      return false;
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
   const editCharacter = async (characterId, { videogame_id, name, icon }) => {
     try {
       setIsSaving(true);
@@ -96,6 +125,8 @@ const useCharacters = () => {
     }
   };
 
+  
+
   const clearActionError = () => {
     setActionError("");
   };
@@ -109,6 +140,7 @@ const useCharacters = () => {
     loadCharacters,
     registerCharacter,
     editCharacter,
+    removeCharacter,
     clearActionError,
   };
 };

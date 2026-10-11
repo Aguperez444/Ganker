@@ -29,10 +29,10 @@ def get_ranks_by_videogame_id(videogame_id: int):
 
 @router.post("", status_code=201, response_model=RankObjectResponse, dependencies=[Depends(require_admin)])
 def create_game_rank(
-    videogame_id: int = Form(..., description="ID of the videogame"),
-    name: str = Form(..., description="Name of the rank"),
-    value: int = Form(..., description="Value of the rank"),
-    icon: UploadFile = File(..., description="Icon image file"),
+    videogame_id: int = Form(..., description="ID del videojuego"),
+    name: str = Form(..., description="Nombre del rango"),
+    value: int = Form(..., description="Valor numérico del rango"),
+    icon: UploadFile = File(..., description="Archivo de imagen del ícono"),
 ):
     # Asegurarse de que la petición incluya un archivo con nombre
     if not icon.filename:
@@ -58,9 +58,9 @@ def create_game_rank(
 @router.put("/{rank_id}", status_code=200, response_model=RankObjectResponse, dependencies=[Depends(require_admin)])
 def update_game_rank(
     rank_id: int,
-    name: str = Form(..., description="Name of the rank"),
-    value: int = Form(..., description="Value of the rank"),
-    icon: UploadFile | None = File(None, description="Icon image file"),
+    name: str = Form(..., description="Nombre del rango"),
+    value: int = Form(..., description="Valor numérico del rango"),
+    icon: UploadFile | None = File(None, description="Archivo de imagen del ícono"),
 ):
     if icon and not icon.filename:
         raise HTTPException(

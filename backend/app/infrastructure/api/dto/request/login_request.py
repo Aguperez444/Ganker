@@ -1,8 +1,6 @@
-from pydantic import BaseModel
-from pydantic import EmailStr
-
+from pydantic import BaseModel, EmailStr, Field
 
 
 class LoginRequest(BaseModel):
-    mail: EmailStr
-    password: str
+    mail: EmailStr = Field(..., description="Correo electrónico del usuario")
+    password: str = Field(..., description="Contraseña del usuario")

@@ -1,6 +1,6 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 class CharacterObjectResponse(BaseModel):
-    character_id: int
-    name: str
-    icon_url: str
+    character_id: int = Field(..., description="ID único del personaje")
+    name: str = Field(..., description="Nombre del personaje")
+    icon_url: str = Field(..., description="URL del ícono del personaje")

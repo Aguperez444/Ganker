@@ -26,7 +26,12 @@ class DeleteCharacter:
             uow.character_repo.delete_character(character_id)
 
             # Limpiar archivo de ícono en almacenamiento si existe
-            if character_to_delete.icon_url:
-                self.storage_service.delete_file(character_to_delete.icon_url)
+            # noinspection broad-exception
+            try:
+                if character_to_delete.icon_url:
+                    self.storage_service.delete_file(character_to_delete.icon_url)
+            except Exception:
+                from colorama import Fore, Style
+                print(Fore.RED + "-" * 70 + "\n" + f"Error inesperado al borrar la imagen anterior del personaje: {character_to_delete.icon_url} \n" + "-" * 70 + "\n" + Style.RESET_ALL)
 
         return DeleteCharacterResponse(message="El personaje ha sido eliminado exitosamente.")

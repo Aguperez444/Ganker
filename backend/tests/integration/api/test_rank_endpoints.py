@@ -50,6 +50,69 @@ class TestRankEndpointsIntegration:
 
         assert response.status_code == 404
 
+    def test_create_rank_missing_videogame(self, client, admin_auth_headers):
+        # Probar registrar un rango sin seleccionar un videojuego (falla)
+        file = ("rank.png", io.BytesIO(b"data"), "image/png")
+        data = {
+            "name": "Rank Without Game",
+            "value": 100
+        }
+
+        response = client.post(
+            "/api/v1/ranks",
+            data=data,
+            files={"icon": file},
+            headers=admin_auth_headers
+        )
+
+        assert response.status_code == 422
+
+    def test_create_rank_missing_name(self, client, admin_auth_headers, seed_catalog_data):
+        # Probar registrar un rango sin ingresar el nombre del rango (falla)
+        vg_id = seed_catalog_data["videogame"].videogame_id
+        file = ("rank.png", io.BytesIO(b"data"), "image/png")
+        data = {
+            "value": 100,
+            "videogame_id": vg_id
+        }
+
+        response = client.post(
+            "/api/v1/ranks",
+            data=data,
+            files={"icon": file},
+            headers=admin_auth_headers
+        )
+
+        assert response.status_code == 422
+
+    def test_create_rank_same_name_different_videogame_success(self, client, admin_auth_headers, seed_catalog_data, test_db_session):
+        # Probar registrar un rango con un nombre ya existente pero en un videojuego diferente (pasa)
+        from app.infrastructure.database.models.videogame_orm import VideogameORM
+        vg2 = VideogameORM(name="Valorant", icon_url="/val.png", rank_per_role=False)
+        test_db_session.add(vg2)
+        test_db_session.commit()
+        test_db_session.refresh(vg2)
+
+        existing_rank_name = seed_catalog_data["ranks"][0].name
+        file = ("rank.png", io.BytesIO(b"data"), "image/png")
+        data = {
+            "name": existing_rank_name,
+            "value": 100,
+            "videogame_id": vg2.videogame_id
+        }
+
+        response = client.post(
+            "/api/v1/ranks",
+            data=data,
+            files={"icon": file},
+            headers=admin_auth_headers
+        )
+
+        assert response.status_code == 201
+        res_data = response.json()
+        assert res_data["name"] == existing_rank_name
+        assert res_data["value"] == 100
+
     def test_create_rank_duplicate_name(self, client, admin_auth_headers, seed_catalog_data):
         vg_id = seed_catalog_data["videogame"].videogame_id
         existing_rank_name = seed_catalog_data["ranks"][0].name

@@ -1,10 +1,12 @@
 from fastapi import APIRouter, Depends, Form, UploadFile, File, HTTPException, status
 
 from app.application.use_cases.create_role import CreateRole
+from app.application.use_cases.delete_role import DeleteRole
 from app.application.use_cases.query_roles import QueryRoles
 from app.application.use_cases.update_role import UpdateRole
 from app.infrastructure.api.dependencies.auth import require_admin, require_player
 
+from app.infrastructure.api.dto.response.delete.delete_role_response import DeleteRoleResponse
 from app.infrastructure.api.dto.response.get.get_roles_response import GetRolesResponse
 from app.infrastructure.api.dto.response.base_classes.role_object_response import RoleObjectResponse
 from app.infrastructure.database.unit_of_work.uow_factory import uow_factory
@@ -28,9 +30,9 @@ def get_roles_by_videogame_id(videogame_id: int):
 
 @router.post("", status_code=201, response_model=RoleObjectResponse, dependencies=[Depends(require_admin)])
 def create_game_role(
-    videogame_id: int = Form(..., description="ID of the videogame"),
-    name: str = Form(..., description="Name of the role"),
-    icon: UploadFile = File(..., description="Icon image file"),
+    videogame_id: int = Form(..., description="ID del videojuego"),
+    name: str = Form(..., description="Nombre del rol"),
+    icon: UploadFile = File(..., description="Archivo de imagen del ícono"),
 ):
     # Asegurarse de que la petición incluya un archivo con nombre
     if not icon.filename:
@@ -56,8 +58,8 @@ def create_game_role(
 @router.put("/{role_id}", status_code=200, response_model=RoleObjectResponse, dependencies=[Depends(require_admin)])
 def update_game_role(
     role_id: int,
-    name: str = Form(..., description="Name of the role"),
-    icon: UploadFile | None = File(None, description="Icon image file"),
+    name: str = Form(..., description="Nombre del rol"),
+    icon: UploadFile | None = File(None, description="Archivo de imagen del ícono"),
 ):
     if icon and not icon.filename:
         raise HTTPException(
@@ -75,3 +77,11 @@ def update_game_role(
         icon=icon
     )
     return result
+
+
+@router.delete("/{role_id}", status_code=200, response_model=DeleteRoleResponse, dependencies=[Depends(require_admin)])
+def delete_game_role(role_id: int):
+    uow = uow_factory()
+    storage_service = get_storage_service()
+    use_case = DeleteRole(storage_service=storage_service, uow=uow)
+    return use_case.execute(role_id=role_id)

@@ -48,3 +48,11 @@ export const updateCharacter = async (
 
   return response.data;
 };
+
+export const deleteCharacter = async (characterId) => {
+  const response = await axiosClient.delete(
+    `/api/v1/characters/${characterId}`
+  );
+
+  return response.data;
+};

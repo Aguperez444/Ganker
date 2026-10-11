@@ -93,3 +93,44 @@ class TestUpdateCharacterUseCase:
             use_case.execute(character_id=999, name="Unknown", videogame_id=1, icon=None)
 
         assert exc_info.value.status_code == 404
+
+    def test_update_character_keep_name_change_icon(self, mock_deps):
+        # Probar modificar un personaje manteniendo su nombre actual y cambiando únicamente su avatar (pasa)
+        use_case, uow, storage_service = mock_deps
+
+        vg = Videogame(videogame_id=1, name="LoL", icon_url="/lol.png", rank_per_role=True)
+        uow.videogame_repo.get_videogame_by_id.return_value = vg
+
+        existing_char = Character(character_id=10, name="Ahri", videogame=vg, icon_url="/old.png")
+        uow.character_repo.get_character_by_id.return_value = existing_char
+        uow.character_repo.get_character_by_name_and_videogame.return_value = existing_char
+        uow.character_repo.update_character.side_effect = lambda c: c
+
+        mock_icon = MagicMock()
+        mock_icon.filename = "new_icon.png"
+
+        result = use_case.execute(character_id=10, name="Ahri", videogame_id=1, icon=mock_icon)
+
+        assert result.character_id == 10
+        assert result.name == "Ahri"
+        storage_service.save_image_file.assert_called_once()
+        uow.character_repo.update_character.assert_called_once()
+
+    def test_update_character_same_name_different_videogame_passes(self, mock_deps):
+        # Probar modificar un personaje asignando un nombre que ya existe pero en otro videojuego diferente (pasa)
+        use_case, uow, storage_service = mock_deps
+
+        vg1 = Videogame(videogame_id=1, name="LoL", icon_url="/lol.png", rank_per_role=True)
+        uow.videogame_repo.get_videogame_by_id.return_value = vg1
+
+        existing_char = Character(character_id=10, name="Ahri", videogame=vg1, icon_url="/old.png")
+        uow.character_repo.get_character_by_id.return_value = existing_char
+        # In videogame 1, name "Jett" does NOT exist
+        uow.character_repo.get_character_by_name_and_videogame.return_value = None
+        uow.character_repo.update_character.side_effect = lambda c: c
+
+        result = use_case.execute(character_id=10, name="Jett", videogame_id=1, icon=None)
+
+        assert result.character_id == 10
+        assert result.name == "Jett"
+        uow.character_repo.update_character.assert_called_once()

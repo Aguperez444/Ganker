@@ -112,3 +112,22 @@ class TestCreateRankUseCase:
             use_case.execute(game_id=1, name="Gold", icon_stream=MagicMock(), filename="gold.png", value=1000)
 
         storage_service.delete_file.assert_called_once_with("/media/league_of_legends/ranks/gold.png")
+
+    def test_create_rank_same_name_different_videogame(self, mock_deps):
+        # Probar registrar un rango con un nombre ya existente pero en un videojuego diferente (pasa)
+        use_case, uow, storage_service = mock_deps
+
+        vg2 = Videogame(videogame_id=2, name="Valorant", icon_url="/val.png", rank_per_role=False)
+        uow.videogame_repo.get_videogame_by_id.return_value = vg2
+        uow.rank_repo.get_rank_by_name_and_videogame.return_value = None
+        uow.rank_repo.get_rank_by_value_and_videogame.return_value = None
+
+        saved = Rank(rank_id=5, name="Gold", value=1000, videogame=vg2, icon_url="/media/valorant/ranks/gold.png")
+        uow.rank_repo.save_rank.return_value = saved
+
+        result = use_case.execute(game_id=2, name="Gold", icon_stream=MagicMock(), filename="gold.png", value=1000)
+
+        assert result.rank_id == 5
+        assert result.name == "Gold"
+        assert result.value == 1000
+        uow.rank_repo.save_rank.assert_called_once()

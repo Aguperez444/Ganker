@@ -15,9 +15,10 @@ def get_storage_service():
     return LocalDiskStorageService()
 @router.post("/", status_code=201, response_model=VideogameObjectResponse, dependencies=[Depends(require_admin)])
 def register_videogame(
-    name: str = Form(..., description="Name of the videogame"),
-    icon: UploadFile = File(..., description="Icon image file"),
-    rank_per_role: bool = Form(..., description="Whether the videogame ranks players per role"),
+    name: str = Form(..., description="Nombre del videojuego"),
+    icon: UploadFile = File(..., description="Archivo de imagen del ícono"),
+    rank_per_role: bool = Form(..., description="Indica si el videojuego rankea a los jugadores por rol"),
+    has_characters: bool = Form(True, description="Indica si el videojuego posee selección de personajes"),
 ):
 
     # Asegurarse de que la petición incluya un archivo con nombre
@@ -30,16 +31,17 @@ def register_videogame(
     uow = uow_factory()
     storage_service = get_storage_service()
     register_videogame_use_case = RegisterVideogame(storage_service, uow)
-    videogame = register_videogame_use_case.execute(name, icon.file, icon.filename, rank_per_role)
+    videogame = register_videogame_use_case.execute(name, icon.file, icon.filename, rank_per_role, has_characters)
 
     return videogame
 
 @router.put("/{videogame_id}", status_code=200, response_model=VideogameObjectResponse, dependencies=[Depends(require_admin)])
 def update_videogame(
     videogame_id: int,
-    name: str = Form(..., description="Name of the videogame"),
-    icon: UploadFile | None = File(None, description="Icon image file"),
-    rank_per_role: bool = Form(..., description="Whether the videogame ranks players per role"),
+    name: str = Form(..., description="Nombre del videojuego"),
+    icon: UploadFile | None = File(None, description="Archivo de imagen del ícono"),
+    rank_per_role: bool = Form(..., description="Indica si el videojuego rankea a los jugadores por rol"),
+    has_characters: bool = Form(True, description="Indica si el videojuego posee selección de personajes"),
 ):
 
     if icon and not icon.filename:
@@ -52,7 +54,7 @@ def update_videogame(
     storage_service = get_storage_service()
     update_videogame_use_case = UpdateVideogame(storage_service, uow)
 
-    updated_videogame = update_videogame_use_case.execute(videogame_id, name, icon, rank_per_role)
+    updated_videogame = update_videogame_use_case.execute(videogame_id, name, icon, rank_per_role, has_characters)
 
     return updated_videogame
 

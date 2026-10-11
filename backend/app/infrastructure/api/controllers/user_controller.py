@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Depends, UploadFile, File, HTTPException, status, Form
 from typing import Optional
+from pydantic import EmailStr
 
 
 from app.application.use_cases.query_users import QueryUsers
@@ -54,8 +55,8 @@ def register_user(request: RegisterUserRequest, user_id: int = Depends(get_curre
 
 
 @router.put("/", response_model=UpdateUserResponse, status_code=200, dependencies=[Depends(require_player)])
-def update_user(username: str = Form(...),name: str = Form(...),mail: str = Form(...),
-                      icon: Optional[UploadFile] = File(None, description="Icon image file"),
+def update_user(username: str = Form(...), name: str = Form(...), mail: EmailStr = Form(...),
+                      icon: Optional[UploadFile] = File(None, description="Archivo de imagen del ícono"),
                       user_id: int = Depends(get_current_user_id)
                       ) -> UpdateUserResponse:
     # Asegurarse de que la petición incluya un archivo con nombre
@@ -66,13 +67,15 @@ def update_user(username: str = Form(...),name: str = Form(...),mail: str = Form
         )
 
     file_obj = icon.file if icon else None
-    filename = icon.filename if icon else None
+    file_name = icon.filename if icon else None
+    if file_obj and not file_name:
+        raise HTTPException(status_code=400, detail="El archivo de ícono del usuario debe tener un nombre válido.")
 
     uow = uow_factory()
     storage_service = get_storage_service()
 
     update_user_use_case = UpdateUser(uow, storage_service)
-    return update_user_use_case.execute(user_id, username, name, mail, file_obj, filename)
+    return update_user_use_case.execute(user_id, username, name, mail, file_obj, file_name)
 
 @router.get("/me", response_model=GetUserResponse, status_code=200, dependencies=[Depends(require_player)])
 def get_user(user_id: int = Depends(get_current_user_id)) -> GetUserResponse:

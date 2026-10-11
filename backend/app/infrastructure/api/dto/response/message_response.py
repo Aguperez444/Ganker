@@ -1,5 +1,5 @@
 from datetime import datetime
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, Field, ConfigDict
 
 from app.infrastructure.api.dto.response.notification.notification_type_enum import NotificationType
 
@@ -7,11 +7,10 @@ from app.infrastructure.api.dto.response.notification.notification_type_enum imp
 class MessageResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
-    type: str = NotificationType.NEW_MESSAGE
-    message_id: int
-    conversation_id: int
-    sender_id: int
-    content: str
-    timestamp: datetime
-    is_read: bool
-
+    type: str = Field(NotificationType.NEW_MESSAGE, description="Tipo de notificación del mensaje")
+    message_id: int = Field(..., description="ID único del mensaje")
+    conversation_id: int = Field(..., description="ID de la conversación a la que pertenece el mensaje")
+    sender_id: int = Field(..., description="ID del remitente del mensaje")
+    content: str = Field(..., description="Contenido del mensaje")
+    timestamp: datetime = Field(..., description="Marca de tiempo del mensaje")
+    is_read: bool = Field(..., description="Indica si el mensaje ha sido leído")

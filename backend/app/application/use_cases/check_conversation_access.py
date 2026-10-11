@@ -1,7 +1,7 @@
 from typing import Optional
 
 from app.application.ports.i_unit_of_work import IUnitOfWork
-
+from app.domain.models.conversation_type_enum import ConversationTypeEnum
 
 class CheckConversationAccess:
     def __init__(self, uow: IUnitOfWork):
@@ -12,6 +12,10 @@ class CheckConversationAccess:
             conversation = uow.conversation_repo.get_by_conversation_id(conversation_id)
             if not conversation or not conversation.belongs_user_id(user_id):
                 return False, None
-            other_user = conversation.get_other_user(user_id)
-            return True, other_user.user_id
-
+            
+            if conversation.conversation_type == ConversationTypeEnum.PRIVATE:
+                other_user = conversation.get_other_user(user_id)
+                return True, other_user.user_id
+            else:
+                # Los chatrooms grupales se acceden por el websocket /chatroom
+                return False, None

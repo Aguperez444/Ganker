@@ -1,4 +1,5 @@
 from app.application.ports.i_unit_of_work import IUnitOfWork
+from app.domain.models.conversation_type_enum import ConversationTypeEnum
 from app.domain.exceptions.chat.conversation_not_found_exception import ConversationNotFoundException
 from app.domain.exceptions.chat.user_does_not_belong_to_conversation_exception import \
     UserDoesNotBelongToConversationException
@@ -17,6 +18,10 @@ class GetMessages:
 
             # verificar que exista
             if not conversation:
+                raise ConversationNotFoundException(conversation_id)
+
+            # los chatrooms grupales se consultan por los endpoints /chatroom
+            if conversation.conversation_type == ConversationTypeEnum.GROUP:
                 raise ConversationNotFoundException(conversation_id)
 
             # verificar que el usuario sea parte de la conversación

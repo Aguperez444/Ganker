@@ -47,7 +47,12 @@ class DeleteRank:
             uow.rank_repo.delete_rank(rank_id)
 
             # Limpiar archivo de ícono en almacenamiento si existe
-            if rank_to_delete.icon_url:
-                self.storage_service.delete_file(rank_to_delete.icon_url)
+            # noinspection broad-exception
+            try:
+                if rank_to_delete.icon_url:
+                    self.storage_service.delete_file(rank_to_delete.icon_url)
+            except Exception:
+                from colorama import Fore, Style
+                print(Fore.RED + "-" * 70 + "\n" + f"Error inesperado al borrar la imagen anterior del rango: {rank_to_delete.icon_url} \n" + "-" * 70 + "\n" + Style.RESET_ALL)
 
         return DeleteRankResponse(message="El rango ha sido eliminado exitosamente.")

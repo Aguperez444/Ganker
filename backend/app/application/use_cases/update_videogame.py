@@ -5,6 +5,7 @@ from fastapi import UploadFile
 from app.application.ports.i_storage_service import IStorageService
 from app.domain.services.catalog_validation_service import CatalogValidationService
 from app.domain.services.slug_service import SlugService
+from app.domain.services.static_validation_service import StaticValidationService
 from app.infrastructure.api.dto.response.base_classes.videogame_object_response import VideogameObjectResponse
 
 if TYPE_CHECKING:
@@ -16,15 +17,17 @@ class UpdateVideogame:
         self.storage_service: IStorageService = storage_service
         self.uow: 'IUnitOfWork' = unit_of_work
 
-    def execute(self, videogame_id: int, name: str, icon: UploadFile | None, rank_per_role: bool) -> VideogameObjectResponse:
+    def execute(self, videogame_id: int, name: str, icon: UploadFile | None, rank_per_role: bool, has_characters: bool = True) -> VideogameObjectResponse:
+        cleaned_name = StaticValidationService.validate_videogame_name_format(name)
+
         with self.uow as uow:
             existing_game = CatalogValidationService.get_and_validate_exist_videogame(videogame_id, uow)
-            cleaned_name = name.strip() if name else existing_game.name
             CatalogValidationService.validate_videogame_name_uniqueness(cleaned_name, videogame_id, uow=uow)
 
             # actualizar juego
             existing_game.name = cleaned_name
             existing_game.rank_per_role = rank_per_role
+            existing_game.has_characters = has_characters
 
             new_icon_url = None
             if icon and icon.filename:
@@ -62,6 +65,7 @@ class UpdateVideogame:
             name=updated_game.name,
             icon_url=updated_game.icon_url or "Sin icono",
             rank_per_role=updated_game.rank_per_role,
+            has_characters=updated_game.has_characters,
         )
 
 

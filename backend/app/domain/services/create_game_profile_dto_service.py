@@ -2,6 +2,7 @@ from app.domain.models.game_profile import GameProfile
 from app.infrastructure.api.dto.response.base_classes.character_object_response import CharacterObjectResponse
 from app.infrastructure.api.dto.response.base_classes.game_profile_object_response import GameProfileObjectResponse
 from app.infrastructure.api.dto.response.base_classes.rank_object_response import RankObjectResponse
+from app.infrastructure.api.dto.response.base_classes.region_object_response import RegionObjectResponse
 from app.infrastructure.api.dto.response.base_classes.role_object_response import RoleObjectResponse
 from app.infrastructure.api.dto.response.base_classes.role_profile_object_response import RoleProfileObjectResponse
 from app.infrastructure.api.dto.response.base_classes.videogame_object_response import VideogameObjectResponse
@@ -22,6 +23,7 @@ class CreateGameProfileDTOService:
                 name=domain_game_profile.videogame.name,
                 icon_url=domain_game_profile.videogame.icon_url,
                 rank_per_role=domain_game_profile.videogame.rank_per_role,
+                has_characters=domain_game_profile.videogame.has_characters,
             ),
             characters=[CharacterObjectResponse(character_id=character.character_id, name=character.name, icon_url=character.icon_url) for character in ordered_characters],
             role_profiles=[RoleProfileObjectResponse(
@@ -30,7 +32,11 @@ class CreateGameProfileDTOService:
                 rank=RankObjectResponse(
                     rank_id=role_profile.rank.rank_id, name=role_profile.rank.name,
                     icon_url= role_profile.rank.icon_url, value=role_profile.rank.value)
-            ) for role_profile in domain_game_profile.role_profiles]
+            ) for role_profile in domain_game_profile.role_profiles],
+            region= RegionObjectResponse(
+                region_id=domain_game_profile.region.region_id,
+                name=domain_game_profile.region.name
+            ) if domain_game_profile.region else None
         )
 
     @staticmethod
@@ -46,6 +52,7 @@ class CreateGameProfileDTOService:
                 name=domain_game_profile.videogame.name,
                 icon_url=domain_game_profile.videogame.icon_url,
                 rank_per_role=domain_game_profile.videogame.rank_per_role,
+                has_characters=domain_game_profile.videogame.has_characters,
             ),
             characters=[CharacterObjectResponse(character_id=character.character_id, name=character.name, icon_url=character.icon_url) for character in ordered_characters],
             role_profiles=[RoleProfileObjectResponse(
@@ -54,5 +61,9 @@ class CreateGameProfileDTOService:
                 rank=RankObjectResponse(
                     rank_id=role_profile.rank.rank_id, name=role_profile.rank.name,
                     icon_url= role_profile.rank.icon_url, value=role_profile.rank.value)
-            ) for role_profile in domain_game_profile.role_profiles]
+            ) for role_profile in domain_game_profile.role_profiles],
+            region= RegionObjectResponse(
+                region_id=domain_game_profile.region.region_id,
+                name=domain_game_profile.region.name
+            ) if domain_game_profile.region else None
         )

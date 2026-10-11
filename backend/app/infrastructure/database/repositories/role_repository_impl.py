@@ -48,3 +48,11 @@ class RoleRepositoryImpl(IRoleRepository):
             return RoleMapper.orm_to_domain(orm_role)
         return role
 
+    def delete_role(self, role_id: int) -> bool:
+        orm_role = self.session.query(RoleORM).filter(RoleORM.role_id == role_id).first()
+        if orm_role:
+            self.session.delete(orm_role)
+            self.session.flush()
+            return True
+        return False
+

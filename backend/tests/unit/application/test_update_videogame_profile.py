@@ -56,7 +56,7 @@ class TestUpdateVideogameProfileUseCase:
 
         req = UpdateGameProfileRequest(
             character_ids=[10],
-            roles_ranks=[RoleRankInput(role_id=100, rank_id=1000)]
+            roles_ranks=[RoleRankInput(role_id=100, rank_id=1000)], region_id=None
         )
 
         result = use_case.execute(player_id=42, game_profile_id=5, update_videogame_profile_request=req)
@@ -75,7 +75,7 @@ class TestUpdateVideogameProfileUseCase:
         use_case = UpdateVideogameProfile(unit_of_work=mock_uow)
         mock_uow.game_profile_repo.get_game_profile_by_id.return_value = None
 
-        req = UpdateGameProfileRequest(character_ids=[], roles_ranks=[])
+        req = UpdateGameProfileRequest(character_ids=[], roles_ranks=[], region_id=None)
 
         with pytest.raises(GameProfileNotFoundException) as exc_info:
             use_case.execute(player_id=42, game_profile_id=999, update_videogame_profile_request=req)
@@ -89,7 +89,7 @@ class TestUpdateVideogameProfileUseCase:
         existing_profile = GameProfile(5, player_id=99, videogame=vg, characters_priority=[], role_profiles=[])
         mock_uow.game_profile_repo.get_game_profile_by_id.return_value = existing_profile
 
-        req = UpdateGameProfileRequest(character_ids=[], roles_ranks=[])
+        req = UpdateGameProfileRequest(character_ids=[], roles_ranks=[], region_id=None)
 
         with pytest.raises(DoesNotBelongToProfileException) as exc_info:
             use_case.execute(player_id=42, game_profile_id=5, update_videogame_profile_request=req)
@@ -104,7 +104,7 @@ class TestUpdateVideogameProfileUseCase:
         mock_uow.game_profile_repo.get_game_profile_by_id.return_value = existing_profile
         mock_uow.character_repo.get_character_by_id.return_value = None
 
-        req = UpdateGameProfileRequest(character_ids=[999], roles_ranks=[])
+        req = UpdateGameProfileRequest(character_ids=[999], roles_ranks=[], region_id=None)
 
         with pytest.raises(CharacterNotFoundException) as exc_info:
             use_case.execute(player_id=42, game_profile_id=5, update_videogame_profile_request=req)
@@ -122,7 +122,7 @@ class TestUpdateVideogameProfileUseCase:
         mock_uow.game_profile_repo.get_game_profile_by_id.return_value = existing_profile
         mock_uow.character_repo.get_character_by_id.return_value = dota_char
 
-        req = UpdateGameProfileRequest(character_ids=[10], roles_ranks=[])
+        req = UpdateGameProfileRequest(character_ids=[10], roles_ranks=[], region_id=None)
 
         with pytest.raises(DoesNotBelongToGameException) as exc_info:
             use_case.execute(player_id=42, game_profile_id=5, update_videogame_profile_request=req)
@@ -137,7 +137,7 @@ class TestUpdateVideogameProfileUseCase:
         mock_uow.game_profile_repo.get_game_profile_by_id.return_value = existing_profile
         mock_uow.role_repo.get_role_by_id.return_value = None
 
-        req = UpdateGameProfileRequest(character_ids=[], roles_ranks=[RoleRankInput(role_id=999, rank_id=1)])
+        req = UpdateGameProfileRequest(character_ids=[], roles_ranks=[RoleRankInput(role_id=999, rank_id=1)], region_id=None)
 
         with pytest.raises(RoleNotFoundException) as exc_info:
             use_case.execute(player_id=42, game_profile_id=5, update_videogame_profile_request=req)
@@ -154,7 +154,7 @@ class TestUpdateVideogameProfileUseCase:
         mock_uow.role_repo.get_role_by_id.return_value = role
         mock_uow.rank_repo.get_rank_by_id.return_value = None
 
-        req = UpdateGameProfileRequest(character_ids=[], roles_ranks=[RoleRankInput(role_id=1, rank_id=999)])
+        req = UpdateGameProfileRequest(character_ids=[], roles_ranks=[RoleRankInput(role_id=1, rank_id=999)], region_id=None)
 
         with pytest.raises(RankNotFoundException) as exc_info:
             use_case.execute(player_id=42, game_profile_id=5, update_videogame_profile_request=req)
@@ -174,7 +174,7 @@ class TestUpdateVideogameProfileUseCase:
         mock_uow.role_repo.get_role_by_id.return_value = role_dota
         mock_uow.rank_repo.get_rank_by_id.return_value = rank_lol
 
-        req = UpdateGameProfileRequest(character_ids=[], roles_ranks=[RoleRankInput(role_id=1, rank_id=1)])
+        req = UpdateGameProfileRequest(character_ids=[], roles_ranks=[RoleRankInput(role_id=1, rank_id=1)], region_id=None)
 
         with pytest.raises(DoesNotBelongToGameException) as exc_info:
             use_case.execute(player_id=42, game_profile_id=5, update_videogame_profile_request=req)

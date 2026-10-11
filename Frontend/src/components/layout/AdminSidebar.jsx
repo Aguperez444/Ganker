@@ -23,6 +23,10 @@ export const adminNavigationItems = [
     path: "/app/admin/characters",
   },
   {
+    label: "Regiones",
+    path: "/app/admin/regions",
+  },
+  {
     label: "Moderación",
     path: "/app/admin/moderacion",
   },

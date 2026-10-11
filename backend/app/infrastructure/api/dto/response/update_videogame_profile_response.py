@@ -2,6 +2,7 @@ from pydantic import BaseModel, Field
 from typing import List
 
 from app.infrastructure.api.dto.response.base_classes.character_object_response import CharacterObjectResponse
+from app.infrastructure.api.dto.response.base_classes.region_object_response import RegionObjectResponse
 from app.infrastructure.api.dto.response.base_classes.role_profile_object_response import RoleProfileObjectResponse
 from app.infrastructure.api.dto.response.base_classes.videogame_object_response import VideogameObjectResponse
 
@@ -12,3 +13,4 @@ class UpdateGameProfileResponse(BaseModel):
     videogame: VideogameObjectResponse = Field(..., description="Videojuego asociado al perfil de juego actualizado")
     characters: List[CharacterObjectResponse] = Field(..., description="Personajes asociados al perfil de juego actualizado")
     role_profiles: List['RoleProfileObjectResponse'] = Field(..., description="Perfiles de rol asociados al perfil de juego actualizado")
+    region: RegionObjectResponse | None = Field(..., description="Region de juego asociada al pefil de juego actualizado")

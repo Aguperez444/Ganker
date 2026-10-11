@@ -24,6 +24,17 @@ class TestUserEndpointsIntegration:
         assert "refresh_token" in data
         assert data.get("token_type") == "Bearer"
 
+    def test_register_player_without_mail(self, client):
+        # Probar registrar usuario sin ingresar mail (falla)
+        payload = {
+            "name": "Jane Doe",
+            "username": "janedoenomail",
+            "password": "SecurePassword123"
+        }
+
+        response = client.post("/api/v1/users/register", json=payload)
+        assert response.status_code == 422
+
     def test_register_player_duplicate_email(self, client, seed_player):
         payload = {
             "name": "Duplicate Mail User",
@@ -135,7 +146,7 @@ class TestUserEndpointsIntegration:
         response = client.post("/api/v1/users/register_user", json=payload, headers=admin_auth_headers)
 
         assert response.status_code == 401
-        assert "is not authorized to register a user with role" in response.json().get("error", "")
+        assert "no está autorizado para registrar un usuario con rol" in response.json().get("error", "")
 
     def test_register_user_forbidden_for_player(self, client, player_auth_headers):
         payload = {
@@ -243,6 +254,24 @@ class TestUserEndpointsIntegration:
 
         response = client.put("/api/v1/users/", data=data, files={"icon": file})
         assert response.status_code == 401
+
+    def test_update_user_missing_required_field(self, client, player_auth_headers):
+        # Probar modificar datos sin ingresar un campo obligatorio (falla)
+        data = {
+            "username": "onlyusername"
+        }
+        response = client.put("/api/v1/users/", data=data, headers=player_auth_headers)
+        assert response.status_code == 422
+
+    def test_update_user_invalid_email_format(self, client, player_auth_headers):
+        # Probar modificar el email ingresando un formato inválido (falla)
+        data = {
+            "username": "validusername",
+            "name": "Valid Name",
+            "mail": "not-an-email"
+        }
+        response = client.put("/api/v1/users/", data=data, headers=player_auth_headers)
+        assert response.status_code == 422
 
     def test_update_user_empty_filename_rejected(self, client, player_auth_headers):
         data = {

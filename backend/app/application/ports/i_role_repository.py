@@ -25,3 +25,7 @@ class IRoleRepository(ABC):
     @abstractmethod
     def update_role(self, role: 'Role') -> 'Role':
         raise NotImplementedError
+
+    @abstractmethod
+    def delete_role(self, role_id: int) -> bool:
+        raise NotImplementedError

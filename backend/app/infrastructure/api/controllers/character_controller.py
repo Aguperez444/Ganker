@@ -27,9 +27,9 @@ def get_characters_by_videogame_id(videogame_id: int):
 
 
 @router.post("/", status_code=201, response_model=CharacterObjectResponse, dependencies=[Depends(require_admin)])
-def register_character(name: str = Form(..., description="Name of the character"),
-                             videogame_id: int = Form(..., description="ID of the videogame"),
-                             icon: UploadFile = File(..., description="Icon image file"),
+def register_character(name: str = Form(..., description="Nombre del personaje"),
+                             videogame_id: int = Form(..., description="ID del videojuego"),
+                             icon: UploadFile = File(..., description="Archivo de imagen del ícono"),
                              ):
 
     # Asegurarse de que la petición incluya un archivo con nombre
@@ -48,9 +48,9 @@ def register_character(name: str = Form(..., description="Name of the character"
 
 @router.put("/{character_id}", status_code=200, response_model=CharacterObjectResponse, dependencies=[Depends(require_admin)])
 def update_character(character_id: int,
-                           name: str = Form(..., description="Name of the character"),
-                           videogame_id: int = Form(..., description="ID of the videogame"),
-                           icon: UploadFile = File(description="Icon image file"),
+                           name: str = Form(..., description="Nombre del personaje"),
+                           videogame_id: int = Form(..., description="ID del videojuego"),
+                           icon: UploadFile = File(description="Archivo de imagen del ícono"),
                            ):
 
     if icon:

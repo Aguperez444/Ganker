@@ -1,3 +1,5 @@
+from sqlalchemy import func
+
 from app.application.ports.i_message_repository import IMessageRepository
 from app.domain.models.message import Message
 from app.infrastructure.database.mappers.message_mapper import MessageMapper
@@ -38,3 +40,17 @@ class MessageRepoImpl(IMessageRepository):
         ).update({MessageORM.is_read: True}, synchronize_session='fetch')
         self._session.flush()
         return updated_rows
+
+    def get_last_message_id(self, conversation_id: int) -> int | None:
+        return self._session.query(func.max(MessageORM.message_id)).filter(
+            MessageORM.conversation_id == conversation_id
+        ).scalar()
+
+    def get_unread_count_after(self, conversation_id: int, user_id: int, last_read_message_id: int | None) -> int:
+        query = self._session.query(MessageORM).filter(
+            MessageORM.conversation_id == conversation_id,
+            MessageORM.sender_id != user_id
+        )
+        if last_read_message_id is not None:
+            query = query.filter(MessageORM.message_id > last_read_message_id)
+        return query.count()

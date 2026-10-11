@@ -1,19 +1,22 @@
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING, Optional, List
 
-from app.domain.exceptions.entity_not_persited_exception import EntityNotPersistedException
+from app.domain.exceptions.entity_not_persisted_exception import EntityNotPersistedException
 from app.domain.exceptions.invalid_id_exception import InvalidIdException
+from app.domain.models.conversation_type_enum import ConversationTypeEnum
 
 if TYPE_CHECKING:
     from app.domain.models.user import User
     from app.domain.models.message import Message
+    from app.domain.models.conversation_member import ConversationMember
 
 
 class Conversation:
-    def __init__(self, conversation_id: Optional[int], user_1: 'User', user_2: 'User', messages: list['Message']):
+    def __init__(self, conversation_id: Optional[int], members: List['ConversationMember'], messages: list['Message'], conversation_type: ConversationTypeEnum = ConversationTypeEnum.PRIVATE, name: Optional[str] = None):
         self._conversation_id: Optional[int] = conversation_id
-        self._user_1: 'User' = user_1
-        self._user_2: 'User' = user_2
+        self._members: List['ConversationMember'] = members
         self._messages: list['Message'] = messages
+        self._conversation_type: ConversationTypeEnum = conversation_type
+        self._name: Optional[str] = name
 
 
     @property
@@ -29,42 +32,56 @@ class Conversation:
         self._conversation_id = value
 
     @property
-    def user_1(self) -> 'User':
-        return self._user_1
-    @user_1.setter
-    def user_1(self, value: 'User'):
-        self._user_1 = value
+    def members(self) -> List['ConversationMember']:
+        return self._members
+    
+    @members.setter
+    def members(self, value: List['ConversationMember']):
+        self._members = value
 
     @property
-    def user_2(self) -> 'User':
-        return self._user_2
-    @user_2.setter
-    def user_2(self, value: 'User'):
-        self._user_2 = value
-
-    @property
-    def messages(self) -> list:
+    def messages(self) -> list['Message']:
         return self._messages
+    
     @messages.setter
-    def messages(self, value: list):
+    def messages(self, value: list['Message']):
         self._messages = value
+
+    @property
+    def conversation_type(self) -> ConversationTypeEnum:
+        return self._conversation_type
+    
+    @conversation_type.setter
+    def conversation_type(self, value: ConversationTypeEnum):
+        self._conversation_type = value
+
+    @property
+    def name(self) -> Optional[str]:
+        return self._name
+
+    @name.setter
+    def name(self, value: Optional[str]):
+        self._name = value
+
 
     def is_persisted(self) -> bool:
         return self._conversation_id is not None
 
     def belongs_user_id(self, user_id: int):
-        if user_id != self.user_1.user_id and user_id != self.user_2.user_id:
-            return False
-        return True
+        return any(member.user.user_id == user_id for member in self._members)
 
-    def belongs_user(self, user: 'User'):
-        if user.user_id != self.user_1.user_id and user.user_id != self.user_2.user_id:
-            return False
-        return True
+    def is_group(self) -> bool:
+        return self._conversation_type == ConversationTypeEnum.GROUP
+
+    def get_member(self, user_id: int) -> Optional['ConversationMember']:
+        for member in self._members:
+            if member.user.user_id == user_id:
+                return member
+        return None
 
     def get_other_user(self, user_id: int) -> 'User':
-        if user_id == self.user_1.user_id:
-            return self.user_2
-        elif user_id == self.user_2.user_id:
-            return self.user_1
-        raise ValueError(f"User with id {user_id} is not part of this conversation.")
+        if self._conversation_type == ConversationTypeEnum.PRIVATE:
+            for member in self._members:
+                if member.user.user_id != user_id:
+                    return member.user
+        raise ValueError(f"El usuario con id {user_id} no tiene un único 'otro' usuario en esta conversación.")
