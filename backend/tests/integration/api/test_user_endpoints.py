@@ -1,5 +1,6 @@
 import io
 import pytest
+from tests.conftest import VALID_PNG_BYTES, VALID_SVG_BYTES
 
 
 class TestUserEndpointsIntegration:
@@ -219,7 +220,7 @@ class TestUserEndpointsIntegration:
     # ---------------------------------------------------------
 
     def test_update_user_success(self, client, player_auth_headers, seed_player):
-        file_content = b"fake-user-avatar-image-data"
+        file_content = VALID_PNG_BYTES
         file = ("avatar.png", io.BytesIO(file_content), "image/png")
 
         data = {
@@ -250,7 +251,7 @@ class TestUserEndpointsIntegration:
             "name": "Hacker",
             "mail": "hacker@example.com",
         }
-        file = ("avatar.png", io.BytesIO(b"data"), "image/png")
+        file = ("avatar.png", io.BytesIO(VALID_PNG_BYTES), "image/png")
 
         response = client.put("/api/v1/users/", data=data, files={"icon": file})
         assert response.status_code == 401
@@ -296,7 +297,7 @@ class TestUserEndpointsIntegration:
             "name": "My Name",
             "mail": seed_admin.mail,  # belongs to seed_admin
         }
-        file = ("icon.png", io.BytesIO(b"data"), "image/png")
+        file = ("icon.png", io.BytesIO(VALID_PNG_BYTES), "image/png")
 
         response = client.put(
             "/api/v1/users/",
@@ -314,7 +315,7 @@ class TestUserEndpointsIntegration:
             "name": "My Name",
             "mail": "unique.mail@example.com",
         }
-        file = ("icon.png", io.BytesIO(b"data"), "image/png")
+        file = ("icon.png", io.BytesIO(VALID_PNG_BYTES), "image/png")
 
         response = client.put(
             "/api/v1/users/",
@@ -325,6 +326,74 @@ class TestUserEndpointsIntegration:
 
         assert response.status_code == 409
         assert "ya está ocupado" in response.json().get("error", "")
+
+    def test_update_user_valid_svg_avatar_success(self, client, player_auth_headers, seed_player):
+        file = ("avatar.svg", io.BytesIO(VALID_SVG_BYTES), "image/svg+xml")
+        data = {
+            "username": "john_svg",
+            "name": "John SVG",
+            "mail": "john.svg@example.com",
+        }
+        response = client.put(
+            "/api/v1/users/",
+            data=data,
+            files={"icon": file},
+            headers=player_auth_headers
+        )
+        assert response.status_code == 200
+        result = response.json()
+        assert result["icon_url"].startswith("/media/users/icons/")
+        assert result["icon_url"].endswith(".svg")
+
+    def test_update_user_malicious_svg_script_rejected(self, client, player_auth_headers, seed_player):
+        evil_svg = b'<svg xmlns="http://www.w3.org/2000/svg"><script>alert(localStorage.getItem("access_token"))</script></svg>'
+        file = ("evil.svg", io.BytesIO(evil_svg), "image/svg+xml")
+        data = {
+            "username": "attacker",
+            "name": "Attacker",
+            "mail": "attacker@example.com",
+        }
+        response = client.put(
+            "/api/v1/users/",
+            data=data,
+            files={"icon": file},
+            headers=player_auth_headers
+        )
+        assert response.status_code == 400
+        assert "no permitidas" in response.json().get("error", "").lower() or "no es válido" in response.json().get("error", "").lower()
+
+    def test_update_user_malicious_svg_onload_rejected(self, client, player_auth_headers, seed_player):
+        evil_svg = b'<svg xmlns="http://www.w3.org/2000/svg" onload="fetch(\'/steal?t=\'+localStorage.getItem(\'access_token\'))"></svg>'
+        file = ("evil_event.svg", io.BytesIO(evil_svg), "image/svg+xml")
+        data = {
+            "username": "attacker2",
+            "name": "Attacker 2",
+            "mail": "attacker2@example.com",
+        }
+        response = client.put(
+            "/api/v1/users/",
+            data=data,
+            files={"icon": file},
+            headers=player_auth_headers
+        )
+        assert response.status_code == 400
+        assert "manejadores de eventos" in response.json().get("error", "").lower()
+
+    def test_update_user_html_disguised_as_svg_rejected(self, client, player_auth_headers, seed_player):
+        fake_svg = b'<html><body><script>alert("pwn")</script></body></html>'
+        file = ("fake.svg", io.BytesIO(fake_svg), "image/svg+xml")
+        data = {
+            "username": "attacker3",
+            "name": "Attacker 3",
+            "mail": "attacker3@example.com",
+        }
+        response = client.put(
+            "/api/v1/users/",
+            data=data,
+            files={"icon": file},
+            headers=player_auth_headers
+        )
+        assert response.status_code == 400
 
     # ---------------------------------------------------------
     # GET /api/v1/users/me

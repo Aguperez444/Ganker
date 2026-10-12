@@ -207,6 +207,10 @@ async def leave_team(
     result: LeaveTeamResponse = await run_in_threadpool(use_case.execute, team_id, user_id)
     team = result.data
 
+    # Cerrar la conexión WebSocket activa del usuario en el chatroom del equipo
+    if team.conversation_id is not None:
+        await chat_manager.close_user_in_conversation(team.conversation_id, user_id, code=1008, reason="Has salido del equipo")
+
     await teams_feed_manager.broadcast_event(TeamEventTypeEnum.TEAM_MEMBER_LEFT, team.public_payload())
 
     # Notificar al resto de integrantes del equipo
@@ -234,6 +238,10 @@ async def kick_team_member_by_path(
 
     result: KickMemberResponse = await run_in_threadpool(use_case.execute, team_id, current_user_id, target_user_id)
     team = result.data
+
+    # Cerrar la conexión WebSocket activa del usuario expulsado en el chatroom del equipo
+    if team.conversation_id is not None:
+        await chat_manager.close_user_in_conversation(team.conversation_id, target_user_id, code=1008, reason="Has sido expulsado del equipo")
 
     await teams_feed_manager.broadcast_event(TeamEventTypeEnum.TEAM_MEMBER_KICKED, team.public_payload())
 

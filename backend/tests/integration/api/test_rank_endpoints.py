@@ -1,5 +1,6 @@
 import io
 import pytest
+from tests.conftest import VALID_PNG_BYTES, VALID_SVG_BYTES
 from app.infrastructure.database.models.game_profile_orm import GameProfileORM
 from app.infrastructure.database.models.role_profile_orm import RoleProfileORM
 
@@ -12,7 +13,7 @@ class TestRankEndpointsIntegration:
 
     def test_create_rank_admin_success(self, client, admin_auth_headers, seed_catalog_data):
         vg_id = seed_catalog_data["videogame"].videogame_id
-        file = ("challenger.png", io.BytesIO(b"fake-rank-icon"), "image/png")
+        file = ("challenger.png", io.BytesIO(VALID_PNG_BYTES), "image/png")
         data = {
             "name": "Challenger",
             "value": 5000,
@@ -34,7 +35,7 @@ class TestRankEndpointsIntegration:
         assert "ranks" in res_data["icon_url"]
 
     def test_create_rank_videogame_not_found(self, client, admin_auth_headers):
-        file = ("rank.png", io.BytesIO(b"data"), "image/png")
+        file = ("rank.png", io.BytesIO(VALID_PNG_BYTES), "image/png")
         data = {
             "name": "Ghost Rank",
             "value": 100,
@@ -52,7 +53,7 @@ class TestRankEndpointsIntegration:
 
     def test_create_rank_missing_videogame(self, client, admin_auth_headers):
         # Probar registrar un rango sin seleccionar un videojuego (falla)
-        file = ("rank.png", io.BytesIO(b"data"), "image/png")
+        file = ("rank.png", io.BytesIO(VALID_PNG_BYTES), "image/png")
         data = {
             "name": "Rank Without Game",
             "value": 100
@@ -70,7 +71,7 @@ class TestRankEndpointsIntegration:
     def test_create_rank_missing_name(self, client, admin_auth_headers, seed_catalog_data):
         # Probar registrar un rango sin ingresar el nombre del rango (falla)
         vg_id = seed_catalog_data["videogame"].videogame_id
-        file = ("rank.png", io.BytesIO(b"data"), "image/png")
+        file = ("rank.png", io.BytesIO(VALID_PNG_BYTES), "image/png")
         data = {
             "value": 100,
             "videogame_id": vg_id
@@ -94,7 +95,7 @@ class TestRankEndpointsIntegration:
         test_db_session.refresh(vg2)
 
         existing_rank_name = seed_catalog_data["ranks"][0].name
-        file = ("rank.png", io.BytesIO(b"data"), "image/png")
+        file = ("rank.png", io.BytesIO(VALID_PNG_BYTES), "image/png")
         data = {
             "name": existing_rank_name,
             "value": 100,
@@ -116,7 +117,7 @@ class TestRankEndpointsIntegration:
     def test_create_rank_duplicate_name(self, client, admin_auth_headers, seed_catalog_data):
         vg_id = seed_catalog_data["videogame"].videogame_id
         existing_rank_name = seed_catalog_data["ranks"][0].name
-        file = ("rank.png", io.BytesIO(b"data"), "image/png")
+        file = ("rank.png", io.BytesIO(VALID_PNG_BYTES), "image/png")
         data = {
             "name": existing_rank_name,
             "value": 9999,
@@ -136,7 +137,7 @@ class TestRankEndpointsIntegration:
     def test_create_rank_duplicate_value(self, client, admin_auth_headers, seed_catalog_data):
         vg_id = seed_catalog_data["videogame"].videogame_id
         existing_rank_value = seed_catalog_data["ranks"][0].value
-        file = ("rank.png", io.BytesIO(b"data"), "image/png")
+        file = ("rank.png", io.BytesIO(VALID_PNG_BYTES), "image/png")
         data = {
             "name": "Brand New Rank Name",
             "value": existing_rank_value,
@@ -155,7 +156,7 @@ class TestRankEndpointsIntegration:
 
     def test_create_rank_invalid_name(self, client, admin_auth_headers, seed_catalog_data):
         vg_id = seed_catalog_data["videogame"].videogame_id
-        file = ("rank.png", io.BytesIO(b"data"), "image/png")
+        file = ("rank.png", io.BytesIO(VALID_PNG_BYTES), "image/png")
         data = {
             "name": "   ",
             "value": 50,
@@ -173,7 +174,7 @@ class TestRankEndpointsIntegration:
 
     def test_create_rank_negative_value(self, client, admin_auth_headers, seed_catalog_data):
         vg_id = seed_catalog_data["videogame"].videogame_id
-        file = ("rank.png", io.BytesIO(b"data"), "image/png")
+        file = ("rank.png", io.BytesIO(VALID_PNG_BYTES), "image/png")
         data = {
             "name": "Negative Rank",
             "value": -5,
@@ -207,7 +208,7 @@ class TestRankEndpointsIntegration:
 
     def test_create_rank_forbidden_for_player(self, client, player_auth_headers, seed_catalog_data):
         vg_id = seed_catalog_data["videogame"].videogame_id
-        file = ("rank.png", io.BytesIO(b"data"), "image/png")
+        file = ("rank.png", io.BytesIO(VALID_PNG_BYTES), "image/png")
         data = {
             "name": "ForbiddenRank",
             "value": 50,
@@ -225,7 +226,7 @@ class TestRankEndpointsIntegration:
 
     def test_create_rank_unauthorized(self, client, seed_catalog_data):
         vg_id = seed_catalog_data["videogame"].videogame_id
-        file = ("rank.png", io.BytesIO(b"data"), "image/png")
+        file = ("rank.png", io.BytesIO(VALID_PNG_BYTES), "image/png")
         data = {"name": "NoAuthRank", "value": 50, "videogame_id": vg_id}
 
         response = client.post("/api/v1/ranks", data=data, files={"icon": file})
@@ -259,7 +260,7 @@ class TestRankEndpointsIntegration:
 
     def test_update_rank_admin_success(self, client, admin_auth_headers, seed_catalog_data):
         rank = seed_catalog_data["ranks"][0]
-        file = ("emerald.png", io.BytesIO(b"new-emerald-icon"), "image/png")
+        file = ("emerald.png", io.BytesIO(VALID_PNG_BYTES), "image/png")
         data = {
             "name": "Emerald",
             "value": 1500
@@ -305,7 +306,7 @@ class TestRankEndpointsIntegration:
     def test_update_rank_change_only_icon_success(self, client, admin_auth_headers, seed_catalog_data):
         # Probar modificar un rango manteniendo su nombre y orden y cambiando únicamente su ícono (pasa)
         rank = seed_catalog_data["ranks"][0]
-        file = ("gold_shiny.png", io.BytesIO(b"shiny-icon-data"), "image/png")
+        file = ("gold_shiny.png", io.BytesIO(VALID_PNG_BYTES), "image/png")
         data = {
             "name": rank.name,
             "value": rank.value
@@ -409,7 +410,7 @@ class TestRankEndpointsIntegration:
 
     def test_update_rank_invalid_icon_filename(self, client, admin_auth_headers, seed_catalog_data):
         rank = seed_catalog_data["ranks"][0]
-        file = ("", io.BytesIO(b"data"), "image/png")
+        file = ("", io.BytesIO(VALID_PNG_BYTES), "image/png")
         data = {
             "name": "Some Rank",
             "value": 1000

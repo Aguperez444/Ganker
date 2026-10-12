@@ -199,6 +199,11 @@ def admin_auth_headers(jwt_service, seed_admin):
     return {"Authorization": f"Bearer {token}"}
 
 
+VALID_PNG_BYTES = b"\x89PNG\r\n\x1a\n\x00\x00\x00\rIHDR\x00\x00\x00\x01\x00\x00\x00\x01\x08\x06\x00\x00\x00\x1f\x15c4\x00\x00\x00\nIDATx\x9cc\x00\x00\x00\x02\x00\x01H\xaf\xa4q\x00\x00\x00\x00IEND\xaeB\x60\x82"
+VALID_SVG_BYTES = b'<svg xmlns="http://www.w3.org/2000/svg" width="10" height="10"><circle cx="5" cy="5" r="5"/></svg>'
+VALID_JPG_BYTES = b"\xff\xd8\xff\xe0\x00\x10JFIF\x00\x01\x01\x01\x00`\x00`\x00\x00\xff\xdb\x00C\x00"
+
+
 @pytest.fixture(scope="function")
 def owner_auth_headers(jwt_service, seed_owner):
     """Headers with valid access token for seed_owner."""
@@ -252,8 +257,16 @@ def client(monkeypatch, test_session_factory, jwt_service, tmp_path):
     # noinspection PyUnresolvedReferences
     monkeypatch.setattr(settings, "media_dir", temp_media)
 
+    from app.infrastructure.start.main import SecuredStaticFiles
+    for route in app.routes:
+        if getattr(route, "name", None) == "media":
+            route.app = SecuredStaticFiles(directory=str(temp_media))
+
     import app.infrastructure.api.dependencies.auth as auth_dep
     monkeypatch.setattr(auth_dep, "token_service", jwt_service)
+
+    from app.infrastructure.api.dependencies.login_rate_limiter import login_rate_limiter
+    login_rate_limiter.reset()
 
     with TestClient(app) as test_client:
         yield test_client

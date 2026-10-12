@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, Depends, status, Request
 from fastapi.security import OAuth2PasswordRequestForm
 
 
@@ -8,6 +8,7 @@ from app.application.use_cases.user_logout import UserLogout
 
 from app.infrastructure.api.auth.jwt_token_service import JwtTokenService
 from app.infrastructure.api.auth.password_hash_service import PasswordHashService
+from app.infrastructure.api.dependencies.login_rate_limiter import login_rate_limiter
 from app.infrastructure.database.unit_of_work.uow_factory import uow_factory
 from app.infrastructure.config.settings import settings
 
@@ -18,7 +19,9 @@ from app.infrastructure.api.dto.request.login_request import LoginRequest
 router = APIRouter(prefix="/auth/v1", tags=["Authentication"])
 
 @router.post("/login", response_model=AuthTokensResponse)
-def login(form_data: OAuth2PasswordRequestForm = Depends()) -> AuthTokensResponse:
+def login(request: Request, form_data: OAuth2PasswordRequestForm = Depends()) -> AuthTokensResponse:
+    login_rate_limiter.check(request, identifier=form_data.username)
+
     uow = uow_factory()
     token_service = JwtTokenService(settings.jwt_secret_key)
     password_hasher = PasswordHashService()

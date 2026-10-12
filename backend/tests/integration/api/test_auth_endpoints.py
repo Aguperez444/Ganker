@@ -178,3 +178,43 @@ class TestAuthEndpointsIntegration:
     def test_logout_missing_field(self, client):
         response = client.post("/auth/v1/logout", json={})
         assert response.status_code == 422
+
+    # ---------------------------------------------------------
+    # RATE LIMITING (Anti-brute force)
+    # ---------------------------------------------------------
+
+    def test_login_rate_limit_exceeded_by_ip_returns_429(self, client, seed_player):
+        form_data = {
+            "username": seed_player.mail,
+            "password": "WrongPassword1"
+        }
+        # First 5 attempts from same IP (allowed, returns 401)
+        for i in range(5):
+            res = client.post("/auth/v1/login", data=form_data)
+            assert res.status_code == 401
+
+        # 6th attempt should be blocked with 429
+        blocked_res = client.post("/auth/v1/login", data=form_data)
+        assert blocked_res.status_code == 429
+        assert "Demasiados intentos" in blocked_res.json().get("detail", "")
+        assert "retry-after" in blocked_res.headers
+
+    def test_login_rate_limit_exceeded_by_account_from_different_ips(self, client, seed_player):
+        form_data = {
+            "username": seed_player.mail,
+            "password": "WrongPassword2"
+        }
+        # 5 attempts targeting the same account from 5 different IPs
+        for i in range(5):
+            headers = {"X-Forwarded-For": f"192.168.1.{10 + i}"}
+            res = client.post("/auth/v1/login", data=form_data, headers=headers)
+            assert res.status_code == 401
+
+        # 6th attempt from a brand new IP for the same account should also be blocked with 429
+        blocked_res = client.post(
+            "/auth/v1/login",
+            data=form_data,
+            headers={"X-Forwarded-For": "10.0.0.99"}
+        )
+        assert blocked_res.status_code == 429
+        assert "retry-after" in blocked_res.headers

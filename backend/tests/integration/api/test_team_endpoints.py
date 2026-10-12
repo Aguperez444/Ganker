@@ -1,6 +1,7 @@
 from datetime import datetime
 import io
 import pytest
+from tests.conftest import VALID_PNG_BYTES, VALID_SVG_BYTES
 
 from app.domain.models.user_role import UserRole
 from app.infrastructure.database.models.character_orm import CharacterORM
@@ -148,7 +149,7 @@ class TestTeamEndpointsIntegration:
         response = client.post(
             "/api/v1/teams",
             data=self._team_form(payload),
-            files={"team_icon": ("vengadores.png", io.BytesIO(b"fake-team-icon"), "image/png")},
+            files={"team_icon": ("vengadores.png", io.BytesIO(VALID_PNG_BYTES), "image/png")},
             headers=player_auth_headers,
         )
         assert response.status_code == 201
@@ -187,6 +188,58 @@ class TestTeamEndpointsIntegration:
         get_res = client.get(f"/api/v1/teams/{data['team_id']}", headers=player_auth_headers)
         assert get_res.status_code == 200
         assert get_res.json()["team_id"] == data["team_id"]
+
+    def test_create_team_with_valid_svg_icon_success(self, client, player_auth_headers, setup_data):
+        vg = setup_data["videogame"]
+        ranks = setup_data["ranks"]
+        roles = setup_data["roles"]
+        reg = setup_data["regions"]["las"]
+        payload = {
+            "name": "Equipo Vector",
+            "description": "Equipo con icono SVG",
+            "allow_other_regions": False,
+            "videogame_id": vg.videogame_id,
+            "region_id": reg.region_id,
+            "min_rank_id": ranks["silver"].rank_id,
+            "max_rank_id": ranks["gold"].rank_id,
+            "creator_game_role_id": roles["duelist"].role_id,
+            "vacant_game_role_ids": [roles["controller"].role_id]
+        }
+        response = client.post(
+            "/api/v1/teams",
+            data=self._team_form(payload),
+            files={"team_icon": ("team_logo.svg", io.BytesIO(VALID_SVG_BYTES), "image/svg+xml")},
+            headers=player_auth_headers,
+        )
+        assert response.status_code == 201
+        data = response.json()
+        assert data["icon_url"].startswith("/media/teams/icons/")
+        assert data["icon_url"].endswith(".svg")
+
+    def test_create_team_with_malicious_svg_icon_fails(self, client, player_auth_headers, setup_data):
+        vg = setup_data["videogame"]
+        ranks = setup_data["ranks"]
+        roles = setup_data["roles"]
+        reg = setup_data["regions"]["las"]
+        evil_svg = b'<svg xmlns="http://www.w3.org/2000/svg"><script>alert("team-xss")</script></svg>'
+        payload = {
+            "name": "Equipo Malicioso",
+            "description": "Intento de XSS en icono",
+            "allow_other_regions": False,
+            "videogame_id": vg.videogame_id,
+            "region_id": reg.region_id,
+            "min_rank_id": ranks["silver"].rank_id,
+            "max_rank_id": ranks["gold"].rank_id,
+            "creator_game_role_id": roles["duelist"].role_id,
+            "vacant_game_role_ids": [roles["controller"].role_id]
+        }
+        response = client.post(
+            "/api/v1/teams",
+            data=self._team_form(payload),
+            files={"team_icon": ("evil.svg", io.BytesIO(evil_svg), "image/svg+xml")},
+            headers=player_auth_headers,
+        )
+        assert response.status_code == 400
 
     def test_create_team_empty_mandatory_fields_fails(self, client, player_auth_headers, setup_data):
         vg = setup_data["videogame"]
@@ -1426,6 +1479,96 @@ class TestTeamEndpointsIntegration:
         }
         res_jane = client.post("/api/v1/teams", data=self._team_form(payload_jane), headers=headers_jane)
         assert res_jane.status_code == 201
+
+    # ---------------------------------------------------------
+    # WEBSOCKET AUTHENTICATION & ACCESS REVOCATION
+    # ---------------------------------------------------------
+
+    def test_team_feed_websocket_requires_authentication(self, client, jwt_service, seed_player):
+        from starlette.websockets import WebSocketDisconnect
+
+        # Sin token es rechazado con WS_1008_POLICY_VIOLATION
+        with pytest.raises(WebSocketDisconnect) as exc_info:
+            with client.websocket_connect("/api/v1/ws/teams"):
+                pass
+        assert exc_info.value.code == 1008
+
+        # Con token inválido es rechazado
+        with pytest.raises(WebSocketDisconnect) as exc_info:
+            with client.websocket_connect("/api/v1/ws/teams?token=token_invalido"):
+                pass
+        assert exc_info.value.code == 1008
+
+        # Con token válido de jugador se conecta exitosamente
+        _, valid_token = self._headers(jwt_service, seed_player)
+        with client.websocket_connect(f"/api/v1/ws/teams?token={valid_token}") as ws:
+            assert ws is not None
+
+    def test_kicked_member_websocket_is_closed_and_cannot_receive_messages(
+        self, client, jwt_service, player_auth_headers, setup_data
+    ):
+        from starlette.websockets import WebSocketDisconnect
+
+        team_data = self._create_sample_team(client, player_auth_headers, setup_data)
+        team_id = team_data["team_id"]
+        chatroom_id = team_data["conversation_id"]
+        target_slot_id = team_data["members"][1]["team_member_role_id"]
+
+        jane_user = setup_data["players"]["janedoe"]
+        headers_jane, token_jane = self._headers(jwt_service, jane_user)
+
+        # Jane se une al equipo
+        join_res = client.post(
+            f"/api/v1/teams/{team_id}/join",
+            json={"target_team_member_role_id": target_slot_id},
+            headers=headers_jane,
+        )
+        assert join_res.status_code == 200
+
+        # Jane se conecta al WebSocket del chatroom
+        with client.websocket_connect(f"/api/v1/ws/chat/chatroom/{chatroom_id}?token={token_jane}") as ws_jane:
+            # El líder expulsa a Jane
+            kick_res = client.delete(
+                f"/api/v1/teams/{team_id}/kick/{jane_user.user_id}",
+                headers=player_auth_headers,
+            )
+            assert kick_res.status_code == 200
+
+            # El socket de Jane debe haber sido cerrado con 1008
+            with pytest.raises(WebSocketDisconnect) as exc_info:
+                ws_jane.receive_text()
+            assert exc_info.value.code == 1008
+
+    def test_member_leaving_team_websocket_is_closed(
+        self, client, jwt_service, player_auth_headers, setup_data
+    ):
+        from starlette.websockets import WebSocketDisconnect
+
+        team_data = self._create_sample_team(client, player_auth_headers, setup_data)
+        team_id = team_data["team_id"]
+        chatroom_id = team_data["conversation_id"]
+        target_slot_id = team_data["members"][1]["team_member_role_id"]
+
+        jane_user = setup_data["players"]["janedoe"]
+        headers_jane, token_jane = self._headers(jwt_service, jane_user)
+
+        # Jane se une al equipo
+        client.post(
+            f"/api/v1/teams/{team_id}/join",
+            json={"target_team_member_role_id": target_slot_id},
+            headers=headers_jane,
+        )
+
+        # Jane se conecta al WebSocket del chatroom
+        with client.websocket_connect(f"/api/v1/ws/chat/chatroom/{chatroom_id}?token={token_jane}") as ws_jane:
+            # Jane sale del equipo
+            leave_res = client.delete(f"/api/v1/teams/{team_id}/leave", headers=headers_jane)
+            assert leave_res.status_code == 200
+
+            # El socket de Jane debe haber sido cerrado con 1008
+            with pytest.raises(WebSocketDisconnect) as exc_info:
+                ws_jane.receive_text()
+            assert exc_info.value.code == 1008
 
 
 

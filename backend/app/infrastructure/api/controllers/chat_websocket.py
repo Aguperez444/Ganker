@@ -140,7 +140,7 @@ async def websocket_chatroom_endpoint(
                 chat_manager.disconnect(chatroom_id, user_id, websocket)
                 return
 
-            await chat_manager.broadcast_to_conversation(chatroom_id, saved_message)
+            await chat_manager.broadcast_to_conversation(chatroom_id, saved_message, allowed_user_ids=set(member_ids))
 
             # Notificamos a los miembros que no tienen el chatroom abierto
             notification = NotificationResponse(

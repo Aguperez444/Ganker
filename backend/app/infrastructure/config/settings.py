@@ -22,6 +22,10 @@ class Settings(BaseSettings):
     media_dir: Path = Field(default_factory=lambda: BASE_DIR / "media", validation_alias="UPLOAD_DIR")
     media_url: str = Field(default="/media", validation_alias="MEDIA_URL")
 
+    login_rate_limit_enabled: bool = Field(default=True, validation_alias="LOGIN_RATE_LIMIT_ENABLED")
+    login_rate_limit_max_attempts: int = Field(default=5, validation_alias="LOGIN_RATE_LIMIT_MAX_ATTEMPTS")
+    login_rate_limit_window_seconds: int = Field(default=60, validation_alias="LOGIN_RATE_LIMIT_WINDOW_SECONDS")
+
     model_config = SettingsConfigDict(
         env_file=CONFIG_DIR / "secrets.env",
         env_file_encoding="utf-8",

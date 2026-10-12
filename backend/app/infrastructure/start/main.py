@@ -61,6 +61,14 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+class SecuredStaticFiles(StaticFiles):
+    async def get_response(self, path: str, scope):
+        response = await super().get_response(path, scope)
+        response.headers["X-Content-Type-Options"] = "nosniff"
+        response.headers["Content-Security-Policy"] = "default-src 'none'; style-src 'unsafe-inline'; sandbox"
+        return response
+
+
 # SERVIR MEDIOS EN MODO LOCAL (Solo si NO estamos dentro de Docker)
 # En Docker definimos UPLOAD_DIR=/app/media; en local esa variable no existe
 IS_DOCKER = os.getenv("UPLOAD_DIR") is not None
@@ -70,7 +78,7 @@ if not IS_DOCKER:
     settings.media_dir.mkdir(parents=True, exist_ok=True)
 
     # FastAPI atiende las peticiones a /media directamente desde la carpeta física
-    app.mount("/media", StaticFiles(directory=str(settings.media_dir)), name="media")
+    app.mount("/media", SecuredStaticFiles(directory=str(settings.media_dir)), name="media")
     print(f"[*] Modo Local: FastAPI está sirviendo estáticos desde {settings.media_dir}")
 
 
