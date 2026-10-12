@@ -1,11 +1,18 @@
 from abc import ABC, abstractmethod
 
+from app.domain.models.team import Team
 from app.domain.specifications.base import Specification
 from app.infrastructure.api.dto.response.get.get_game_profile_response import GetGameProfileResponse
 
 
-class IFindBySpecificationRepository(ABC):
+class IFindBySpecificationsRepository(ABC):
+
+
 
     @abstractmethod
     def get_videogame_profiles(self, spec: Specification, skip: int, limit: int) -> list['GetGameProfileResponse']:
-        pass
+        raise NotImplementedError
+
+    @abstractmethod
+    def get_teams(self, spec: Specification, skip: int, limit: int) -> list['Team']:
+        raise NotImplementedError
