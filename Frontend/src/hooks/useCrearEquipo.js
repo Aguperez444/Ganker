@@ -9,14 +9,23 @@ import { validarFormularioEquipo } from "../utils/validacionesEquipos";
 // Funcion de modulo (no useCallback del hook) por el mismo motivo que
 // cargarVideojuegos en useGames.js: llamarla desde un efecto no dispara la
 // regla set-state-in-effect.
-async function consultarMiEquipo({ setMiEquipo, setVerificandoEquipo }) {
+async function consultarMiEquipo({
+  setMiEquipo,
+  setVerificandoEquipo,
+  setErrorVerificacion,
+}) {
   try {
+    setVerificandoEquipo(true);
+    setErrorVerificacion("");
     setMiEquipo(await obtenerMiEquipo());
   } catch (error) {
-    // Si la consulta falla no bloqueamos el formulario: el backend vuelve a
-    // validar al crear y responde 409 si el jugador ya tiene equipo.
+    // Sin saber si ya tiene equipo no se ofrece crear uno (mismo criterio
+    // que EquiposPage): el formulario queda bloqueado hasta poder comprobarlo.
     console.error("Error al consultar el equipo del jugador:", error);
     setMiEquipo(null);
+    setErrorVerificacion(
+      "No pudimos comprobar si ya formás parte de un equipo. Intentá de nuevo en unos segundos."
+    );
   } finally {
     setVerificandoEquipo(false);
   }
@@ -73,6 +82,7 @@ const useCrearEquipo = () => {
 
   const [miEquipo, setMiEquipo] = useState(null);
   const [verificandoEquipo, setVerificandoEquipo] = useState(true);
+  const [errorVerificacion, setErrorVerificacion] = useState("");
 
   const [enviando, setEnviando] = useState(false);
   const [errorEnvio, setErrorEnvio] = useState("");
@@ -80,9 +90,19 @@ const useCrearEquipo = () => {
   // Si el jugador cambia de juego rapido, solo vale la respuesta del ultimo.
   const juegoPedidoRef = useRef("");
 
+  const verificarEquipo = useCallback(
+    () =>
+      consultarMiEquipo({
+        setMiEquipo,
+        setVerificandoEquipo,
+        setErrorVerificacion,
+      }),
+    []
+  );
+
   useEffect(() => {
-    consultarMiEquipo({ setMiEquipo, setVerificandoEquipo });
-  }, []);
+    verificarEquipo();
+  }, [verificarEquipo]);
 
   const perfilSeleccionado = useMemo(
     () =>
@@ -247,6 +267,8 @@ const useCrearEquipo = () => {
 
     miEquipo,
     verificandoEquipo,
+    errorVerificacion,
+    verificarEquipo,
 
     enviando,
     errorEnvio,

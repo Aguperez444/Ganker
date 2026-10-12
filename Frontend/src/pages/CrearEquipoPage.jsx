@@ -21,6 +21,8 @@ const CrearEquipoPage = () => {
     errorCatalogos,
     miEquipo,
     verificandoEquipo,
+    errorVerificacion,
+    verificarEquipo,
     enviando,
     errorEnvio,
     actualizarCampo,
@@ -45,6 +47,24 @@ const CrearEquipoPage = () => {
 
   if (verificandoEquipo) {
     contenido = <p className="text-sm text-ganker-muted">Cargando...</p>;
+  } else if (errorVerificacion) {
+    // Sin poder comprobar si ya tiene equipo no se habilita el formulario.
+    contenido = (
+      <Aviso
+        titulo="No pudimos cargar el formulario"
+        accion={
+          <button
+            type="button"
+            onClick={verificarEquipo}
+            className={CLASES_BOTON_PRINCIPAL}
+          >
+            Reintentar
+          </button>
+        }
+      >
+        {errorVerificacion}
+      </Aviso>
+    );
   } else if (miEquipo) {
     // Regla de la US: un jugador no puede estar en dos equipos activos.
     contenido = (

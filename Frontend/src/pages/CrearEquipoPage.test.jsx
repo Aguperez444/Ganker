@@ -276,6 +276,26 @@ describe("US 14 - Crear equipo", () => {
     ).toBeInTheDocument();
   });
 
+  it("no muestra el formulario si no puede comprobar si el jugador ya tiene equipo, y lo habilita al reintentar", async () => {
+    const user = userEvent.setup();
+    obtenerMiEquipo.mockRejectedValueOnce(new Error("Network Error"));
+    renderPagina();
+
+    expect(
+      await screen.findByText(/no pudimos comprobar si ya formás parte/i)
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByLabelText(/nombre del equipo/i)
+    ).not.toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: /reintentar/i }));
+
+    expect(
+      await screen.findByLabelText(/nombre del equipo/i)
+    ).toBeInTheDocument();
+    expect(obtenerMiEquipo).toHaveBeenCalledTimes(2);
+  });
+
   it("pide crear un perfil de juego si el jugador no tiene ninguno", async () => {
     const perfilesOriginales = usuario.profiles;
     usuario.profiles = [];
