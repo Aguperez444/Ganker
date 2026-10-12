@@ -156,3 +156,15 @@ export function salirDeEquipo(equipoId) {
     .delete(`/api/v1/teams/${equipoId}/leave`)
     .then((res) => res.data);
 }
+
+// US - Marcar equipo como inactivo.
+//   PATCH /api/v1/teams/{team_id}/deactivate
+// Solo el lider puede hacerlo (lo valida el backend). El equipo sale del
+// listado de busqueda y sus integrantes quedan libres para crear o unirse a
+// otro equipo, pero NO se los desvincula y el chatroom sigue funcionando.
+// Devuelve { status, message, data: TeamSummaryResponse }.
+export function marcarEquipoInactivo(equipoId) {
+  return axiosClient
+    .patch(`/api/v1/teams/${equipoId}/deactivate`)
+    .then((res) => res.data);
+}

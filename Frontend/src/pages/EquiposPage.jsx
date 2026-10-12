@@ -1,8 +1,10 @@
+import { useMemo } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import FiltrosEquiposComponent from "../components/equipos/FiltrosEquiposComponent";
 import ModalUnirseEquipoComponent from "../components/equipos/ModalUnirseEquipoComponent";
 import TarjetaEquipoComponent from "../components/equipos/TarjetaEquipoComponent";
 import useBuscarEquipos from "../hooks/useBuscarEquipos";
+import { iconosPorRol } from "../hooks/useIconosDeRoles";
 import useMiEquipo from "../hooks/useMiEquipo";
 import useUnirseEquipo from "../hooks/useUnirseEquipo";
 
@@ -39,6 +41,12 @@ const EquiposPage = () => {
   const mensajeExito = useLocation().state?.mensajeExito ?? "";
   const { equipo, cargando, error } = useMiEquipo();
   const busqueda = useBuscarEquipos();
+  // La busqueda ya carga los roles del juego elegido (para el filtro): se
+  // reusan para los iconos de rol de los integrantes de cada tarjeta.
+  const iconosDeRoles = useMemo(
+    () => iconosPorRol(busqueda.roles),
+    [busqueda.roles]
+  );
   const union = useUnirseEquipo({
     alActualizarEquipo: busqueda.actualizarEquipo,
   });
@@ -84,6 +92,7 @@ const EquiposPage = () => {
             key={equipoEncontrado.team_id}
             equipo={equipoEncontrado}
             onUnirse={union.abrir}
+            iconosDeRoles={iconosDeRoles}
           />
         ))}
       </div>

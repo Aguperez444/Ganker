@@ -5,6 +5,7 @@ import useMiEquipo from "./useMiEquipo";
 import {
   eliminarEquipo,
   expulsarIntegrante,
+  marcarEquipoInactivo,
   obtenerMiEquipo,
   salirDeEquipo,
   transferirLiderazgo,
@@ -16,6 +17,7 @@ vi.mock("../api/teamApi", () => ({
   transferirLiderazgo: vi.fn(),
   eliminarEquipo: vi.fn(),
   salirDeEquipo: vi.fn(),
+  marcarEquipoInactivo: vi.fn(),
 }));
 
 const equipoCompleto = {
@@ -288,6 +290,51 @@ describe("useMiEquipo - US 19 salirse de un equipo", () => {
     expect(mensaje).toBeNull();
     expect(result.current.errorSalida).toMatch(
       /transferir el liderazgo o eliminar el equipo/
+    );
+  });
+});
+
+describe("useMiEquipo - marcar equipo como inactivo", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    obtenerMiEquipo.mockResolvedValue(equipoCompleto);
+  });
+
+  it("marca el equipo como inactivo y devuelve la confirmación", async () => {
+    const { result } = await renderHookListo();
+    marcarEquipoInactivo.mockResolvedValue({
+      status: "success",
+      message: "El equipo fue marcado inactivo exitosamente.",
+    });
+
+    let mensaje;
+    await act(async () => {
+      mensaje = await result.current.marcarEquipoInactivo();
+    });
+
+    expect(marcarEquipoInactivo).toHaveBeenCalledWith(3);
+    expect(mensaje).toBe("El equipo fue marcado inactivo exitosamente.");
+  });
+
+  it("deniega la acción a quien no es el líder (403)", async () => {
+    const { result } = await renderHookListo();
+    marcarEquipoInactivo.mockRejectedValue({
+      response: {
+        status: 403,
+        data: {
+          error: "El usuario con ID 2 no es el líder del equipo con ID 3.",
+        },
+      },
+    });
+
+    let mensaje;
+    await act(async () => {
+      mensaje = await result.current.marcarEquipoInactivo();
+    });
+
+    expect(mensaje).toBeNull();
+    expect(result.current.errorInactivo).toBe(
+      "Solo el líder del equipo puede marcarlo como inactivo."
     );
   });
 });

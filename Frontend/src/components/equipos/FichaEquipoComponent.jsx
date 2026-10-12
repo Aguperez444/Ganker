@@ -1,14 +1,11 @@
 import { urlDeMedia } from "../../utils/media";
 import Dato from "./DatoEquipoComponent";
+import RangoPermitidoComponent from "./RangoPermitidoComponent";
 
 // Cabecera de la vista de un equipo (TeamSummaryResponse): icono, nombre,
 // ocupacion, mensaje de busqueda y las condiciones para unirse.
 const FichaEquipoComponent = ({ equipo }) => {
   const iconUrl = urlDeMedia(equipo.icon_url);
-  const rangoPermitido =
-    equipo.min_rank?.rank_id === equipo.max_rank?.rank_id
-      ? equipo.min_rank?.name
-      : `${equipo.min_rank?.name} a ${equipo.max_rank?.name}`;
 
   return (
     <div className="rounded-2xl border border-white/10 bg-ganker-surface p-5 sm:p-6">
@@ -49,7 +46,15 @@ const FichaEquipoComponent = ({ equipo }) => {
           etiqueta="Otras regiones"
           valor={equipo.allow_other_regions ? "Se admiten" : "No se admiten"}
         />
-        <Dato etiqueta="Rango permitido" valor={rangoPermitido} />
+        <Dato
+          etiqueta="Rango permitido"
+          valor={
+            <RangoPermitidoComponent
+              rangoMinimo={equipo.min_rank}
+              rangoMaximo={equipo.max_rank}
+            />
+          }
+        />
       </dl>
     </div>
   );

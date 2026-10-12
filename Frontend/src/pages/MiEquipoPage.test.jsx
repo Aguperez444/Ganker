@@ -6,6 +6,7 @@ import { describe, it, expect, beforeEach, vi } from "vitest";
 import MiEquipoPage from "./MiEquipoPage";
 import {
   eliminarEquipo,
+  marcarEquipoInactivo,
   obtenerMiEquipo,
   salirDeEquipo,
   transferirLiderazgo,
@@ -23,12 +24,17 @@ vi.mock("../context/ChatContext", () => ({
   useChat: () => chat,
 }));
 
+vi.mock("../api/roleApi", () => ({
+  getRolesByGame: vi.fn().mockResolvedValue([]),
+}));
+
 vi.mock("../api/teamApi", () => ({
   obtenerMiEquipo: vi.fn(),
   expulsarIntegrante: vi.fn(),
   transferirLiderazgo: vi.fn(),
   eliminarEquipo: vi.fn(),
   salirDeEquipo: vi.fn(),
+  marcarEquipoInactivo: vi.fn(),
 }));
 
 const integrante = (userId, username, esLider) => ({
@@ -222,6 +228,52 @@ describe("MiEquipoPage", () => {
           /transferí el liderazgo a otro integrante o eliminá el equipo/
         )
       ).toBeInTheDocument();
+    });
+  });
+
+  describe("Marcar equipo como inactivo", () => {
+    it("el líder confirma, vuelve a Equipos y el chat del equipo NO se cierra", async () => {
+      const usuario = userEvent.setup();
+      marcarEquipoInactivo.mockResolvedValue({
+        message: "El equipo fue marcado inactivo exitosamente.",
+      });
+      renderPagina();
+
+      await usuario.click(
+        await screen.findByRole("button", { name: "Marcar como inactivo" })
+      );
+      await usuario.click(
+        within(screen.getByRole("dialog")).getByRole("button", {
+          name: "Marcar como inactivo",
+        })
+      );
+
+      expect(marcarEquipoInactivo).toHaveBeenCalledWith(3);
+      expect(await screen.findByText("Pantalla equipos")).toBeInTheDocument();
+      expect(chat.cerrarConversacionActiva).not.toHaveBeenCalled();
+    });
+
+    it("cancelar mantiene el equipo activo", async () => {
+      const usuario = userEvent.setup();
+      renderPagina();
+
+      await usuario.click(
+        await screen.findByRole("button", { name: "Marcar como inactivo" })
+      );
+      await usuario.click(screen.getByRole("button", { name: "Cancelar" }));
+
+      expect(marcarEquipoInactivo).not.toHaveBeenCalled();
+      expect(screen.getByText("Los Gankers")).toBeInTheDocument();
+    });
+
+    it("un integrante común no ve la opción", async () => {
+      obtenerMiEquipo.mockResolvedValue(equipoComoIntegrante);
+      renderPagina();
+
+      expect(await screen.findByText("Los Gankers")).toBeInTheDocument();
+      expect(
+        screen.queryByRole("button", { name: "Marcar como inactivo" })
+      ).toBeNull();
     });
   });
 });

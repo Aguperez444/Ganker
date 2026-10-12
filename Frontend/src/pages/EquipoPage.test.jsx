@@ -35,6 +35,10 @@ vi.mock("../context/ChatContext", () => ({
   useChat: () => chat,
 }));
 
+vi.mock("../api/roleApi", () => ({
+  getRolesByGame: vi.fn().mockResolvedValue([]),
+}));
+
 vi.mock("../api/teamApi", () => ({
   obtenerEquipo: vi.fn(),
   unirseAEquipo: vi.fn(),

@@ -5,6 +5,7 @@ import ModalConfirmacionComponent from "../components/common/ModalConfirmacionCo
 import FichaEquipoComponent from "../components/equipos/FichaEquipoComponent";
 import IntegrantesEquipoComponent from "../components/equipos/IntegrantesEquipoComponent";
 import { useChat } from "../context/ChatContext";
+import useIconosDeRoles from "../hooks/useIconosDeRoles";
 import useMiEquipo from "../hooks/useMiEquipo";
 
 // US 14 - Crear equipo: vista del equipo a la que se redirige al crearlo.
@@ -12,6 +13,8 @@ import useMiEquipo from "../hooks/useMiEquipo";
 // US 43 - Transferir liderazgo: el lider elige a otro integrante.
 // US 16 - Eliminar equipo: el lider lo disuelve.
 // US 19 - Salirse de un equipo: un integrante comun lo abandona.
+// Marcar equipo como inactivo: el lider lo saca de la busqueda sin
+// desvincular a nadie ni cerrar el chat.
 const MiEquipoPage = () => {
   const location = useLocation();
   const navigate = useNavigate();
@@ -29,6 +32,7 @@ const MiEquipoPage = () => {
   const [nuevoLider, setNuevoLider] = useState(null);
   const [confirmandoEliminacion, setConfirmandoEliminacion] = useState(false);
   const [confirmandoSalida, setConfirmandoSalida] = useState(false);
+  const [confirmandoInactivo, setConfirmandoInactivo] = useState(false);
   const {
     equipo,
     cargando,
@@ -45,6 +49,10 @@ const MiEquipoPage = () => {
     errorSalida,
     salirDelEquipo,
     limpiarErrorSalida,
+    marcandoInactivo,
+    errorInactivo,
+    marcarEquipoInactivo,
+    limpiarErrorInactivo,
     eliminando,
     errorEliminacion,
     eliminarEquipo,
@@ -52,6 +60,7 @@ const MiEquipoPage = () => {
   } = useMiEquipo();
 
   const esLider = Boolean(equipo?.consultant_player_info?.is_leader);
+  const iconosDeRoles = useIconosDeRoles(equipo?.videogame?.videogame_id);
 
   const handleAbrirExpulsion = (integrante) => {
     limpiarErrorExpulsion();
@@ -130,6 +139,28 @@ const MiEquipoPage = () => {
     navigate("/app/equipos", { state: { mensajeExito: mensaje } });
   };
 
+  const handleAbrirInactivo = () => {
+    limpiarErrorInactivo();
+    setMensajeExito("");
+    setConfirmandoInactivo(true);
+  };
+
+  const handleCancelarInactivo = () => {
+    limpiarErrorInactivo();
+    setConfirmandoInactivo(false);
+  };
+
+  const handleConfirmarInactivo = async () => {
+    const mensaje = await marcarEquipoInactivo();
+
+    if (!mensaje) return;
+
+    // A diferencia de salir o eliminar, el chat del equipo NO se cierra: los
+    // integrantes lo siguen usando desde el panel de chat. El equipo deja de
+    // ser el activo del jugador, asi que se vuelve a Equipos.
+    navigate("/app/equipos", { state: { mensajeExito: mensaje } });
+  };
+
   const handleAbrirEliminacion = () => {
     limpiarErrorEliminacion();
     setMensajeExito("");
@@ -182,6 +213,7 @@ const MiEquipoPage = () => {
           </h2>
           <IntegrantesEquipoComponent
             integrantes={equipo.members}
+            iconosDeRoles={iconosDeRoles}
             onExpulsar={esLider ? handleAbrirExpulsion : undefined}
             onTransferirLiderazgo={
               esLider ? handleAbrirTransferencia : undefined
@@ -225,6 +257,30 @@ const MiEquipoPage = () => {
             </button>
           </div>
         </div>
+
+        {esLider && (
+          <div className="rounded-2xl border border-white/10 bg-ganker-surface p-5 sm:p-6">
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <h2 className="font-heading text-lg font-semibold text-ganker-text">
+                  Marcar como inactivo
+                </h2>
+                <p className="mt-1 text-sm text-ganker-muted">
+                  El equipo deja de aparecer en la búsqueda. Nadie sale del
+                  equipo y el chat sigue funcionando, pero todos quedan libres
+                  para crear o unirse a otro equipo.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={handleAbrirInactivo}
+                className="shrink-0 cursor-pointer rounded-xl border border-white/10 px-5 py-3 text-sm font-semibold text-ganker-text transition hover:bg-white/5"
+              >
+                Marcar como inactivo
+              </button>
+            </div>
+          </div>
+        )}
 
         {esLider && (
           <div className="rounded-2xl border border-ganker-error/20 bg-ganker-surface p-5 sm:p-6">
@@ -332,6 +388,32 @@ const MiEquipoPage = () => {
         error={errorSalida}
         onConfirm={handleConfirmarSalida}
         onCancel={handleCancelarSalida}
+      />
+
+      <ModalConfirmacionComponent
+        isOpen={confirmandoInactivo}
+        title="Marcar equipo como inactivo"
+        message={
+          <>
+            <p>
+              ¿Seguro que querés marcar{" "}
+              <span className="font-semibold text-ganker-text">
+                {equipo?.team_name}
+              </span>{" "}
+              como inactivo?
+            </p>
+            <p className="mt-2">
+              Va a dejar de aparecer en la búsqueda de equipos. Los integrantes
+              siguen en el equipo y pueden seguir usando el chat, pero quedan
+              libres para crear o unirse a otro equipo.
+            </p>
+          </>
+        }
+        confirmLabel="Marcar como inactivo"
+        isLoading={marcandoInactivo}
+        error={errorInactivo}
+        onConfirm={handleConfirmarInactivo}
+        onCancel={handleCancelarInactivo}
       />
 
       <ModalConfirmacionComponent
