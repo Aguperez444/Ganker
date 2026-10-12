@@ -1,15 +1,19 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { CLAVES_SESION } from "../api/axiosClient";
-import { crearChatSocket } from "../api/chatSocketApi";
+import { crearChatSocket, crearChatroomSocket } from "../api/chatSocketApi";
 
 const MAX_INTENTOS_RECONEXION = 5;
 
 const TIPO_MENSAJES_LEIDOS = "MESSAGES_READ_NOTIFICATION";
 
+// `tipo`: "privada" o "equipo" (US 44, chatroom del equipo). Cambia solo
+// a que socket se conecta: el protocolo ({ content } de ida, el mensaje
+// guardado de vuelta) es el mismo.
 export function useChatSocket(
   conversationId,
   mensajesIniciales = [],
-  onMensaje
+  onMensaje,
+  tipo = "privada"
 ) {
   const [mensajes, setMensajes] = useState(mensajesIniciales);
   const [estado, setEstado] = useState("CERRADO");
@@ -47,7 +51,10 @@ export function useChatSocket(
     setEstado("CONECTANDO");
     setError(null);
 
-    const socket = crearChatSocket(conversationId, token);
+    const socket =
+      tipo === "equipo"
+        ? crearChatroomSocket(conversationId, token)
+        : crearChatSocket(conversationId, token);
 
     socketRef.current = socket;
 
@@ -113,7 +120,20 @@ export function useChatSocket(
       socketRef.current = null;
 
       if (event.code === 1008) {
-        setError(event.reason || "No tenés acceso a esta conversación.");
+        setError(
+          tipo === "equipo"
+            ? "No sos integrante de este equipo: no podés leer ni enviar mensajes."
+            : event.reason || "No tenés acceso a esta conversación."
+        );
+        return;
+      }
+
+      // El backend cierra el chatroom con 1000 cuando el equipo se disuelve:
+      // no tiene sentido reconectar.
+      if (tipo === "equipo" && event.code === 1000) {
+        setError(
+          "El chat del equipo se cerró: ya no se pueden enviar mensajes."
+        );
         return;
       }
 
@@ -132,7 +152,7 @@ export function useChatSocket(
 
       setError("Se perdió la conexión con el chat.");
     };
-  }, [conversationId]);
+  }, [conversationId, tipo]);
 
   useEffect(() => {
     conectarRef.current = conectar;

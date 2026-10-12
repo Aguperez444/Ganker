@@ -1,6 +1,17 @@
 import { resolveIconUrl } from "../../utils/media";
+import {
+  CLASES_BOTON_ELIMINAR,
+  CLASES_BOTON_MODIFICAR,
+} from "../common/botonesAccion";
 
-const RolesListComponent = ({ roles, isLoading, error }) => {
+const RolesListComponent = ({
+  roles,
+  isLoading,
+  error,
+  selectedRoleId,
+  onEdit,
+  onDelete,
+}) => {
   if (isLoading) {
     return (
       <div className="rounded-xl border border-white/10 bg-ganker-surface-light p-6">
@@ -35,7 +46,12 @@ const RolesListComponent = ({ roles, isLoading, error }) => {
         {sortedRoles.map((role) => (
           <li
             key={role.id}
-            className="flex items-center justify-between gap-4 bg-ganker-surface-light px-5 py-4 transition hover:bg-white/5"
+            className={[
+              "flex items-center justify-between gap-4 px-5 py-4 transition",
+              selectedRoleId === role.id
+                ? "bg-ganker-purple/20"
+                : "bg-ganker-surface-light hover:bg-white/5",
+            ].join(" ")}
           >
             <div className="flex min-w-0 items-center gap-3">
               {resolveIconUrl(role.icon_url) ? (
@@ -68,6 +84,23 @@ const RolesListComponent = ({ roles, isLoading, error }) => {
               <p className="truncate font-medium text-ganker-text">
                 {role.name}
               </p>
+            </div>
+
+            <div className="flex shrink-0 items-center gap-2">
+              <button
+                type="button"
+                onClick={() => onEdit(role)}
+                className={CLASES_BOTON_MODIFICAR}
+              >
+                Modificar
+              </button>
+              <button
+                type="button"
+                onClick={() => onDelete(role)}
+                className={CLASES_BOTON_ELIMINAR}
+              >
+                Eliminar
+              </button>
             </div>
           </li>
         ))}

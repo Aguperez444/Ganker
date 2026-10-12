@@ -1,4 +1,8 @@
 import { resolveIconUrl } from "../../utils/media";
+import {
+  CLASES_BOTON_ELIMINAR,
+  CLASES_BOTON_MODIFICAR,
+} from "../common/botonesAccion";
 
 const CharactersListComponent = ({
   characters,
@@ -84,11 +88,11 @@ const CharactersListComponent = ({
               </p>
             </div>
 
-            <div className="flex shrink-0 items-center gap-1">
+            <div className="flex shrink-0 items-center gap-2">
               <button
                 type="button"
                 onClick={() => onEdit(character)}
-                className="cursor-pointer rounded-lg px-3 py-2 text-sm font-semibold text-ganker-purple-light transition hover:bg-ganker-purple/20 hover:text-ganker-text"
+                className={CLASES_BOTON_MODIFICAR}
               >
                 Modificar
               </button>
@@ -96,7 +100,7 @@ const CharactersListComponent = ({
               <button
                 type="button"
                 onClick={() => onDelete(character)}
-                className="cursor-pointer rounded-lg px-3 py-2 text-sm font-semibold text-ganker-error transition hover:bg-ganker-error/10"
+                className={CLASES_BOTON_ELIMINAR}
               >
                 Eliminar
               </button>

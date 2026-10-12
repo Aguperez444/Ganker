@@ -1,4 +1,5 @@
 import { resolveIconUrl } from "../../utils/media";
+import { CLASES_BOTON_MODIFICAR } from "../common/botonesAccion";
 
 const GameListComponent = ({
   games,
@@ -82,7 +83,7 @@ const GameListComponent = ({
             <button
               type="button"
               onClick={() => onEdit(game)}
-              className="shrink-0 cursor-pointer rounded-lg px-3 py-2 text-sm font-semibold text-ganker-purple-light transition hover:bg-ganker-purple/20 hover:text-ganker-text"
+              className={`shrink-0 ${CLASES_BOTON_MODIFICAR}`}
             >
               Modificar
             </button>

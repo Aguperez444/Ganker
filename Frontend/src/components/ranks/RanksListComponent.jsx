@@ -1,6 +1,17 @@
 import { resolveIconUrl } from "../../utils/media";
+import {
+  CLASES_BOTON_ELIMINAR,
+  CLASES_BOTON_MODIFICAR,
+} from "../common/botonesAccion";
 
-const RanksListComponent = ({ ranks, isLoading, error }) => {
+const RanksListComponent = ({
+  ranks,
+  isLoading,
+  error,
+  selectedRankId,
+  onEdit,
+  onDelete,
+}) => {
   if (isLoading) {
     return (
       <div className="rounded-xl border border-white/10 bg-ganker-surface-light p-6">
@@ -35,7 +46,12 @@ const RanksListComponent = ({ ranks, isLoading, error }) => {
         {sortedRanks.map((rank) => (
           <li
             key={rank.id}
-            className="flex items-center justify-between gap-4 bg-ganker-surface-light px-5 py-4 transition hover:bg-white/5"
+            className={[
+              "flex items-center justify-between gap-4 px-5 py-4 transition",
+              selectedRankId === rank.id
+                ? "bg-ganker-purple/20"
+                : "bg-ganker-surface-light hover:bg-white/5",
+            ].join(" ")}
           >
             <div className="flex min-w-0 items-center gap-3">
               {resolveIconUrl(rank.icon_url) ? (
@@ -70,9 +86,25 @@ const RanksListComponent = ({ ranks, isLoading, error }) => {
               </p>
             </div>
 
-            <span className="shrink-0 rounded-full bg-ganker-purple/20 px-3 py-1 text-xs font-semibold text-ganker-purple-light">
-              Valor {rank.value}
-            </span>
+            <div className="flex shrink-0 items-center gap-2">
+              <span className="rounded-full bg-ganker-purple/20 px-3 py-1 text-xs font-semibold text-ganker-purple-light">
+                Valor {rank.value}
+              </span>
+              <button
+                type="button"
+                onClick={() => onEdit(rank)}
+                className={CLASES_BOTON_MODIFICAR}
+              >
+                Modificar
+              </button>
+              <button
+                type="button"
+                onClick={() => onDelete(rank)}
+                className={CLASES_BOTON_ELIMINAR}
+              >
+                Eliminar
+              </button>
+            </div>
           </li>
         ))}
       </ul>

@@ -1,45 +1,24 @@
 import { Link } from "react-router-dom";
-import { urlDeMedia } from "../../utils/media";
+import IconoChicoComponent from "../common/IconoChicoComponent";
 import IntegrantesEquipoComponent from "./IntegrantesEquipoComponent";
-
-function Icono({ src, className }) {
-  const url = urlDeMedia(src);
-  if (!url) {
-    return (
-      <div
-        className={`${className} border border-dashed border-white/20 bg-ganker-surface`}
-      />
-    );
-  }
-  return (
-    <img
-      src={url}
-      alt=""
-      className={`${className} object-cover`}
-      onError={(e) => {
-        e.currentTarget.style.visibility = "hidden";
-      }}
-    />
-  );
-}
+import RangoPermitidoComponent from "./RangoPermitidoComponent";
 
 // US 17 - Buscar equipos: un equipo del listado (TeamSummaryResponse) con
 // nombre, descripcion, rango representativo, integrantes (avatar y rango) y
-// vacantes (misma lista con contorno por renglon que Mi equipo) y contador. El boton "Unirse al equipo" (US 18) llama a onUnirse,
-// que abre el modal donde se ve si el jugador cumple los requisitos.
-const TarjetaEquipoComponent = ({ equipo, onUnirse }) => {
+// vacantes (misma lista con contorno por renglon que Mi equipo) y contador.
+// El boton "Unirse al equipo" (US 18) llama a onUnirse, que abre el modal
+// donde se ve si el jugador cumple los requisitos. `iconosDeRoles` se pasa
+// tal cual a la lista de integrantes.
+const TarjetaEquipoComponent = ({ equipo, onUnirse, iconosDeRoles }) => {
   const info = equipo.consultant_player_info;
   const rangoRepresentativo = equipo.representative_rank;
-  const rangoPermitido =
-    equipo.min_rank?.rank_id === equipo.max_rank?.rank_id
-      ? equipo.min_rank?.name
-      : `${equipo.min_rank?.name} a ${equipo.max_rank?.name}`;
 
   return (
     <article className="flex h-full flex-col rounded-2xl border border-white/10 bg-ganker-surface p-5">
       <div className="flex items-start gap-3">
-        <Icono
+        <IconoChicoComponent
           src={equipo.icon_url}
+          placeholder
           className="h-12 w-12 shrink-0 rounded-lg border border-white/10"
         />
         <div className="min-w-0 flex-1">
@@ -49,10 +28,15 @@ const TarjetaEquipoComponent = ({ equipo, onUnirse }) => {
           >
             {equipo.team_name}
           </Link>
-          <p className="truncate text-xs text-ganker-muted">
-            {equipo.region?.region_name ?? "Sin región"}
-            {equipo.allow_other_regions ? " (admite otras)" : ""} · Rango{" "}
-            {rangoPermitido}
+          <p className="flex flex-wrap items-center gap-x-1 text-xs text-ganker-muted">
+            <span>
+              {equipo.region?.region_name ?? "Sin región"}
+              {equipo.allow_other_regions ? " (admite otras)" : ""} · Rango
+            </span>
+            <RangoPermitidoComponent
+              rangoMinimo={equipo.min_rank}
+              rangoMaximo={equipo.max_rank}
+            />
           </p>
         </div>
         <span
@@ -71,7 +55,10 @@ const TarjetaEquipoComponent = ({ equipo, onUnirse }) => {
 
       {rangoRepresentativo && (
         <div className="mt-3 flex items-center gap-2 text-xs text-ganker-muted">
-          <Icono src={rangoRepresentativo.icon_url} className="h-5 w-5" />
+          <IconoChicoComponent
+            src={rangoRepresentativo.icon_url}
+            className="h-5 w-5"
+          />
           <span>
             Rango representativo:{" "}
             <span className="font-semibold text-ganker-text">
@@ -82,7 +69,11 @@ const TarjetaEquipoComponent = ({ equipo, onUnirse }) => {
       )}
 
       <div className="mt-3">
-        <IntegrantesEquipoComponent integrantes={equipo.members} compacto />
+        <IntegrantesEquipoComponent
+          integrantes={equipo.members}
+          compacto
+          iconosDeRoles={iconosDeRoles}
+        />
       </div>
 
       <div className="mt-auto pt-5">

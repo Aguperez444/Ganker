@@ -2,20 +2,43 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { crearNotificacionesSocket } from "../api/chatSocketApi";
 
 const MAX_INTENTOS_RECONEXION = 6;
-const TIPO_NUEVO_MENSAJE = "NEW_MESSAGE_NOTIFICATION";
+// Mensaje nuevo en un chat privado o en el chatroom de un equipo (US 44):
+// los dos traen { conversation_id, sender_id, content, timestamp }.
+const TIPOS_NUEVO_MENSAJE = [
+  "NEW_MESSAGE_NOTIFICATION",
+  "NEW_CHATROOM_MESSAGE_NOTIFICATION",
+];
 
-export function useNotificacionesSocket(token, onNotificacion) {
+// Cambios en el equipo del jugador (alguien se unio, salio, fue expulsado,
+// cambio el lider, se disolvio o se marco inactivo). El backend se los manda
+// a los integrantes para que la vista del equipo se actualice sola.
+const TIPOS_EVENTO_EQUIPO = [
+  "TEAM_JOINED_NOTIFICATION",
+  "TEAM_NEW_MEMBER_NOTIFICATION",
+  "TEAM_MEMBER_LEFT_NOTIFICATION",
+  "TEAM_MEMBER_KICKED_NOTIFICATION",
+  "TEAM_LEADERSHIP_TRANSFERRED_NOTIFICATION",
+  "TEAM_DELETED_NOTIFICATION",
+  "TEAM_DEACTIVATED_NOTIFICATION",
+];
+
+export function useNotificacionesSocket(token, onNotificacion, onEventoEquipo) {
   const [conectado, setConectado] = useState(false);
 
   const socketRef = useRef(null);
   const intentosRef = useRef(0);
   const reintentoTimeoutRef = useRef(null);
   const onNotificacionRef = useRef(onNotificacion);
+  const onEventoEquipoRef = useRef(onEventoEquipo);
   const conectarRef = useRef(() => {});
 
   useEffect(() => {
     onNotificacionRef.current = onNotificacion;
   }, [onNotificacion]);
+
+  useEffect(() => {
+    onEventoEquipoRef.current = onEventoEquipo;
+  }, [onEventoEquipo]);
 
   const conectar = useCallback(() => {
     if (!token) return;
@@ -50,8 +73,10 @@ export function useNotificacionesSocket(token, onNotificacion) {
         return;
       }
 
-      if (data.type === TIPO_NUEVO_MENSAJE) {
+      if (TIPOS_NUEVO_MENSAJE.includes(data.type)) {
         onNotificacionRef.current?.(data);
+      } else if (TIPOS_EVENTO_EQUIPO.includes(data.type)) {
+        onEventoEquipoRef.current?.(data);
       }
     };
 

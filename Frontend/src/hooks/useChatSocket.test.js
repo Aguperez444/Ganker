@@ -150,4 +150,37 @@ describe("useChatSocket", () => {
     );
     expect(MockWebSocket.instances).toHaveLength(1);
   });
+
+  describe("US 44 - chatroom del equipo", () => {
+    it("se conecta al socket del chatroom, no al de la conversación privada", () => {
+      renderHook(() => useChatSocket(9, [], undefined, "equipo"));
+
+      expect(MockWebSocket.instances[0].url).toContain(
+        "/api/v1/ws/chat/chatroom/9?token=token-de-prueba"
+      );
+    });
+
+    it("si el equipo se disolvió (cierre 1000) avisa y no reconecta", () => {
+      const { result } = renderHook(() =>
+        useChatSocket(9, [], undefined, "equipo")
+      );
+      const socket = MockWebSocket.instances[0];
+      act(() => socket.simularApertura());
+
+      act(() => socket.simularCierre(1000, "Chatroom cerrado"));
+
+      expect(result.current.error).toMatch(/ya no se pueden enviar mensajes/);
+      expect(MockWebSocket.instances).toHaveLength(1);
+    });
+
+    it("si no es integrante (cierre 1008) avisa que no tiene permisos", () => {
+      const { result } = renderHook(() =>
+        useChatSocket(9, [], undefined, "equipo")
+      );
+
+      act(() => MockWebSocket.instances[0].simularCierre(1008));
+
+      expect(result.current.error).toMatch(/No sos integrante de este equipo/);
+    });
+  });
 });

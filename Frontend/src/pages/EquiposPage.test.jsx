@@ -36,6 +36,7 @@ vi.mock("../context/AuthContext", () => ({
 }));
 
 vi.mock("../context/ChatContext", () => ({
+  useEventosEquipo: () => {},
   useChat: () => chat,
 }));
 

@@ -4,6 +4,7 @@ import FichaEquipoComponent from "../components/equipos/FichaEquipoComponent";
 import IntegrantesEquipoComponent from "../components/equipos/IntegrantesEquipoComponent";
 import ModalUnirseEquipoComponent from "../components/equipos/ModalUnirseEquipoComponent";
 import useEquipo from "../hooks/useEquipo";
+import useIconosDeRoles from "../hooks/useIconosDeRoles";
 import useUnirseEquipo from "../hooks/useUnirseEquipo";
 import { elegibilidadDelEquipo } from "../utils/validacionesEquipos";
 
@@ -16,6 +17,7 @@ const EquipoPage = () => {
   const navigate = useNavigate();
   const { equipo, cargando, error, reemplazarEquipo } = useEquipo(equipoId);
   const union = useUnirseEquipo({ alActualizarEquipo: reemplazarEquipo });
+  const iconosDeRoles = useIconosDeRoles(equipo?.videogame?.videogame_id);
 
   const handleConfirmar = async (vacanteId) => {
     const resultado = await union.unirse(vacanteId);
@@ -93,7 +95,10 @@ const EquipoPage = () => {
           <h2 className="mb-4 font-heading text-lg font-semibold text-ganker-text">
             Integrantes
           </h2>
-          <IntegrantesEquipoComponent integrantes={equipo.members} />
+          <IntegrantesEquipoComponent
+            integrantes={equipo.members}
+            iconosDeRoles={iconosDeRoles}
+          />
         </div>
       </div>
     );

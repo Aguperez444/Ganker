@@ -38,6 +38,7 @@ vi.mock("../context/AuthContext", () => ({
 // MiEquipoPage (a donde redirige) usa el chat para cerrar la sala al
 // eliminar el equipo.
 vi.mock("../context/ChatContext", () => ({
+  useEventosEquipo: () => {},
   useChat: () => ({
     conversacionActivaId: null,
     cargarConversaciones: vi.fn(),

@@ -23,3 +23,33 @@ export const createRank = async ({ videogame_id, name, value, icon }) => {
     },
   });
 };
+
+// Modificar rango. PUT /api/v1/ranks/{rank_id} (multipart: name, value y
+// icon opcional). El videojuego no viaja: no se puede cambiar. Si no se
+// manda icono, el backend mantiene el actual.
+export const updateRank = async (rankId, { name, value, icon }) => {
+  const fd = new FormData();
+  fd.append("name", name);
+  fd.append("value", value);
+  if (icon) {
+    fd.append("icon", icon);
+  }
+
+  const response = await axiosClient.put(`/api/v1/ranks/${rankId}`, fd, {
+    headers: {
+      "Content-Type": "multipart/form-data",
+    },
+  });
+
+  return response.data;
+};
+
+// Eliminar rango. DELETE /api/v1/ranks/{rank_id} -> { message }.
+// Los perfiles que lo usaban pasan al rango inmediatamente inferior (o al
+// superior si no hay inferior); si es el unico rango del juego y esta en uso,
+// el backend lo rechaza.
+export const deleteRank = async (rankId) => {
+  const response = await axiosClient.delete(`/api/v1/ranks/${rankId}`);
+
+  return response.data;
+};

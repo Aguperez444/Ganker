@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import AvatarUsuarioComponent from "../common/AvatarUsuarioComponent";
+import IconoChicoComponent from "../common/IconoChicoComponent";
 import { useChatSocket } from "../../hooks/useChatSocket";
 import { useChatHistory } from "../../hooks/useChatHistory";
 import { useChat } from "../../context/ChatContext";
@@ -35,6 +36,24 @@ function mismoMinuto(a, b) {
   );
 }
 
+// US 45 - El backend responde 403 si el jugador no es integrante del chat
+// (o del equipo) y 404 si el chat no existe: se explica cada caso en vez de
+// un error generico.
+function mensajeDeErrorHistorial(error, esDeEquipo) {
+  const status = error?.response?.status;
+  if (status === 403) {
+    return esDeEquipo
+      ? "No sos integrante de este equipo: no podés ver su historial."
+      : "No tenés acceso a esta conversación.";
+  }
+  if (status === 404) {
+    return esDeEquipo
+      ? "El chat de este equipo no existe."
+      : "La conversación no existe.";
+  }
+  return "No se pudo cargar el historial de mensajes.";
+}
+
 // Este componente prepara el historial inicial antes de montar
 // ChatWindowInterna.
 //
@@ -51,7 +70,8 @@ const ChatWindowComponent = ({
     useChat();
 
   const { cargarPaginaHistorial } = useChatHistory(
-    conversacion.conversation_id
+    conversacion.conversation_id,
+    conversacion.tipo
   );
 
   // Si ya abrimos esta conversación durante la sesión,
@@ -84,7 +104,9 @@ const ChatWindowComponent = ({
 
         logError("Error al cargar el historial de mensajes:", error);
 
-        setErrorHistorial("No se pudo cargar el historial de mensajes.");
+        setErrorHistorial(
+          mensajeDeErrorHistorial(error, conversacion.tipo === "equipo")
+        );
 
         setMensajesDelFetch([]);
       });
@@ -135,7 +157,8 @@ const ChatWindowInterna = ({
     useChat();
 
   const { cargarPaginaHistorial } = useChatHistory(
-    conversacion.conversation_id
+    conversacion.conversation_id,
+    conversacion.tipo
   );
 
   const mensajesRef = useRef(null);
@@ -152,10 +175,15 @@ const ChatWindowInterna = ({
 
   const restaurarScrollRef = useRef(null);
 
+  // US 44 - Chatroom del equipo: en vez del otro jugador se muestra el
+  // equipo, y en cada mensaje ajeno quien lo escribio.
+  const esDeEquipo = conversacion.tipo === "equipo";
+
   const otroParticipante = conversacion.other_participant;
 
-  const nombreOtro =
-    otroParticipante?.name || otroParticipante?.username || "Jugador";
+  const nombreOtro = esDeEquipo
+    ? conversacion.nombre || "Chat del equipo"
+    : otroParticipante?.name || otroParticipante?.username || "Jugador";
 
   // Si se reabre el panel/drawer con la conversación ya activa,
   // volvemos a marcarla como vista.
@@ -166,7 +194,8 @@ const ChatWindowInterna = ({
   const { mensajes, setMensajes, estado, error, enviarMensaje } = useChatSocket(
     conversacion.conversation_id,
     mensajesIniciales,
-    (mensaje) => onMensaje?.(conversacion.conversation_id, mensaje)
+    (mensaje) => onMensaje?.(conversacion.conversation_id, mensaje),
+    conversacion.tipo
   );
 
   // Solo mostramos el indicador de leído en el último mensaje propio.
@@ -282,7 +311,14 @@ const ChatWindowInterna = ({
         )}
 
         <div className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-full border border-ganker-purple/40 bg-ganker-surface-light text-sm font-semibold text-ganker-text">
-          <AvatarUsuarioComponent user={otroParticipante} alt={nombreOtro} />
+          {esDeEquipo ? (
+            <IconoChicoComponent
+              src={conversacion.icon_url}
+              className="h-full w-full"
+            />
+          ) : (
+            <AvatarUsuarioComponent user={otroParticipante} alt={nombreOtro} />
+          )}
         </div>
 
         <div className="min-w-0 flex-1">
@@ -291,6 +327,9 @@ const ChatWindowInterna = ({
           </h3>
 
           <span className="text-[11px] text-ganker-muted">
+            {esDeEquipo && conversacion.member_count
+              ? `${conversacion.member_count} integrantes · `
+              : ""}
             {TEXTO_ESTADO[estado] ?? estado}
           </span>
         </div>
@@ -347,13 +386,27 @@ const ChatWindowInterna = ({
               siguiente.sender_id !== mensaje.sender_id ||
               !mismoMinuto(mensaje.timestamp, siguiente.timestamp);
 
+            // En el chat del equipo el nombre va solo al empezar una tanda
+            // de mensajes de otra persona (no se repite en cada globo).
+            const anterior = mensajes[indice - 1];
+            const autor =
+              esDeEquipo &&
+              mensaje.sender_id !== currentUserId &&
+              anterior?.sender_id !== mensaje.sender_id
+                ? mensaje.sender_name || mensaje.sender_username
+                : null;
+
             return (
               <MessageBubbleComponent
                 key={mensaje.message_id ?? indice}
                 mensaje={mensaje}
                 esPropio={mensaje.sender_id === currentUserId}
                 mostrarHora={mostrarHora}
-                mostrarIndicadorLeido={indice === indiceUltimoMensajePropio}
+                autor={autor}
+                // El chatroom no informa quien leyo cada mensaje.
+                mostrarIndicadorLeido={
+                  !esDeEquipo && indice === indiceUltimoMensajePropio
+                }
               />
             );
           })

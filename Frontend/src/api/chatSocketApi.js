@@ -23,3 +23,14 @@ export function crearNotificacionesSocket(token) {
     urlWebSocket(`/api/v1/ws/notifications?token=${encodeURIComponent(token)}`)
   );
 }
+
+// US 44 - Socket del chatroom de un equipo. Mismo protocolo que el privado:
+// se envia { content } y llegan los mensajes guardados. El backend cierra con
+// 1008 si el jugador no es integrante, y con 1000 cuando el equipo se disuelve.
+export function crearChatroomSocket(chatroomId, token) {
+  return new WebSocket(
+    urlWebSocket(
+      `/api/v1/ws/chat/chatroom/${chatroomId}?token=${encodeURIComponent(token)}`
+    )
+  );
+}

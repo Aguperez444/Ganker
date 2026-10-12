@@ -73,3 +73,44 @@ describe("IntegrantesEquipoComponent", () => {
     expect(onExpulsar).toHaveBeenCalledWith(integrantes[1]);
   });
 });
+
+describe("IntegrantesEquipoComponent - íconos de rol y rango", () => {
+  it("muestra el ícono del rol y del rango al lado de cada integrante", () => {
+    const { container } = render(
+      <IntegrantesEquipoComponent
+        integrantes={[
+          {
+            team_member_role_id: 1,
+            user_id: 1,
+            username: "pepe",
+            is_leader: false,
+            is_vacant: false,
+            icon_url: "",
+            active_game_profile: {
+              region_name: "LAS",
+              active_role_profile: {
+                role_id: 10,
+                role_name: "Mid",
+                rank_name: "Oro",
+                rank_icon_url: "/media/ranks/oro.png",
+              },
+            },
+          },
+        ]}
+        iconosDeRoles={{ 10: "/media/roles/mid.png" }}
+      />
+    );
+
+    const fuentes = [...container.querySelectorAll("img")].map((img) =>
+      img.getAttribute("src")
+    );
+    expect(fuentes.some((src) => src.endsWith("/media/roles/mid.png"))).toBe(
+      true
+    );
+    expect(fuentes.some((src) => src.endsWith("/media/ranks/oro.png"))).toBe(
+      true
+    );
+    expect(screen.getByText("Mid")).toBeInTheDocument();
+    expect(screen.getByText("Oro")).toBeInTheDocument();
+  });
+});

@@ -1,7 +1,8 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import {
   eliminarEquipo,
   expulsarIntegrante,
+  marcarEquipoInactivo,
   obtenerMiEquipo,
   salirDeEquipo,
   transferirLiderazgo,
@@ -107,6 +108,26 @@ function mensajeDeErrorAlSalir(error) {
   return "Ocurrió un error al salir del equipo. Intentá de nuevo.";
 }
 
+// Marcar inactivo: el 403 trae IDs internos y el 409 significa que ya
+// estaba inactivo.
+function mensajeDeErrorAlMarcarInactivo(error) {
+  const data = error.response?.data;
+  const status = error.response?.status;
+
+  if (!error.response) {
+    return "No pudimos conectar con el servidor. Intentá de nuevo.";
+  }
+  if (status === 403) {
+    return "Solo el líder del equipo puede marcarlo como inactivo.";
+  }
+  if (status === 404) return "El equipo ya no existe.";
+  if (status === 409) return "El equipo ya está inactivo.";
+  if (typeof data?.error === "string") return data.error;
+  if (typeof data?.detail === "string") return data.detail;
+
+  return "Ocurrió un error al marcar el equipo como inactivo. Intentá de nuevo.";
+}
+
 // Equipo activo del jugador logueado (null si no esta en ninguno).
 const useMiEquipo = () => {
   const [equipo, setEquipo] = useState(null);
@@ -122,12 +143,22 @@ const useMiEquipo = () => {
   const [saliendo, setSaliendo] = useState(false);
   const [errorSalida, setErrorSalida] = useState("");
 
+  const [marcandoInactivo, setMarcandoInactivo] = useState(false);
+  const [errorInactivo, setErrorInactivo] = useState("");
+
   const [eliminando, setEliminando] = useState(false);
   const [errorEliminacion, setErrorEliminacion] = useState("");
 
   useEffect(() => {
     cargarMiEquipo({ setEquipo, setCargando, setError });
   }, []);
+
+  // Vuelve a pedir el equipo sin mostrar "Cargando..." (ej. cuando el
+  // backend avisa que alguien se unio o salio).
+  const recargar = useCallback(
+    () => cargarMiEquipo({ setEquipo, setCargando, setError }),
+    []
+  );
 
   // Devuelve true/false y la pagina decide que mostrar (modal, banner).
   const expulsar = async (usuarioId) => {
@@ -233,6 +264,38 @@ const useMiEquipo = () => {
     setErrorSalida("");
   };
 
+  // Marcar inactivo. Devuelve el mensaje de confirmacion del backend, o null
+  // si fallo. Quien llama decide a donde ir: el equipo deja de ser el activo
+  // del jugador, asi que /teams/me pasa a devolver null.
+  const marcarInactivo = async () => {
+    if (!equipo) return null;
+
+    try {
+      setMarcandoInactivo(true);
+      setErrorInactivo("");
+
+      const resultado = await marcarEquipoInactivo(equipo.team_id);
+      return resultado.message;
+    } catch (error) {
+      logError("Error al marcar el equipo como inactivo:", error);
+      setErrorInactivo(mensajeDeErrorAlMarcarInactivo(error));
+
+      // Ya no es lider, ya estaba inactivo o no existe: estado real.
+      const status = error.response?.status;
+      if (status === 403 || status === 404 || status === 409) {
+        await cargarMiEquipo({ setEquipo, setCargando, setError });
+      }
+
+      return null;
+    } finally {
+      setMarcandoInactivo(false);
+    }
+  };
+
+  const limpiarErrorInactivo = () => {
+    setErrorInactivo("");
+  };
+
   // US 16 - Devuelve el mensaje de confirmacion del backend, o null si fallo.
   // Quien llama decide a donde ir (el equipo ya no existe).
   const eliminar = async () => {
@@ -268,6 +331,10 @@ const useMiEquipo = () => {
     equipo,
     cargando,
     error,
+    // US 15 - Al modificar el equipo el backend devuelve su estado nuevo:
+    // se usa directamente en vez de volver a pedirlo.
+    reemplazarEquipo: setEquipo,
+    recargar,
     expulsando,
     errorExpulsion,
     expulsarIntegrante: expulsar,
@@ -280,6 +347,10 @@ const useMiEquipo = () => {
     errorSalida,
     salirDelEquipo: salir,
     limpiarErrorSalida,
+    marcandoInactivo,
+    errorInactivo,
+    marcarEquipoInactivo: marcarInactivo,
+    limpiarErrorInactivo,
     eliminando,
     errorEliminacion,
     eliminarEquipo: eliminar,

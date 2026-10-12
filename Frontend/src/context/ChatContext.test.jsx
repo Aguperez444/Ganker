@@ -9,6 +9,8 @@ import {
   iniciarConversacion,
   obtenerConversaciones,
   marcarConversacionComoLeida,
+  obtenerChatrooms,
+  marcarChatroomComoLeido,
 } from "../api/chatApi";
 
 vi.mock("../api/jugadoresApi", () => ({
@@ -18,6 +20,8 @@ vi.mock("../api/jugadoresApi", () => ({
 }));
 
 vi.mock("../api/chatApi", () => ({
+  obtenerChatrooms: vi.fn(() => Promise.resolve([])),
+  marcarChatroomComoLeido: vi.fn(() => Promise.resolve({})),
   iniciarConversacion: vi.fn(),
   obtenerConversaciones: vi.fn(),
   marcarConversacionComoLeida: vi.fn(),
@@ -100,7 +104,7 @@ function Harness() {
       <ul>
         {chat.conversaciones.map((c) => (
           <li key={c.conversation_id} data-testid={`conv-${c.conversation_id}`}>
-            {c.other_participant.username}:{c.unread_count ?? 0}
+            {c.other_participant?.username ?? c.nombre}:{c.unread_count ?? 0}
           </li>
         ))}
       </ul>
@@ -108,6 +112,9 @@ function Harness() {
       <button onClick={() => chat.iniciarChat(1)}>iniciar-con-uno-mismo</button>
       <button onClick={() => chat.seleccionarConversacion(1)}>
         seleccionar-1
+      </button>
+      <button onClick={() => chat.seleccionarConversacion(9)}>
+        seleccionar-9
       </button>
     </div>
   );
@@ -258,5 +265,39 @@ describe("ChatContext", () => {
 
     expect(screen.getByTestId("conv-1")).toHaveTextContent("owner_user:0");
     expect(screen.getByTestId("total-no-leidos")).toHaveTextContent("0");
+  });
+
+  describe("US 44/45 - chats de equipo", () => {
+    it("muestra el chat del equipo junto a los privados y lo marca leído con su endpoint", async () => {
+      obtenerChatrooms.mockResolvedValue([
+        {
+          chatroom_id: 9,
+          team_id: 4,
+          name: "Los Gankers",
+          icon_url: "",
+          member_count: 3,
+          last_message: {
+            content: "hola equipo",
+            timestamp: "2026-10-12T20:00:00",
+            sender_id: 2,
+            sender_username: "owner_user",
+          },
+          unread_count: 2,
+        },
+      ]);
+      await renderConSesion();
+
+      expect(await screen.findByTestId("conv-9")).toHaveTextContent(
+        "Los Gankers:2"
+      );
+
+      await userEvent.click(
+        screen.getByRole("button", { name: "seleccionar-9" })
+      );
+
+      expect(marcarChatroomComoLeido).toHaveBeenCalledWith(9);
+      expect(marcarConversacionComoLeida).not.toHaveBeenCalledWith(9);
+      expect(screen.getByTestId("conv-9")).toHaveTextContent("Los Gankers:0");
+    });
   });
 });

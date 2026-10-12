@@ -1,4 +1,5 @@
 import { urlDeMedia } from "../../utils/media";
+import IconoChicoComponent from "../common/IconoChicoComponent";
 
 const CLASES_ETIQUETA = "shrink-0 rounded-full border font-semibold";
 
@@ -14,11 +15,36 @@ const CLASES_ETIQUETA = "shrink-0 rounded-full border font-semibold";
 //
 // `compacto`: renglones de una sola linea, para las tarjetas de Buscar
 // equipos (US 17) donde entran varios equipos por pantalla.
+//
+// `iconosDeRoles` ({ role_id: icon_url }, opcional): el backend no manda el
+// icono del rol de cada integrante, asi que la pagina lo cruza con el
+// catalogo de roles del juego (ver hooks/useIconosDeRoles.js). Sin el, la
+// fila se muestra igual pero solo con el nombre del rol.
+function DetalleRolYRango({ perfilRol, iconoRol, rango }) {
+  return (
+    <span className="inline-flex min-w-0 items-center gap-1">
+      <IconoChicoComponent src={iconoRol} className="h-4 w-4 shrink-0" />
+      <span className="truncate">{perfilRol.role_name}</span>
+      {rango && (
+        <>
+          <span aria-hidden="true">·</span>
+          <IconoChicoComponent
+            src={perfilRol.rank_icon_url}
+            className="h-4 w-4 shrink-0"
+          />
+          <span className="truncate">{rango}</span>
+        </>
+      )}
+    </span>
+  );
+}
+
 const IntegrantesEquipoComponent = ({
   integrantes,
   onExpulsar,
   onTransferirLiderazgo,
   compacto = false,
+  iconosDeRoles = {},
 }) => {
   const tamanioAvatar = compacto ? "h-7 w-7" : "h-10 w-10";
   const tamanioEtiqueta = compacto
@@ -33,9 +59,13 @@ const IntegrantesEquipoComponent = ({
         const rango = !integrante.is_vacant && perfilRol.rank_name?.trim();
         // Las vacantes muestran solo el rol buscado: la etiqueta "Disponible"
         // ya indica que el lugar esta libre.
-        const detalle = integrante.is_vacant
-          ? null
-          : `${perfilRol.role_name}${rango ? ` · ${rango}` : ""}`;
+        const detalle = integrante.is_vacant ? null : (
+          <DetalleRolYRango
+            perfilRol={perfilRol}
+            iconoRol={iconosDeRoles[perfilRol.role_id]}
+            rango={rango}
+          />
+        );
         const nombre = integrante.is_vacant
           ? perfilRol.role_name
           : integrante.username;
@@ -71,22 +101,24 @@ const IntegrantesEquipoComponent = ({
               )}
 
               {compacto ? (
-                <p className="min-w-0 truncate text-sm">
-                  <span className={`font-medium ${colorNombre}`}>{nombre}</span>
+                <div className="flex min-w-0 items-center gap-1.5 text-sm">
+                  <span className={`truncate font-medium ${colorNombre}`}>
+                    {nombre}
+                  </span>
                   {detalle && (
-                    <span className="text-xs text-ganker-muted">
-                      {" "}
-                      · {detalle}
+                    <span className="flex min-w-0 items-center gap-1.5 text-xs text-ganker-muted">
+                      <span aria-hidden="true">·</span>
+                      {detalle}
                     </span>
                   )}
-                </p>
+                </div>
               ) : (
                 <div className="min-w-0">
                   <p className={`truncate font-medium ${colorNombre}`}>
                     {nombre}
                   </p>
                   {detalle && (
-                    <p className="truncate text-xs text-ganker-muted">
+                    <p className="mt-0.5 flex min-w-0 text-xs text-ganker-muted">
                       {detalle}
                     </p>
                   )}
@@ -113,12 +145,12 @@ const IntegrantesEquipoComponent = ({
             {(onTransferirLiderazgo || onExpulsar) &&
               !integrante.is_vacant &&
               !integrante.is_leader && (
-                <div className="flex shrink-0 items-center gap-1">
+                <div className="flex shrink-0 items-center gap-2">
                   {onTransferirLiderazgo && (
                     <button
                       type="button"
                       onClick={() => onTransferirLiderazgo(integrante)}
-                      className="cursor-pointer rounded-lg px-3 py-2 text-sm font-semibold text-ganker-purple-light transition hover:bg-ganker-purple/20 hover:text-ganker-text"
+                      className="cursor-pointer rounded-lg border border-ganker-purple-light/40 px-3 py-1.5 text-sm font-semibold text-ganker-purple-light transition hover:bg-ganker-purple/20 hover:text-ganker-text"
                     >
                       Hacer líder
                     </button>
@@ -127,7 +159,7 @@ const IntegrantesEquipoComponent = ({
                     <button
                       type="button"
                       onClick={() => onExpulsar(integrante)}
-                      className="cursor-pointer rounded-lg px-3 py-2 text-sm font-semibold text-ganker-error transition hover:bg-ganker-error/10"
+                      className="cursor-pointer rounded-lg border border-ganker-error/40 px-3 py-1.5 text-sm font-semibold text-ganker-error transition hover:bg-ganker-error/10"
                     >
                       Expulsar
                     </button>

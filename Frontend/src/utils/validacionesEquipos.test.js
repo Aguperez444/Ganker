@@ -5,6 +5,7 @@ import {
   mensajeDeRechazoAlUnirse,
   motivoVacanteNoDisponible,
   perfilDelJuego,
+  validarEdicionEquipo,
   validarFormularioEquipo,
 } from "./validacionesEquipos";
 
@@ -262,5 +263,69 @@ describe("US 18 - Unirse a equipo", () => {
       mensajeDeRechazoAlUnirse("Ya formás parte de otro equipo activo", equipo)
     ).toBe("Ya formás parte de otro equipo activo");
     expect(mensajeDeRechazoAlUnirse(undefined, equipo)).toBeNull();
+  });
+});
+
+describe("US 15 - validarEdicionEquipo", () => {
+  const PLATA = { rank_id: 2, name: "Plata", value: 2 };
+  const ORO_ = { rank_id: 3, name: "Oro", value: 3 };
+  const PLATINO = { rank_id: 4, name: "Platino", value: 4 };
+  const rangos = [PLATA, ORO_, PLATINO];
+
+  const integrante = (username, rankName) => ({
+    is_vacant: false,
+    username,
+    active_game_profile: { active_role_profile: { rank_name: rankName } },
+  });
+
+  const base = {
+    nombre: "Los Gankers",
+    descripcion: "",
+    regionId: "2",
+    admiteOtrasRegiones: false,
+    rangoMinimo: PLATA,
+    rangoMaximo: PLATINO,
+    integrantes: [integrante("lider", "Oro")],
+    rangos,
+  };
+
+  it("acepta datos válidos", () => {
+    expect(validarEdicionEquipo(base)).toEqual({});
+  });
+
+  it("rechaza el nombre vacío", () => {
+    expect(validarEdicionEquipo({ ...base, nombre: "  " }).nombre).toBe(
+      "Ingresá el nombre del equipo."
+    );
+  });
+
+  it("rechaza un rango mínimo superior al máximo", () => {
+    expect(
+      validarEdicionEquipo({
+        ...base,
+        rangoMinimo: PLATINO,
+        rangoMaximo: PLATA,
+      }).rangoMaximo
+    ).toMatch(/mínimo no puede ser superior/);
+  });
+
+  it("rechaza un intervalo que deja afuera el rango de un integrante", () => {
+    const errores = validarEdicionEquipo({
+      ...base,
+      rangoMinimo: PLATINO,
+      rangoMaximo: PLATINO,
+      integrantes: [integrante("lider", "Oro"), { is_vacant: true }],
+    });
+    expect(errores.rangos).toContain("Quedan afuera: lider (Oro)");
+  });
+
+  it("un equipo sin región tiene que admitir otras regiones", () => {
+    expect(
+      validarEdicionEquipo({
+        ...base,
+        regionId: "",
+        admiteOtrasRegiones: false,
+      }).region
+    ).toBeTruthy();
   });
 });
