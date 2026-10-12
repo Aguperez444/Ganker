@@ -1206,6 +1206,228 @@ class TestTeamEndpointsIntegration:
         assert join_res.status_code == 200
         assert join_res.json()["status"] == "success"
 
+    # =========================================================================
+    # USER STORY 9: Marcar como inactivo un equipo
+    # =========================================================================
+
+    def test_deactivate_team_success_as_creator(self, client, jwt_service, player_auth_headers, setup_data, mocker):
+        # Probar marcar inactivo un equipo siendo el creador y confirmar la acción (pasa)
+        mock_send = mocker.patch("app.infrastructure.api.controllers.team_controller.notification_manager.send_to_user", return_value=None)
+        mock_broadcast = mocker.patch("app.infrastructure.api.controllers.team_controller.teams_feed_manager.broadcast_event", return_value=None)
+
+        team_data = self._create_sample_team(client, player_auth_headers, setup_data)
+        team_id = team_data["team_id"]
+        target_slot_id = team_data["members"][1]["team_member_role_id"]
+
+        jane_user = setup_data["players"]["janedoe"]
+        headers_jane, _ = self._headers(jwt_service, jane_user)
+        client.post(f"/api/v1/teams/{team_id}/join",
+                    json={"target_team_member_role_id": target_slot_id},
+                    headers=headers_jane)
+
+        seed_user = setup_data["players"]["seed"]
+
+        # El creador marca el equipo como inactivo mediante PATCH /{team_id}/deactivate
+        res = client.patch(f"/api/v1/teams/{team_id}/deactivate", headers=player_auth_headers)
+        assert res.status_code == 200
+        body = res.json()
+        assert body["status"] == "success"
+        assert "marcado inactivo exitosamente" in body["message"]
+
+        # El equipo queda marcado como inactivo
+        assert body["data"]["is_active"] is False
+
+        # NO se desvincula a ninguno de los miembros
+        assert body["data"]["player_count"] == 2
+        assert len(body["data"]["members"]) == 2
+        assert any(m["user_id"] == seed_user.user_id for m in body["data"]["members"])
+        assert any(m["user_id"] == jane_user.user_id for m in body["data"]["members"])
+
+        # Se retira del listado público de equipos
+        feed_res = client.get(f"/api/v1/teams?videogame_id={setup_data['videogame'].videogame_id}", headers=player_auth_headers)
+        assert feed_res.status_code == 200
+        assert not any(t["team_id"] == team_id for t in feed_res.json())
+
+        # Sigue siendo consultable directamente por ID con is_active=False
+        get_res = client.get(f"/api/v1/teams/{team_id}", headers=player_auth_headers)
+        assert get_res.status_code == 200
+        assert get_res.json()["is_active"] is False
+
+        # Validar eventos de WebSocket y notificaciones
+        mock_broadcast.assert_called_with("TEAM_DEACTIVATED", mocker.ANY)
+        called_user_ids = [call.args[0] for call in mock_send.call_args_list]
+        assert seed_user.user_id in called_user_ids
+        assert jane_user.user_id in called_user_ids
+
+    def test_deactivate_team_cancel_keeps_team_active(self, client, jwt_service, player_auth_headers, setup_data):
+        # Probar cancelar la confirmación de marcar inactivo el equipo (el equipo se mantiene activo, pasa)
+        team_data = self._create_sample_team(client, player_auth_headers, setup_data)
+        team_id = team_data["team_id"]
+
+        # Al cancelar en el modal del frontend, no se ejecuta la petición
+        # El equipo sigue activo y en el listado público
+        get_res = client.get(f"/api/v1/teams/{team_id}", headers=player_auth_headers)
+        assert get_res.status_code == 200
+        assert get_res.json()["is_active"] is True
+
+        feed_res = client.get(f"/api/v1/teams?videogame_id={setup_data['videogame'].videogame_id}", headers=player_auth_headers)
+        assert feed_res.status_code == 200
+        assert any(t["team_id"] == team_id for t in feed_res.json())
+
+    def test_deactivate_team_as_regular_member_fails(self, client, jwt_service, player_auth_headers, setup_data):
+        # Probar intentar marcar inactivo el equipo siendo un integrante regular sin permisos de creador (falla)
+        team_data = self._create_sample_team(client, player_auth_headers, setup_data)
+        team_id = team_data["team_id"]
+        target_slot_id = team_data["members"][1]["team_member_role_id"]
+
+        jane_user = setup_data["players"]["janedoe"]
+        headers_jane, _ = self._headers(jwt_service, jane_user)
+        client.post(f"/api/v1/teams/{team_id}/join",
+                    json={"target_team_member_role_id": target_slot_id},
+                    headers=headers_jane)
+
+        # Miembro regular intenta marcar como inactivo -> 403 Forbidden
+        res = client.patch(f"/api/v1/teams/{team_id}/deactivate", headers=headers_jane)
+        assert res.status_code == 403
+        assert "no es el líder del equipo" in res.json()["error"]
+
+    def test_deactivated_team_allows_members_to_continue_interacting_in_chatroom(self, client, jwt_service, player_auth_headers, setup_data):
+        # Probar que luego de la marca como inactivo del equipo, todos los miembros puedan continuar interactuando en el chatroom asociado (pasa)
+        team_data = self._create_sample_team(client, player_auth_headers, setup_data)
+        team_id = team_data["team_id"]
+        target_slot_id = team_data["members"][1]["team_member_role_id"]
+        chatroom_id = team_data["conversation_id"]
+
+        jane_user = setup_data["players"]["janedoe"]
+        headers_jane, token_jane = self._headers(jwt_service, jane_user)
+        client.post(f"/api/v1/teams/{team_id}/join",
+                    json={"target_team_member_role_id": target_slot_id},
+                    headers=headers_jane)
+
+        # Marcar inactivo
+        res_deact = client.patch(f"/api/v1/teams/{team_id}/deactivate", headers=player_auth_headers)
+        assert res_deact.status_code == 200
+
+        # NO se desactiva el chatroom: enviar mensajes por websocket sigue funcionando
+        with client.websocket_connect(f"/api/v1/ws/chat/chatroom/{chatroom_id}?token={token_jane}") as ws_jane:
+            ws_jane.send_json({"content": "Hola equipo inactivo"})
+            received = ws_jane.receive_json()
+            assert received["content"] == "Hola equipo inactivo"
+            assert received["chatroom_id"] == chatroom_id
+            assert received["sender_username"] == jane_user.username
+
+        # Consultar mensajes del chatroom mediante HTTP GET sigue funcionando
+        chat_res = client.get(f"/api/v1/chat/chatroom/{chatroom_id}/messages", headers=headers_jane)
+        assert chat_res.status_code == 200
+        assert len(chat_res.json()["messages"]) >= 1
+
+        # Marcar chatroom como leído sigue funcionando
+        read_res = client.patch(f"/api/v1/chat/chatroom/{chatroom_id}/read", headers=headers_jane)
+        assert read_res.status_code == 200
+
+    def test_deactivated_team_enables_members_and_creator_to_join_another_team(self, client, jwt_service, player_auth_headers, setup_data):
+        # Probar que luego de la desactivación, los integrantes y el creador queden habilitados para ingresar a otro equipo (pasa)
+        team_data = self._create_sample_team(client, player_auth_headers, setup_data)
+        team_id = team_data["team_id"]
+        target_slot_id = team_data["members"][1]["team_member_role_id"]
+
+        jane_user = setup_data["players"]["janedoe"]
+        headers_jane, _ = self._headers(jwt_service, jane_user)
+        client.post(f"/api/v1/teams/{team_id}/join",
+                    json={"target_team_member_role_id": target_slot_id},
+                    headers=headers_jane)
+
+        # Marcar inactivo
+        client.patch(f"/api/v1/teams/{team_id}/deactivate", headers=player_auth_headers)
+
+        # Creamos otro equipo con otro líder (br_player)
+        vg = setup_data["videogame"]
+        reg = setup_data["regions"]["las"]
+        ranks = setup_data["ranks"]
+        roles = setup_data["roles"]
+        br_user = setup_data["players"]["br"]
+        headers_br, _ = self._headers(jwt_service, br_user)
+
+        team_new = client.post(
+            "/api/v1/teams",
+            data=self._team_form({
+                "name": "Team Open",
+                "allow_other_regions": True,
+                "videogame_id": vg.videogame_id,
+                "min_rank_id": ranks["silver"].rank_id,
+                "max_rank_id": ranks["gold"].rank_id,
+                "creator_game_role_id": roles["controller"].role_id,
+                "vacant_game_role_ids": [roles["initiator"].role_id, roles["duelist"].role_id]
+            }),
+            headers=headers_br
+        ).json()
+
+        slot_initiator = team_new["members"][1]["team_member_role_id"]
+        slot_duelist = team_new["members"][2]["team_member_role_id"]
+
+        # 1. La integrante del equipo inactivo (janedoe) puede unirse al nuevo equipo
+        join_jane = client.post(f"/api/v1/teams/{team_new['team_id']}/join",
+                                json={"target_team_member_role_id": slot_initiator},
+                                headers=headers_jane)
+        assert join_jane.status_code == 200
+        assert join_jane.json()["status"] == "success"
+
+        # 2. El creador del equipo inactivo (seed) puede unirse al nuevo equipo
+        join_seed = client.post(f"/api/v1/teams/{team_new['team_id']}/join",
+                                json={"target_team_member_role_id": slot_duelist},
+                                headers=player_auth_headers)
+        assert join_seed.status_code == 200
+        assert join_seed.json()["status"] == "success"
+
+    def test_deactivated_team_enables_members_and_creator_to_create_another_team(self, client, jwt_service, player_auth_headers, setup_data):
+        # Probar que luego de la desactivación, los integrantes y el creador queden habilitados para crear otro equipo (pasa)
+        team_data = self._create_sample_team(client, player_auth_headers, setup_data)
+        team_id = team_data["team_id"]
+        target_slot_id = team_data["members"][1]["team_member_role_id"]
+
+        jane_user = setup_data["players"]["janedoe"]
+        headers_jane, _ = self._headers(jwt_service, jane_user)
+        client.post(f"/api/v1/teams/{team_id}/join",
+                    json={"target_team_member_role_id": target_slot_id},
+                    headers=headers_jane)
+
+        # Marcar inactivo
+        client.patch(f"/api/v1/teams/{team_id}/deactivate", headers=player_auth_headers)
+
+        vg = setup_data["videogame"]
+        reg = setup_data["regions"]["las"]
+        ranks = setup_data["ranks"]
+        roles = setup_data["roles"]
+
+        # 1. El creador del equipo inactivo puede crear otro equipo
+        payload_seed = {
+            "name": "Team Seed Nuevo",
+            "allow_other_regions": True,
+            "videogame_id": vg.videogame_id,
+            "region_id": reg.region_id,
+            "min_rank_id": ranks["silver"].rank_id,
+            "max_rank_id": ranks["gold"].rank_id,
+            "creator_game_role_id": roles["duelist"].role_id,
+            "vacant_game_role_ids": [roles["controller"].role_id]
+        }
+        res_seed = client.post("/api/v1/teams", data=self._team_form(payload_seed), headers=player_auth_headers)
+        assert res_seed.status_code == 201
+
+        # 2. La integrante del equipo inactivo (janedoe) puede crear otro equipo
+        payload_jane = {
+            "name": "Team Jane Nuevo",
+            "allow_other_regions": True,
+            "videogame_id": vg.videogame_id,
+            "region_id": reg.region_id,
+            "min_rank_id": ranks["silver"].rank_id,
+            "max_rank_id": ranks["gold"].rank_id,
+            "creator_game_role_id": roles["controller"].role_id,
+            "vacant_game_role_ids": [roles["initiator"].role_id]
+        }
+        res_jane = client.post("/api/v1/teams", data=self._team_form(payload_jane), headers=headers_jane)
+        assert res_jane.status_code == 201
+
+
 
 
 

@@ -13,6 +13,7 @@ from app.application.use_cases.leave_team import LeaveTeam
 from app.application.use_cases.kick_member import KickMember
 from app.application.use_cases.transfer_leadership import TransferLeadership
 from app.application.use_cases.delete_team import DeleteTeam
+from app.application.use_cases.deactivate_team import DeactivateTeam
 from app.infrastructure.api.chat.connection_manager import chat_manager
 from app.infrastructure.api.chat.user_notification_manager import notification_manager
 from app.infrastructure.api.dependencies.auth import get_current_user_id, require_player
@@ -28,7 +29,8 @@ from app.infrastructure.api.dto.response.team_summary import (
     UpdateTeamResponse,
     LeaveTeamResponse,
     KickMemberResponse,
-    TransferLeadershipResponse
+    TransferLeadershipResponse,
+    DeactivateTeamResponse
 )
 
 from app.infrastructure.api.teams.teams_feed_connection_manager import teams_feed_manager
@@ -358,6 +360,42 @@ async def delete_team(
     })
 
     return result.response
+
+
+@router.patch("/{team_id}/deactivate", status_code=200, response_model=DeactivateTeamResponse, dependencies=[Depends(require_player)])
+async def deactivate_team(
+    team_id: int,
+    current_user_id: int = Depends(get_current_user_id),
+):
+    uow = uow_factory()
+    use_case = DeactivateTeam(uow)
+
+    result: DeactivateTeamResponse = await run_in_threadpool(use_case.execute, team_id, current_user_id)
+    team = result.data
+
+    # Notificar al WebSocket general del feed de salas para retirarlo del listado público
+    await teams_feed_manager.broadcast_event(TeamEventTypeEnum.TEAM_DEACTIVATED, team.public_payload())
+
+    # Notificación al creador
+    await notification_manager.send_to_user(current_user_id, {
+        "type": NotificationType.TEAM_DEACTIVATED,
+        "team_id": team.team_id,
+        "team_name": team.team_name,
+        "message": f"El equipo {team.team_name} fue marcado inactivo exitosamente."
+    })
+
+    # Notificación a los demás integrantes del equipo
+    for member in team.members:
+        if member.user_id is not None and member.user_id != current_user_id:
+            await notification_manager.send_to_user(member.user_id, {
+                "type": NotificationType.TEAM_DEACTIVATED,
+                "team_id": team.team_id,
+                "team_name": team.team_name,
+                "message": f"El equipo {team.team_name} fue marcado inactivo por su líder."
+            })
+
+    return result
+
 
 
 

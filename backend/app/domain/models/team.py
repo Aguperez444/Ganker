@@ -388,6 +388,21 @@ class Team:
         if self._conversation:
             self._conversation.members = []
 
+    def deactivate(self, requester_id: int) -> None:
+        """
+        Marca el equipo como inactivo para no seguir en la búsqueda activa de jugadores,
+        manteniendo a los miembros y el chatroom intactos.
+        Valida que el solicitante sea el líder del equipo.
+        """
+        if not self.is_active:
+            raise TeamNotActiveException(self.team_id)
+
+        if not self.is_leader(requester_id):
+            raise UserNotTeamLeaderException(requester_id, self.team_id)
+
+        self._is_active = False
+
+
 
     def _remove_member(self, target_user_id: int) -> None:
         """Mét.odo interno para remover a un miembro del equipo sin validaciones de permisos."""

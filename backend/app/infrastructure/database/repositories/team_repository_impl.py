@@ -157,6 +157,21 @@ class TeamRepositoryImpl(ITeamRepository):
             self.session.delete(conversation_orm)
             self.session.flush()
 
+    def deactivate_team(self, target_team: 'Team') -> 'Team':
+        team_orm = (
+            self.session.query(TeamORM)
+            .filter(TeamORM.team_id == target_team.team_id)
+            .first()
+        )
+        if team_orm is None:
+            raise TeamNotFoundException(target_team.team_id)
+
+        team_orm.is_active = False
+
+        self.session.flush()
+        self.session.expire(team_orm)
+        return TeamMapper.orm_to_domain(team_orm)
+
     def get_team_info_by_conversation_ids(self, conversation_ids: list[int]) -> dict[int, tuple[int, Optional[str]]]:
         if not conversation_ids:
             return {}
