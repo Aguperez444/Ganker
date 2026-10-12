@@ -463,7 +463,7 @@ class TestTeamEndpointsIntegration:
 
         # 1. Búsqueda general: debe incluir datos, vacantes, representative_rank y join_eligibility
         headers_jane, _ = self._headers(jwt_service, setup_data["players"]["janedoe"])
-        res = client.get("/api/v1/teams", headers=headers_jane)
+        res = client.get(f"/api/v1/teams?videogame_id={vg.videogame_id}", headers=headers_jane)
         assert res.status_code == 200
         teams = res.json()
         assert len(teams) >= 1
@@ -479,36 +479,45 @@ class TestTeamEndpointsIntegration:
         assert len(res_vg.json()) >= 1
 
         # 3. Filtro por región
-        res_reg = client.get(f"/api/v1/teams?region_id={reg_las.region_id}", headers=headers_jane)
+        res_reg = client.get(f"/api/v1/teams?videogame_id={vg.videogame_id}&region_id={reg_las.region_id}", headers=headers_jane)
         assert len(res_reg.json()) >= 1
 
         # 4. Filtro por texto coincidente en nombre o descripción
-        res_name = client.get("/api/v1/teams?search=Bravo", headers=headers_jane)
+        res_name = client.get(f"/api/v1/teams?videogame_id={vg.videogame_id}&search=Bravo", headers=headers_jane)
         assert len(res_name.json()) >= 1
-        res_desc = client.get("/api/v1/teams?search=support", headers=headers_jane)
+        res_desc = client.get(f"/api/v1/teams?videogame_id={vg.videogame_id}&search=support", headers=headers_jane)
         assert len(res_desc.json()) >= 1
 
         # 5. Filtro por rol vacante
-        res_role = client.get(f"/api/v1/teams?role_id={roles['controller'].role_id}", headers=headers_jane)
+        res_role = client.get(f"/api/v1/teams?videogame_id={vg.videogame_id}&role_id={roles['controller'].role_id}", headers=headers_jane)
         assert len(res_role.json()) >= 1
 
         # 6. Filtro por cantidad de cupos vacantes
-        res_vac = client.get("/api/v1/teams?vacant_slots=2", headers=headers_jane)
+        res_vac = client.get(f"/api/v1/teams?videogame_id={vg.videogame_id}&vacant_slots=2", headers=headers_jane)
         assert len(res_vac.json()) >= 1
-        res_vac_too_many = client.get("/api/v1/teams?vacant_slots=5", headers=headers_jane)
+        res_vac_too_many = client.get(f"/api/v1/teams?videogame_id={vg.videogame_id}&vacant_slots=5", headers=headers_jane)
         assert len(res_vac_too_many.json()) == 0
 
-        # 7. Búsqueda sin coincidencias devuelve lista vacía
-        res_empty = client.get("/api/v1/teams?search=Inexistente123456", headers=headers_jane)
+        # 7. Filtro por rango
+        res_rank = client.get(f"/api/v1/teams?videogame_id={vg.videogame_id}&rank_id={ranks['silver'].rank_id}", headers=headers_jane)
+        assert res_rank.status_code == 200
+        assert len(res_rank.json()) >= 1
+
+        # 8. Búsqueda sin coincidencias devuelve lista vacía
+        res_empty = client.get(f"/api/v1/teams?videogame_id={vg.videogame_id}&search=Inexistente123456", headers=headers_jane)
         assert res_empty.status_code == 200
         assert res_empty.json() == []
 
-        # 8. Visualizar equipo cuando el jugador no cumple requisitos (br_player con equipo estricto)
+        # 9. Visualizar equipo cuando el jugador no cumple requisitos (br_player con equipo estricto)
         # br_player ve can_join=False
         headers_br, _ = self._headers(jwt_service, setup_data["players"]["br"])
         # Creamos un equipo con restricción de región por seed_player
-        res_br_view = client.get("/api/v1/teams", headers=headers_br)
+        res_br_view = client.get(f"/api/v1/teams?videogame_id={vg.videogame_id}", headers=headers_br)
         assert res_br_view.status_code == 200
+
+        # 10. Búsqueda sin videogame_id devuelve 400
+        res_no_vg = client.get("/api/v1/teams", headers=headers_jane)
+        assert res_no_vg.status_code == 400
 
     # =========================================================================
     # USER STORY 4: Modificar información del equipo
@@ -549,7 +558,7 @@ class TestTeamEndpointsIntegration:
         assert get_res.json()["team_name"] == "Alpha Team Renamed"
 
         # Verificar que se actualizó en la lista general de equipos
-        feed_res = client.get("/api/v1/teams", headers=player_auth_headers)
+        feed_res = client.get(f"/api/v1/teams?videogame_id={setup_data['videogame'].videogame_id}", headers=player_auth_headers)
         assert feed_res.status_code == 200
         feed_teams = feed_res.json()
         matching = [t for t in feed_teams if t["team_id"] == team_id]
@@ -721,7 +730,8 @@ class TestTeamEndpointsIntegration:
         assert vacant_slot["user_id"] is None
 
         # Verificar en la lista general de equipos
-        feed_res = client.get("/api/v1/teams", headers=player_auth_headers)
+        feed_res = client.get(f"/api/v1/teams?videogame_id={setup_data['videogame'].videogame_id}", headers=player_auth_headers)
+        assert feed_res.status_code == 200
         feed_team = next(t for t in feed_res.json() if t["team_id"] == team_id)
         assert feed_team["player_count"] == 1
 

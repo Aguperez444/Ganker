@@ -51,24 +51,26 @@ class FindBySpecificationsRepositoryImpl(IFindBySpecificationsRepository):
             return query.filter(GameProfileORM.videogame_id == spec.to_expression())
 
         if isinstance(spec, ByRegionsSpecification):
-            return query.filter(GameProfileORM.region_id == spec.to_expression())
+            val = spec.to_expression()
+            if isinstance(val, (list, tuple, set)):
+                return query.filter(GameProfileORM.region_id.in_(val))
+            return query.filter(GameProfileORM.region_id == val)
 
         if isinstance(spec, ByCharactersSpecification):
             return query.filter(
                 GameProfileORM.character_associations.any(CharacterPriorityORM.character_id.in_(spec.to_expression())))
 
         if isinstance(spec, ByRolesSpecification):
-            return query.filter(GameProfileORM.role_profiles.any(RoleProfileORM.rank_id == spec.to_expression()))
-
+            val = spec.to_expression()
+            if isinstance(val, (list, tuple, set)):
+                return query.filter(GameProfileORM.role_profiles.any(RoleProfileORM.role_id.in_(val)))
+            return query.filter(GameProfileORM.role_profiles.any(RoleProfileORM.role_id == val))
 
         if isinstance(spec, ByRanksSpecification):
-            min_rank_alias = aliased(RankORM)
-            max_rank_alias = aliased(RankORM)
-            return (query
-                    .join(min_rank_alias, TeamORM.min_rank)
-                    .join(max_rank_alias, TeamORM.max_rank)
-                    .filter(min_rank_alias.value <= spec.to_expression())
-                    .filter(max_rank_alias.value >= spec.to_expression()))
+            val = spec.to_expression()
+            if isinstance(val, (list, tuple, set)):
+                return query.filter(GameProfileORM.role_profiles.any(RoleProfileORM.rank_id.in_(val)))
+            return query.filter(GameProfileORM.role_profiles.any(RoleProfileORM.rank_id == val))
 
         # TODO Deberíamos hacer un índice para que esta no destruya el rendimiento recorriendo todos los registros
         if isinstance(spec, ByLastConnectionSpecification):
@@ -157,10 +159,19 @@ class FindBySpecificationsRepositoryImpl(IFindBySpecificationsRepository):
             return query.filter(TeamORM.videogame_id == spec.to_expression())
 
         if isinstance(spec, ByRegionsSpecification):
-            return query.filter(TeamORM.region_id == spec.to_expression())
+            val = spec.to_expression()
+            if isinstance(val, (list, tuple, set)):
+                return query.filter(TeamORM.region_id.in_(val))
+            return query.filter(TeamORM.region_id == val)
 
         if isinstance(spec, ByRanksSpecification):
-            return query.filter(TeamORM.min_rank <= spec.to_expression() & TeamORM.max_rank >= spec.to_expression())
+            min_rank_alias = aliased(RankORM)
+            max_rank_alias = aliased(RankORM)
+            return (query
+                    .join(min_rank_alias, TeamORM.min_rank)
+                    .join(max_rank_alias, TeamORM.max_rank)
+                    .filter(min_rank_alias.value <= spec.to_expression())
+                    .filter(max_rank_alias.value >= spec.to_expression()))
 
         if isinstance(spec, ByVacantSlotsSpecification):
             # Filtro por equipos con x cantidad de vacantes libres, osea, user_id == None en TeamMemberRoleORM
@@ -177,8 +188,10 @@ class FindBySpecificationsRepositoryImpl(IFindBySpecificationsRepository):
 
         if isinstance(spec, ByRolesSpecification):
             # Filtro equipos que alguna vacante tenga el rol especificado
+            val = spec.to_expression()
+            role_filter = TeamMemberRoleORM.game_role_id.in_(val) if isinstance(val, (list, tuple, set)) else (TeamMemberRoleORM.game_role_id == val)
             return query.filter(TeamORM.members_roles.any(
-                TeamMemberRoleORM.game_role_id.in_(spec.to_expression()) & TeamMemberRoleORM.user_id.is_(None)))
+                role_filter & TeamMemberRoleORM.user_id.is_(None)))
 
         if isinstance(spec, BySearchTermsSpecification):
             return query.filter(or_(TeamORM.name.ilike(spec.to_expression(), escape="\\"),

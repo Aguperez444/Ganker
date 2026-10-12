@@ -2,7 +2,7 @@ from app.domain.specifications.base import Specification
 
 
 class ByRanksSpecification(Specification):
-    def __init__(self, ranks: int):
+    def __init__(self, ranks: int | list[int]):
         self.ranks = ranks
 
     def to_expression(self):
