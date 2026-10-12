@@ -5,11 +5,12 @@ from app.domain.exceptions.invalid_id_exception import InvalidIdException
 
 
 class Videogame:
-    def __init__(self, videogame_id: Optional[int], name: str, icon_url:str, rank_per_role: bool):
+    def __init__(self, videogame_id: Optional[int], name: str, icon_url: str, rank_per_role: bool, has_characters: bool = True):
         self._videogame_id = videogame_id
         self._name = name
         self._icon_url: str = icon_url
         self._rank_per_role: bool = bool(rank_per_role) if rank_per_role is not None else False
+        self._has_characters: bool = bool(has_characters) if has_characters is not None else True
 
     @property
     def videogame_id(self) -> int:
@@ -43,6 +44,13 @@ class Videogame:
     def rank_per_role(self, value: bool):
         self._rank_per_role = value
 
+    @property
+    def has_characters(self) -> bool:
+        return self._has_characters
+    @has_characters.setter
+    def has_characters(self, value: bool):
+        self._has_characters = bool(value)
+
     def __eq__(self, other: object) -> bool:
         if isinstance(other, Videogame):
             return self._videogame_id is not None and self._videogame_id == other._videogame_id
@@ -52,4 +60,5 @@ class Videogame:
         return self._videogame_id is not None
 
     def __repr__(self) -> str:
-        return f"Videogame(videogame_id={self.videogame_id or 'sin_id'}, name='{self.name}', icon_url='{self.icon_url}', rank_per_role={self.rank_per_role})"
+        return (f"Videogame(videogame_id={self._videogame_id or 'sin_id'}, name='{self.name}',"
+                f" icon_url='{self.icon_url}', rank_per_role={self.rank_per_role}, has_characters={self.has_characters})")

@@ -25,6 +25,23 @@ class TestVideogameEndpointsIntegration:
         assert "id" in res_data
         assert res_data["icon_url"].startswith("/media/games/")
         assert res_data["rank_per_role"] is True
+        assert res_data["has_characters"] is True
+
+    def test_register_videogame_without_characters_success(self, client, admin_auth_headers):
+        file = ("cs2_icon.png", io.BytesIO(b"fake-cs2-icon-data"), "image/png")
+        data = {"name": "Counter-Strike 2", "rank_per_role": False, "has_characters": False}
+
+        response = client.post(
+            "/api/v1/videogames/",
+            data=data,
+            files={"icon": file},
+            headers=admin_auth_headers
+        )
+
+        assert response.status_code == 201
+        res_data = response.json()
+        assert res_data["name"] == "Counter-Strike 2"
+        assert res_data["has_characters"] is False
 
     def test_register_videogame_forbidden_for_player(self, client, player_auth_headers):
         file = ("game_icon.png", io.BytesIO(b"data"), "image/png")
@@ -107,6 +124,21 @@ class TestVideogameEndpointsIntegration:
         assert res_data["name"] == "Updated Game Name"
         assert res_data["icon_url"].startswith("/media/games/")
         assert res_data["rank_per_role"] is False
+        assert res_data["has_characters"] is True
+
+    def test_update_videogame_has_characters_false(self, client, admin_auth_headers, seed_catalog_data):
+        vg_id = seed_catalog_data["videogame"].videogame_id
+        data = {"name": "Game Without Characters", "rank_per_role": False, "has_characters": False}
+
+        response = client.put(
+            f"/api/v1/videogames/{vg_id}",
+            data=data,
+            headers=admin_auth_headers
+        )
+
+        assert response.status_code == 200
+        res_data = response.json()
+        assert res_data["has_characters"] is False
 
     def test_update_videogame_empty_name(self, client, admin_auth_headers, seed_catalog_data):
         # Probar modificar un videojuego sin ingresar el nombre (falla)

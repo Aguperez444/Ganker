@@ -1,4 +1,5 @@
 import pytest
+
 from app.domain.models.team import Team
 from app.domain.models.user import User
 from app.domain.models.videogame import Videogame
@@ -17,7 +18,7 @@ from app.domain.exceptions.team.invalid_rank_exception import InvalidrankExcepti
 from app.domain.exceptions.team.InvalidRegionException import InvalidRegionException
 from app.domain.exceptions.team.team_is_full_exception import TeamIsAlreadyFullException
 from app.domain.exceptions.team.user_already_in_team_exception import UserAlreadyInTeamException
-
+from app.domain.exceptions.videogame.invalid_videogame_name_exception import InvalidVideogameNameException
 
 @pytest.fixture
 def base_setup():
@@ -123,3 +124,180 @@ def test_add_member_already_in_team(base_setup):
 
     with pytest.raises(UserAlreadyInTeamException):
         team.add_member(user, 2)
+
+
+def test_update_information_success(base_setup):
+    team, user, vg, region_team, region_other, role, min_r, max_r = base_setup
+    rank_silver = Rank(2, "Silver", 2000, vg, "/s")
+    gp = GameProfile(1, 1, vg, [], [RoleProfile(1, role, rank_silver)], region_team)
+    user.profiles.append(gp)
+    team.members[0].user = user
+
+    team.update_information(
+        name="Team Renamed",
+        description="New description",
+        allow_other_regions=True,
+        region=region_other,
+        min_rank=min_r,
+        max_rank=max_r
+    )
+
+    assert team.name == "Team Renamed"
+    assert team.description == "New description"
+    assert team.allow_other_regions is True
+    assert team.region == region_other
+    assert team.conversation.name == "Chat del equipo Team Renamed"
+
+
+def test_update_information_empty_name(base_setup):
+    team, user, vg, region_team, _, role, min_r, max_r = base_setup
+    with pytest.raises(InvalidVideogameNameException):
+        team.update_information(
+            name="   ",
+            description="Desc",
+            allow_other_regions=True,
+            region=region_team,
+            min_rank=min_r,
+            max_rank=max_r
+        )
+
+
+def test_update_information_min_greater_than_max(base_setup):
+    from app.domain.exceptions.team.invalid_rank_range_exception import InvalidRankRangeException
+    team, user, vg, region_team, _, role, min_r, max_r = base_setup
+    with pytest.raises(InvalidRankRangeException):
+        team.update_information(
+            name="Team",
+            description="Desc",
+            allow_other_regions=True,
+            region=region_team,
+            min_rank=max_r,  # 3000
+            max_rank=min_r   # 1000
+        )
+
+
+def test_update_information_excludes_member_rank(base_setup):
+    team, user, vg, region_team, _, role, min_r, max_r = base_setup
+    # Member tiene rank Silver (2000)
+    rank_silver = Rank(2, "Silver", 2000, vg, "/s")
+    gp = GameProfile(1, 1, vg, [], [RoleProfile(1, role, rank_silver)], region_team)
+    user.profiles.append(gp)
+    team.members[0].user = user
+
+    # Nuevo rango: Gold (3000) a Diamond (4000) -> excluye Silver (2000)
+    rank_diamond = Rank(4, "Diamond", 4000, vg, "/d")
+    with pytest.raises(InvalidrankException):
+        team.update_information(
+            name="Team High Rank",
+            description="Desc",
+            allow_other_regions=True,
+            region=region_team,
+            min_rank=max_r,        # 3000
+            max_rank=rank_diamond  # 4000
+        )
+
+
+def test_update_information_without_region_and_not_allow_others(base_setup):
+    from app.domain.exceptions.team.team_without_region_must_allow_others_exception import TeamWithoutRegionMustAllowOthersException
+    team, user, vg, _, _, role, min_r, max_r = base_setup
+    with pytest.raises(TeamWithoutRegionMustAllowOthersException):
+        team.update_information(
+            name="Team No Region",
+            description="Desc",
+            allow_other_regions=False,
+            region=None,
+            min_rank=min_r,
+            max_rank=max_r
+        )
+
+
+def test_leave_team_success(base_setup):
+    from app.domain.models.conversation_member import ConversationMember
+    from app.domain.models.conversation_member_role_enum import ConversationMemberRoleEnum
+    team, user, vg, region_team, _, role, _, _ = base_setup
+
+    user2 = User(2, "u2", "U2", "b@b.com", "pw", UserRole.PLAYER, [])
+    # Slot 0 es OWNER (user), Slot 1 es MEMBER (user2)
+    team.members[0].user = user
+    team.members[1].user = user2
+    team.conversation.members = [
+        ConversationMember(1, 1, user, ConversationMemberRoleEnum.ADMIN),
+        ConversationMember(2, 1, user2, ConversationMemberRoleEnum.MEMBER)
+    ]
+
+    team.leave_team(user_id=2)
+
+    assert team.members[1].user is None
+    assert team.is_full() is False
+    assert len(team.conversation.members) == 1
+    assert team.conversation.members[0].user == user
+
+
+def test_leave_team_as_leader_fails(base_setup):
+    from app.domain.exceptions.team.leader_cannot_leave_team_exception import LeaderCannotLeaveTeamException
+    team, user, _, _, _, _, _, _ = base_setup
+    team.members[0].user = user
+
+    with pytest.raises(LeaderCannotLeaveTeamException):
+        team.leave_team(user_id=user.user_id)
+
+
+def test_leave_team_not_in_team_fails(base_setup):
+    from app.domain.exceptions.team.user_not_in_team_exception import UserNotInTeamException
+    team, user, _, _, _, _, _, _ = base_setup
+    with pytest.raises(UserNotInTeamException):
+        team.leave_team(user_id=99)
+
+
+def test_kick_member_success(base_setup):
+    from app.domain.models.conversation_member import ConversationMember
+    from app.domain.models.conversation_member_role_enum import ConversationMemberRoleEnum
+    team, user, vg, region_team, _, role, _, _ = base_setup
+
+    user2 = User(2, "u2", "U2", "b@b.com", "pw", UserRole.PLAYER, [])
+    team.members[0].user = user
+    team.members[1].user = user2
+    team.conversation.members = [
+        ConversationMember(1, 1, user, ConversationMemberRoleEnum.ADMIN),
+        ConversationMember(2, 1, user2, ConversationMemberRoleEnum.MEMBER)
+    ]
+
+    team.kick_member(requester_id=user.user_id, target_user_id=user2.user_id)
+
+    assert team.members[1].user is None
+    assert team.is_full() is False
+    assert len(team.conversation.members) == 1
+    assert team.conversation.members[0].user == user
+
+
+def test_kick_member_as_non_leader_fails(base_setup):
+    from app.domain.exceptions.team.user_not_team_leader_exception import UserNotTeamLeaderException
+    team, user, _, _, _, _, _, _ = base_setup
+    user2 = User(2, "u2", "U2", "b@b.com", "pw", UserRole.PLAYER, [])
+    user3 = User(3, "u3", "U3", "c@c.com", "pw", UserRole.PLAYER, [])
+    team.members[0].user = user
+    team.members[1].user = user2
+
+    # user2 es miembro regular, intenta expulsar a user3
+    with pytest.raises(UserNotTeamLeaderException):
+        team.kick_member(requester_id=user2.user_id, target_user_id=user3.user_id)
+
+
+def test_kick_member_self_fails(base_setup):
+    from app.domain.exceptions.team.leader_cannot_kick_self_exception import LeaderCannotKickSelfException
+    team, user, _, _, _, _, _, _ = base_setup
+    team.members[0].user = user
+
+    with pytest.raises(LeaderCannotKickSelfException):
+        team.kick_member(requester_id=user.user_id, target_user_id=user.user_id)
+
+
+def test_kick_member_not_in_team_fails(base_setup):
+    from app.domain.exceptions.team.user_not_in_team_exception import UserNotInTeamException
+    team, user, _, _, _, _, _, _ = base_setup
+    team.members[0].user = user
+
+    with pytest.raises(UserNotInTeamException):
+        team.kick_member(requester_id=user.user_id, target_user_id=99)
+
+

@@ -9,7 +9,8 @@ class VideogameMapper:
             videogame_id = videogame_orm.videogame_id,
             name = videogame_orm.name,
             icon_url = videogame_orm.icon_url,
-            rank_per_role = videogame_orm.rank_per_role
+            rank_per_role = videogame_orm.rank_per_role,
+            has_characters = videogame_orm.has_characters if videogame_orm.has_characters is not None else True
         )
 
     @staticmethod
@@ -18,11 +19,13 @@ class VideogameMapper:
             return VideogameORM(
                 name = videogame.name,
                 icon_url = videogame.icon_url,
-                rank_per_role = videogame.rank_per_role
+                rank_per_role = videogame.rank_per_role,
+                has_characters = videogame.has_characters
             )
         return VideogameORM(
             videogame_id = videogame.videogame_id,
             name = videogame.name,
             icon_url = videogame.icon_url,
-            rank_per_role = videogame.rank_per_role
+            rank_per_role = videogame.rank_per_role,
+            has_characters = videogame.has_characters
         )

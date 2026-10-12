@@ -57,18 +57,27 @@ class TestDatabaseMappers:
         assert domain_converted.profiles == []
 
     def test_videogame_mapper(self):
-        vg_domain = Videogame(videogame_id=5, name="Valorant", icon_url="/media/games/val.png", rank_per_role=False)
+        vg_domain = Videogame(videogame_id=5, name="Valorant", icon_url="/media/games/val.png", rank_per_role=False, has_characters=True)
         vg_orm = VideogameMapper.domain_to_orm(vg_domain)
         assert vg_orm.videogame_id == 5
         assert vg_orm.name == "Valorant"
         assert vg_orm.icon_url == "/media/games/val.png"
         assert vg_orm.rank_per_role is False
+        assert vg_orm.has_characters is True
 
         domain_converted = VideogameMapper.orm_to_domain(vg_orm)
         assert domain_converted.videogame_id == 5
         assert domain_converted.name == "Valorant"
         assert domain_converted.icon_url == "/media/games/val.png"
         assert domain_converted.rank_per_role is False
+        assert domain_converted.has_characters is True
+
+        # Test with has_characters=False (like CS2)
+        vg_cs = Videogame(videogame_id=6, name="CS2", icon_url="/media/games/cs2.png", rank_per_role=False, has_characters=False)
+        vg_cs_orm = VideogameMapper.domain_to_orm(vg_cs)
+        assert vg_cs_orm.has_characters is False
+        domain_cs = VideogameMapper.orm_to_domain(vg_cs_orm)
+        assert domain_cs.has_characters is False
 
     def test_character_mapper(self):
         vg_orm = VideogameORM(videogame_id=1, name="LoL", icon_url="/lol.png", rank_per_role=True)

@@ -13,10 +13,16 @@ from app.domain.exceptions.team.team_member_slot_not_found_exception import Team
 from app.domain.exceptions.team.user_already_in_team_exception import UserAlreadyInTeamException
 from app.domain.exceptions.team.team_not_active_exception import TeamNotActiveException
 from app.domain.exceptions.team.team_without_region_must_allow_others_exception import TeamWithoutRegionMustAllowOthersException
+from app.domain.exceptions.team.invalid_rank_range_exception import InvalidRankRangeException
+from app.domain.exceptions.team.catalog_item_videogame_mismatch_exception import CatalogItemVideogameMismatchException
+from app.domain.exceptions.team.leader_cannot_leave_team_exception import LeaderCannotLeaveTeamException
+from app.domain.exceptions.team.leader_cannot_kick_self_exception import LeaderCannotKickSelfException
+from app.domain.exceptions.team.user_not_in_team_exception import UserNotInTeamException
+from app.domain.exceptions.team.user_not_team_leader_exception import UserNotTeamLeaderException
 from app.domain.exceptions.domain_exception import DomainException
 from app.domain.models.conversation_member import ConversationMember
 from app.domain.models.conversation_member_role_enum import ConversationMemberRoleEnum
-
+from app.domain.services.static_validation_service import StaticValidationService
 
 if TYPE_CHECKING:
     from app.domain.models.videogame import Videogame
@@ -250,3 +256,100 @@ class Team:
             user=new_user,
             role=ConversationMemberRoleEnum.MEMBER
         ))
+
+    def update_information(
+        self,
+        name: str,
+        description: Optional[str],
+        allow_other_regions: bool,
+        region: Optional['Region'],
+        min_rank: 'Rank',
+        max_rank: 'Rank',
+    ) -> None:
+
+        name = StaticValidationService.validate_videogame_name_format(name)
+
+        if region is not None and region.videogame != self.videogame:
+            raise CatalogItemVideogameMismatchException("región", region.region_id, self.videogame.videogame_id)
+
+        for rank in (min_rank, max_rank):
+            if rank.videogame != self.videogame:
+                raise CatalogItemVideogameMismatchException("rango", rank.rank_id, self.videogame.videogame_id)
+
+        if min_rank.value > max_rank.value:
+            raise InvalidRankRangeException(min_rank.value, max_rank.value)
+
+        if region is None and not allow_other_regions:
+            raise TeamWithoutRegionMustAllowOthersException()
+
+        # Validar compatibilidad de rangos con todos los integrantes activos actuales (incluyendo líder)
+        for member in self._members:
+            if member.user is not None:
+                user_game_profile = member.user.get_game_profile_by_videogame(self.videogame)
+                if user_game_profile:
+                    user_role_profile = user_game_profile.get_role_profile_by_role(member.game_role)
+                    if user_role_profile and user_role_profile.rank:
+                        member_rank = user_role_profile.rank
+                        if member_rank.value < min_rank.value or member_rank.value > max_rank.value:
+                            team_id = self.team_id
+                            raise InvalidrankException(
+                                team_id,
+                                member_rank.rank_id,
+                                member_rank.value,
+                                min_rank.value,
+                                max_rank.value
+                            )
+
+        self._name = name.strip()
+        self._description = description
+        self._allow_other_regions = bool(allow_other_regions)
+        self._region = region
+        self._min_rank = min_rank
+        self._max_rank = max_rank
+        if self._conversation:
+            self._conversation.name = f"Chat del equipo {self._name}"
+
+    def leave_team(self, user_id: int) -> None:
+        """Permite a un miembro regular abandonar el equipo, liberando su cupo y revocando su acceso al chatroom."""
+        if not self.is_active:
+            raise TeamNotActiveException(self.team_id)
+
+        if self.is_leader(user_id):
+            raise LeaderCannotLeaveTeamException(self.team_id)
+
+        self._remove_member(user_id)
+
+    def kick_member(self, requester_id: int, target_user_id: int) -> None:
+        """Permite al líder expulsar a un integrante activo del equipo, liberando su cupo y revocando su acceso al chatroom."""
+        if not self.is_active:
+            raise TeamNotActiveException(self.team_id)
+
+        if not self.is_leader(requester_id):
+            raise UserNotTeamLeaderException(requester_id, self.team_id)
+
+        if requester_id == target_user_id:
+            raise LeaderCannotKickSelfException(self.team_id)
+
+        self._remove_member(target_user_id)
+
+
+    def _remove_member(self, target_user_id: int) -> None:
+        """Mét.odo interno para remover a un miembro del equipo sin validaciones de permisos."""
+        target_slot = None
+        for member in self._members:
+            if member.user is not None and member.user.user_id == target_user_id:
+                target_slot = member
+                break
+
+        if not target_slot:
+            raise UserNotInTeamException(target_user_id, self.team_id)
+
+        # Liberar el cupo
+        target_slot.user = None
+
+        # Remover de la conversación del equipo
+        if self._conversation:
+            self._conversation.members = [
+                member for member in self._conversation.members
+                if member.user is not None and member.user.user_id != target_user_id
+            ]

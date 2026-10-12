@@ -51,6 +51,7 @@ class ConsultantPlayerInfo(BaseModel):
 class VideogameInfoSummaryResponse(BaseModel):
     videogame_id: int | None = Field(None, description="ID del videojuego")
     name: str | None = Field(None, description="Nombre del videojuego")
+    has_characters: bool | None = Field(None, description="Indica si el videojuego posee selección de personajes")
 
 
 class RegionInfoSummaryResponse(BaseModel):
@@ -95,3 +96,23 @@ class JoinTeamResponse(BaseModel):
     message: str = Field(..., description="Mensaje de confirmación para el jugador")
     chatroom_id: int = Field(..., description="ID del chatroom del equipo al que se incorporó el jugador")
     data: TeamSummaryResponse = Field(..., description="Estado actualizado del equipo")
+
+
+class UpdateTeamResponse(BaseModel):
+    status: str = Field("success", description="Resultado de la operación")
+    message: str = Field(..., description="Mensaje de confirmación para el creador")
+    data: TeamSummaryResponse = Field(..., description="Estado actualizado del equipo")
+
+
+class LeaveTeamResponse(BaseModel):
+    status: str = Field("success", description="Resultado de la operación")
+    message: str = Field(..., description="Mensaje de confirmación para el jugador")
+    data: TeamSummaryResponse = Field(..., description="Estado actualizado del equipo")
+
+
+class KickMemberResponse(BaseModel):
+    status: str = Field("success", description="Resultado de la operación")
+    message: str = Field(..., description="Notificación de confirmación de expulsión")
+    data: TeamSummaryResponse = Field(..., description="Estado actualizado del equipo")
+
+

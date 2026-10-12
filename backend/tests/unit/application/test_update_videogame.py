@@ -42,10 +42,24 @@ class TestUpdateVideogameUseCase:
         assert result.name == "League of Legends"
         assert result.icon_url == "/media/games/lol/new_icon.png"
         assert result.rank_per_role is False
+        assert result.has_characters is True
 
         storage_service.delete_file.assert_called_once_with("/media/games/lol/old.png")
         storage_service.save_image_file.assert_called_once()
         uow.videogame_repo.update_videogame.assert_called_once()
+
+    def test_update_videogame_change_has_characters(self, mock_deps):
+        use_case, uow, storage_service = mock_deps
+
+        existing = Videogame(videogame_id=1, name="CS2", icon_url="/media/games/cs2/old.png", rank_per_role=False, has_characters=True)
+        uow.videogame_repo.get_videogame_by_id.return_value = existing
+        uow.videogame_repo.get_videogame_by_name.return_value = None
+        uow.videogame_repo.update_videogame.side_effect = lambda g: g
+
+        result = use_case.execute(videogame_id=1, name="CS2", icon=None, rank_per_role=False, has_characters=False)
+
+        assert result.has_characters is False
+        assert existing.has_characters is False
 
     def test_update_videogame_not_found(self, mock_deps):
         use_case, uow, _ = mock_deps

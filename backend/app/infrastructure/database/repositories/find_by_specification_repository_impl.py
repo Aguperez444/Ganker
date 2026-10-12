@@ -109,6 +109,7 @@ class FindBySpecificationRepositoryImpl(IFindBySpecificationRepository):
                 name=game_profile_domain.videogame.name,
                 icon_url=game_profile_domain.videogame.icon_url,
                 rank_per_role=game_profile_domain.videogame.rank_per_role,
+                has_characters=game_profile_domain.videogame.has_characters,
             ),
             characters=[CharacterObjectResponse(character_id=character.character_id, name=character.name,
                                                 icon_url=character.icon_url) for character in ordered_characters],
