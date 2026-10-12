@@ -1,5 +1,7 @@
 from typing import List, Optional, TYPE_CHECKING
 from app.application.ports.i_unit_of_work import IUnitOfWork
+from app.domain.exceptions.does_not_belong_to_game_exception import DoesNotBelongToGameException
+from app.domain.exceptions.invalid_id_exception import InvalidIdException
 from app.domain.specifications.base import Specification
 from app.domain.specifications.ranks_specification import ByRanksSpecification
 from app.domain.specifications.regions_specification import ByRegionsSpecification
@@ -19,7 +21,7 @@ class SearchTeams:
     def __init__(self, uow: IUnitOfWork):
         self._uow = uow
 
-    def execute(self, videogame_id: Optional[int] = None, region_id: Optional[int] = None,
+    def execute(self, videogame_id: int, region_id: Optional[int] = None,
                 rank_id: Optional[int] = None, vacant_slots: Optional[int] = None,
                 role_id: Optional[int] = None, search: Optional[str] = None,
                 user_id: Optional[int] = None, limit: int = 5, offset: int = 0) -> List[TeamSummaryResponse]:
@@ -33,21 +35,27 @@ class SearchTeams:
                 viewer = CatalogValidationService.get_and_validate_exist_user(user_id, uow)
                 viewer_in_other_team = uow.team_repo.is_user_in_any_active_team(user_id) if viewer is not None else False
 
-            specs: list[Specification] = [ByIsActiveSpecification(True)]
+            if not videogame_id:
+                raise InvalidIdException(videogame_id)
+            CatalogValidationService.get_and_validate_exist_videogame(videogame_id, uow)
+            specs: list[Specification] = [ByIsActiveSpecification(True), ByVideogameSpecification(videogame_id)]
 
-            if videogame_id:
-                CatalogValidationService.get_and_validate_exist_videogame(videogame_id, uow)
-                specs.append(ByVideogameSpecification(videogame_id))
             if region_id:
-                CatalogValidationService.get_and_validate_exist_region(region_id, uow)
-                specs.append(ByRegionsSpecification([region_id]))
+                region = CatalogValidationService.get_and_validate_exist_region(region_id, uow)
+                if region.videogame.videogame_id != videogame_id:
+                    raise DoesNotBelongToGameException("region", str(region_id), str(videogame_id))
+                specs.append(ByRegionsSpecification(region_id))
             if rank_id:
-                CatalogValidationService.get_and_validate_exist_rank(rank_id, uow)
-                specs.append(ByRanksSpecification([rank_id]))
+                rank = CatalogValidationService.get_and_validate_exist_rank(rank_id, uow)
+                if rank.videogame.videogame_id != videogame_id:
+                    raise DoesNotBelongToGameException("rank", str(rank_id), str(videogame_id))
+                specs.append(ByRanksSpecification(rank.value))
             if vacant_slots:
                 specs.append(ByVacantSlotsSpecification(vacant_slots))
             if role_id:
-                CatalogValidationService.get_and_validate_exist_role(role_id, uow)
+                role = CatalogValidationService.get_and_validate_exist_role(role_id, uow)
+                if role.videogame.videogame_id != videogame_id:
+                    raise DoesNotBelongToGameException("role", str(role_id), str(videogame_id))
                 specs.append(ByRolesSpecification([role_id]))
             if search:
                 specs.append(BySearchTermsSpecification(search))

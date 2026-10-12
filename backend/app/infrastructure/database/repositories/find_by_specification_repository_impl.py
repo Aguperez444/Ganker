@@ -1,7 +1,7 @@
 from typing import List
 
 from sqlalchemy import func, select, or_
-from sqlalchemy.orm import Session, joinedload
+from sqlalchemy.orm import Session, joinedload, aliased
 from app.application.ports.i_find_by_specifications_service import IFindBySpecificationsRepository
 from app.domain.models.team import Team
 from app.domain.specifications.base import Specification, AndSpecification
@@ -27,7 +27,7 @@ from app.infrastructure.api.dto.response.get.get_game_profile_response import Ge
 from app.infrastructure.database.mappers.game_profile_mapper import GameProfileMapper
 from app.infrastructure.database.mappers.team_mapper import TeamMapper
 from app.infrastructure.database.models import GameProfileORM, CharacterPriorityORM, RoleProfileORM, UserORM, TeamORM, \
-    TeamMemberRoleORM
+    TeamMemberRoleORM, RankORM
 from app.domain.specifications.regions_specification import ByRegionsSpecification
 
 
@@ -51,17 +51,24 @@ class FindBySpecificationsRepositoryImpl(IFindBySpecificationsRepository):
             return query.filter(GameProfileORM.videogame_id == spec.to_expression())
 
         if isinstance(spec, ByRegionsSpecification):
-            return query.filter(GameProfileORM.region_id.in_(spec.to_expression()))
+            return query.filter(GameProfileORM.region_id == spec.to_expression())
 
         if isinstance(spec, ByCharactersSpecification):
             return query.filter(
                 GameProfileORM.character_associations.any(CharacterPriorityORM.character_id.in_(spec.to_expression())))
 
         if isinstance(spec, ByRolesSpecification):
-            return query.filter(GameProfileORM.role_profiles.any(RoleProfileORM.role_id.in_(spec.to_expression())))
+            return query.filter(GameProfileORM.role_profiles.any(RoleProfileORM.rank_id == spec.to_expression()))
+
 
         if isinstance(spec, ByRanksSpecification):
-            return query.filter(GameProfileORM.role_profiles.any(RoleProfileORM.rank_id.in_(spec.to_expression())))
+            min_rank_alias = aliased(RankORM)
+            max_rank_alias = aliased(RankORM)
+            return (query
+                    .join(min_rank_alias, TeamORM.min_rank)
+                    .join(max_rank_alias, TeamORM.max_rank)
+                    .filter(min_rank_alias.value <= spec.to_expression())
+                    .filter(max_rank_alias.value >= spec.to_expression()))
 
         # TODO Deberíamos hacer un índice para que esta no destruya el rendimiento recorriendo todos los registros
         if isinstance(spec, ByLastConnectionSpecification):

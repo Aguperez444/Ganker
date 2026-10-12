@@ -38,7 +38,7 @@ def get_storage_service():
 
 @router.get("", status_code=200, response_model=list[TeamSummaryResponse], dependencies=[Depends(require_player)])
 async def search_teams(
-    videogame_id: Optional[int] = Query(None),
+    videogame_id: int = Query(None),
     region_id: Optional[int] = Query(None),
     rank_id: Optional[int] = Query(None),
     vacant_slots: Optional[int] = Query(None, ge=1),
