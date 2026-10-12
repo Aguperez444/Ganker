@@ -1,5 +1,6 @@
 import { useCallback, useState } from "react";
 import { createRole, getRolesByGame } from "../api/roleApi";
+import { logError } from "../utils/logs";
 
 const useRoles = () => {
   const [roles, setRoles] = useState([]);
@@ -30,7 +31,7 @@ const useRoles = () => {
         }))
       );
     } catch (error) {
-      console.error("Error al cargar roles:", error);
+      logError("Error al cargar roles:", error);
       setError("No se pudieron cargar los roles.");
     } finally {
       setIsLoading(false);

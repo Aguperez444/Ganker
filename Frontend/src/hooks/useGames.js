@@ -4,6 +4,7 @@ import {
   getGames,
   updateGame as updateGameRequest,
 } from "../api/gameApi";
+import { logError } from "../utils/logs";
 
 // Modulo aparte (no un useCallback del componente) a proposito: llamar desde
 // el cuerpo de un efecto a una funcion memoizada del propio componente que
@@ -24,10 +25,11 @@ async function cargarVideojuegos({ setGames, setIsLoading, setError }) {
         name: game.name,
         icon_url: game.icon_url,
         rank_per_role: Boolean(game.rank_per_role),
+        has_characters: game.has_characters !== false,
       }))
     );
   } catch (error) {
-    console.error("Error al cargar videojuegos:", error);
+    logError("Error al cargar videojuegos:", error);
     setError("No se pudieron cargar los videojuegos.");
   } finally {
     setIsLoading(false);
@@ -60,14 +62,21 @@ const useGames = () => {
       let name = nameOrData;
       let iconFile = icon;
       let rankPerRole = false;
+      let hasCharacters = true;
 
       if (typeof nameOrData === "object" && nameOrData !== null) {
         name = nameOrData.name;
         iconFile = nameOrData.icon;
         rankPerRole = Boolean(nameOrData.rank_per_role);
+        hasCharacters = nameOrData.has_characters !== false;
       }
 
-      const newGame = await createGameRequest(name, iconFile, rankPerRole);
+      const newGame = await createGameRequest(
+        name,
+        iconFile,
+        rankPerRole,
+        hasCharacters
+      );
 
       setGames((currentGames) => [
         ...currentGames,
@@ -76,6 +85,7 @@ const useGames = () => {
           name: newGame.name,
           icon_url: newGame.icon_url,
           rank_per_role: Boolean(newGame.rank_per_role),
+          has_characters: newGame.has_characters !== false,
         },
       ]);
 
@@ -111,18 +121,21 @@ const useGames = () => {
       let name = nameOrData;
       let iconFile = icon;
       let rankPerRole = false;
+      let hasCharacters = true;
 
       if (typeof nameOrData === "object" && nameOrData !== null) {
         name = nameOrData.name;
         iconFile = nameOrData.icon;
         rankPerRole = Boolean(nameOrData.rank_per_role);
+        hasCharacters = nameOrData.has_characters !== false;
       }
 
       const updatedGame = await updateGameRequest(
         id,
         name,
         iconFile,
-        rankPerRole
+        rankPerRole,
+        hasCharacters
       );
 
       setGames((currentGames) =>
@@ -133,6 +146,7 @@ const useGames = () => {
                 name: updatedGame.name,
                 icon_url: updatedGame.icon_url,
                 rank_per_role: Boolean(updatedGame.rank_per_role),
+                has_characters: updatedGame.has_characters !== false,
               }
             : game
         )

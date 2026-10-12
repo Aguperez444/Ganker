@@ -6,6 +6,7 @@ const GameForm = ({
   initialName = "",
   initialIconUrl = "",
   initialRankPerRole = false,
+  initialHasCharacters = true,
   isLoading = false,
   error = "",
   onSubmit,
@@ -13,6 +14,7 @@ const GameForm = ({
 }) => {
   const [name, setName] = useState(initialName);
   const [rankPerRole, setRankPerRole] = useState(initialRankPerRole);
+  const [hasCharacters, setHasCharacters] = useState(initialHasCharacters);
   const [iconFile, setIconFile] = useState(null);
   const [validationError, setValidationError] = useState("");
   const [isDragging, setIsDragging] = useState(false);
@@ -124,6 +126,7 @@ const GameForm = ({
       name: trimmedName,
       icon: iconFile,
       rank_per_role: rankPerRole,
+      has_characters: hasCharacters,
     });
   };
 
@@ -147,7 +150,8 @@ const GameForm = ({
       ? name.trim().length > 0 && iconFile !== null
       : (name.trim().length > 0 && name.trim() !== initialName.trim()) ||
         iconFile !== null ||
-        rankPerRole !== initialRankPerRole;
+        rankPerRole !== initialRankPerRole ||
+        hasCharacters !== initialHasCharacters;
 
   return (
     <section className="rounded-2xl border border-white/10 bg-ganker-surface p-6 shadow-xl">
@@ -198,9 +202,29 @@ const GameForm = ({
               Rango por rol
             </span>
             <span className="block text-xs text-ganker-muted">
-              Si está activo, cada rol del perfil tiene su propio rango. Si
-              está desactivado, el perfil usa un único rango para todos los
-              roles seleccionados.
+              Si está activo, cada rol del perfil tiene su propio rango. Si está
+              desactivado, el perfil usa un único rango para todos los roles
+              seleccionados.
+            </span>
+          </span>
+        </label>
+
+        <label className="flex cursor-pointer items-start gap-3 rounded-lg border border-white/10 bg-ganker-surface-light px-4 py-3">
+          <input
+            type="checkbox"
+            checked={hasCharacters}
+            onChange={(event) => setHasCharacters(event.target.checked)}
+            disabled={isLoading}
+            className="mt-0.5 h-4 w-4 accent-ganker-purple"
+          />
+          <span>
+            <span className="block text-sm font-medium text-ganker-text">
+              Tiene personajes
+            </span>
+            <span className="block text-xs text-ganker-muted">
+              Si está activo, los jugadores eligen sus personajes principales en
+              el perfil de juego. Desactivalo en juegos sin personajes distintos
+              (por ejemplo, CS2).
             </span>
           </span>
         </label>

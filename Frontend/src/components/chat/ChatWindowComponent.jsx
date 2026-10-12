@@ -5,6 +5,7 @@ import { useChatHistory } from "../../hooks/useChatHistory";
 import { useChat } from "../../context/ChatContext";
 import MessageBubbleComponent from "./MessageBubbleComponent";
 import MessageInputComponent from "./MessageInputComponent";
+import { logError } from "../../utils/logs";
 
 const TEXTO_ESTADO = {
   CONECTANDO: "Conectando...",
@@ -81,7 +82,7 @@ const ChatWindowComponent = ({
       .catch((error) => {
         if (cancelado) return;
 
-        console.error("Error al cargar el historial de mensajes:", error);
+        logError("Error al cargar el historial de mensajes:", error);
 
         setErrorHistorial("No se pudo cargar el historial de mensajes.");
 
@@ -233,7 +234,7 @@ const ChatWindowInterna = ({
         });
       }
     } catch (error) {
-      console.error("Error al cargar mensajes anteriores:", error);
+      logError("Error al cargar mensajes anteriores:", error);
 
       setErrorAnteriores("No se pudieron cargar mensajes anteriores.");
     } finally {

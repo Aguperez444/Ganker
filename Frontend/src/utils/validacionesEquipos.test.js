@@ -2,6 +2,9 @@ import { describe, it, expect } from "vitest";
 
 import {
   CUPOS_VACANTES_MAXIMO,
+  mensajeDeRechazoAlUnirse,
+  motivoVacanteNoDisponible,
+  perfilDelJuego,
   validarFormularioEquipo,
 } from "./validacionesEquipos";
 
@@ -135,5 +138,129 @@ describe("US 14 - validarFormularioEquipo", () => {
         rolesVacantesIds: Array(CUPOS_VACANTES_MAXIMO + 1).fill("11"),
       }).rolesVacantes
     ).toMatch(/entre 1 y/);
+  });
+});
+
+describe("US 18 - Unirse a equipo", () => {
+  const equipo = {
+    videogame: { videogame_id: 1, name: "League of Legends" },
+    region: { region_id: 2, region_name: "LAS" },
+    allow_other_regions: false,
+    min_rank: { rank_id: 2, name: "Plata", value: 2 },
+    max_rank: { rank_id: 4, name: "Platino", value: 4 },
+  };
+
+  const vacanteMid = {
+    is_vacant: true,
+    team_member_role_id: 30,
+    active_game_profile: {
+      active_role_profile: { role_id: 10, role_name: "Mid" },
+    },
+  };
+
+  const perfilConRango = (valor, regionId = 2) => ({
+    videogame: { id: 1 },
+    region: { region_id: regionId, name: "Región" },
+    role_profiles: [
+      {
+        role: { role_id: 10, name: "Mid" },
+        rank: { rank_id: valor, name: `Rango ${valor}`, value: valor },
+      },
+    ],
+  });
+
+  it("encuentra el perfil del jugador para el juego del equipo", () => {
+    const perfil = perfilConRango(3);
+    expect(perfilDelJuego([perfil], 1)).toBe(perfil);
+    expect(perfilDelJuego([perfil], 9)).toBeNull();
+  });
+
+  it("permite la vacante si cumple rol, región y rango", () => {
+    expect(
+      motivoVacanteNoDisponible({
+        equipo,
+        vacante: vacanteMid,
+        perfil: perfilConRango(3),
+      })
+    ).toBeNull();
+  });
+
+  it("rechaza sin perfil de juego", () => {
+    expect(
+      motivoVacanteNoDisponible({ equipo, vacante: vacanteMid, perfil: null })
+    ).toMatch(/perfil de League of Legends/);
+  });
+
+  it("rechaza sin perfil para el rol de la vacante", () => {
+    const perfil = { ...perfilConRango(3), role_profiles: [] };
+    expect(
+      motivoVacanteNoDisponible({ equipo, vacante: vacanteMid, perfil })
+    ).toMatch(/rol Mid/);
+  });
+
+  it("rechaza un rango inferior al mínimo o superior al máximo", () => {
+    for (const valor of [1, 5]) {
+      expect(
+        motivoVacanteNoDisponible({
+          equipo,
+          vacante: vacanteMid,
+          perfil: perfilConRango(valor),
+        })
+      ).toMatch(/fuera del rango del equipo \(Plata a Platino\)/);
+    }
+  });
+
+  it("rechaza otra región si el equipo no la admite", () => {
+    expect(
+      motivoVacanteNoDisponible({
+        equipo,
+        vacante: vacanteMid,
+        perfil: perfilConRango(3, 7),
+      })
+    ).toMatch(/solo admite jugadores de LAS/);
+  });
+
+  it("permite otra región si el equipo la admite", () => {
+    expect(
+      motivoVacanteNoDisponible({
+        equipo: { ...equipo, allow_other_regions: true },
+        vacante: vacanteMid,
+        perfil: perfilConRango(3, 7),
+      })
+    ).toBeNull();
+  });
+
+  it("traduce los rechazos del backend que traen IDs internos", () => {
+    expect(
+      mensajeDeRechazoAlUnirse(
+        "El equipo con id: 3 está completo, no pueden unirse más usuarios",
+        equipo
+      )
+    ).toBe("El equipo ya no tiene vacantes disponibles.");
+    expect(
+      mensajeDeRechazoAlUnirse(
+        "El rango con ID 1 no es válido para el equipo con ID 3. Valor: 1, Mínimo admitido: 2, Máximo admitido: 4",
+        equipo
+      )
+    ).toMatch(/Plata a Platino/);
+    expect(
+      mensajeDeRechazoAlUnirse(
+        "El equipo 3 solo admite jugadores de la región 2 y el jugador tiene la región 7",
+        equipo
+      )
+    ).toMatch(/solo admite jugadores de LAS/);
+    expect(
+      mensajeDeRechazoAlUnirse(
+        "El usuario con id: 5 ya forma parte de un equipo activo",
+        equipo
+      )
+    ).toMatch(/Ya formás parte de otro equipo activo/);
+  });
+
+  it("deja pasar los mensajes sin IDs y no devuelve nada sin mensaje", () => {
+    expect(
+      mensajeDeRechazoAlUnirse("Ya formás parte de otro equipo activo", equipo)
+    ).toBe("Ya formás parte de otro equipo activo");
+    expect(mensajeDeRechazoAlUnirse(undefined, equipo)).toBeNull();
   });
 });

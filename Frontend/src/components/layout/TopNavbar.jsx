@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import ChatNavbarButton from "../chat/ChatNavbarButton.jsx";
 import AvatarUsuarioComponent from "../common/AvatarUsuarioComponent";
@@ -13,6 +13,23 @@ const TopNavbar = ({
 }) => {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+  const { pathname } = useLocation();
+  const enPanelAdmin = pathname.startsWith("/app/admin");
+  const inicioDelPanel = enPanelAdmin ? "/app/admin" : "/app";
+  // En el inicio de cada panel no hay "atras" dentro de la app.
+  const mostrarAtras = pathname.replace(/\/$/, "") !== inicioDelPanel;
+
+  // React Router guarda en history.state.idx cuantas pantallas de la app hay
+  // antes de esta. Si es 0 (se entro por un link directo o se recargo en la
+  // primera), navigate(-1) sacaria al jugador del sitio: en ese caso se va
+  // al inicio del panel.
+  const handleAtras = () => {
+    if (window.history.state?.idx > 0) {
+      navigate(-1);
+    } else {
+      navigate(inicioDelPanel);
+    }
+  };
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const userMenuRef = useRef(null);
 
@@ -58,6 +75,29 @@ const TopNavbar = ({
           </svg>
         </button>
 
+        {/* Atras: misma accion que la flecha del navegador */}
+        {mostrarAtras && (
+          <button
+            type="button"
+            onClick={handleAtras}
+            aria-label="Atrás"
+            title="Atrás"
+            className="flex h-10 shrink-0 cursor-pointer items-center gap-1 rounded-lg px-2 text-sm font-semibold text-ganker-muted transition hover:bg-ganker-surface-light hover:text-ganker-text"
+          >
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.8"
+              className="h-5 w-5"
+              aria-hidden="true"
+            >
+              <path d="m15 18-6-6 6-6" />
+            </svg>
+            <span className="hidden sm:inline">Atrás</span>
+          </button>
+        )}
+
         {/* Selector de juego */}
         <div className="flex min-w-0 items-center gap-3">
           <span className="hidden text-xs font-semibold tracking-[0.18em] text-ganker-muted uppercase xl:block">
@@ -90,6 +130,36 @@ const TopNavbar = ({
             oculta/muestra el panel fijo de chat, en mobile/admin abre/cierra
             el drawer. `chatVisible` refleja ese estado en el label y en el
             estilo (igual criterio que el item activo del sidebar). */}
+        {/* Paso directo entre las dos areas (solo admin/owner): lleva a la
+            que no se esta viendo. Antes vivia en el menu del avatar. */}
+        {esAdmin(user) && (
+          <Link
+            to={enPanelAdmin ? "/app" : "/app/admin"}
+            title={
+              enPanelAdmin
+                ? "Ir al panel de jugador"
+                : "Ir al panel de administración"
+            }
+            className="flex h-10 shrink-0 items-center gap-2 rounded-lg border border-ganker-purple/40 px-3 text-xs font-semibold text-ganker-purple-light transition hover:bg-ganker-surface-light hover:text-ganker-text"
+          >
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.8"
+              className="h-4 w-4 shrink-0"
+              aria-hidden="true"
+            >
+              <path d="M7 7h11l-3-3" />
+              <path d="M17 17H6l3 3" />
+            </svg>
+            {/* En mobile queda solo el icono; el texto sigue para lectores. */}
+            <span className="sr-only sm:not-sr-only">
+              {enPanelAdmin ? "Panel jugador" : "Panel admin"}
+            </span>
+          </Link>
+        )}
+
         {showChatButton && (
           <ChatNavbarButton onOpenChat={onOpenChat} chatVisible={chatVisible} />
         )}
@@ -120,27 +190,6 @@ const TopNavbar = ({
                   </p>
                 </div>
               )}
-              {/* Unico paso entre las dos areas: el sidebar de jugador ya no
-                  ofrece admin, y el de admin ya no ofrece volver. */}
-              {esAdmin(user) && (
-                <>
-                  <Link
-                    to="/app/admin"
-                    onClick={() => setIsUserMenuOpen(false)}
-                    className="block rounded-lg px-3 py-2 text-xs font-semibold text-ganker-purple-light transition hover:bg-ganker-surface-light"
-                  >
-                    Panel de administración
-                  </Link>
-                  <Link
-                    to="/app"
-                    onClick={() => setIsUserMenuOpen(false)}
-                    className="block rounded-lg px-3 py-2 text-xs font-semibold text-ganker-purple-light transition hover:bg-ganker-surface-light"
-                  >
-                    Panel jugador
-                  </Link>
-                </>
-              )}
-
               {/* US 02 - Modificar mis datos */}
               <Link
                 to="/app/cuenta"
@@ -148,13 +197,6 @@ const TopNavbar = ({
                 className="block rounded-lg px-3 py-2 text-xs font-semibold text-ganker-muted transition hover:bg-ganker-surface-light hover:text-ganker-text"
               >
                 Mi cuenta
-              </Link>
-              <Link
-                to="/"
-                onClick={() => setIsUserMenuOpen(false)}
-                className="block rounded-lg px-3 py-2 text-xs font-semibold text-ganker-muted transition hover:bg-ganker-surface-light hover:text-ganker-text"
-              >
-                Página principal
               </Link>
               <button
                 type="button"

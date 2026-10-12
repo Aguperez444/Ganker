@@ -1,3 +1,4 @@
+import CampoContrasenaComponent from "../common/CampoContrasenaComponent";
 import CampoTexto from "../common/CampoTexto";
 
 const ICONO_USUARIO = (
@@ -44,20 +45,18 @@ function JugadorForm({ valores, errores, cargando, errorServidor, onChange, onBl
           onBlur={() => onBlur("mail")}
           error={errores.mail}
         />
-        <CampoTexto
+        <CampoContrasenaComponent
           label="CONTRASEÑA"
           icono={ICONO_CANDADO}
-          type="password"
           placeholder="Creá una contraseña"
           value={valores.password}
           onChange={(e) => onChange("password", e.target.value)}
           onBlur={() => onBlur("password")}
           error={errores.password}
         />
-        <CampoTexto
+        <CampoContrasenaComponent
           label="CONFIRMAR CONTRASEÑA"
           icono={ICONO_CANDADO}
-          type="password"
           placeholder="Repetí tu contraseña"
           value={valores.confirmarPassword}
           onChange={(e) => onChange("confirmarPassword", e.target.value)}

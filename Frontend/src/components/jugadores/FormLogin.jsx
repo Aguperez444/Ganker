@@ -1,3 +1,4 @@
+import CampoContrasenaComponent from "../common/CampoContrasenaComponent";
 import CampoTexto from "../common/CampoTexto";
 
 const ICONO_USUARIO = (
@@ -27,10 +28,9 @@ function FormLogin({ valores, errores, cargando, errorServidor, onChange, onSubm
         onChange={(e) => onChange("email", e.target.value)}
         error={errores.email}
       />
-      <CampoTexto
+      <CampoContrasenaComponent
         label="CONTRASEÑA"
         icono={ICONO_CANDADO}
-        type="password"
         placeholder="Tu contraseña"
         value={valores.password}
         onChange={(e) => onChange("password", e.target.value)}

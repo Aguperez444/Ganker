@@ -17,6 +17,7 @@ import { obtenerIdUsuarioDesdeToken } from "../utils/jwt";
 import { reproducirSonidoNotificacion } from "../utils/sonido";
 import { useNotificacionesSocket } from "../hooks/useNotificacionesSocket";
 import { useIsDesktop } from "../hooks/useIsDesktop";
+import { logError } from "../utils/logs";
 
 const ChatContext = createContext(null);
 
@@ -64,7 +65,7 @@ async function cargarYSetearConversaciones({
     const lista = await obtenerConversaciones();
     setConversaciones(lista ?? []);
   } catch (err) {
-    console.error("Error al cargar conversaciones:", err);
+    logError("Error al cargar conversaciones:", err);
     setError("No se pudieron cargar las conversaciones.");
   } finally {
     setCargando(false);
@@ -275,7 +276,7 @@ export function ChatProvider({ children }) {
     // en la base y un refresh de pagina vuelve a mostrar estos mensajes
     // como no leidos.
     marcarConversacionComoLeida(conversationId).catch((err) => {
-      console.error("Error al marcar la conversación como leída:", err);
+      logError("Error al marcar la conversación como leída:", err);
     });
   }, []);
 

@@ -54,6 +54,7 @@ vi.mock("../api/rankApi", () => ({
 }));
 
 vi.mock("../api/axiosClient", () => ({
+  revocarRefreshToken: vi.fn(() => Promise.resolve()),
   default: { post: vi.fn(), get: vi.fn(), put: vi.fn() },
   registrarOnSesionExpirada: vi.fn(),
   registrarOnTokensRenovados: vi.fn(),
@@ -280,8 +281,9 @@ describe("US 03 - Buscar jugadores", () => {
       screen.getByRole("button", { name: /limpiar filtros/i })
     );
 
+    // La busqueda se relanza tras el debounce del username: hay que esperarla.
     expect(
-      screen.getAllByRole("button", { name: /enviar mensaje/i }).length
+      (await screen.findAllByRole("button", { name: /enviar mensaje/i })).length
     ).toBe(3);
   });
 

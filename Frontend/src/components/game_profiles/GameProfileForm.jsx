@@ -7,11 +7,14 @@ const GameProfileForm = ({
   characters,
   roles,
   ranks,
+  regions = [],
 
   selectedGameId,
+  selectedRegionId = "",
   selectedCharacters,
   selectedRoles,
   usesRankPerRole,
+  usesCharacters = true,
   profileRank,
 
   isLoadingGames,
@@ -21,6 +24,7 @@ const GameProfileForm = ({
   gameDataError,
 
   onGameChange,
+  onRegionChange,
   onAddCharacter,
   onRemoveCharacter,
   onMoveCharacter,
@@ -149,144 +153,179 @@ const GameProfileForm = ({
 
           {!isLoadingGameData && !gameDataError && (
             <div className="space-y-8">
-              {/* Personajes */}
+              {/* Region: opcional, "Ninguna" se manda como null */}
               <div>
                 <div className="mb-4">
                   <h3 className="font-heading text-lg font-semibold text-ganker-text">
-                    Personajes principales
+                    Región
                   </h3>
 
                   <p className="mt-1 text-sm text-ganker-muted">
-                    Agrega los personajes que juegas y ordénalos según tu
-                    preferencia.
+                    Opcional. Indica en qué región del videojuego juegas.
                   </p>
                 </div>
 
                 <div className="max-w-xl">
-                  <IconSelectComponent
-                    value=""
-                    onChange={(characterId) => onAddCharacter(characterId)}
-                    options={availableCharacters}
-                    placeholder="Agregar personaje..."
-                    buscable
-                    getOptionId={(character) => character.character_id}
-                  />
+                  <label htmlFor="region-perfil" className="sr-only">
+                    Región
+                  </label>
+                  <select
+                    id="region-perfil"
+                    value={selectedRegionId}
+                    onChange={(e) => onRegionChange(e.target.value)}
+                    className="w-full rounded-lg border border-white/10 bg-ganker-surface-light px-3 py-2.5 text-sm text-ganker-text outline-none transition focus:border-ganker-purple-light"
+                  >
+                    <option value="">Ninguna</option>
+                    {regions.map((region) => (
+                      <option key={region.region_id} value={region.region_id}>
+                        {region.name}
+                      </option>
+                    ))}
+                  </select>
                 </div>
+              </div>
 
-                {availableCharacters.length > 0 && (
-                  <div className="mt-3 flex flex-wrap gap-2">
-                    {availableCharacters.slice(0, 5).map((character) => {
-                      const iconUrl = urlDeMedia(character.icon_url);
+              {/* Personajes: no se piden en juegos sin personajes
+                  distintos (videogame.has_characters = false, ej. CS2) */}
+              {usesCharacters && (
+                <div className="border-t border-white/10 pt-8">
+                  <div className="mb-4">
+                    <h3 className="font-heading text-lg font-semibold text-ganker-text">
+                      Personajes principales
+                    </h3>
 
-                      return (
-                        <button
+                    <p className="mt-1 text-sm text-ganker-muted">
+                      Agrega los personajes que juegas y ordénalos según tu
+                      preferencia.
+                    </p>
+                  </div>
+
+                  <div className="max-w-xl">
+                    <IconSelectComponent
+                      value=""
+                      onChange={(characterId) => onAddCharacter(characterId)}
+                      options={availableCharacters}
+                      placeholder="Agregar personaje..."
+                      buscable
+                      getOptionId={(character) => character.character_id}
+                    />
+                  </div>
+
+                  {availableCharacters.length > 0 && (
+                    <div className="mt-3 flex flex-wrap gap-2">
+                      {availableCharacters.slice(0, 5).map((character) => {
+                        const iconUrl = urlDeMedia(character.icon_url);
+
+                        return (
+                          <button
+                            key={character.character_id}
+                            type="button"
+                            onClick={() =>
+                              onAddCharacter(String(character.character_id))
+                            }
+                            className="flex items-center gap-2 rounded-lg border border-white/10 bg-ganker-surface-light py-1.5 pr-3 pl-1.5 transition hover:border-ganker-purple-light/50 hover:bg-white/5"
+                          >
+                            <div className="flex h-8 w-8 shrink-0 items-center justify-center overflow-hidden rounded-md bg-ganker-surface">
+                              {iconUrl ? (
+                                <img
+                                  src={iconUrl}
+                                  alt={character.name}
+                                  className="h-full w-full object-cover"
+                                  onError={(e) => {
+                                    e.currentTarget.style.display = "none";
+                                  }}
+                                />
+                              ) : (
+                                <span className="text-xs font-semibold text-ganker-purple-light">
+                                  {character.name.charAt(0).toUpperCase()}
+                                </span>
+                              )}
+                            </div>
+
+                            <span className="max-w-20 truncate text-xs font-medium text-ganker-text">
+                              {character.name}
+                            </span>
+
+                            <span
+                              className="text-sm font-bold text-ganker-purple-light"
+                              aria-hidden="true"
+                            >
+                              +
+                            </span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
+
+                  {selectedCharacters.length > 0 && (
+                    <div className="mt-4 space-y-2">
+                      {selectedCharacters.map((character, index) => (
+                        <div
                           key={character.character_id}
-                          type="button"
-                          onClick={() =>
-                            onAddCharacter(String(character.character_id))
-                          }
-                          className="flex items-center gap-2 rounded-lg border border-white/10 bg-ganker-surface-light py-1.5 pr-3 pl-1.5 transition hover:border-ganker-purple-light/50 hover:bg-white/5"
+                          className="flex items-center gap-3 rounded-xl border border-white/10 bg-ganker-surface-light p-3"
                         >
-                          <div className="flex h-8 w-8 shrink-0 items-center justify-center overflow-hidden rounded-md bg-ganker-surface">
-                            {iconUrl ? (
-                              <img
-                                src={iconUrl}
-                                alt={character.name}
-                                className="h-full w-full object-cover"
-                                onError={(e) => {
-                                  e.currentTarget.style.display = "none";
-                                }}
-                              />
-                            ) : (
-                              <span className="text-xs font-semibold text-ganker-purple-light">
-                                {character.name.charAt(0).toUpperCase()}
-                              </span>
-                            )}
+                          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-ganker-purple/20 text-sm font-semibold text-ganker-purple-light">
+                            {index + 1}
                           </div>
 
-                          <span className="max-w-20 truncate text-xs font-medium text-ganker-text">
+                          {urlDeMedia(character.icon_url) && (
+                            <img
+                              src={urlDeMedia(character.icon_url)}
+                              alt={character.name}
+                              className="h-10 w-10 rounded-lg object-cover"
+                              onError={(e) => {
+                                e.currentTarget.style.display = "none";
+                              }}
+                            />
+                          )}
+
+                          <span className="min-w-0 flex-1 truncate text-sm font-medium text-ganker-text">
                             {character.name}
                           </span>
 
-                          <span
-                            className="text-sm font-bold text-ganker-purple-light"
-                            aria-hidden="true"
-                          >
-                            +
-                          </span>
-                        </button>
-                      );
-                    })}
-                  </div>
-                )}
+                          <div className="flex items-center gap-1">
+                            <button
+                              type="button"
+                              onClick={() =>
+                                onMoveCharacter(character.character_id, "up")
+                              }
+                              disabled={index === 0}
+                              className="rounded-lg px-3 py-2 text-ganker-muted transition hover:bg-white/5 hover:text-ganker-text disabled:cursor-not-allowed disabled:opacity-30"
+                              aria-label={`Subir ${character.name}`}
+                            >
+                              ↑
+                            </button>
 
-                {selectedCharacters.length > 0 && (
-                  <div className="mt-4 space-y-2">
-                    {selectedCharacters.map((character, index) => (
-                      <div
-                        key={character.character_id}
-                        className="flex items-center gap-3 rounded-xl border border-white/10 bg-ganker-surface-light p-3"
-                      >
-                        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-ganker-purple/20 text-sm font-semibold text-ganker-purple-light">
-                          {index + 1}
+                            <button
+                              type="button"
+                              onClick={() =>
+                                onMoveCharacter(character.character_id, "down")
+                              }
+                              disabled={index === selectedCharacters.length - 1}
+                              className="rounded-lg px-3 py-2 text-ganker-muted transition hover:bg-white/5 hover:text-ganker-text disabled:cursor-not-allowed disabled:opacity-30"
+                              aria-label={`Bajar ${character.name}`}
+                            >
+                              ↓
+                            </button>
+
+                            <button
+                              type="button"
+                              onClick={() =>
+                                onRemoveCharacter(character.character_id)
+                              }
+                              className="rounded-lg px-3 py-2 text-ganker-error transition hover:bg-ganker-error/10"
+                              aria-label={`Eliminar ${character.name}`}
+                            >
+                              ×
+                            </button>
+                          </div>
                         </div>
-
-                        {urlDeMedia(character.icon_url) && (
-                          <img
-                            src={urlDeMedia(character.icon_url)}
-                            alt={character.name}
-                            className="h-10 w-10 rounded-lg object-cover"
-                            onError={(e) => {
-                              e.currentTarget.style.display = "none";
-                            }}
-                          />
-                        )}
-
-                        <span className="min-w-0 flex-1 truncate text-sm font-medium text-ganker-text">
-                          {character.name}
-                        </span>
-
-                        <div className="flex items-center gap-1">
-                          <button
-                            type="button"
-                            onClick={() =>
-                              onMoveCharacter(character.character_id, "up")
-                            }
-                            disabled={index === 0}
-                            className="rounded-lg px-3 py-2 text-ganker-muted transition hover:bg-white/5 hover:text-ganker-text disabled:cursor-not-allowed disabled:opacity-30"
-                            aria-label={`Subir ${character.name}`}
-                          >
-                            ↑
-                          </button>
-
-                          <button
-                            type="button"
-                            onClick={() =>
-                              onMoveCharacter(character.character_id, "down")
-                            }
-                            disabled={index === selectedCharacters.length - 1}
-                            className="rounded-lg px-3 py-2 text-ganker-muted transition hover:bg-white/5 hover:text-ganker-text disabled:cursor-not-allowed disabled:opacity-30"
-                            aria-label={`Bajar ${character.name}`}
-                          >
-                            ↓
-                          </button>
-
-                          <button
-                            type="button"
-                            onClick={() =>
-                              onRemoveCharacter(character.character_id)
-                            }
-                            className="rounded-lg px-3 py-2 text-ganker-error transition hover:bg-ganker-error/10"
-                            aria-label={`Eliminar ${character.name}`}
-                          >
-                            ×
-                          </button>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
 
               {/* Roles */}
               <div className="border-t border-white/10 pt-8">

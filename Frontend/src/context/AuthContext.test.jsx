@@ -15,6 +15,7 @@ vi.mock("../api/jugadoresApi", () => ({
 }));
 
 vi.mock("../api/axiosClient", () => ({
+  revocarRefreshToken: vi.fn(() => Promise.resolve()),
   default: { post: vi.fn(), get: vi.fn() },
   registrarOnSesionExpirada: vi.fn(),
   registrarOnTokensRenovados: vi.fn(),
@@ -121,7 +122,9 @@ describe("AuthContext: `user` no depende de por donde entro el jugador", () => {
 
     expect(userTrasRegistro).toBe(userTrasLogin);
     expect(JSON.parse(userTrasRegistro)).toEqual(JUGADOR);
-  });
+    // Tipea el registro y el login completos tecla por tecla: con toda la
+    // suite corriendo en paralelo roza el limite de 5s por defecto.
+  }, 15000);
 });
 
 describe("AuthContext: restaurar sesion al recargar la pagina", () => {

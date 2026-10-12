@@ -35,6 +35,16 @@ vi.mock("../context/AuthContext", () => ({
   useAuth: () => ({ user: usuario }),
 }));
 
+// MiEquipoPage (a donde redirige) usa el chat para cerrar la sala al
+// eliminar el equipo.
+vi.mock("../context/ChatContext", () => ({
+  useChat: () => ({
+    conversacionActivaId: null,
+    cargarConversaciones: vi.fn(),
+    cerrarConversacionActiva: vi.fn(),
+  }),
+}));
+
 vi.mock("../api/teamApi", () => ({
   crearEquipo: vi.fn(),
   obtenerMiEquipo: vi.fn(),
@@ -190,7 +200,7 @@ describe("US 14 - Crear equipo", () => {
     ).toBeInTheDocument();
     expect(await screen.findByText("Líder")).toBeInTheDocument();
     expect(screen.getByText("joaco")).toBeInTheDocument();
-    expect(screen.getByText("Cupo vacante")).toBeInTheDocument();
+    expect(screen.getByText("Disponible")).toBeInTheDocument();
     expect(screen.getByText("Chat del equipo")).toBeInTheDocument();
   });
 

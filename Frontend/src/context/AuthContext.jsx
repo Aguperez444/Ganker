@@ -8,8 +8,10 @@ import {
 import axiosClient, {
   registrarOnSesionExpirada,
   registrarOnTokensRenovados,
+  revocarRefreshToken,
 } from "../api/axiosClient";
 import { obtenerJugadorActual } from "../api/jugadoresApi";
+import { logError } from "../utils/logs";
 
 const AuthContext = createContext(null);
 
@@ -63,6 +65,14 @@ export function AuthProvider({ children }) {
   }, []);
 
   const logout = useCallback(() => {
+    // Se lee antes de borrarlo para poder revocarlo en el backend. No se
+    // espera la respuesta: si falla (backend caido, token ya vencido) la
+    // sesion local se cierra igual.
+    const refreshToken = localStorage.getItem("refresh_token");
+    if (refreshToken) {
+      revocarRefreshToken(refreshToken).catch(() => {});
+    }
+
     localStorage.removeItem("access_token");
     localStorage.removeItem("refresh_token");
     // Ya no guardamos el usuario en localStorage, pero lo seguimos borrando
@@ -183,10 +193,7 @@ export function AuthProvider({ children }) {
       // necesita en el mismo evento para elegir el destino segun el rol.
       return { success: true, user: usuario };
     } catch (error) {
-      console.error(
-        "Error en el login:",
-        error.response?.data || error.message
-      );
+      logError("Error en el login:", error);
       return {
         success: false,
         status: error.response?.status,

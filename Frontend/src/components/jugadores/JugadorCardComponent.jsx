@@ -35,6 +35,17 @@ function seleccionarPersonajesVisibles(characters, characterIdFiltrado) {
   return { visibles, ocultos: characters.length - visibles.length };
 }
 
+// Rangos distintos de los roles del perfil. En juegos sin rango por rol
+// deberia ser uno solo; si hubiera datos viejos con rangos mezclados se
+// muestran todos, pero sin repetir.
+function rangosUnicos(roleProfiles) {
+  const vistos = new Map();
+  (roleProfiles ?? []).forEach(({ rank }) => {
+    if (rank && !vistos.has(rank.rank_id)) vistos.set(rank.rank_id, rank);
+  });
+  return [...vistos.values()];
+}
+
 function InsigniaPerfil({ icon_url, name }) {
   const iconUrl = urlDeMedia(icon_url);
 
@@ -70,6 +81,9 @@ function InsigniaPerfil({ icon_url, name }) {
  * `perfilJuego.characterIdFiltrado` (opcional): el id del personaje por el
  * que se esta filtrando la busqueda, si hay uno — ver
  * seleccionarPersonajesVisibles mas arriba.
+ * `perfilJuego.rangoPorRol` (opcional, true por defecto): en juegos con
+ * rank_per_role = false todos los roles comparten el rango del perfil, asi
+ * que se muestran los roles y el rango una sola vez en vez de repetirlo.
  */
 const JugadorCardComponent = ({
   jugador,
@@ -108,15 +122,29 @@ const JugadorCardComponent = ({
 
       {perfilJuego && (
         <div className="flex flex-wrap items-center justify-center gap-1.5">
-          {perfilJuego.role_profiles?.map((roleProfile) => (
-            <span
-              key={roleProfile.role_profile_id}
-              className="flex items-center gap-1.5"
-            >
-              <InsigniaPerfil {...roleProfile.role} />
-              <InsigniaPerfil {...roleProfile.rank} />
-            </span>
-          ))}
+          {perfilJuego.rangoPorRol === false ? (
+            <>
+              {rangosUnicos(perfilJuego.role_profiles).map((rank) => (
+                <InsigniaPerfil key={`rango-${rank.rank_id}`} {...rank} />
+              ))}
+              {perfilJuego.role_profiles?.map((roleProfile) => (
+                <InsigniaPerfil
+                  key={roleProfile.role_profile_id}
+                  {...roleProfile.role}
+                />
+              ))}
+            </>
+          ) : (
+            perfilJuego.role_profiles?.map((roleProfile) => (
+              <span
+                key={roleProfile.role_profile_id}
+                className="flex items-center gap-1.5"
+              >
+                <InsigniaPerfil {...roleProfile.role} />
+                <InsigniaPerfil {...roleProfile.rank} />
+              </span>
+            ))
+          )}
           {personajesVisibles.map((character) => (
             <InsigniaPerfil key={character.character_id} {...character} />
           ))}

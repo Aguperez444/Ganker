@@ -5,6 +5,7 @@ import {
   getCharactersByGame,
   updateCharacter,
 } from "../api/characterApi";
+import { logError } from "../utils/logs";
 
 function mapearErrorAccion(error, accion) {
   if (error.response?.data?.error) return error.response.data.error;
@@ -57,7 +58,7 @@ const useCharacters = () => {
         }))
       );
     } catch (error) {
-      console.error("Error al cargar personajes:", error);
+      logError("Error al cargar personajes:", error);
       setError("No se pudieron cargar los personajes.");
     } finally {
       setIsLoading(false);

@@ -5,6 +5,8 @@ import { useAuth } from "../context/AuthContext";
 import { getCharactersByGame } from "../api/characterApi";
 import { getRolesByGame } from "../api/roleApi";
 import { getRanksByGame } from "../api/rankApi";
+import { getRegionsByGame } from "../api/regionApi";
+import { logError } from "../utils/logs";
 
 const useGameProfile = () => {
   const { refrescarUsuario } = useAuth();
@@ -13,10 +15,14 @@ const useGameProfile = () => {
   const [characters, setCharacters] = useState([]);
   const [roles, setRoles] = useState([]);
   const [ranks, setRanks] = useState([]);
+  const [regions, setRegions] = useState([]);
 
   const [selectedGameId, setSelectedGameId] = useState("");
   const [selectedCharacters, setSelectedCharacters] = useState([]);
   const [selectedRoles, setSelectedRoles] = useState([]);
+
+  // Region del perfil: opcional. "" = "Ninguna", que viaja como null.
+  const [selectedRegionId, setSelectedRegionId] = useState("");
 
   // Rango unico del perfil, para juegos con rank_per_role = false. Se
   // propaga a todos los selectedRoles (ver setProfileRank), asi que el
@@ -33,6 +39,13 @@ const useGameProfile = () => {
   );
   const usesRankPerRole = selectedGame
     ? Boolean(selectedGame.rank_per_role)
+    : true;
+
+  // Juegos sin personajes distintos (ej. CS2) tienen has_characters = false:
+  // el formulario no pide personajes y se mandan vacios. Si el catalogo no
+  // cargo o el backend no manda la flag, se asume que si tiene.
+  const usesCharacters = selectedGame
+    ? selectedGame.has_characters !== false
     : true;
 
   // US 08 - Editar perfil de juego.
@@ -60,7 +73,7 @@ const useGameProfile = () => {
 
         setGames(videogames);
       } catch (error) {
-        console.error("Error al cargar videojuegos:", error);
+        logError("Error al cargar videojuegos:", error);
         setGamesError("No se pudieron cargar los videojuegos disponibles.");
       } finally {
         setIsLoadingGames(false);
@@ -76,6 +89,7 @@ const useGameProfile = () => {
         setCharacters([]);
         setRoles([]);
         setRanks([]);
+        setRegions([]);
         return;
       }
 
@@ -83,24 +97,28 @@ const useGameProfile = () => {
         setIsLoadingGameData(true);
         setGameDataError("");
 
-        const [gameCharacters, gameRoles, gameRanks] = await Promise.all([
-          getCharactersByGame(selectedGameId),
-          getRolesByGame(selectedGameId),
-          getRanksByGame(selectedGameId),
-        ]);
+        const [gameCharacters, gameRoles, gameRanks, gameRegions] =
+          await Promise.all([
+            getCharactersByGame(selectedGameId),
+            getRolesByGame(selectedGameId),
+            getRanksByGame(selectedGameId),
+            getRegionsByGame(selectedGameId),
+          ]);
 
         setCharacters(gameCharacters);
         setRoles(gameRoles);
         setRanks(gameRanks);
+        setRegions(gameRegions ?? []);
       } catch (error) {
-        console.error("Error al cargar los datos del videojuego:", error);
+        logError("Error al cargar los datos del videojuego:", error);
 
         setCharacters([]);
         setRoles([]);
         setRanks([]);
+        setRegions([]);
 
         setGameDataError(
-          "No se pudieron cargar los personajes, roles y rangos del videojuego."
+          "No se pudieron cargar los personajes, roles, rangos y regiones del videojuego."
         );
       } finally {
         setIsLoadingGameData(false);
@@ -125,6 +143,8 @@ const useGameProfile = () => {
     setSelectedCharacters([]);
     setSelectedRoles([]);
     setProfileRankState("");
+    setRegions([]);
+    setSelectedRegionId("");
 
     setGameDataError("");
 
@@ -249,6 +269,9 @@ const useGameProfile = () => {
     setSelectedGameId(String(profile.videogame.id));
 
     setSelectedCharacters(profile.characters);
+    setSelectedRegionId(
+      profile.region?.region_id ? String(profile.region.region_id) : ""
+    );
 
     const roleEntries = profile.role_profiles.map((roleProfile) => ({
       role_id: roleProfile.role.role_id,
@@ -281,6 +304,8 @@ const useGameProfile = () => {
     setSelectedCharacters([]);
     setSelectedRoles([]);
     setProfileRankState("");
+    setRegions([]);
+    setSelectedRegionId("");
 
     setGameDataError("");
     setFormError("");
@@ -295,7 +320,7 @@ const useGameProfile = () => {
     try {
       await refrescarUsuario();
     } catch (error) {
-      console.error("Error al refrescar los perfiles del jugador:", error);
+      logError("Error al refrescar los perfiles del jugador:", error);
     }
   };
 
@@ -308,7 +333,7 @@ const useGameProfile = () => {
       return false;
     }
 
-    if (selectedCharacters.length === 0) {
+    if (usesCharacters && selectedCharacters.length === 0) {
       setFormError("Debes seleccionar al menos un personaje.");
       return false;
     }
@@ -332,14 +357,16 @@ const useGameProfile = () => {
     const profileData = {
       videogame_id: Number(selectedGameId),
 
-      character_ids: selectedCharacters.map(
-        (character) => character.character_id
-      ),
+      character_ids: usesCharacters
+        ? selectedCharacters.map((character) => character.character_id)
+        : [],
 
       roles: selectedRoles.map((role) => ({
         role_id: role.role_id,
         rank_id: Number(role.rank_id),
       })),
+
+      region_id: selectedRegionId ? Number(selectedRegionId) : null,
     };
 
     try {
@@ -355,7 +382,7 @@ const useGameProfile = () => {
 
       return true;
     } catch (error) {
-      console.error("Error al crear perfil de juego:", error);
+      logError("Error al crear perfil de juego:", error);
 
       const status = error.response?.status;
 
@@ -396,7 +423,7 @@ const useGameProfile = () => {
       return false;
     }
 
-    if (selectedCharacters.length === 0) {
+    if (usesCharacters && selectedCharacters.length === 0) {
       setFormError("Debes seleccionar al menos un personaje.");
       return false;
     }
@@ -418,14 +445,18 @@ const useGameProfile = () => {
     }
 
     const profileData = {
-      character_ids: selectedCharacters.map(
-        (character) => character.character_id
-      ),
+      character_ids: usesCharacters
+        ? selectedCharacters.map((character) => character.character_id)
+        : [],
 
       roles_ranks: selectedRoles.map((role) => ({
         role_id: role.role_id,
         rank_id: Number(role.rank_id),
       })),
+
+      // Siempre se manda: null le dice al backend que el perfil queda sin
+      // region (si se omitiera, tambien la borraria).
+      region_id: selectedRegionId ? Number(selectedRegionId) : null,
     };
 
     try {
@@ -439,7 +470,7 @@ const useGameProfile = () => {
 
       return true;
     } catch (error) {
-      console.error("Error al editar perfil de juego:", error);
+      logError("Error al editar perfil de juego:", error);
 
       const status = error.response?.status;
 
@@ -472,12 +503,15 @@ const useGameProfile = () => {
     characters,
     roles,
     ranks,
+    regions,
 
     selectedGameId,
+    selectedRegionId,
     selectedCharacters,
     selectedRoles,
     editingProfileId,
     usesRankPerRole,
+    usesCharacters,
     profileRank,
 
     isLoadingGames,
@@ -490,6 +524,7 @@ const useGameProfile = () => {
     successMessage,
 
     selectGame,
+    selectRegion: setSelectedRegionId,
     addCharacter,
     removeCharacter,
     moveCharacter,
