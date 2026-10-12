@@ -17,6 +17,8 @@ vi.mock("../../api/jugadoresApi", () => ({
 }));
 
 vi.mock("../../api/chatApi", () => ({
+  obtenerChatrooms: vi.fn(() => Promise.resolve([])),
+  marcarChatroomComoLeido: vi.fn(() => Promise.resolve({})),
   iniciarConversacion: vi.fn(),
   obtenerConversaciones: vi.fn(),
   marcarConversacionComoLeida: vi.fn().mockResolvedValue({}),

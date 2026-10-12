@@ -1,12 +1,17 @@
 import { useEffect, useState } from "react";
 import RoleForm from "../../components/roles/RoleFormComponent";
 import RolesListComponent from "../../components/roles/RolesListComponent";
+import ModalConfirmacionComponent from "../../components/common/ModalConfirmacionComponent";
 import useGames from "../../hooks/useGames";
 import useRoles from "../../hooks/useRoles";
 
+// Admin de roles: registrar, modificar (US 29) y eliminar (US 30).
 const RolesPage = () => {
   const [selectedGameId, setSelectedGameId] = useState("");
-  const [isFormOpen, setIsFormOpen] = useState(false);
+  // null = formulario cerrado. "create" / "edit" = se ve el formulario.
+  const [mode, setMode] = useState(null);
+  const [selectedRole, setSelectedRole] = useState(null);
+  const [roleToDelete, setRoleToDelete] = useState(null);
   const [successMessage, setSuccessMessage] = useState("");
 
   const { games, isLoading: isLoadingGames } = useGames();
@@ -19,6 +24,8 @@ const RolesPage = () => {
     actionError,
     loadRoles,
     registerRole,
+    editRole,
+    removeRole,
     clearActionError,
   } = useRoles();
 
@@ -31,12 +38,21 @@ const RolesPage = () => {
   const handleOpenRegister = () => {
     clearActionError();
     setSuccessMessage("");
-    setIsFormOpen(true);
+    setSelectedRole(null);
+    setMode("create");
+  };
+
+  const handleOpenEdit = (role) => {
+    clearActionError();
+    setSuccessMessage("");
+    setSelectedRole(role);
+    setMode("edit");
   };
 
   const handleCancel = () => {
     clearActionError();
-    setIsFormOpen(false);
+    setMode(null);
+    setSelectedRole(null);
   };
 
   const handleRegister = async (roleData) => {
@@ -47,7 +63,7 @@ const RolesPage = () => {
     }
 
     setSuccessMessage(`Rol "${roleData.name}" registrado correctamente.`);
-    setIsFormOpen(false);
+    setMode(null);
 
     // Si el rol se registró para el juego que se está viendo, ya se
     // refrescó la lista dentro de registerRole. Si fue para otro juego,
@@ -55,6 +71,52 @@ const RolesPage = () => {
     if (String(roleData.videogame_id) !== String(selectedGameId)) {
       setSelectedGameId(String(roleData.videogame_id));
     }
+  };
+
+  const handleEdit = async (roleData) => {
+    if (!selectedRole) {
+      return;
+    }
+
+    const success = await editRole(selectedRole.id, roleData);
+
+    if (!success) {
+      return;
+    }
+
+    setSuccessMessage(`Rol "${roleData.name}" modificado correctamente.`);
+    setMode(null);
+    setSelectedRole(null);
+  };
+
+  const handleOpenDelete = (role) => {
+    clearActionError();
+    setSuccessMessage("");
+    // Cerramos el formulario abierto para que no comparta el mensaje de
+    // error con el modal ni quede editando un rol que se va a borrar.
+    setMode(null);
+    setSelectedRole(null);
+    setRoleToDelete(role);
+  };
+
+  const handleCancelDelete = () => {
+    clearActionError();
+    setRoleToDelete(null);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!roleToDelete) {
+      return;
+    }
+
+    const message = await removeRole(roleToDelete.id, selectedGameId);
+
+    if (!message) {
+      return;
+    }
+
+    setSuccessMessage(message);
+    setRoleToDelete(null);
   };
 
   return (
@@ -82,9 +144,7 @@ const RolesPage = () => {
 
         <div
           className={`mt-8 grid gap-6 ${
-            isFormOpen
-              ? "lg:grid-cols-[minmax(0,1.4fr)_minmax(320px,0.8fr)]"
-              : ""
+            mode ? "lg:grid-cols-[minmax(0,1.4fr)_minmax(320px,0.8fr)]" : ""
           }`}
         >
           <section className="min-w-0 rounded-2xl border border-white/10 bg-ganker-surface p-6 shadow-xl">
@@ -130,6 +190,9 @@ const RolesPage = () => {
                 roles={roles}
                 isLoading={isLoadingRoles}
                 error={rolesError}
+                selectedRoleId={selectedRole?.id}
+                onEdit={handleOpenEdit}
+                onDelete={handleOpenDelete}
               />
             ) : (
               <div className="rounded-xl border border-white/10 bg-ganker-surface-light p-6">
@@ -140,8 +203,10 @@ const RolesPage = () => {
             )}
           </section>
 
-          {isFormOpen && (
+          {mode === "create" && (
             <RoleForm
+              key="create"
+              mode="create"
               games={games}
               initialVideogameId={selectedGameId}
               isLoading={isSaving}
@@ -150,8 +215,49 @@ const RolesPage = () => {
               onCancel={handleCancel}
             />
           )}
+
+          {mode === "edit" && selectedRole && (
+            <RoleForm
+              key={`edit-${selectedRole.id}`}
+              mode="edit"
+              games={games}
+              initialVideogameId={selectedGameId}
+              initialName={selectedRole.name}
+              initialIconUrl={selectedRole.icon_url}
+              isLoading={isSaving}
+              error={actionError}
+              onSubmit={handleEdit}
+              onCancel={handleCancel}
+            />
+          )}
         </div>
       </div>
+
+      <ModalConfirmacionComponent
+        isOpen={Boolean(roleToDelete)}
+        title="Eliminar rol"
+        message={
+          <>
+            <p>
+              ¿Seguro que querés eliminar el rol{" "}
+              <span className="font-semibold text-ganker-text">
+                {roleToDelete?.name}
+              </span>
+              ?
+            </p>
+            <p className="mt-2">
+              Se va a quitar de los perfiles de los jugadores que lo tengan, y
+              si un perfil de juego se queda sin ningún rol, ese perfil también
+              se elimina. Esta acción no se puede deshacer.
+            </p>
+          </>
+        }
+        confirmLabel="Eliminar"
+        isLoading={isSaving}
+        error={actionError}
+        onConfirm={handleConfirmDelete}
+        onCancel={handleCancelDelete}
+      />
     </section>
   );
 };

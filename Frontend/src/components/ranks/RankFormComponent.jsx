@@ -1,25 +1,41 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { resolveIconUrl } from "../../utils/media";
 
+// mode "create" registra uno nuevo; "edit" modifica uno existente: el
+// videojuego queda bloqueado (no se puede cambiar) y el icono es opcional
+// (si no se elige otro, el backend mantiene el actual).
 const RankForm = ({
+  mode = "create",
   games = [],
   initialVideogameId = "",
+  initialName = "",
+  initialValue = "",
+  initialIconUrl = "",
   isLoading = false,
   error = "",
   onSubmit,
   onCancel,
 }) => {
+  const isEditMode = mode === "edit";
+
   const [videogameId, setVideogameId] = useState(initialVideogameId ?? "");
-  const [name, setName] = useState("");
-  const [value, setValue] = useState("");
+  const [name, setName] = useState(initialName);
+  const [value, setValue] = useState(
+    initialValue === "" || initialValue === null ? "" : String(initialValue)
+  );
   const [iconFile, setIconFile] = useState(null);
-  const [previewUrl, setPreviewUrl] = useState(null);
+  const resolvedInitialPreview = useMemo(
+    () => resolveIconUrl(initialIconUrl),
+    [initialIconUrl]
+  );
+  const [previewUrl, setPreviewUrl] = useState(resolvedInitialPreview);
   const [validationError, setValidationError] = useState("");
   const [isDragging, setIsDragging] = useState(false);
   const fileInputRef = useRef(null);
 
   useEffect(() => {
     return () => {
-      if (previewUrl) {
+      if (previewUrl && previewUrl.startsWith("blob:")) {
         URL.revokeObjectURL(previewUrl);
       }
     };
@@ -43,7 +59,7 @@ const RankForm = ({
     setValidationError("");
     setIconFile(file);
 
-    if (previewUrl) {
+    if (previewUrl && previewUrl.startsWith("blob:")) {
       URL.revokeObjectURL(previewUrl);
     }
     setPreviewUrl(URL.createObjectURL(file));
@@ -77,11 +93,12 @@ const RankForm = ({
   };
 
   const handleRemoveIcon = () => {
-    if (previewUrl) {
+    if (previewUrl && previewUrl.startsWith("blob:")) {
       URL.revokeObjectURL(previewUrl);
     }
     setIconFile(null);
-    setPreviewUrl(null);
+    // Al editar, "Quitar" descarta la imagen nueva y vuelve a la actual.
+    setPreviewUrl(isEditMode ? resolvedInitialPreview : null);
     if (fileInputRef.current) {
       fileInputRef.current.value = "";
     }
@@ -109,8 +126,13 @@ const RankForm = ({
       return;
     }
 
-    if (!iconFile) {
+    if (!isEditMode && !iconFile) {
       setValidationError("La imagen del ícono es obligatoria.");
+      return;
+    }
+
+    if (isEditMode && !iconFile && !previewUrl) {
+      setValidationError("Debés seleccionar una imagen para el ícono.");
       return;
     }
 
@@ -124,18 +146,26 @@ const RankForm = ({
 
   const displayedError = validationError || error;
 
-  const hasChanges =
-    Boolean(videogameId) && name.trim().length > 0 && value !== "" && iconFile !== null;
+  const hasChanges = isEditMode
+    ? (name.trim().length > 0 && name.trim() !== initialName.trim()) ||
+      (value !== "" && String(value) !== String(initialValue)) ||
+      iconFile !== null
+    : Boolean(videogameId) &&
+      name.trim().length > 0 &&
+      value !== "" &&
+      iconFile !== null;
 
   return (
     <section className="rounded-2xl border border-white/10 bg-ganker-surface p-6 shadow-xl">
       <header className="mb-6">
         <h2 className="font-heading text-xl font-semibold text-ganker-text">
-          Registrar rango
+          {isEditMode ? "Modificar rango" : "Registrar rango"}
         </h2>
 
         <p className="mt-1 text-sm text-ganker-muted">
-          Agregá un nuevo rango para un videojuego.
+          {isEditMode
+            ? "Actualizá la información del rango. El videojuego no se puede cambiar."
+            : "Agregá un nuevo rango para un videojuego."}
         </p>
       </header>
 
@@ -155,7 +185,7 @@ const RankForm = ({
               setVideogameId(event.target.value);
               if (validationError) setValidationError("");
             }}
-            disabled={isLoading}
+            disabled={isLoading || isEditMode}
             className="w-full rounded-lg border border-white/10 bg-ganker-surface-light px-4 py-3 text-ganker-text outline-none transition-all duration-200 focus:border-ganker-purple-light focus:ring-2 focus:ring-ganker-purple/30 disabled:cursor-not-allowed disabled:opacity-50"
           >
             <option value="" disabled>
@@ -245,10 +275,12 @@ const RankForm = ({
 
               <div className="min-w-0 flex-1">
                 <p className="truncate text-sm font-medium text-ganker-text">
-                  {iconFile.name}
+                  {iconFile ? iconFile.name : "Ícono actual"}
                 </p>
                 <p className="text-xs text-ganker-muted">
-                  {(iconFile.size / 1024).toFixed(1)} KB
+                  {iconFile
+                    ? `${(iconFile.size / 1024).toFixed(1)} KB`
+                    : "Imagen guardada en el servidor"}
                 </p>
               </div>
 
@@ -336,7 +368,13 @@ const RankForm = ({
             disabled={isLoading || !hasChanges}
             className="cursor-pointer rounded-lg bg-gradient-to-r from-ganker-orange via-ganker-orange-light to-ganker-purple px-5 py-3 text-sm font-semibold text-white shadow-lg transition-all duration-200 hover:-translate-y-0.5 hover:shadow-ganker-purple/30 active:translate-y-0 disabled:cursor-not-allowed disabled:opacity-50"
           >
-            {isLoading ? "REGISTRANDO..." : "REGISTRAR RANGO"}
+            {isEditMode
+              ? isLoading
+                ? "GUARDANDO..."
+                : "GUARDAR CAMBIOS"
+              : isLoading
+                ? "REGISTRANDO..."
+                : "REGISTRAR RANGO"}
           </button>
         </div>
       </form>

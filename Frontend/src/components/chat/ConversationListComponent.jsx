@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import AvatarUsuarioComponent from "../common/AvatarUsuarioComponent";
+import IconoChicoComponent from "../common/IconoChicoComponent";
 
 function formatearFechaReciente(timestamp) {
   if (!timestamp) return "";
@@ -19,6 +20,8 @@ function formatearFechaReciente(timestamp) {
 
 /**
  * US 10 - Lista de conversaciones del jugador logueado.
+ * US 44 - Incluye los chats de los equipos (tipo "equipo"): se muestran con
+ * el icono y el nombre del equipo, y el ultimo mensaje con quien lo escribio.
  */
 const ConversationListComponent = ({
   conversaciones,
@@ -99,8 +102,18 @@ const ConversationListComponent = ({
           </div>
         ) : (
           conversaciones.map((c) => {
+            const esDeEquipo = c.tipo === "equipo";
             const otro = c.other_participant;
-            const nombreOtro = otro?.name || otro?.username || "Jugador";
+            const nombreOtro = esDeEquipo
+              ? c.nombre || "Chat del equipo"
+              : otro?.name || otro?.username || "Jugador";
+            const vistaPrevia = c.last_message
+              ? esDeEquipo && c.last_message.sender_username
+                ? `${c.last_message.sender_username}: ${c.last_message.content}`
+                : c.last_message.content
+              : esDeEquipo
+                ? "Todavía no hay mensajes en el equipo."
+                : "Iniciá la conversación...";
             const activa = conversacionActivaId === c.conversation_id;
             const noLeido = (c.unread_count ?? 0) > 0;
 
@@ -123,7 +136,14 @@ const ConversationListComponent = ({
                     real (estilo Discord/WhatsApp). */}
                 <div className="relative h-10 w-10 shrink-0">
                   <div className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-full border border-ganker-purple/30 bg-ganker-surface-light text-sm font-semibold text-ganker-text">
-                    <AvatarUsuarioComponent user={otro} alt={nombreOtro} />
+                    {esDeEquipo ? (
+                      <IconoChicoComponent
+                        src={c.icon_url}
+                        className="h-full w-full"
+                      />
+                    ) : (
+                      <AvatarUsuarioComponent user={otro} alt={nombreOtro} />
+                    )}
                   </div>
                   {noLeido && (
                     <span
@@ -136,9 +156,14 @@ const ConversationListComponent = ({
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center justify-between gap-2">
                     <p
-                      className={`truncate text-sm ${noLeido ? "font-bold" : "font-semibold"} text-ganker-text`}
+                      className={`flex min-w-0 items-center gap-1.5 text-sm ${noLeido ? "font-bold" : "font-semibold"} text-ganker-text`}
                     >
-                      {nombreOtro}
+                      <span className="truncate">{nombreOtro}</span>
+                      {esDeEquipo && (
+                        <span className="shrink-0 rounded-full border border-ganker-orange/30 bg-ganker-orange/10 px-1.5 py-0.5 text-[10px] font-semibold text-ganker-orange-light">
+                          Equipo
+                        </span>
+                      )}
                     </p>
                     {c.last_message?.timestamp && (
                       <span className="shrink-0 text-[10px] text-ganker-muted">
@@ -151,9 +176,7 @@ const ConversationListComponent = ({
                     <p
                       className={`truncate text-xs ${noLeido ? "font-semibold text-ganker-text" : "text-ganker-muted"}`}
                     >
-                      {c.last_message
-                        ? c.last_message.content
-                        : "Iniciá la conversación..."}
+                      {vistaPrevia}
                     </p>
                     {noLeido && c.unread_count > 1 && (
                       <span className="shrink-0 rounded-full bg-ganker-error/20 px-1.5 py-0.5 text-[10px] font-bold text-ganker-error">

@@ -1,12 +1,17 @@
 import { useEffect, useState } from "react";
 import RankForm from "../../components/ranks/RankFormComponent";
 import RanksListComponent from "../../components/ranks/RanksListComponent";
+import ModalConfirmacionComponent from "../../components/common/ModalConfirmacionComponent";
 import useGames from "../../hooks/useGames";
 import useRanks from "../../hooks/useRanks";
 
+// Admin de rangos: registrar, modificar y eliminar.
 const RanksPage = () => {
   const [selectedGameId, setSelectedGameId] = useState("");
-  const [isFormOpen, setIsFormOpen] = useState(false);
+  // null = formulario cerrado. "create" / "edit" = se ve el formulario.
+  const [mode, setMode] = useState(null);
+  const [selectedRank, setSelectedRank] = useState(null);
+  const [rankToDelete, setRankToDelete] = useState(null);
   const [successMessage, setSuccessMessage] = useState("");
 
   const { games, isLoading: isLoadingGames } = useGames();
@@ -19,6 +24,8 @@ const RanksPage = () => {
     actionError,
     loadRanks,
     registerRank,
+    editRank,
+    removeRank,
     clearActionError,
   } = useRanks();
 
@@ -31,12 +38,21 @@ const RanksPage = () => {
   const handleOpenRegister = () => {
     clearActionError();
     setSuccessMessage("");
-    setIsFormOpen(true);
+    setSelectedRank(null);
+    setMode("create");
+  };
+
+  const handleOpenEdit = (rank) => {
+    clearActionError();
+    setSuccessMessage("");
+    setSelectedRank(rank);
+    setMode("edit");
   };
 
   const handleCancel = () => {
     clearActionError();
-    setIsFormOpen(false);
+    setMode(null);
+    setSelectedRank(null);
   };
 
   const handleRegister = async (rankData) => {
@@ -47,7 +63,7 @@ const RanksPage = () => {
     }
 
     setSuccessMessage(`Rango "${rankData.name}" registrado correctamente.`);
-    setIsFormOpen(false);
+    setMode(null);
 
     // Si el rango se registró para el juego que se está viendo, ya se
     // refrescó la lista dentro de registerRank. Si fue para otro juego,
@@ -55,6 +71,52 @@ const RanksPage = () => {
     if (String(rankData.videogame_id) !== String(selectedGameId)) {
       setSelectedGameId(String(rankData.videogame_id));
     }
+  };
+
+  const handleEdit = async (rankData) => {
+    if (!selectedRank) {
+      return;
+    }
+
+    const success = await editRank(selectedRank.id, rankData);
+
+    if (!success) {
+      return;
+    }
+
+    setSuccessMessage(`Rango "${rankData.name}" modificado correctamente.`);
+    setMode(null);
+    setSelectedRank(null);
+  };
+
+  const handleOpenDelete = (rank) => {
+    clearActionError();
+    setSuccessMessage("");
+    // Cerramos el formulario abierto para que no comparta el mensaje de
+    // error con el modal ni quede editando un rango que se va a borrar.
+    setMode(null);
+    setSelectedRank(null);
+    setRankToDelete(rank);
+  };
+
+  const handleCancelDelete = () => {
+    clearActionError();
+    setRankToDelete(null);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!rankToDelete) {
+      return;
+    }
+
+    const message = await removeRank(rankToDelete.id, selectedGameId);
+
+    if (!message) {
+      return;
+    }
+
+    setSuccessMessage(message);
+    setRankToDelete(null);
   };
 
   return (
@@ -82,7 +144,7 @@ const RanksPage = () => {
 
         <div
           className={`mt-8 grid gap-6 ${
-            isFormOpen ? "lg:grid-cols-[minmax(0,1.4fr)_minmax(320px,0.8fr)]" : ""
+            mode ? "lg:grid-cols-[minmax(0,1.4fr)_minmax(320px,0.8fr)]" : ""
           }`}
         >
           <section className="min-w-0 rounded-2xl border border-white/10 bg-ganker-surface p-6 shadow-xl">
@@ -128,6 +190,9 @@ const RanksPage = () => {
                 ranks={ranks}
                 isLoading={isLoadingRanks}
                 error={ranksError}
+                selectedRankId={selectedRank?.id}
+                onEdit={handleOpenEdit}
+                onDelete={handleOpenDelete}
               />
             ) : (
               <div className="rounded-xl border border-white/10 bg-ganker-surface-light p-6">
@@ -138,8 +203,10 @@ const RanksPage = () => {
             )}
           </section>
 
-          {isFormOpen && (
+          {mode === "create" && (
             <RankForm
+              key="create"
+              mode="create"
               games={games}
               initialVideogameId={selectedGameId}
               isLoading={isSaving}
@@ -148,8 +215,50 @@ const RanksPage = () => {
               onCancel={handleCancel}
             />
           )}
+
+          {mode === "edit" && selectedRank && (
+            <RankForm
+              key={`edit-${selectedRank.id}`}
+              mode="edit"
+              games={games}
+              initialVideogameId={selectedGameId}
+              initialName={selectedRank.name}
+              initialValue={selectedRank.value}
+              initialIconUrl={selectedRank.icon_url}
+              isLoading={isSaving}
+              error={actionError}
+              onSubmit={handleEdit}
+              onCancel={handleCancel}
+            />
+          )}
         </div>
       </div>
+
+      <ModalConfirmacionComponent
+        isOpen={Boolean(rankToDelete)}
+        title="Eliminar rango"
+        message={
+          <>
+            <p>
+              ¿Seguro que querés eliminar el rango{" "}
+              <span className="font-semibold text-ganker-text">
+                {rankToDelete?.name}
+              </span>
+              ?
+            </p>
+            <p className="mt-2">
+              Los jugadores que lo tengan pasan al rango inmediatamente inferior
+              (o al superior, si no hay uno inferior). Esta acción no se puede
+              deshacer.
+            </p>
+          </>
+        }
+        confirmLabel="Eliminar"
+        isLoading={isSaving}
+        error={actionError}
+        onConfirm={handleConfirmDelete}
+        onCancel={handleCancelDelete}
+      />
     </section>
   );
 };

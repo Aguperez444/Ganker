@@ -11,6 +11,8 @@ import {
   iniciarConversacion,
   obtenerConversaciones,
   marcarConversacionComoLeida,
+  obtenerChatrooms,
+  marcarChatroomComoLeido,
 } from "../api/chatApi";
 import { useAuth } from "./AuthContext";
 import { obtenerIdUsuarioDesdeToken } from "../utils/jwt";
@@ -43,6 +45,31 @@ function guardarPreferenciaBooleana(clave, valor) {
   }
 }
 
+// US 44/45 - Los chats privados y los chatrooms de equipo se muestran en la
+// misma lista. Cada uno se marca con `tipo` ("privada" | "equipo") y el
+// chatroom se adapta a la forma de una conversacion (conversation_id): los
+// ids no chocan porque el backend usa la misma tabla para ambos.
+function chatroomComoConversacion(chatroom) {
+  return {
+    tipo: "equipo",
+    conversation_id: chatroom.chatroom_id,
+    team_id: chatroom.team_id,
+    nombre: chatroom.name,
+    icon_url: chatroom.icon_url,
+    member_count: chatroom.member_count,
+    last_message: chatroom.last_message,
+    unread_count: chatroom.unread_count,
+  };
+}
+
+function ordenarPorUltimoMensaje(conversaciones) {
+  const fecha = (c) =>
+    c.last_message?.timestamp
+      ? new Date(c.last_message.timestamp).getTime()
+      : 0;
+  return [...conversaciones].sort((a, b) => fecha(b) - fecha(a));
+}
+
 // `cargandoRef` evita pedidos GET concurrentes si ya hay uno en vuelo.
 async function cargarYSetearConversaciones({
   isAuthenticated,
@@ -62,8 +89,36 @@ async function cargarYSetearConversaciones({
   setCargando(true);
   setError(null);
   try {
-    const lista = await obtenerConversaciones();
-    setConversaciones(lista ?? []);
+    // Si falla una de las dos listas se muestra la otra: el chat privado no
+    // tiene por que dejar de andar porque no cargaron los de equipo.
+    const [privadas, chatrooms] = await Promise.allSettled([
+      obtenerConversaciones(),
+      obtenerChatrooms(),
+    ]);
+
+    if (privadas.status === "rejected" && chatrooms.status === "rejected") {
+      throw privadas.reason;
+    }
+
+    const lista = [
+      ...(privadas.status === "fulfilled" ? (privadas.value ?? []) : []).map(
+        (c) => ({ ...c, tipo: "privada" })
+      ),
+      ...(chatrooms.status === "fulfilled" ? (chatrooms.value ?? []) : []).map(
+        chatroomComoConversacion
+      ),
+    ];
+    setConversaciones(ordenarPorUltimoMensaje(lista));
+
+    const fallo = privadas.status === "rejected" ? privadas : chatrooms;
+    if (fallo.status === "rejected") {
+      logError("Error al cargar parte de las conversaciones:", fallo.reason);
+      setError(
+        privadas.status === "rejected"
+          ? "No se pudieron cargar las conversaciones privadas."
+          : "No se pudieron cargar los chats de equipo."
+      );
+    }
   } catch (err) {
     logError("Error al cargar conversaciones:", err);
     setError("No se pudieron cargar las conversaciones.");
@@ -233,7 +288,29 @@ export function ChatProvider({ children }) {
     [estaViendo, actualizarUltimoMensaje]
   );
 
-  useNotificacionesSocket(isAuthenticated ? token : null, manejarNotificacion);
+  // Pantallas suscriptas a los cambios del equipo (ver useEventosEquipo).
+  const suscriptoresEquipoRef = useRef(new Set());
+
+  const suscribirEventosEquipo = useCallback((callback) => {
+    suscriptoresEquipoRef.current.add(callback);
+    return () => suscriptoresEquipoRef.current.delete(callback);
+  }, []);
+
+  // Al unirse, salir, ser expulsado o disolverse el equipo cambia tambien la
+  // lista de chats (aparece o desaparece el del equipo): se recarga aca.
+  const manejarEventoEquipo = useCallback(
+    (evento) => {
+      cargarConversaciones();
+      suscriptoresEquipoRef.current.forEach((callback) => callback(evento));
+    },
+    [cargarConversaciones]
+  );
+
+  useNotificacionesSocket(
+    isAuthenticated ? token : null,
+    manejarNotificacion,
+    manejarEventoEquipo
+  );
 
   // Mensaje de la sala activa: a diferencia de la notificacion global, solo
   // llega mientras esa conversacion esta abierta, asi que nunca suma no leidos.
@@ -274,8 +351,19 @@ export function ChatProvider({ children }) {
 
     // Fire and forget: si no avisamos al backend, is_read queda en false
     // en la base y un refresh de pagina vuelve a mostrar estos mensajes
-    // como no leidos.
-    marcarConversacionComoLeida(conversationId).catch((err) => {
+    // como no leidos. Los chatrooms de equipo tienen su propio endpoint.
+    // Si todavia no esta en la lista (ej. recien unido a un equipo) no se
+    // sabe a que endpoint ir: ChatWindowComponent la vuelve a marcar al
+    // montarse, cuando la lista ya se recargo.
+    const conversacion = conversacionesRef.current.find(
+      (c) => c.conversation_id === conversationId
+    );
+    if (!conversacion) return;
+    const marcar =
+      conversacion.tipo === "equipo"
+        ? marcarChatroomComoLeido
+        : marcarConversacionComoLeida;
+    marcar(conversationId).catch((err) => {
       logError("Error al marcar la conversación como leída:", err);
     });
   }, []);
@@ -390,6 +478,7 @@ export function ChatProvider({ children }) {
     alternarChat,
     alternarPanelDesktop,
     iniciarChat,
+    suscribirEventosEquipo,
     manejarMensajeDeSalaActiva,
     obtenerMensajesDeConversacion,
     sembrarMensajesDeConversacion,
@@ -397,6 +486,26 @@ export function ChatProvider({ children }) {
   };
 
   return <ChatContext.Provider value={value}>{children}</ChatContext.Provider>;
+}
+
+// Ejecuta `callback(evento)` cada vez que el backend avisa un cambio en el
+// equipo del jugador (ej. TEAM_NEW_MEMBER_NOTIFICATION). Fuera de un
+// ChatProvider no hace nada, asi los hooks y paginas que la usan se pueden
+// testear sin montar el chat.
+export function useEventosEquipo(callback) {
+  const context = useContext(ChatContext);
+  const callbackRef = useRef(callback);
+
+  useEffect(() => {
+    callbackRef.current = callback;
+  }, [callback]);
+
+  const suscribir = context?.suscribirEventosEquipo;
+
+  useEffect(() => {
+    if (!suscribir) return undefined;
+    return suscribir((evento) => callbackRef.current?.(evento));
+  }, [suscribir]);
 }
 
 export function useChat() {

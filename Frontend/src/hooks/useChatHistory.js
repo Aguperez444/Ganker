@@ -1,10 +1,17 @@
 import { useCallback } from "react";
-import { obtenerHistorialMensajes } from "../api/chatApi";
+import {
+  obtenerHistorialChatroom,
+  obtenerHistorialMensajes,
+} from "../api/chatApi";
 
-export function useChatHistory(conversationId) {
+// `tipo`: "privada" (chat entre dos jugadores) o "equipo" (chatroom del
+// equipo, US 45). Cada uno tiene su propio endpoint de historial.
+export function useChatHistory(conversationId, tipo = "privada") {
   const cargarPaginaHistorial = useCallback(
     async ({ page = 1, size = 50 } = {}) => {
-      const mensajes = await obtenerHistorialMensajes(conversationId, {
+      const obtener =
+        tipo === "equipo" ? obtenerHistorialChatroom : obtenerHistorialMensajes;
+      const mensajes = await obtener(conversationId, {
         page,
         size,
       });
@@ -13,7 +20,7 @@ export function useChatHistory(conversationId) {
       // La UI trabaja del más viejo al más nuevo.
       return [...mensajes].reverse();
     },
-    [conversationId]
+    [conversationId, tipo]
   );
 
   return {

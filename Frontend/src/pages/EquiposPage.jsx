@@ -3,6 +3,7 @@ import { Link, useLocation, useNavigate } from "react-router-dom";
 import FiltrosEquiposComponent from "../components/equipos/FiltrosEquiposComponent";
 import ModalUnirseEquipoComponent from "../components/equipos/ModalUnirseEquipoComponent";
 import TarjetaEquipoComponent from "../components/equipos/TarjetaEquipoComponent";
+import { useEventosEquipo } from "../context/ChatContext";
 import useBuscarEquipos from "../hooks/useBuscarEquipos";
 import { iconosPorRol } from "../hooks/useIconosDeRoles";
 import useMiEquipo from "../hooks/useMiEquipo";
@@ -39,7 +40,12 @@ const EquiposPage = () => {
   const navigate = useNavigate();
   // US 16 - Confirmacion al volver de eliminar el equipo.
   const mensajeExito = useLocation().state?.mensajeExito ?? "";
-  const { equipo, cargando, error } = useMiEquipo();
+  const { equipo, cargando, error, recargar } = useMiEquipo();
+  // La tarjeta de "mi equipo" se actualiza sola si el equipo cambia (ej. me
+  // expulsaron o se disolvio).
+  useEventosEquipo(() => {
+    recargar();
+  });
   const busqueda = useBuscarEquipos();
   // La busqueda ya carga los roles del juego elegido (para el filtro): se
   // reusan para los iconos de rol de los integrantes de cada tarjeta.

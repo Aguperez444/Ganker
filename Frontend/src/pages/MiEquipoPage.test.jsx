@@ -1,4 +1,4 @@
-import { render, screen, within } from "@testing-library/react";
+import { act, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { describe, it, expect, beforeEach, vi } from "vitest";
@@ -10,6 +10,7 @@ import {
   obtenerMiEquipo,
   salirDeEquipo,
   transferirLiderazgo,
+  actualizarEquipo,
 } from "../api/teamApi";
 
 const { chat } = vi.hoisted(() => ({
@@ -17,11 +18,30 @@ const { chat } = vi.hoisted(() => ({
     conversacionActivaId: 99,
     cargarConversaciones: vi.fn(),
     cerrarConversacionActiva: vi.fn(),
+    seleccionarConversacion: vi.fn(),
   },
 }));
 
 vi.mock("../context/ChatContext", () => ({
   useChat: () => chat,
+  useEventosEquipo: (callback) => {
+    chat.alEventoEquipo = callback;
+  },
+}));
+
+vi.mock("../api/rankApi", () => ({
+  getRanksByGame: vi.fn().mockResolvedValue([
+    { rank_id: 2, name: "Plata", value: 2 },
+    { rank_id: 3, name: "Oro", value: 3 },
+    { rank_id: 4, name: "Platino", value: 4 },
+  ]),
+}));
+
+vi.mock("../api/regionApi", () => ({
+  getRegionsByGame: vi.fn().mockResolvedValue([
+    { region_id: 2, name: "LAS" },
+    { region_id: 5, name: "LAN" },
+  ]),
 }));
 
 vi.mock("../api/roleApi", () => ({
@@ -35,6 +55,7 @@ vi.mock("../api/teamApi", () => ({
   eliminarEquipo: vi.fn(),
   salirDeEquipo: vi.fn(),
   marcarEquipoInactivo: vi.fn(),
+  actualizarEquipo: vi.fn(),
 }));
 
 const integrante = (userId, username, esLider) => ({
@@ -59,7 +80,12 @@ const equipoComoLider = {
   conversation_id: 99,
   player_count: 2,
   max_players: 2,
-  videogame: { name: "League of Legends" },
+  description: "Buscamos mid",
+  allow_other_regions: false,
+  videogame: { videogame_id: 1, name: "League of Legends" },
+  region: { region_id: 2, region_name: "LAS" },
+  min_rank: { rank_id: 2, name: "Plata", value: 2 },
+  max_rank: { rank_id: 4, name: "Platino", value: 4 },
   consultant_player_info: { is_member: true, is_leader: true },
   members: [integrante(1, "lider", true), integrante(2, "pepe", false)],
 };
@@ -274,6 +300,149 @@ describe("MiEquipoPage", () => {
       expect(
         screen.queryByRole("button", { name: "Marcar como inactivo" })
       ).toBeNull();
+    });
+  });
+
+  describe("US 15 - Modificar equipo", () => {
+    async function abrirEdicion(usuario) {
+      renderPagina();
+      await usuario.click(
+        await screen.findByRole("button", { name: "Modificar equipo" })
+      );
+      // Espera a que carguen los rangos del juego.
+      await screen.findAllByRole("option", { name: "Platino" });
+    }
+
+    it("el líder modifica la descripción y el permiso de región sin tocar los rangos", async () => {
+      const usuario = userEvent.setup();
+      actualizarEquipo.mockResolvedValue({
+        message: "El equipo Los Gankers ha sido modificado exitosamente",
+        data: { ...equipoComoLider, description: "Buscamos support" },
+      });
+      await abrirEdicion(usuario);
+
+      // El videojuego se muestra pero no es editable.
+      expect(screen.getByRole("dialog")).toHaveTextContent(
+        "El videojuego del equipo no se puede cambiar"
+      );
+
+      const descripcion = screen.getByLabelText(/Mensaje de búsqueda/);
+      await usuario.clear(descripcion);
+      await usuario.type(descripcion, "Buscamos support");
+      await usuario.click(
+        screen.getByLabelText(/Admitir jugadores de otras regiones/)
+      );
+      await usuario.click(
+        screen.getByRole("button", { name: "Guardar cambios" })
+      );
+
+      expect(actualizarEquipo).toHaveBeenCalledWith(
+        3,
+        expect.objectContaining({
+          descripcion: "Buscamos support",
+          admiteOtrasRegiones: true,
+          rangoMinimoId: "2",
+          rangoMaximoId: "4",
+        })
+      );
+      expect(
+        await screen.findByText(/ha sido modificado exitosamente/)
+      ).toBeInTheDocument();
+      expect(screen.getByText("Buscamos support")).toBeInTheDocument();
+    });
+
+    it("no guarda si el nombre queda vacío", async () => {
+      const usuario = userEvent.setup();
+      await abrirEdicion(usuario);
+
+      await usuario.clear(screen.getByLabelText(/Nombre del equipo/));
+      await usuario.click(
+        screen.getByRole("button", { name: "Guardar cambios" })
+      );
+
+      expect(
+        screen.getByText("Ingresá el nombre del equipo.")
+      ).toBeInTheDocument();
+      expect(actualizarEquipo).not.toHaveBeenCalled();
+    });
+
+    it("no guarda si el rango mínimo es superior al máximo", async () => {
+      const usuario = userEvent.setup();
+      await abrirEdicion(usuario);
+
+      await usuario.selectOptions(screen.getByLabelText(/Rango mínimo/), "4");
+      await usuario.selectOptions(screen.getByLabelText(/Rango máximo/), "2");
+      await usuario.click(
+        screen.getByRole("button", { name: "Guardar cambios" })
+      );
+
+      expect(
+        screen.getByText(/mínimo no puede ser superior/)
+      ).toBeInTheDocument();
+      expect(actualizarEquipo).not.toHaveBeenCalled();
+    });
+
+    it("no guarda si el nuevo rango deja afuera a un integrante", async () => {
+      const usuario = userEvent.setup();
+      await abrirEdicion(usuario);
+
+      // Los integrantes son Oro: Platino a Platino los deja afuera.
+      await usuario.selectOptions(screen.getByLabelText(/Rango mínimo/), "4");
+      await usuario.click(
+        screen.getByRole("button", { name: "Guardar cambios" })
+      );
+
+      expect(
+        screen.getByText(/Quedan afuera: lider \(Oro\)/)
+      ).toBeInTheDocument();
+      expect(actualizarEquipo).not.toHaveBeenCalled();
+    });
+
+    it("un integrante sin rol de líder no puede modificar el equipo", async () => {
+      obtenerMiEquipo.mockResolvedValue(equipoComoIntegrante);
+      renderPagina();
+
+      expect(await screen.findByText("Los Gankers")).toBeInTheDocument();
+      expect(
+        screen.queryByRole("button", { name: "Modificar equipo" })
+      ).toBeNull();
+    });
+  });
+
+  describe("US 44 - chat del equipo", () => {
+    it("abre el chat del equipo en el panel de chat", async () => {
+      const usuario = userEvent.setup();
+      renderPagina();
+
+      await usuario.click(
+        await screen.findByRole("button", { name: "Abrir chat del equipo" })
+      );
+
+      expect(chat.seleccionarConversacion).toHaveBeenCalledWith(99);
+    });
+  });
+
+  describe("actualización automática", () => {
+    it("vuelve a pedir el equipo cuando el backend avisa que alguien se unió", async () => {
+      renderPagina();
+      expect(await screen.findByText("Los Gankers")).toBeInTheDocument();
+      expect(obtenerMiEquipo).toHaveBeenCalledTimes(1);
+
+      obtenerMiEquipo.mockResolvedValue({
+        ...equipoComoLider,
+        player_count: 3,
+        members: [...equipoComoLider.members, integrante(5, "nuevo", false)],
+      });
+      await act(async () => {
+        chat.alEventoEquipo({
+          type: "TEAM_NEW_MEMBER_NOTIFICATION",
+          team_id: 3,
+          username: "nuevo",
+        });
+      });
+
+      expect(obtenerMiEquipo).toHaveBeenCalledTimes(2);
+      expect(await screen.findByText("nuevo")).toBeInTheDocument();
     });
   });
 });

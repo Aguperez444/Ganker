@@ -2,9 +2,12 @@ import { useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import AvisoComponent from "../components/common/AvisoComponent";
 import ModalConfirmacionComponent from "../components/common/ModalConfirmacionComponent";
+import { CLASES_BOTON_MODIFICAR } from "../components/common/botonesAccion";
 import FichaEquipoComponent from "../components/equipos/FichaEquipoComponent";
 import IntegrantesEquipoComponent from "../components/equipos/IntegrantesEquipoComponent";
-import { useChat } from "../context/ChatContext";
+import ModalEditarEquipoComponent from "../components/equipos/ModalEditarEquipoComponent";
+import { useChat, useEventosEquipo } from "../context/ChatContext";
+import useEditarEquipo from "../hooks/useEditarEquipo";
 import useIconosDeRoles from "../hooks/useIconosDeRoles";
 import useMiEquipo from "../hooks/useMiEquipo";
 
@@ -13,6 +16,7 @@ import useMiEquipo from "../hooks/useMiEquipo";
 // US 43 - Transferir liderazgo: el lider elige a otro integrante.
 // US 16 - Eliminar equipo: el lider lo disuelve.
 // US 19 - Salirse de un equipo: un integrante comun lo abandona.
+// US 15 - Modificar equipo: el lider edita sus datos.
 // Marcar equipo como inactivo: el lider lo saca de la busqueda sin
 // desvincular a nadie ni cerrar el chat.
 const MiEquipoPage = () => {
@@ -22,6 +26,7 @@ const MiEquipoPage = () => {
     conversacionActivaId,
     cargarConversaciones,
     cerrarConversacionActiva,
+    seleccionarConversacion,
   } = useChat();
   // Arranca con el mensaje de Crear/Unirse a equipo (si se llego desde ahi)
   // y despues lo reemplaza el de la ultima accion.
@@ -37,6 +42,8 @@ const MiEquipoPage = () => {
     equipo,
     cargando,
     error,
+    reemplazarEquipo,
+    recargar,
     expulsando,
     errorExpulsion,
     expulsarIntegrante,
@@ -61,6 +68,26 @@ const MiEquipoPage = () => {
 
   const esLider = Boolean(equipo?.consultant_player_info?.is_leader);
   const iconosDeRoles = useIconosDeRoles(equipo?.videogame?.videogame_id);
+  const edicion = useEditarEquipo();
+
+  // Se actualiza sola cuando alguien se une, sale, es expulsado, cambia el
+  // lider, o el equipo se disuelve o se marca inactivo.
+  useEventosEquipo(() => {
+    recargar();
+  });
+
+  const handleAbrirEdicion = () => {
+    setMensajeExito("");
+    edicion.abrir(equipo);
+  };
+
+  const handleGuardarEdicion = async () => {
+    const resultado = await edicion.guardar();
+    if (!resultado) return;
+
+    reemplazarEquipo(resultado.data);
+    setMensajeExito(resultado.message);
+  };
 
   const handleAbrirExpulsion = (integrante) => {
     limpiarErrorExpulsion();
@@ -221,17 +248,28 @@ const MiEquipoPage = () => {
           />
         </div>
 
-        {/* El chat grupal (abrir la sala, enviar y ver mensajes) es de las
-            US 43 y 44; esta tarjeta es su punto de entrada. */}
+        {/* US 44/45 - El chat del equipo se usa desde el panel de chat
+            (junto a los privados); esta tarjeta lo abre directamente. */}
         {equipo.conversation_id && (
           <div className="rounded-2xl border border-white/10 bg-ganker-surface p-5 sm:p-6">
-            <h2 className="font-heading text-lg font-semibold text-ganker-text">
-              Chat del equipo
-            </h2>
-            <p className="mt-1 text-sm text-ganker-muted">
-              La sala de chat se creó junto con el equipo. Los jugadores que se
-              sumen entran automáticamente.
-            </p>
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <h2 className="font-heading text-lg font-semibold text-ganker-text">
+                  Chat del equipo
+                </h2>
+                <p className="mt-1 text-sm text-ganker-muted">
+                  Coordiná con tus compañeros. Solo los integrantes del equipo
+                  pueden leerlo y escribir.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => seleccionarConversacion(equipo.conversation_id)}
+                className={CLASES_BOTON_MODIFICAR}
+              >
+                Abrir chat del equipo
+              </button>
+            </div>
           </div>
         )}
 
@@ -311,10 +349,19 @@ const MiEquipoPage = () => {
   return (
     <section className="min-h-full bg-ganker-bg px-4 py-6 sm:px-6 lg:px-8">
       <div className="mx-auto w-full max-w-3xl">
-        <header className="mb-8">
+        <header className="mb-8 flex flex-wrap items-center justify-between gap-4">
           <h1 className="font-heading text-3xl font-bold text-ganker-text sm:text-4xl">
             Mi equipo
           </h1>
+          {esLider && equipo && (
+            <button
+              type="button"
+              onClick={handleAbrirEdicion}
+              className={CLASES_BOTON_MODIFICAR}
+            >
+              Modificar equipo
+            </button>
+          )}
         </header>
 
         {mensajeExito && (
@@ -328,6 +375,23 @@ const MiEquipoPage = () => {
 
         {contenido}
       </div>
+
+      {edicion.abierto && (
+        <ModalEditarEquipoComponent
+          equipo={edicion.equipo}
+          formulario={edicion.formulario}
+          errores={edicion.errores}
+          rangos={edicion.rangos}
+          regiones={edicion.regiones}
+          cargandoCatalogos={edicion.cargandoCatalogos}
+          errorCatalogos={edicion.errorCatalogos}
+          enviando={edicion.enviando}
+          errorEnvio={edicion.errorEnvio}
+          onCampoChange={edicion.actualizarCampo}
+          onGuardar={handleGuardarEdicion}
+          onCancelar={edicion.cerrar}
+        />
+      )}
 
       <ModalConfirmacionComponent
         isOpen={integranteAExpulsar !== null}

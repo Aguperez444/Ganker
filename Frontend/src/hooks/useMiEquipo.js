@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import {
   eliminarEquipo,
   expulsarIntegrante,
@@ -152,6 +152,13 @@ const useMiEquipo = () => {
   useEffect(() => {
     cargarMiEquipo({ setEquipo, setCargando, setError });
   }, []);
+
+  // Vuelve a pedir el equipo sin mostrar "Cargando..." (ej. cuando el
+  // backend avisa que alguien se unio o salio).
+  const recargar = useCallback(
+    () => cargarMiEquipo({ setEquipo, setCargando, setError }),
+    []
+  );
 
   // Devuelve true/false y la pagina decide que mostrar (modal, banner).
   const expulsar = async (usuarioId) => {
@@ -324,6 +331,10 @@ const useMiEquipo = () => {
     equipo,
     cargando,
     error,
+    // US 15 - Al modificar el equipo el backend devuelve su estado nuevo:
+    // se usa directamente en vez de volver a pedirlo.
+    reemplazarEquipo: setEquipo,
+    recargar,
     expulsando,
     errorExpulsion,
     expulsarIntegrante: expulsar,

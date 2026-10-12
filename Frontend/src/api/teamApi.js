@@ -168,3 +168,33 @@ export function marcarEquipoInactivo(equipoId) {
     .patch(`/api/v1/teams/${equipoId}/deactivate`)
     .then((res) => res.data);
 }
+
+// US 15 - Modificar equipo.
+//   PUT /api/v1/teams/{team_id} (JSON) -> name, description,
+//   allow_other_regions, region_id (null = sin region), min_rank_id,
+//   max_rank_id
+// El videojuego no viaja: no se puede cambiar. Solo el lider puede editar y
+// el backend valida que el rango de cada integrante entre en el nuevo
+// intervalo. Devuelve { status, message, data: TeamSummaryResponse }.
+export function actualizarEquipo(
+  equipoId,
+  {
+    nombre,
+    descripcion,
+    regionId,
+    admiteOtrasRegiones,
+    rangoMinimoId,
+    rangoMaximoId,
+  }
+) {
+  return axiosClient
+    .put(`/api/v1/teams/${equipoId}`, {
+      name: nombre.trim(),
+      description: descripcion?.trim() ? descripcion.trim() : null,
+      allow_other_regions: admiteOtrasRegiones,
+      region_id: regionId ? Number(regionId) : null,
+      min_rank_id: Number(rangoMinimoId),
+      max_rank_id: Number(rangoMaximoId),
+    })
+    .then((res) => res.data);
+}

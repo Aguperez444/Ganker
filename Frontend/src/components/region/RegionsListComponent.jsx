@@ -1,3 +1,7 @@
+import {
+  CLASES_BOTON_ELIMINAR,
+  CLASES_BOTON_MODIFICAR,
+} from "../common/botonesAccion";
 const RegionsListComponent = ({
   regions,
   isLoading,
@@ -62,7 +66,7 @@ const RegionsListComponent = ({
               <button
                 type="button"
                 onClick={() => onEdit(region)}
-                className="cursor-pointer rounded-lg px-3 py-2 text-sm font-semibold text-ganker-purple-light transition hover:bg-ganker-purple/20 hover:text-ganker-text"
+                className={CLASES_BOTON_MODIFICAR}
               >
                 Modificar
               </button>
@@ -71,7 +75,7 @@ const RegionsListComponent = ({
                 type="button"
                 onClick={() => onDelete(region)}
                 disabled={deletingRegionId === region.id}
-                className="cursor-pointer rounded-lg px-3 py-2 text-sm font-semibold text-ganker-error transition hover:bg-ganker-error/10 disabled:cursor-not-allowed disabled:opacity-50"
+                className={CLASES_BOTON_ELIMINAR}
               >
                 {deletingRegionId === region.id ? "Eliminando..." : "Eliminar"}
               </button>

@@ -255,3 +255,70 @@ export function elegibilidadDelEquipo(equipo) {
       "No cumplís los requisitos para unirte a este equipo.",
   };
 }
+
+// US 15 - Modificar equipo.
+// Mismas reglas que al crear para nombre, descripcion, region y rangos, mas
+// la que pide la US: el nuevo intervalo tiene que contener el rango actual de
+// cada integrante. `integrantes` son los members ocupados del equipo; su
+// rango viene solo por nombre (active_role_profile.rank_name), asi que se
+// busca en `rangos` (el catalogo del juego, con su `value`).
+export function validarEdicionEquipo({
+  nombre,
+  descripcion,
+  regionId,
+  admiteOtrasRegiones,
+  rangoMinimo,
+  rangoMaximo,
+  integrantes = [],
+  rangos = [],
+}) {
+  const errores = {};
+
+  if (!nombre.trim()) {
+    errores.nombre = "Ingresá el nombre del equipo.";
+  } else if (nombre.trim().length > LARGO_MAXIMO_NOMBRE_EQUIPO) {
+    errores.nombre = `El nombre no puede superar los ${LARGO_MAXIMO_NOMBRE_EQUIPO} caracteres.`;
+  }
+
+  if ((descripcion ?? "").trim().length > LARGO_MAXIMO_DESCRIPCION_EQUIPO) {
+    errores.descripcion = `La descripción no puede superar los ${LARGO_MAXIMO_DESCRIPCION_EQUIPO} caracteres.`;
+  }
+
+  if (!regionId && !admiteOtrasRegiones) {
+    errores.region = "Elegí una región o permití jugadores de otras regiones.";
+  }
+
+  if (!rangoMinimo) errores.rangoMinimo = "Elegí el rango mínimo.";
+  if (!rangoMaximo) errores.rangoMaximo = "Elegí el rango máximo.";
+
+  if (rangoMinimo && rangoMaximo && rangoMinimo.value > rangoMaximo.value) {
+    errores.rangoMaximo =
+      "El rango mínimo no puede ser superior al rango máximo.";
+  }
+
+  if (rangoMinimo && rangoMaximo && !errores.rangoMaximo) {
+    const afuera = integrantes
+      .filter((integrante) => !integrante.is_vacant)
+      .map((integrante) => {
+        const nombreRango =
+          integrante.active_game_profile?.active_role_profile?.rank_name;
+        const rango = rangos.find((r) => r.name === nombreRango);
+        return { integrante, rango };
+      })
+      .filter(
+        ({ rango }) =>
+          rango && !rangoDentroDelRango(rango, rangoMinimo, rangoMaximo)
+      );
+
+    if (afuera.length > 0) {
+      const detalle = afuera
+        .map(
+          ({ integrante, rango }) => `${integrante.username} (${rango.name})`
+        )
+        .join(", ");
+      errores.rangos = `El nuevo rango tiene que incluir el de todos los integrantes. Quedan afuera: ${detalle}.`;
+    }
+  }
+
+  return errores;
+}

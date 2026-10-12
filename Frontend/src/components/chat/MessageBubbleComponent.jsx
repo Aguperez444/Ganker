@@ -41,11 +41,18 @@ const MessageBubbleComponent = ({
   esPropio,
   mostrarHora = true,
   mostrarIndicadorLeido = esPropio,
+  // US 44 - Nombre de quien escribio, en el chat del equipo.
+  autor = null,
 }) => {
   const indicadorLeido = esPropio && mostrarIndicadorLeido;
 
   return (
     <div className={`flex flex-col ${esPropio ? "items-end" : "items-start"}`}>
+      {autor && (
+        <span className="mb-1 px-1 text-[11px] font-semibold text-ganker-purple-light">
+          {autor}
+        </span>
+      )}
       <div
         className={`max-w-[75%] rounded-2xl px-4 py-2.5 text-sm break-words ${
           esPropio

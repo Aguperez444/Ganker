@@ -74,4 +74,40 @@ describe("useNotificacionesSocket", () => {
     act(() => socket.simularMensaje(notif));
     expect(onNotificacion).toHaveBeenCalledWith(notif);
   });
+
+  it("reenvía los eventos de equipo a onEventoEquipo y no a onNotificacion", () => {
+    const onNotificacion = vi.fn();
+    const onEventoEquipo = vi.fn();
+    renderHook(() =>
+      useNotificacionesSocket("mi-token", onNotificacion, onEventoEquipo)
+    );
+    const socket = MockWebSocket.instances[0];
+    act(() => socket.simularApertura());
+
+    const evento = {
+      type: "TEAM_NEW_MEMBER_NOTIFICATION",
+      team_id: 3,
+      username: "nuevo",
+    };
+    act(() => socket.simularMensaje(evento));
+
+    expect(onEventoEquipo).toHaveBeenCalledWith(evento);
+    expect(onNotificacion).not.toHaveBeenCalled();
+  });
+
+  it("también avisa los mensajes nuevos del chat del equipo", () => {
+    const onNotificacion = vi.fn();
+    renderHook(() => useNotificacionesSocket("mi-token", onNotificacion));
+    const socket = MockWebSocket.instances[0];
+    act(() => socket.simularApertura());
+
+    act(() =>
+      socket.simularMensaje({
+        type: "NEW_CHATROOM_MESSAGE_NOTIFICATION",
+        conversation_id: 9,
+      })
+    );
+
+    expect(onNotificacion).toHaveBeenCalled();
+  });
 });
