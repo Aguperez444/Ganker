@@ -47,6 +47,14 @@ class ITeamRepository(ABC):
         raise NotImplementedError
 
     @abstractmethod
+    def delete_team(self, target_team: 'Team') -> None:
+        """
+        Persiste la disolución y eliminación de un equipo
+        desvinculando a todos los miembros y vaciando los miembros de la conversación asociada.
+        """
+        raise NotImplementedError
+
+    @abstractmethod
     def get_team_info_by_conversation_ids(self, conversation_ids: List[int]) -> dict[int, tuple[int, Optional[str]]]:
         """Devuelve un diccionario conversation_id -> (team_id, icon_url) para las conversaciones que pertenecen a un equipo."""
         raise NotImplementedError

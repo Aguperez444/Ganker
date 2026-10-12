@@ -137,6 +137,26 @@ class TeamRepositoryImpl(ITeamRepository):
         self.session.flush()
         return TeamMapper.orm_to_domain(team_orm)
 
+    def delete_team(self, target_team: 'Team') -> None:
+        team_orm = (
+            self.session.query(TeamORM)
+            .filter(TeamORM.team_id == target_team.team_id)
+            .first()
+        )
+        if team_orm is None:
+            raise TeamNotFoundException(target_team.team_id)
+
+        conversation_orm = team_orm.conversation
+
+        # Eliminar el equipo (y en cascada sus members_roles) de la base de datos
+        self.session.delete(team_orm)
+        self.session.flush()
+
+        # Eliminar la conversación (chatroom) asociada de la base de datos
+        if conversation_orm:
+            self.session.delete(conversation_orm)
+            self.session.flush()
+
     def get_team_info_by_conversation_ids(self, conversation_ids: list[int]) -> dict[int, tuple[int, Optional[str]]]:
         if not conversation_ids:
             return {}

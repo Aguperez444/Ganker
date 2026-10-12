@@ -371,6 +371,23 @@ class Team:
                 elif conv_member.user and conv_member.user.user_id == target_user_id:
                     conv_member.role = ConversationMemberRoleEnum.ADMIN
 
+    def delete_team(self, requester_id: int) -> None:
+        """
+        Disuelve y elimina el equipo del sistema.
+        Valida que el solicitante sea el líder del equipo.
+        Desvincula a todos los integrantes y cierra la conversación/chatroom asociada.
+        """
+        if not self.is_leader(requester_id):
+            raise UserNotTeamLeaderException(requester_id, self.team_id)
+
+        # Desvincular a todos los miembros de sus cupos
+        for member in self._members:
+            member.user = None
+
+        # Desactivar y vaciar los integrantes del chatroom para revocar acceso
+        if self._conversation:
+            self._conversation.members = []
+
 
     def _remove_member(self, target_user_id: int) -> None:
         """Mét.odo interno para remover a un miembro del equipo sin validaciones de permisos."""

@@ -374,4 +374,45 @@ def test_transfer_leadership_inactive_team_fails(base_setup):
         team.transfer_leadership(requester_id=user.user_id, target_user_id=user2.user_id)
 
 
+def test_delete_team_success(base_setup):
+    from app.domain.models.conversation_member import ConversationMember
+    from app.domain.models.conversation_member_role_enum import ConversationMemberRoleEnum
+    team, user, vg, region_team, _, role, _, _ = base_setup
+
+    user2 = User(2, "u2", "U2", "b@b.com", "pw", UserRole.PLAYER, [])
+    team.members[0].user = user
+    team.members[1].user = user2
+    team.conversation.members = [
+        ConversationMember(1, 1, user, ConversationMemberRoleEnum.ADMIN),
+        ConversationMember(2, 1, user2, ConversationMemberRoleEnum.MEMBER)
+    ]
+
+    team.delete_team(requester_id=user.user_id)
+
+    assert team.members[0].user is None
+    assert team.members[1].user is None
+    assert len(team.conversation.members) == 0
+
+
+def test_delete_team_as_non_leader_fails(base_setup):
+    from app.domain.exceptions.team.user_not_team_leader_exception import UserNotTeamLeaderException
+    team, user, _, _, _, _, _, _ = base_setup
+    user2 = User(2, "u2", "U2", "b@b.com", "pw", UserRole.PLAYER, [])
+    team.members[0].user = user
+    team.members[1].user = user2
+
+    with pytest.raises(UserNotTeamLeaderException):
+        team.delete_team(requester_id=user2.user_id)
+
+
+def test_delete_team_when_inactive_succeeds(base_setup):
+    team, user, _, _, _, _, _, _ = base_setup
+    team.members[0].user = user
+    team.is_active = False
+
+    team.delete_team(requester_id=user.user_id)
+    assert team.members[0].user is None
+
+
+
 

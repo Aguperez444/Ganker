@@ -11,6 +11,9 @@ from app.infrastructure.database.models.role_orm import RoleORM
 from app.infrastructure.database.models.role_profile_orm import RoleProfileORM
 from app.infrastructure.database.models.user_orm import UserORM
 from app.infrastructure.database.models.videogame_orm import VideogameORM
+from app.infrastructure.database.models.team_orm import TeamORM
+from app.infrastructure.database.models.team_member_role_orm import TeamMemberRoleORM
+from app.infrastructure.database.models.conversation_orm import ConversationORM
 
 
 class TestTeamEndpointsIntegration:
@@ -1018,6 +1021,191 @@ class TestTeamEndpointsIntegration:
         assert get_res.status_code == 200
         assert get_res.json()["player_count"] == 1
         assert next(m for m in get_res.json()["members"] if m["user_id"] == jane_user.user_id)["is_leader"] is True
+
+    # =========================================================================
+    # USER STORY 8: Eliminar un equipo
+    # =========================================================================
+
+    def test_delete_team_success_as_creator(self, client, jwt_service, player_auth_headers, setup_data, test_db_session, mocker):
+        # Probar eliminar un equipo siendo el creador y confirmar la acción (pasa)
+        mock_send = mocker.patch("app.infrastructure.api.controllers.team_controller.notification_manager.send_to_user", return_value=None)
+        mock_broadcast = mocker.patch("app.infrastructure.api.controllers.team_controller.teams_feed_manager.broadcast_event", return_value=None)
+        mock_close = mocker.patch("app.infrastructure.api.controllers.team_controller.chat_manager.close_conversation", return_value=None)
+
+        team_data = self._create_sample_team(client, player_auth_headers, setup_data)
+        team_id = team_data["team_id"]
+        target_slot_id = team_data["members"][1]["team_member_role_id"]
+
+        # janedoe se une al equipo
+        jane_user = setup_data["players"]["janedoe"]
+        headers_jane, _ = self._headers(jwt_service, jane_user)
+        client.post(f"/api/v1/teams/{team_id}/join",
+                    json={"target_team_member_role_id": target_slot_id},
+                    headers=headers_jane)
+
+        seed_user = setup_data["players"]["seed"]
+
+        # El creador/líder elimina el equipo (DELETE)
+        del_res = client.delete(f"/api/v1/teams/{team_id}", headers=player_auth_headers)
+        assert del_res.status_code == 200
+        body = del_res.json()
+        assert body["status"] == "success"
+        assert "disuelto exitosamente" in body["message"]
+
+        # Validar que fue eliminado enteramente de la base de datos
+        found_team = test_db_session.query(TeamORM).filter(TeamORM.team_id == team_id).first()
+        assert found_team is None
+
+        found_members = test_db_session.query(TeamMemberRoleORM).filter(TeamMemberRoleORM.team_id == team_id).all()
+        assert len(found_members) == 0
+
+        found_conv = test_db_session.query(ConversationORM).filter(ConversationORM.conversation_id == team_data["conversation_id"]).first()
+        assert found_conv is None
+
+        # Validar que el equipo se retiró del listado público de equipos
+        feed_res = client.get(f"/api/v1/teams?videogame_id={setup_data['videogame'].videogame_id}", headers=player_auth_headers)
+        assert feed_res.status_code == 200
+        assert not any(t["team_id"] == team_id for t in feed_res.json())
+
+        # Validar que la consulta individual del equipo ya no lo encuentra (404)
+        get_res = client.get(f"/api/v1/teams/{team_id}", headers=player_auth_headers)
+        assert get_res.status_code == 404
+
+        # Validar que ni el creador ni los miembros tienen un equipo activo
+        me_creator = client.get("/api/v1/teams/me", headers=player_auth_headers)
+        assert me_creator.status_code == 200
+        assert me_creator.json() is None
+
+        me_member = client.get("/api/v1/teams/me", headers=headers_jane)
+        assert me_member.status_code == 200
+        assert me_member.json() is None
+
+        # Validar que se emitió el evento de eliminación al feed
+        mock_broadcast.assert_called_with("TEAM_DELETED", {"team_id": team_id})
+
+        # Validar que se cerró la sala de chat
+        mock_close.assert_called_with(team_data["conversation_id"])
+
+        # Validar que se enviaron notificaciones a los integrantes
+        called_user_ids = [call.args[0] for call in mock_send.call_args_list]
+        assert seed_user.user_id in called_user_ids
+        assert jane_user.user_id in called_user_ids
+
+    def test_delete_team_cancel_keeps_team_active(self, client, jwt_service, player_auth_headers, setup_data, test_db_session):
+        # Probar cancelar la confirmación de eliminación del equipo (el equipo se mantiene activo, pasa)
+        team_data = self._create_sample_team(client, player_auth_headers, setup_data)
+        team_id = team_data["team_id"]
+        target_slot_id = team_data["members"][1]["team_member_role_id"]
+
+        jane_user = setup_data["players"]["janedoe"]
+        headers_jane, _ = self._headers(jwt_service, jane_user)
+        client.post(f"/api/v1/teams/{team_id}/join",
+                    json={"target_team_member_role_id": target_slot_id},
+                    headers=headers_jane)
+
+        # Al cancelar en el modal del frontend, no se ejecuta la petición DELETE
+        # El equipo se mantiene activo y en el listado
+        get_res = client.get(f"/api/v1/teams/{team_id}", headers=player_auth_headers)
+        assert get_res.status_code == 200
+        assert get_res.json()["is_active"] is True
+        assert get_res.json()["player_count"] == 2
+
+        # Sigue apareciendo en el listado público
+        feed_res = client.get(f"/api/v1/teams?videogame_id={setup_data['videogame'].videogame_id}", headers=player_auth_headers)
+        assert feed_res.status_code == 200
+        assert any(t["team_id"] == team_id for t in feed_res.json())
+
+    def test_delete_team_as_regular_member_fails(self, client, jwt_service, player_auth_headers, setup_data):
+        # Probar intentar eliminar el equipo siendo un integrante regular sin permisos de creador (falla)
+        team_data = self._create_sample_team(client, player_auth_headers, setup_data)
+        team_id = team_data["team_id"]
+        target_slot_id = team_data["members"][1]["team_member_role_id"]
+
+        jane_user = setup_data["players"]["janedoe"]
+        headers_jane, _ = self._headers(jwt_service, jane_user)
+        client.post(f"/api/v1/teams/{team_id}/join",
+                    json={"target_team_member_role_id": target_slot_id},
+                    headers=headers_jane)
+
+        # Miembro regular intenta eliminar el equipo -> 403 Forbidden
+        del_res = client.delete(f"/api/v1/teams/{team_id}", headers=headers_jane)
+        assert del_res.status_code == 403
+        assert "no es el líder del equipo" in del_res.json()["error"]
+
+    def test_delete_team_revokes_chatroom_access_for_all_members(self, client, jwt_service, player_auth_headers, setup_data):
+        # Probar que luego de la eliminación del equipo, ningún miembro pueda continuar interactuando en el chatroom asociado (pasa)
+        team_data = self._create_sample_team(client, player_auth_headers, setup_data)
+        team_id = team_data["team_id"]
+        target_slot_id = team_data["members"][1]["team_member_role_id"]
+        chatroom_id = team_data["conversation_id"]
+
+        jane_user = setup_data["players"]["janedoe"]
+        headers_jane, _ = self._headers(jwt_service, jane_user)
+        client.post(f"/api/v1/teams/{team_id}/join",
+                    json={"target_team_member_role_id": target_slot_id},
+                    headers=headers_jane)
+
+        # Acceso antes de la eliminación: permitido
+        chat_before_jane = client.get(f"/api/v1/chat/chatroom/{chatroom_id}/messages", headers=headers_jane)
+        assert chat_before_jane.status_code == 200
+
+        chat_before_seed = client.get(f"/api/v1/chat/chatroom/{chatroom_id}/messages", headers=player_auth_headers)
+        assert chat_before_seed.status_code == 200
+
+        # El creador elimina el equipo
+        del_res = client.delete(f"/api/v1/teams/{team_id}", headers=player_auth_headers)
+        assert del_res.status_code == 200
+
+        # Acceso después de la eliminación: la sala ya no existe / acceso denegado (404/403)
+        chat_after_jane = client.get(f"/api/v1/chat/chatroom/{chatroom_id}/messages", headers=headers_jane)
+        assert chat_after_jane.status_code in (403, 404)
+
+        chat_after_seed = client.get(f"/api/v1/chat/chatroom/{chatroom_id}/messages", headers=player_auth_headers)
+        assert chat_after_seed.status_code in (403, 404)
+
+    def test_delete_team_enables_members_and_creator_to_join_or_create_another_team(self, client, jwt_service, player_auth_headers, setup_data):
+        # Probar que luego de la eliminación, los integrantes y el creador queden habilitados para ingresar a otro equipo (pasa)
+        team_data = self._create_sample_team(client, player_auth_headers, setup_data)
+        team_id = team_data["team_id"]
+        target_slot_id = team_data["members"][1]["team_member_role_id"]
+
+        jane_user = setup_data["players"]["janedoe"]
+        headers_jane, _ = self._headers(jwt_service, jane_user)
+        client.post(f"/api/v1/teams/{team_id}/join",
+                    json={"target_team_member_role_id": target_slot_id},
+                    headers=headers_jane)
+
+        # Creador elimina el equipo
+        client.delete(f"/api/v1/teams/{team_id}", headers=player_auth_headers)
+
+        # 1. El creador puede crear un nuevo equipo inmediatamente
+        vg = setup_data["videogame"]
+        reg = setup_data["regions"]["las"]
+        ranks = setup_data["ranks"]
+        roles = setup_data["roles"]
+
+        create_payload_creator = {
+            "name": "Nuevo Equipo Creador",
+            "allow_other_regions": True,
+            "videogame_id": vg.videogame_id,
+            "region_id": reg.region_id,
+            "min_rank_id": ranks["silver"].rank_id,
+            "max_rank_id": ranks["gold"].rank_id,
+            "creator_game_role_id": roles["duelist"].role_id,
+            "vacant_game_role_ids": [roles["controller"].role_id]
+        }
+        res_create = client.post("/api/v1/teams", data=self._team_form(create_payload_creator), headers=player_auth_headers)
+        assert res_create.status_code == 201
+        new_team_id = res_create.json()["team_id"]
+        new_slot_id = res_create.json()["members"][1]["team_member_role_id"]
+
+        # 2. La ex-integrante (janedoe) puede unirse al nuevo equipo inmediatamente
+        join_res = client.post(f"/api/v1/teams/{new_team_id}/join",
+                               json={"target_team_member_role_id": new_slot_id},
+                               headers=headers_jane)
+        assert join_res.status_code == 200
+        assert join_res.json()["status"] == "success"
+
 
 
 

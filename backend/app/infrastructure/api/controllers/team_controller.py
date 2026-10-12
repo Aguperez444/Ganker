@@ -12,11 +12,14 @@ from app.application.use_cases.update_team import UpdateTeam
 from app.application.use_cases.leave_team import LeaveTeam
 from app.application.use_cases.kick_member import KickMember
 from app.application.use_cases.transfer_leadership import TransferLeadership
+from app.application.use_cases.delete_team import DeleteTeam
+from app.infrastructure.api.chat.connection_manager import chat_manager
 from app.infrastructure.api.chat.user_notification_manager import notification_manager
 from app.infrastructure.api.dependencies.auth import get_current_user_id, require_player
 from app.infrastructure.api.dto.request.join_team_request import JoinTeamRequest
 from app.infrastructure.api.dto.request.create_team_request import CreateTeamRequest
 from app.infrastructure.api.dto.request.update_team_request import UpdateTeamRequest
+from app.infrastructure.api.dto.response.delete.delete_team_response import DeleteTeamResponse
 from app.infrastructure.api.dto.response.notification.notification_type_enum import NotificationType
 from app.infrastructure.api.dto.response.team.event_type_enum import TeamEventTypeEnum
 from app.infrastructure.api.dto.response.team_summary import (
@@ -317,5 +320,44 @@ async def transfer_team_leadership(
             })
 
     return result
+
+
+@router.delete("/{team_id}", status_code=200, response_model=DeleteTeamResponse, dependencies=[Depends(require_player)])
+async def delete_team(
+    team_id: int,
+    current_user_id: int = Depends(get_current_user_id),
+):
+    uow = uow_factory()
+    use_case = DeleteTeam(uow, get_storage_service())
+
+    result = await run_in_threadpool(use_case.execute, team_id, current_user_id)
+
+    # 1. Notificar en tiempo real al feed de salas que el equipo fue eliminado
+    await teams_feed_manager.broadcast_event(TeamEventTypeEnum.TEAM_DELETED, {"team_id": team_id})
+
+    # 2. Cerrar las conexiones WebSocket activas en el chatroom
+    if result.conversation_id is not None:
+        await chat_manager.close_conversation(result.conversation_id)
+
+    # 3. Notificar a todos los miembros sobre la disolución del equipo
+    for member_id in result.member_user_ids:
+        if member_id != current_user_id:
+            await notification_manager.send_to_user(member_id, {
+                "type": NotificationType.TEAM_DELETED,
+                "team_id": team_id,
+                "team_name": result.team_name,
+                "message": f"El equipo {result.team_name} fue disuelto por su líder."
+            })
+
+    # Confirmación personal para el creador por WebSocket
+    await notification_manager.send_to_user(current_user_id, {
+        "type": NotificationType.TEAM_DELETED,
+        "team_id": team_id,
+        "team_name": result.team_name,
+        "message": f"El equipo {result.team_name} fue disuelto exitosamente."
+    })
+
+    return result.response
+
 
 
