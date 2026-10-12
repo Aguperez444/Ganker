@@ -12,7 +12,7 @@ from app.domain.models.user_role import UserRole
 
 class JwtTokenService(ITokenService):
 
-    def __init__(self, secret_key: str, access_expiration_minutes: int = 15, refresh_expiration_days: int = 7):
+    def __init__(self, secret_key: str, access_expiration_minutes: int = 20, refresh_expiration_days: int = 7):
         self.secret_key = secret_key
         self.expiration_minutes = access_expiration_minutes
         self.refresh_expiration_days = refresh_expiration_days
@@ -21,7 +21,7 @@ class JwtTokenService(ITokenService):
 
         now = datetime.now(timezone.utc)
         access_expiration = now + timedelta(minutes=self.expiration_minutes)
-        refresh_expiration = now + timedelta(minutes=self.refresh_expiration_days)
+        refresh_expiration = now + timedelta(days=self.refresh_expiration_days)
         refresh_jti = str(uuid.uuid4())
 
         access_payload = {
