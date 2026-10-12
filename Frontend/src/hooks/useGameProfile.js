@@ -6,6 +6,7 @@ import { getCharactersByGame } from "../api/characterApi";
 import { getRolesByGame } from "../api/roleApi";
 import { getRanksByGame } from "../api/rankApi";
 import { getRegionsByGame } from "../api/regionApi";
+import { logError } from "../utils/logs";
 
 const useGameProfile = () => {
   const { refrescarUsuario } = useAuth();
@@ -72,7 +73,7 @@ const useGameProfile = () => {
 
         setGames(videogames);
       } catch (error) {
-        console.error("Error al cargar videojuegos:", error);
+        logError("Error al cargar videojuegos:", error);
         setGamesError("No se pudieron cargar los videojuegos disponibles.");
       } finally {
         setIsLoadingGames(false);
@@ -109,7 +110,7 @@ const useGameProfile = () => {
         setRanks(gameRanks);
         setRegions(gameRegions ?? []);
       } catch (error) {
-        console.error("Error al cargar los datos del videojuego:", error);
+        logError("Error al cargar los datos del videojuego:", error);
 
         setCharacters([]);
         setRoles([]);
@@ -319,7 +320,7 @@ const useGameProfile = () => {
     try {
       await refrescarUsuario();
     } catch (error) {
-      console.error("Error al refrescar los perfiles del jugador:", error);
+      logError("Error al refrescar los perfiles del jugador:", error);
     }
   };
 
@@ -381,7 +382,7 @@ const useGameProfile = () => {
 
       return true;
     } catch (error) {
-      console.error("Error al crear perfil de juego:", error);
+      logError("Error al crear perfil de juego:", error);
 
       const status = error.response?.status;
 
@@ -469,7 +470,7 @@ const useGameProfile = () => {
 
       return true;
     } catch (error) {
-      console.error("Error al editar perfil de juego:", error);
+      logError("Error al editar perfil de juego:", error);
 
       const status = error.response?.status;
 

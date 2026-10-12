@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { obtenerEquipo } from "../api/teamApi";
+import { logError } from "../utils/logs";
 
 // Funcion de modulo por el mismo motivo que cargarVideojuegos en useGames.js
 // (regla set-state-in-effect).
@@ -8,7 +9,7 @@ async function cargarEquipo({ equipoId, setEquipo, setCargando, setError }) {
     setError("");
     setEquipo(await obtenerEquipo(equipoId));
   } catch (error) {
-    console.error("Error al cargar el equipo:", error);
+    logError("Error al cargar el equipo:", error);
     setEquipo(null);
     setError(
       error.response?.status === 404

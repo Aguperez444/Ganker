@@ -8,6 +8,7 @@ import { ChatProvider } from "../../context/ChatContext";
 import TopNavbar from "./TopNavbar";
 import { obtenerJugadorActual } from "../../api/jugadoresApi";
 import { obtenerConversaciones } from "../../api/chatApi";
+import { revocarRefreshToken } from "../../api/axiosClient";
 
 vi.mock("../../api/jugadoresApi", () => ({
   registrarJugador: vi.fn(),
@@ -22,6 +23,7 @@ vi.mock("../../api/chatApi", () => ({
 }));
 
 vi.mock("../../api/axiosClient", () => ({
+  revocarRefreshToken: vi.fn(() => Promise.resolve()),
   default: { post: vi.fn(), get: vi.fn(), put: vi.fn() },
   registrarOnSesionExpirada: vi.fn(),
   registrarOnTokensRenovados: vi.fn(),
@@ -154,5 +156,30 @@ describe("boton Atrás", () => {
     await userEvent.click(screen.getByRole("button", { name: "Atrás" }));
 
     expect(screen.getByTestId("ruta")).toHaveTextContent(/^\/app$/);
+  });
+});
+
+describe("cerrar sesión", () => {
+  it("revoca el refresh token en el backend y borra la sesión local", async () => {
+    await abrirMenuComo(JUGADOR);
+
+    await userEvent.click(
+      screen.getByRole("button", { name: /cerrar sesión/i })
+    );
+
+    expect(revocarRefreshToken).toHaveBeenCalledWith("refresco");
+    expect(localStorage.getItem("refresh_token")).toBeNull();
+    expect(localStorage.getItem("access_token")).toBeNull();
+  });
+
+  it("cierra la sesión local aunque el backend falle al revocar", async () => {
+    revocarRefreshToken.mockRejectedValueOnce(new Error("Network Error"));
+    await abrirMenuComo(JUGADOR);
+
+    await userEvent.click(
+      screen.getByRole("button", { name: /cerrar sesión/i })
+    );
+
+    expect(localStorage.getItem("refresh_token")).toBeNull();
   });
 });

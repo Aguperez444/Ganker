@@ -144,3 +144,15 @@ export function eliminarEquipo(equipoId) {
     .delete(`/api/v1/teams/${equipoId}`)
     .then((res) => res.data);
 }
+
+// US 19 - Salirse de un equipo.
+//   DELETE /api/v1/teams/{team_id}/leave
+// El lider no puede salir directamente (tiene que transferir el liderazgo o
+// eliminar el equipo; lo valida el backend). Libera el cupo del jugador y lo
+// saca del chatroom del equipo.
+// Devuelve { status, message, data: TeamSummaryResponse }.
+export function salirDeEquipo(equipoId) {
+  return axiosClient
+    .delete(`/api/v1/teams/${equipoId}/leave`)
+    .then((res) => res.data);
+}

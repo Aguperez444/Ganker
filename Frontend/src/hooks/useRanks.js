@@ -1,5 +1,6 @@
 import { useCallback, useState } from "react";
 import { createRank, getRanksByGame } from "../api/rankApi";
+import { logError } from "../utils/logs";
 
 const useRanks = () => {
   const [ranks, setRanks] = useState([]);
@@ -31,7 +32,7 @@ const useRanks = () => {
         }))
       );
     } catch (error) {
-      console.error("Error al cargar rangos:", error);
+      logError("Error al cargar rangos:", error);
       setError("No se pudieron cargar los rangos.");
     } finally {
       setIsLoading(false);

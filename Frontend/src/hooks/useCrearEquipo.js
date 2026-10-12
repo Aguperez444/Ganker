@@ -5,6 +5,7 @@ import { getRolesByGame } from "../api/roleApi";
 import { crearEquipo, obtenerMiEquipo } from "../api/teamApi";
 import { useAuth } from "../context/AuthContext";
 import { validarFormularioEquipo } from "../utils/validacionesEquipos";
+import { logError } from "../utils/logs";
 
 // Funcion de modulo (no useCallback del hook) por el mismo motivo que
 // cargarVideojuegos en useGames.js: llamarla desde un efecto no dispara la
@@ -21,7 +22,7 @@ async function consultarMiEquipo({
   } catch (error) {
     // Sin saber si ya tiene equipo no se ofrece crear uno (mismo criterio
     // que EquiposPage): el formulario queda bloqueado hasta poder comprobarlo.
-    console.error("Error al consultar el equipo del jugador:", error);
+    logError("Error al consultar el equipo del jugador:", error);
     setMiEquipo(null);
     setErrorVerificacion(
       "No pudimos comprobar si ya formás parte de un equipo. Intentá de nuevo en unos segundos."
@@ -190,7 +191,7 @@ const useCrearEquipo = () => {
         setRoles(rolesJuego || []);
         setRegiones(regionesJuego || []);
       } catch (error) {
-        console.error("Error al cargar los datos del videojuego:", error);
+        logError("Error al cargar los datos del videojuego:", error);
         if (juegoPedidoRef.current === videojuegoId) {
           setErrorCatalogos(
             "No se pudieron cargar los rangos, roles y regiones del videojuego."
@@ -245,7 +246,7 @@ const useCrearEquipo = () => {
 
       return await crearEquipo(formulario);
     } catch (error) {
-      console.error("Error al crear el equipo:", error);
+      logError("Error al crear el equipo:", error);
       setErrorEnvio(mensajeDeErrorAlCrear(error));
       return null;
     } finally {

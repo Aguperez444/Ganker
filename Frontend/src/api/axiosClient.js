@@ -26,6 +26,17 @@ const axiosRefresh = axios.create({
   },
 });
 
+// Revoca el refresh token en el backend al cerrar sesion: sin esto seguiria
+// sirviendo para pedir tokens nuevos aunque el jugador ya haya salido (ej. si
+// alguien lo copio). Usa axiosRefresh porque no necesita access token y no
+// debe disparar el interceptor de 401. Quien la llama no espera el resultado:
+// cerrar sesion en el front no puede depender de que el backend responda.
+export function revocarRefreshToken(refreshToken) {
+  return axiosRefresh.post("/auth/v1/logout", {
+    refresh_token: refreshToken,
+  });
+}
+
 // El interceptor vive fuera de React, asi que no puede llamar al logout() del
 // AuthContext directamente. El provider registra aca su forma de limpiar el
 // estado cuando monta (ver AuthContext.jsx).

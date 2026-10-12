@@ -4,6 +4,7 @@ import {
   getGames,
   updateGame as updateGameRequest,
 } from "../api/gameApi";
+import { logError } from "../utils/logs";
 
 // Modulo aparte (no un useCallback del componente) a proposito: llamar desde
 // el cuerpo de un efecto a una funcion memoizada del propio componente que
@@ -28,7 +29,7 @@ async function cargarVideojuegos({ setGames, setIsLoading, setError }) {
       }))
     );
   } catch (error) {
-    console.error("Error al cargar videojuegos:", error);
+    logError("Error al cargar videojuegos:", error);
     setError("No se pudieron cargar los videojuegos.");
   } finally {
     setIsLoading(false);

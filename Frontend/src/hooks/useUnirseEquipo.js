@@ -8,6 +8,7 @@ import {
   perfilDelJuego,
   vacantesDelEquipo,
 } from "../utils/validacionesEquipos";
+import { logError } from "../utils/logs";
 
 function mensajeDeErrorAlUnirse(error, equipo) {
   const data = error.response?.data;
@@ -80,7 +81,7 @@ const useUnirseEquipo = ({ alActualizarEquipo } = {}) => {
       setEquipo(null);
       return resultado;
     } catch (error) {
-      console.error("Error al unirse al equipo:", error);
+      logError("Error al unirse al equipo:", error);
       setErrorUnion(mensajeDeErrorAlUnirse(error, equipo));
 
       if (error.response) {
@@ -89,7 +90,7 @@ const useUnirseEquipo = ({ alActualizarEquipo } = {}) => {
           setEquipo(actualizado);
           alActualizarEquipo?.(actualizado);
         } catch (errorRecarga) {
-          console.error("Error al recargar el equipo:", errorRecarga);
+          logError("Error al recargar el equipo:", errorRecarga);
         }
       }
 

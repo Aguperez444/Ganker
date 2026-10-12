@@ -4,6 +4,7 @@ import { searchGameProfiles } from "../api/gameProfileApi";
 import { getCharactersByGame } from "../api/characterApi";
 import { getRolesByGame } from "../api/roleApi";
 import { getRanksByGame } from "../api/rankApi";
+import { logError } from "../utils/logs";
 
 // El filtro de username exige minimo 4 caracteres del lado del backend
 // (SearchVideogameProfilesRequest.name, Field(min_length=4)); mandar menos
@@ -90,7 +91,7 @@ export function useBuscarJugadores() {
         const videojuegos = await getGames();
         if (!cancelado) setGames(videojuegos ?? []);
       } catch (error) {
-        console.error("Error al cargar videojuegos:", error);
+        logError("Error al cargar videojuegos:", error);
         if (!cancelado) {
           setGamesError("No se pudieron cargar los videojuegos disponibles.");
         }
@@ -139,7 +140,7 @@ export function useBuscarJugadores() {
         setRoles(gameRoles ?? []);
         setCharacters(gameCharacters ?? []);
       } catch (error) {
-        console.error("Error al cargar los datos del videojuego:", error);
+        logError("Error al cargar los datos del videojuego:", error);
         if (!cancelado) {
           setRanks([]);
           setRoles([]);
@@ -195,7 +196,7 @@ export function useBuscarJugadores() {
           setTodosLosResultados((perfiles ?? []).map(mapearPerfilAJugador));
         }
       } catch (error) {
-        console.error("Error al buscar jugadores:", error);
+        logError("Error al buscar jugadores:", error);
         if (!cancelado) {
           setTodosLosResultados([]);
           setResultadosError("No se pudo realizar la busqueda de jugadores.");

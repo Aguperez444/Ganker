@@ -11,6 +11,7 @@ import useMiEquipo from "../hooks/useMiEquipo";
 // US - Expulsar jugador: el lider expulsa integrantes desde la lista.
 // US 43 - Transferir liderazgo: el lider elige a otro integrante.
 // US 16 - Eliminar equipo: el lider lo disuelve.
+// US 19 - Salirse de un equipo: un integrante comun lo abandona.
 const MiEquipoPage = () => {
   const location = useLocation();
   const navigate = useNavigate();
@@ -27,6 +28,7 @@ const MiEquipoPage = () => {
   const [integranteAExpulsar, setIntegranteAExpulsar] = useState(null);
   const [nuevoLider, setNuevoLider] = useState(null);
   const [confirmandoEliminacion, setConfirmandoEliminacion] = useState(false);
+  const [confirmandoSalida, setConfirmandoSalida] = useState(false);
   const {
     equipo,
     cargando,
@@ -39,6 +41,10 @@ const MiEquipoPage = () => {
     errorTransferencia,
     transferirLiderazgo,
     limpiarErrorTransferencia,
+    saliendo,
+    errorSalida,
+    salirDelEquipo,
+    limpiarErrorSalida,
     eliminando,
     errorEliminacion,
     eliminarEquipo,
@@ -93,6 +99,37 @@ const MiEquipoPage = () => {
     setNuevoLider(null);
   };
 
+  // Al salir o al eliminar el equipo el jugador pierde el acceso al chatroom:
+  // si lo tenia abierto se cierra (asi tambien se corta su conexion a la
+  // sala) y se recarga la lista para que deje de aparecer.
+  const cerrarChatDelEquipo = (conversacionDelEquipo) => {
+    if (conversacionActivaId === conversacionDelEquipo) {
+      cerrarConversacionActiva();
+    }
+    cargarConversaciones();
+  };
+
+  const handleAbrirSalida = () => {
+    limpiarErrorSalida();
+    setMensajeExito("");
+    setConfirmandoSalida(true);
+  };
+
+  const handleCancelarSalida = () => {
+    limpiarErrorSalida();
+    setConfirmandoSalida(false);
+  };
+
+  const handleConfirmarSalida = async () => {
+    const conversacionDelEquipo = equipo?.conversation_id;
+    const mensaje = await salirDelEquipo();
+
+    if (!mensaje) return;
+
+    cerrarChatDelEquipo(conversacionDelEquipo);
+    navigate("/app/equipos", { state: { mensajeExito: mensaje } });
+  };
+
   const handleAbrirEliminacion = () => {
     limpiarErrorEliminacion();
     setMensajeExito("");
@@ -110,13 +147,7 @@ const MiEquipoPage = () => {
 
     if (!mensaje) return;
 
-    // El backend cerro el chatroom del equipo: si estaba abierto se cierra y
-    // se recarga la lista para que deje de aparecer.
-    if (conversacionActivaId === conversacionDelEquipo) {
-      cerrarConversacionActiva();
-    }
-    cargarConversaciones();
-
+    cerrarChatDelEquipo(conversacionDelEquipo);
     navigate("/app/equipos", { state: { mensajeExito: mensaje } });
   };
 
@@ -171,6 +202,29 @@ const MiEquipoPage = () => {
             </p>
           </div>
         )}
+
+        <div className="rounded-2xl border border-white/10 bg-ganker-surface p-5 sm:p-6">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <h2 className="font-heading text-lg font-semibold text-ganker-text">
+                Salir del equipo
+              </h2>
+              <p className="mt-1 text-sm text-ganker-muted">
+                {esLider
+                  ? "Como líder no podés salir directamente: primero transferí el liderazgo a otro integrante o eliminá el equipo."
+                  : "Tu lugar va a quedar vacante y vas a perder el acceso al chat del equipo."}
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={handleAbrirSalida}
+              disabled={esLider}
+              className="shrink-0 cursor-pointer rounded-xl border border-white/10 px-5 py-3 text-sm font-semibold text-ganker-text transition hover:bg-white/5 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              Salir del equipo
+            </button>
+          </div>
+        </div>
 
         {esLider && (
           <div className="rounded-2xl border border-ganker-error/20 bg-ganker-surface p-5 sm:p-6">
@@ -258,6 +312,26 @@ const MiEquipoPage = () => {
         error={errorTransferencia}
         onConfirm={handleConfirmarTransferencia}
         onCancel={handleCancelarTransferencia}
+      />
+
+      <ModalConfirmacionComponent
+        isOpen={confirmandoSalida}
+        title="Salir del equipo"
+        message={
+          <p>
+            ¿Seguro que querés salir de{" "}
+            <span className="font-semibold text-ganker-text">
+              {equipo?.team_name}
+            </span>
+            ? Tu lugar va a quedar vacante y vas a perder el acceso al chat del
+            equipo.
+          </p>
+        }
+        confirmLabel="Salir del equipo"
+        isLoading={saliendo}
+        error={errorSalida}
+        onConfirm={handleConfirmarSalida}
+        onCancel={handleCancelarSalida}
       />
 
       <ModalConfirmacionComponent

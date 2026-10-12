@@ -6,6 +6,7 @@ import {
   eliminarEquipo,
   expulsarIntegrante,
   obtenerMiEquipo,
+  salirDeEquipo,
   transferirLiderazgo,
 } from "../api/teamApi";
 
@@ -14,6 +15,7 @@ vi.mock("../api/teamApi", () => ({
   expulsarIntegrante: vi.fn(),
   transferirLiderazgo: vi.fn(),
   eliminarEquipo: vi.fn(),
+  salirDeEquipo: vi.fn(),
 }));
 
 const equipoCompleto = {
@@ -240,6 +242,52 @@ describe("useMiEquipo - US 16 eliminar equipo", () => {
     expect(mensaje).toBeNull();
     expect(result.current.errorEliminacion).toBe(
       "Solo el líder del equipo puede eliminarlo."
+    );
+  });
+});
+
+describe("useMiEquipo - US 19 salirse de un equipo", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    obtenerMiEquipo.mockResolvedValue(equipoCompleto);
+  });
+
+  it("sale del equipo y devuelve la confirmación del backend", async () => {
+    const { result } = await renderHookListo();
+    salirDeEquipo.mockResolvedValue({
+      status: "success",
+      message: "Has salido del equipo Los Gankers con éxito",
+    });
+
+    let mensaje;
+    await act(async () => {
+      mensaje = await result.current.salirDelEquipo();
+    });
+
+    expect(salirDeEquipo).toHaveBeenCalledWith(3);
+    expect(mensaje).toBe("Has salido del equipo Los Gankers con éxito");
+  });
+
+  it("al líder le muestra el aviso del backend de transferir o eliminar", async () => {
+    const { result } = await renderHookListo();
+    salirDeEquipo.mockRejectedValue({
+      response: {
+        status: 400,
+        data: {
+          error:
+            "El líder del equipo no puede salir directamente. Debe transferir el liderazgo o eliminar el equipo.",
+        },
+      },
+    });
+
+    let mensaje;
+    await act(async () => {
+      mensaje = await result.current.salirDelEquipo();
+    });
+
+    expect(mensaje).toBeNull();
+    expect(result.current.errorSalida).toMatch(
+      /transferir el liderazgo o eliminar el equipo/
     );
   });
 });

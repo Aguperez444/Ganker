@@ -5,6 +5,7 @@ import {
   getRegionsByGame,
   updateRegion,
 } from "../api/regionApi";
+import { logError } from "../utils/logs";
 
 const getBackendErrorMessage = (error, fallbackMessage) => {
   if (typeof error.response?.data?.error === "string") {
@@ -48,7 +49,7 @@ const useRegions = () => {
         }))
       );
     } catch (error) {
-      console.error("Error al cargar regiones:", error);
+      logError("Error al cargar regiones:", error);
 
       setRegions([]);
       setError("No se pudieron cargar las regiones.");
@@ -71,7 +72,7 @@ const useRegions = () => {
 
       return true;
     } catch (error) {
-      console.error("Error al registrar región:", error);
+      logError("Error al registrar región:", error);
 
       const status = error.response?.status;
 
@@ -123,7 +124,7 @@ const useRegions = () => {
 
       return true;
     } catch (error) {
-      console.error("Error al modificar región:", error);
+      logError("Error al modificar región:", error);
 
       const status = error.response?.status;
 
@@ -168,7 +169,7 @@ const useRegions = () => {
 
       return true;
     } catch (error) {
-      console.error("Error al eliminar región:", error);
+      logError("Error al eliminar región:", error);
 
       if (error.response?.status === 404) {
         setActionError("La región que intentás eliminar ya no existe.");

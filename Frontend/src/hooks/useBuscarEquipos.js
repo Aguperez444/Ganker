@@ -5,6 +5,7 @@ import { getRegionsByGame } from "../api/regionApi";
 import { getRolesByGame } from "../api/roleApi";
 import { buscarEquipos } from "../api/teamApi";
 import { useAuth } from "../context/AuthContext";
+import { logError } from "../utils/logs";
 
 export const EQUIPOS_POR_PAGINA = 10;
 
@@ -61,7 +62,7 @@ const useBuscarEquipos = () => {
         const lista = await getGames();
         if (!cancelado) setVideojuegos(lista ?? []);
       } catch (error) {
-        console.error("Error al cargar videojuegos:", error);
+        logError("Error al cargar videojuegos:", error);
         if (!cancelado) {
           setErrorVideojuegos(
             "No se pudieron cargar los videojuegos disponibles."
@@ -109,7 +110,7 @@ const useBuscarEquipos = () => {
         setRangos([...(rangosJuego ?? [])].sort((a, b) => a.value - b.value));
         setRoles(rolesJuego ?? []);
       } catch (error) {
-        console.error("Error al cargar los datos del videojuego:", error);
+        logError("Error al cargar los datos del videojuego:", error);
         if (!cancelado) {
           setRegiones([]);
           setRangos([]);
@@ -155,7 +156,7 @@ const useBuscarEquipos = () => {
 
         if (!cancelado) setEquipos(resultado ?? []);
       } catch (error) {
-        console.error("Error al buscar equipos:", error);
+        logError("Error al buscar equipos:", error);
         if (!cancelado) {
           setEquipos([]);
           setErrorEquipos("No se pudo realizar la búsqueda de equipos.");

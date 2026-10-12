@@ -7,6 +7,7 @@ import MiEquipoPage from "./MiEquipoPage";
 import {
   eliminarEquipo,
   obtenerMiEquipo,
+  salirDeEquipo,
   transferirLiderazgo,
 } from "../api/teamApi";
 
@@ -27,6 +28,7 @@ vi.mock("../api/teamApi", () => ({
   expulsarIntegrante: vi.fn(),
   transferirLiderazgo: vi.fn(),
   eliminarEquipo: vi.fn(),
+  salirDeEquipo: vi.fn(),
 }));
 
 const integrante = (userId, username, esLider) => ({
@@ -165,6 +167,61 @@ describe("MiEquipoPage", () => {
 
       expect(eliminarEquipo).not.toHaveBeenCalled();
       expect(screen.getByText("Los Gankers")).toBeInTheDocument();
+    });
+  });
+
+  describe("US 19 - Salirse de un equipo", () => {
+    beforeEach(() => {
+      obtenerMiEquipo.mockResolvedValue(equipoComoIntegrante);
+    });
+
+    it("un integrante confirma, se cierra el chat del equipo y vuelve a Equipos", async () => {
+      const usuario = userEvent.setup();
+      salirDeEquipo.mockResolvedValue({
+        message: "Has salido del equipo Los Gankers con éxito",
+      });
+      renderPagina();
+
+      await usuario.click(
+        await screen.findByRole("button", { name: "Salir del equipo" })
+      );
+      await usuario.click(
+        within(screen.getByRole("dialog")).getByRole("button", {
+          name: "Salir del equipo",
+        })
+      );
+
+      expect(salirDeEquipo).toHaveBeenCalledWith(3);
+      expect(chat.cerrarConversacionActiva).toHaveBeenCalled();
+      expect(chat.cargarConversaciones).toHaveBeenCalled();
+      expect(await screen.findByText("Pantalla equipos")).toBeInTheDocument();
+    });
+
+    it("cancelar lo deja dentro del equipo", async () => {
+      const usuario = userEvent.setup();
+      renderPagina();
+
+      await usuario.click(
+        await screen.findByRole("button", { name: "Salir del equipo" })
+      );
+      await usuario.click(screen.getByRole("button", { name: "Cancelar" }));
+
+      expect(salirDeEquipo).not.toHaveBeenCalled();
+      expect(screen.getByText("Los Gankers")).toBeInTheDocument();
+    });
+
+    it("el líder no puede salir directamente y se le indica qué hacer", async () => {
+      obtenerMiEquipo.mockResolvedValue(equipoComoLider);
+      renderPagina();
+
+      expect(
+        await screen.findByRole("button", { name: "Salir del equipo" })
+      ).toBeDisabled();
+      expect(
+        screen.getByText(
+          /transferí el liderazgo a otro integrante o eliminá el equipo/
+        )
+      ).toBeInTheDocument();
     });
   });
 });

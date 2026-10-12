@@ -15,6 +15,7 @@ vi.mock("../api/jugadoresApi", () => ({
 }));
 
 vi.mock("../api/axiosClient", () => ({
+  revocarRefreshToken: vi.fn(() => Promise.resolve()),
   default: { post: vi.fn(), get: vi.fn() },
   registrarOnSesionExpirada: vi.fn(),
   registrarOnTokensRenovados: vi.fn(),
