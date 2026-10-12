@@ -3,7 +3,11 @@ import { urlDeMedia } from "../../utils/media";
 // Lista los lugares del equipo (TeamSummaryResponse.members): ocupados por
 // un jugador o vacantes. Las vacantes vienen con username "Libre" y el rol
 // buscado en active_game_profile.active_role_profile.
-const IntegrantesEquipoComponent = ({ integrantes }) => (
+//
+// onExpulsar es opcional: la pagina solo lo pasa si quien mira es el lider.
+// El boton no aparece en las vacantes ni en la fila del lider, asi el lider
+// no puede elegirse a si mismo (el backend tambien lo rechaza).
+const IntegrantesEquipoComponent = ({ integrantes, onExpulsar }) => (
   <ul className="divide-y divide-white/10 overflow-hidden rounded-xl border border-white/10">
     {integrantes.map((integrante, indice) => {
       const perfilRol = integrante.active_game_profile.active_role_profile;
@@ -53,6 +57,16 @@ const IntegrantesEquipoComponent = ({ integrantes }) => (
             <span className="shrink-0 rounded-full border border-ganker-orange/30 bg-ganker-orange/10 px-3 py-1 text-xs font-semibold text-ganker-orange-light">
               Líder
             </span>
+          )}
+
+          {onExpulsar && !integrante.is_vacant && !integrante.is_leader && (
+            <button
+              type="button"
+              onClick={() => onExpulsar(integrante)}
+              className="shrink-0 cursor-pointer rounded-lg px-3 py-2 text-sm font-semibold text-ganker-error transition hover:bg-ganker-error/10"
+            >
+              Expulsar
+            </button>
           )}
         </li>
       );
