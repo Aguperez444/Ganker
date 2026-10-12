@@ -190,7 +190,7 @@ describe("US 14 - Crear equipo", () => {
     ).toBeInTheDocument();
     expect(await screen.findByText("Líder")).toBeInTheDocument();
     expect(screen.getByText("joaco")).toBeInTheDocument();
-    expect(screen.getByText("Cupo vacante")).toBeInTheDocument();
+    expect(screen.getByText("Disponible")).toBeInTheDocument();
     expect(screen.getByText("Chat del equipo")).toBeInTheDocument();
   });
 

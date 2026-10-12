@@ -1,6 +1,6 @@
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { MemoryRouter } from "react-router-dom";
+import { MemoryRouter, useLocation } from "react-router-dom";
 import { describe, it, expect, beforeEach, vi } from "vitest";
 
 import { AuthProvider, useAuth } from "../../context/AuthContext";
@@ -52,6 +52,10 @@ const base = {
 const JUGADOR = { ...base, username: "un_player", role: "player" };
 const ADMIN = { ...base, username: "admin_user", role: "admin" };
 
+function RutaActual() {
+  return <p data-testid="ruta">{useLocation().pathname}</p>;
+}
+
 // Hace de ProtectedRoute: el navbar solo se renderiza con sesion cargada.
 function ConSesion({ children }) {
   const { loading, user } = useAuth();
@@ -59,17 +63,18 @@ function ConSesion({ children }) {
   return children;
 }
 
-async function abrirMenuComo(usuario) {
+async function abrirMenuComo(usuario, ruta = "/app") {
   obtenerJugadorActual.mockResolvedValue(usuario);
   localStorage.setItem("access_token", "acceso");
   localStorage.setItem("refresh_token", "refresco");
 
   render(
-    <MemoryRouter>
+    <MemoryRouter initialEntries={[ruta]}>
       <AuthProvider>
         <ConSesion>
           <ChatProvider>
             <TopNavbar />
+            <RutaActual />
           </ChatProvider>
         </ConSesion>
       </AuthProvider>
@@ -90,27 +95,64 @@ beforeEach(() => {
 });
 
 describe("menu del avatar", () => {
-  it("le ofrece al admin las dos areas", async () => {
-    await abrirMenuComo(ADMIN);
+  it("le da al admin un boton directo al panel de administracion desde el de jugador", async () => {
+    await abrirMenuComo(ADMIN, "/app");
 
-    expect(
-      screen.getByRole("link", { name: "Panel de administración" })
-    ).toHaveAttribute("href", "/app/admin");
+    expect(screen.getByRole("link", { name: "Panel admin" })).toHaveAttribute(
+      "href",
+      "/app/admin"
+    );
+  });
+
+  it("le da al admin un boton directo al panel de jugador desde el de administracion", async () => {
+    await abrirMenuComo(ADMIN, "/app/admin");
+
     expect(screen.getByRole("link", { name: "Panel jugador" })).toHaveAttribute(
       "href",
       "/app"
     );
   });
 
-  // El sidebar de jugador ya no ofrece admin, asi que este menu es el unico
-  // lugar donde podria filtrarse el acceso al panel.
-  it("no le muestra nada de admin al jugador", async () => {
-    await abrirMenuComo(JUGADOR);
+  it("ya no ofrece el cambio de panel dentro del menu del avatar", async () => {
+    await abrirMenuComo(ADMIN);
 
     expect(
       screen.queryByRole("link", { name: /panel de administración/i })
     ).toBeNull();
+    // "Pagina principal" era redundante: se llega a la landing por otro lado.
+    expect(
+      screen.queryByRole("link", { name: /página principal/i })
+    ).toBeNull();
+    expect(screen.getByRole("link", { name: "Mi cuenta" })).toBeInTheDocument();
+  });
+
+  // El sidebar de jugador no ofrece admin, asi que el boton del navbar es el
+  // unico lugar donde podria filtrarse el acceso al panel.
+  it("no le muestra nada de admin al jugador", async () => {
+    await abrirMenuComo(JUGADOR);
+
+    expect(screen.queryByRole("link", { name: /panel admin/i })).toBeNull();
     expect(screen.queryByRole("link", { name: /panel jugador/i })).toBeNull();
     expect(screen.getByRole("link", { name: "Mi cuenta" })).toBeInTheDocument();
+  });
+});
+
+describe("boton Atrás", () => {
+  it("no aparece en el inicio de cada panel", async () => {
+    await abrirMenuComo(JUGADOR, "/app");
+    expect(screen.queryByRole("button", { name: "Atrás" })).toBeNull();
+  });
+
+  it("no aparece en el inicio del panel de administracion", async () => {
+    await abrirMenuComo(ADMIN, "/app/admin");
+    expect(screen.queryByRole("button", { name: "Atrás" })).toBeNull();
+  });
+
+  it("sin historial dentro de la app vuelve al inicio del panel", async () => {
+    await abrirMenuComo(JUGADOR, "/app/equipos/4");
+
+    await userEvent.click(screen.getByRole("button", { name: "Atrás" }));
+
+    expect(screen.getByTestId("ruta")).toHaveTextContent(/^\/app$/);
   });
 });

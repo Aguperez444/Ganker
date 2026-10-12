@@ -17,12 +17,15 @@ const ProfilePage = () => {
     characters,
     roles,
     ranks,
+    regions,
 
     selectedGameId,
+    selectedRegionId,
     selectedCharacters,
     selectedRoles,
     editingProfileId,
     usesRankPerRole,
+    usesCharacters,
     profileRank,
 
     isLoadingGames,
@@ -32,6 +35,7 @@ const ProfilePage = () => {
     gameDataError,
 
     selectGame,
+    selectRegion,
     addCharacter,
     removeCharacter,
     moveCharacter,
@@ -65,7 +69,9 @@ const ProfilePage = () => {
 
   const handleSubmit = async () => {
     const success =
-      mode === "edit" ? await submitEditGameProfile() : await submitGameProfile();
+      mode === "edit"
+        ? await submitEditGameProfile()
+        : await submitGameProfile();
 
     if (!success) {
       return;
@@ -137,16 +143,20 @@ const ProfilePage = () => {
             characters={characters}
             roles={roles}
             ranks={ranks}
+            regions={regions}
+            selectedRegionId={selectedRegionId}
             selectedGameId={selectedGameId}
             selectedCharacters={selectedCharacters}
             selectedRoles={selectedRoles}
             usesRankPerRole={usesRankPerRole}
+            usesCharacters={usesCharacters}
             profileRank={profileRank}
             isLoadingGames={isLoadingGames}
             isLoadingGameData={isLoadingGameData}
             gamesError={gamesError}
             gameDataError={gameDataError}
             onGameChange={selectGame}
+            onRegionChange={selectRegion}
             onAddCharacter={addCharacter}
             onRemoveCharacter={removeCharacter}
             onMoveCharacter={moveCharacter}

@@ -99,3 +99,159 @@ export function validarFormularioEquipo({
 
   return errores;
 }
+
+// US 18 - Unirse a equipo.
+// Igual que en Crear equipo, esto repite las reglas del backend
+// (Team._validate_user_for_slot) solo para mostrar de antemano a que
+// vacantes puede entrar el jugador. El backend sigue decidiendo.
+
+// Perfil de juego del jugador para el videojuego del equipo, o null.
+// `perfiles` es user.profiles de AuthContext.
+export function perfilDelJuego(perfiles, videojuegoId) {
+  return (
+    (perfiles ?? []).find(
+      (perfil) => String(perfil.videogame?.id) === String(videojuegoId)
+    ) ?? null
+  );
+}
+
+function rangoPermitidoTexto(equipo) {
+  if (!equipo.min_rank || !equipo.max_rank) return "";
+  return equipo.min_rank.rank_id === equipo.max_rank.rank_id
+    ? equipo.min_rank.name
+    : `${equipo.min_rank.name} a ${equipo.max_rank.name}`;
+}
+
+// Motivo por el que el jugador no puede ocupar `vacante` (un elemento de
+// equipo.members con is_vacant), o null si cumple los requisitos.
+// Mismo orden de chequeos que el backend: perfil de juego, perfil de rol,
+// region y rango.
+export function motivoVacanteNoDisponible({ equipo, vacante, perfil }) {
+  if (!perfil) {
+    return `Necesitás un perfil de ${equipo.videogame?.name ?? "este juego"} para unirte.`;
+  }
+
+  const rolVacante = vacante.active_game_profile.active_role_profile;
+  const perfilRol = (perfil.role_profiles ?? []).find(
+    (pr) => String(pr.role?.role_id) === String(rolVacante.role_id)
+  );
+  if (!perfilRol) {
+    return `No tenés un perfil para el rol ${rolVacante.role_name}.`;
+  }
+
+  if (!equipo.allow_other_regions && equipo.region?.region_id) {
+    if (String(perfil.region?.region_id) !== String(equipo.region.region_id)) {
+      return `El equipo solo admite jugadores de ${equipo.region.region_name}.`;
+    }
+  }
+
+  if (
+    equipo.min_rank &&
+    equipo.max_rank &&
+    !rangoDentroDelRango(perfilRol.rank, equipo.min_rank, equipo.max_rank)
+  ) {
+    return `Tu rango como ${rolVacante.role_name} (${perfilRol.rank.name}) está fuera del rango del equipo (${rangoPermitidoTexto(equipo)}).`;
+  }
+
+  return null;
+}
+
+// Los mensajes de dominio del backend (al unirse, y el `reason` de
+// join_eligibility) traen IDs internos y el status no alcanza para
+// distinguirlos (rango, region y cupo son todos 400). Se reconocen por su
+// texto y se reemplazan por uno pensado para el jugador.
+const RECHAZOS_AL_UNIRSE = [
+  {
+    patron: /está completo/i,
+    mensaje: () => "El equipo ya no tiene vacantes disponibles.",
+  },
+  {
+    patron: /solo admite jugadores de la región/i,
+    mensaje: (equipo) =>
+      equipo?.region?.region_name
+        ? `El equipo solo admite jugadores de ${equipo.region.region_name} y tu perfil es de otra región.`
+        : "El equipo no admite jugadores de tu región.",
+  },
+  {
+    patron: /rango con ID .* no es válido/i,
+    mensaje: (equipo) =>
+      equipo && rangoPermitidoTexto(equipo)
+        ? `Tu rango está fuera del rango permitido por el equipo (${rangoPermitidoTexto(equipo)}).`
+        : "Tu rango está fuera del rango permitido por el equipo.",
+  },
+  {
+    patron: /perfil de juego .*no fue encontrado/i,
+    mensaje: (equipo) =>
+      `Necesitás un perfil de ${equipo?.videogame?.name ?? "este juego"} para unirte.`,
+  },
+  {
+    patron: /no tiene un perfil de rol válido/i,
+    mensaje: () => "No tenés un perfil para el rol de esa vacante.",
+  },
+  {
+    patron: /ya forma parte de un equipo activo/i,
+    mensaje: () =>
+      "Ya formás parte de otro equipo activo. Tenés que salir de él para unirte a otro.",
+  },
+  {
+    patron: /ya está en el equipo/i,
+    mensaje: () => "Ya sos miembro de este equipo.",
+  },
+  {
+    patron: /ya está ocupado/i,
+    mensaje: () => "Otro jugador acaba de ocupar esa vacante. Elegí otra.",
+  },
+  {
+    patron: /ya no está activo/i,
+    mensaje: () => "El equipo ya no está activo.",
+  },
+  {
+    patron: /slot con ID .* no existe/i,
+    mensaje: () => "Esa vacante ya no existe. Elegí otra.",
+  },
+];
+
+export function mensajeDeRechazoAlUnirse(mensaje, equipo) {
+  if (typeof mensaje !== "string" || !mensaje) return null;
+
+  const rechazo = RECHAZOS_AL_UNIRSE.find(({ patron }) => patron.test(mensaje));
+  if (rechazo) return rechazo.mensaje(equipo);
+
+  // Mensajes ya pensados para el jugador ("Ya formás parte de otro equipo
+  // activo") pasan tal cual; si traen IDs, mejor uno generico.
+  return /\bid\b/i.test(mensaje)
+    ? "No cumplís los requisitos para unirte a este equipo."
+    : mensaje;
+}
+
+// Vacantes del equipo (members con is_vacant), cada una con el motivo por
+// el que el jugador no podria ocuparla (null si puede).
+export function vacantesDelEquipo(equipo, perfil) {
+  return (equipo?.members ?? [])
+    .filter((integrante) => integrante.is_vacant)
+    .map((vacante) => ({
+      ...vacante,
+      motivo: motivoVacanteNoDisponible({ equipo, vacante, perfil }),
+    }));
+}
+
+// Si el jugador puede unirse al equipo en general, segun lo que informa el
+// backend en consultant_player_info (cupo, otro equipo activo, alguna
+// vacante que cumpla). Su `reason` trae IDs, por eso se traduce.
+export function elegibilidadDelEquipo(equipo) {
+  const info = equipo?.consultant_player_info;
+
+  if (info?.is_member) {
+    return { puedeUnirse: false, motivo: "Ya sos miembro de este equipo." };
+  }
+  if (info?.join_eligibility?.can_join) {
+    return { puedeUnirse: true, motivo: null };
+  }
+
+  return {
+    puedeUnirse: false,
+    motivo:
+      mensajeDeRechazoAlUnirse(info?.join_eligibility?.reason, equipo) ??
+      "No cumplís los requisitos para unirte a este equipo.",
+  };
+}

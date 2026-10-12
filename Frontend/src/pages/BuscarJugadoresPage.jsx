@@ -49,6 +49,15 @@ const BuscarJugadoresPage = () => {
     paginaAnterior,
   } = useBuscarJugadores();
 
+  // Los juegos con rank_per_role = false tienen un unico rango por perfil:
+  // la tarjeta lo muestra una sola vez en vez de repetirlo por cada rol.
+  const juegoSeleccionado = games.find(
+    (game) => String(game.id) === String(selectedGameId)
+  );
+  const rangoPorRol = juegoSeleccionado
+    ? Boolean(juegoSeleccionado.rank_per_role)
+    : true;
+
   // US 10 - Al iniciar (o retomar) una conversacion, ChatContext ya deja
   // esa conversacion seleccionada y el panel/drawer de chat abierto: no
   // hace falta navegar a ningun lado, el jugador la ve aparecer ahi mismo.
@@ -258,6 +267,7 @@ const BuscarJugadoresPage = () => {
                           characters: jugador.characters,
                           role_profiles: jugador.role_profiles,
                           characterIdFiltrado: characterId,
+                          rangoPorRol,
                         }}
                       />
                     ))}

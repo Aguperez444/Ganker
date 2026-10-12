@@ -280,8 +280,9 @@ describe("US 03 - Buscar jugadores", () => {
       screen.getByRole("button", { name: /limpiar filtros/i })
     );
 
+    // La busqueda se relanza tras el debounce del username: hay que esperarla.
     expect(
-      screen.getAllByRole("button", { name: /enviar mensaje/i }).length
+      (await screen.findAllByRole("button", { name: /enviar mensaje/i })).length
     ).toBe(3);
   });
 

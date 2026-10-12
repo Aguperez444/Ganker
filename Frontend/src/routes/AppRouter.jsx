@@ -17,6 +17,7 @@ import BuscarJugadoresPage from "../pages/BuscarJugadoresPage.jsx";
 import EquiposPage from "../pages/EquiposPage.jsx";
 import CrearEquipoPage from "../pages/CrearEquipoPage.jsx";
 import MiEquipoPage from "../pages/MiEquipoPage.jsx";
+import EquipoPage from "../pages/EquipoPage.jsx";
 import CharactersPage from "../pages/admin/CharactersPage.jsx";
 import ModeracionPage from "../pages/admin/ModeracionPage.jsx";
 import RegionsPage from "../pages/admin/RegionsPage.jsx";
@@ -56,6 +57,9 @@ function AppRouter() {
             {/* US 14 - Crear equipo, y la vista a la que redirige al crearlo. */}
             <Route path="equipos/crear" element={<CrearEquipoPage />} />
             <Route path="equipos/mi-equipo" element={<MiEquipoPage />} />
+            {/* US 18 - Unirse a equipo. React Router prioriza las rutas fijas
+                de arriba ("crear", "mi-equipo") sobre este parametro. */}
+            <Route path="equipos/:equipoId" element={<EquipoPage />} />
           </Route>
         </Route>
 

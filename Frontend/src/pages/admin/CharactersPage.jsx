@@ -14,6 +14,23 @@ const CharactersPage = () => {
 
   const { games, isLoading: isLoadingGames } = useGames();
 
+  // Solo los juegos con has_characters admiten personajes nuevos (ej. CS2
+  // no). El filtro de la lista sigue mostrando todos, por si un juego quedo
+  // con personajes cargados de antes de apagar la flag.
+  const juegosConPersonajes = games.filter((game) => game.has_characters);
+  const juegoSeleccionado = games.find(
+    (game) => String(game.id) === String(selectedGameId)
+  );
+  const juegoSinPersonajes = Boolean(
+    juegoSeleccionado && !juegoSeleccionado.has_characters
+  );
+  // Al editar, el juego actual del personaje tiene que estar en el select
+  // aunque tenga la flag apagada; si no, el formulario quedaria sin juego.
+  const juegosParaEditar =
+    juegoSinPersonajes && juegoSeleccionado
+      ? [...juegosConPersonajes, juegoSeleccionado]
+      : juegosConPersonajes;
+
   const {
     characters,
     isLoading: isLoadingCharacters,
@@ -189,12 +206,22 @@ const CharactersPage = () => {
               <button
                 type="button"
                 onClick={handleOpenRegister}
-                disabled={isSaving}
+                disabled={isSaving || juegosConPersonajes.length === 0}
                 className="cursor-pointer self-start rounded-lg bg-gradient-to-r from-ganker-orange via-ganker-orange-light to-ganker-purple px-4 py-2.5 text-sm font-semibold text-white shadow-lg transition-all duration-200 hover:-translate-y-0.5 hover:shadow-ganker-purple/30 disabled:cursor-not-allowed disabled:opacity-50"
               >
                 + Registrar personaje
               </button>
             </div>
+
+            {juegoSinPersonajes && (
+              <div className="mb-4 rounded-lg border border-ganker-orange/20 bg-ganker-orange/10 px-4 py-3">
+                <p className="text-sm text-ganker-orange-light">
+                  {juegoSeleccionado.name} no tiene personajes (la opción
+                  "Tiene personajes" del videojuego está desactivada), así que
+                  no se le pueden registrar personajes nuevos.
+                </p>
+              </div>
+            )}
 
             {selectedGameId ? (
               <CharactersListComponent
@@ -218,8 +245,8 @@ const CharactersPage = () => {
             <CharacterForm
               key="create"
               mode="create"
-              games={games}
-              initialVideogameId={selectedGameId}
+              games={juegosConPersonajes}
+              initialVideogameId={juegoSinPersonajes ? "" : selectedGameId}
               isLoading={isSaving}
               error={actionError}
               onSubmit={handleRegister}
@@ -231,7 +258,7 @@ const CharactersPage = () => {
             <CharacterForm
               key={`edit-${selectedCharacter.id}`}
               mode="edit"
-              games={games}
+              games={juegosParaEditar}
               initialVideogameId={selectedGameId}
               initialName={selectedCharacter.name}
               initialIconUrl={selectedCharacter.icon_url}

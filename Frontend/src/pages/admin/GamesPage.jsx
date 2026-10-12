@@ -147,6 +147,7 @@ const GamesPage = () => {
               initialName={selectedGame.name}
               initialIconUrl={selectedGame.icon_url}
               initialRankPerRole={selectedGame.rank_per_role}
+              initialHasCharacters={selectedGame.has_characters}
               isLoading={isSaving}
               error={actionError}
               onSubmit={handleEdit}

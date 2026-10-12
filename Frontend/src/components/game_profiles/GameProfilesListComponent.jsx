@@ -22,6 +22,7 @@ const GameProfilesListComponent = ({ profiles, selectedProfileId, onEdit }) => {
           const iconUrl = urlDeMedia(profile.videogame.icon_url);
           const cantidadPersonajes = profile.characters.length;
           const cantidadRoles = profile.role_profiles.length;
+          const tienePersonajes = profile.videogame.has_characters !== false;
 
           return (
             <li
@@ -54,9 +55,11 @@ const GameProfilesListComponent = ({ profiles, selectedProfileId, onEdit }) => {
                     {profile.videogame.name}
                   </p>
                   <p className="truncate text-xs text-ganker-muted">
-                    {cantidadPersonajes} personaje
-                    {cantidadPersonajes === 1 ? "" : "s"} · {cantidadRoles} rol
-                    {cantidadRoles === 1 ? "" : "es"}
+                    {tienePersonajes &&
+                      `${cantidadPersonajes} personaje${cantidadPersonajes === 1 ? "" : "s"} · `}
+                    {cantidadRoles} rol
+                    {cantidadRoles === 1 ? "" : "es"} ·{" "}
+                    {profile.region?.name ?? "Sin región"}
                   </p>
                 </div>
               </div>
