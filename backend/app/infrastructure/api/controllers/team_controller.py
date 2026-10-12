@@ -11,6 +11,7 @@ from app.application.use_cases.search_teams import SearchTeams
 from app.application.use_cases.update_team import UpdateTeam
 from app.application.use_cases.leave_team import LeaveTeam
 from app.application.use_cases.kick_member import KickMember
+from app.application.use_cases.transfer_leadership import TransferLeadership
 from app.infrastructure.api.chat.user_notification_manager import notification_manager
 from app.infrastructure.api.dependencies.auth import get_current_user_id, require_player
 from app.infrastructure.api.dto.request.join_team_request import JoinTeamRequest
@@ -23,8 +24,10 @@ from app.infrastructure.api.dto.response.team_summary import (
     JoinTeamResponse,
     UpdateTeamResponse,
     LeaveTeamResponse,
-    KickMemberResponse
+    KickMemberResponse,
+    TransferLeadershipResponse
 )
+
 from app.infrastructure.api.teams.teams_feed_connection_manager import teams_feed_manager
 from app.infrastructure.database.unit_of_work.uow_factory import uow_factory
 from app.infrastructure.storage.local_disk_storage_service import LocalDiskStorageService
@@ -253,6 +256,64 @@ async def kick_team_member_by_path(
                 "team_id": team.team_id,
                 "team_name": team.team_name,
                 "message": f"Un jugador fue expulsado del equipo {team.team_name}"
+            })
+
+    return result
+
+
+@router.post("/{team_id}/transfer-leadership/{target_user_id}", status_code=200,
+             response_model=TransferLeadershipResponse, dependencies=[Depends(require_player)])
+async def transfer_team_leadership(
+    team_id: int,
+    target_user_id: int,
+    current_user_id: int = Depends(get_current_user_id),
+):
+    uow = uow_factory()
+    use_case = TransferLeadership(uow)
+
+    result: TransferLeadershipResponse = await run_in_threadpool(
+        use_case.execute,
+        team_id,
+        current_user_id,
+        target_user_id,
+    )
+    team = result.data
+
+    await teams_feed_manager.broadcast_event(TeamEventTypeEnum.TEAM_LEADERSHIP_TRANSFERRED, team.public_payload())
+
+    new_leader_member = next((m for m in team.members if m.user_id == target_user_id), None)
+    new_leader_username = new_leader_member.username if new_leader_member else "un miembro"
+
+    # Notificación al nuevo líder
+    await notification_manager.send_to_user(target_user_id, {
+        "type": NotificationType.TEAM_LEADERSHIP_TRANSFERRED,
+        "team_id": team.team_id,
+        "team_name": team.team_name,
+        "new_leader_id": target_user_id,
+        "new_leader_username": new_leader_username,
+        "message": f"Has sido nombrado nuevo líder del equipo {team.team_name}"
+    })
+
+    # Notificación al líder anterior
+    await notification_manager.send_to_user(current_user_id, {
+        "type": NotificationType.TEAM_LEADERSHIP_TRANSFERRED,
+        "team_id": team.team_id,
+        "team_name": team.team_name,
+        "new_leader_id": target_user_id,
+        "new_leader_username": new_leader_username,
+        "message": f"Has transferido el liderazgo del equipo {team.team_name} a {new_leader_username}"
+    })
+
+    # Notificación al resto de integrantes
+    for member in team.members:
+        if member.user_id is not None and member.user_id != current_user_id and member.user_id != target_user_id:
+            await notification_manager.send_to_user(member.user_id, {
+                "type": NotificationType.TEAM_LEADERSHIP_TRANSFERRED,
+                "team_id": team.team_id,
+                "team_name": team.team_name,
+                "new_leader_id": target_user_id,
+                "new_leader_username": new_leader_username,
+                "message": f"{new_leader_username} es el nuevo líder del equipo {team.team_name}"
             })
 
     return result

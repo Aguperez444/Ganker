@@ -301,3 +301,77 @@ def test_kick_member_not_in_team_fails(base_setup):
         team.kick_member(requester_id=user.user_id, target_user_id=99)
 
 
+def test_transfer_leadership_success(base_setup):
+    from app.domain.models.conversation_member import ConversationMember
+    from app.domain.models.conversation_member_role_enum import ConversationMemberRoleEnum
+    team, user, vg, region_team, _, role, _, _ = base_setup
+
+    user2 = User(2, "u2", "U2", "b@b.com", "pw", UserRole.PLAYER, [])
+    team.members[0].user = user
+    team.members[1].user = user2
+    team.conversation.members = [
+        ConversationMember(1, 1, user, ConversationMemberRoleEnum.ADMIN),
+        ConversationMember(2, 1, user2, ConversationMemberRoleEnum.MEMBER)
+    ]
+
+    team.transfer_leadership(requester_id=user.user_id, target_user_id=user2.user_id)
+
+    # Roles internos del equipo actualizados
+    assert team.members[0].team_role == TeamRoleEnum.MEMBER
+    assert team.members[1].team_role == TeamRoleEnum.OWNER
+    assert team.is_leader(user.user_id) is False
+    assert team.is_leader(user2.user_id) is True
+
+    # Roles en el chatroom actualizados
+    assert team.conversation.members[0].role == ConversationMemberRoleEnum.MEMBER
+    assert team.conversation.members[1].role == ConversationMemberRoleEnum.ADMIN
+
+    # El líder anterior puede ahora salirse del equipo sin disolverlo
+    team.leave_team(user_id=user.user_id)
+    assert team.members[0].user is None
+    assert team.is_leader(user2.user_id) is True
+
+
+def test_transfer_leadership_as_non_leader_fails(base_setup):
+    from app.domain.exceptions.team.user_not_team_leader_exception import UserNotTeamLeaderException
+    team, user, _, _, _, _, _, _ = base_setup
+    user2 = User(2, "u2", "U2", "b@b.com", "pw", UserRole.PLAYER, [])
+    user3 = User(3, "u3", "U3", "c@c.com", "pw", UserRole.PLAYER, [])
+    team.members[0].user = user
+    team.members[1].user = user2
+
+    with pytest.raises(UserNotTeamLeaderException):
+        team.transfer_leadership(requester_id=user2.user_id, target_user_id=user3.user_id)
+
+
+def test_transfer_leadership_to_self_fails(base_setup):
+    from app.domain.exceptions.team.leader_cannot_transfer_to_self_exception import LeaderCannotTransferToSelfException
+    team, user, _, _, _, _, _, _ = base_setup
+    team.members[0].user = user
+
+    with pytest.raises(LeaderCannotTransferToSelfException):
+        team.transfer_leadership(requester_id=user.user_id, target_user_id=user.user_id)
+
+
+def test_transfer_leadership_to_user_not_in_team_fails(base_setup):
+    from app.domain.exceptions.team.user_not_in_team_exception import UserNotInTeamException
+    team, user, _, _, _, _, _, _ = base_setup
+    team.members[0].user = user
+
+    with pytest.raises(UserNotInTeamException):
+        team.transfer_leadership(requester_id=user.user_id, target_user_id=99)
+
+
+def test_transfer_leadership_inactive_team_fails(base_setup):
+    from app.domain.exceptions.team.team_not_active_exception import TeamNotActiveException
+    team, user, _, _, _, _, _, _ = base_setup
+    user2 = User(2, "u2", "U2", "b@b.com", "pw", UserRole.PLAYER, [])
+    team.members[0].user = user
+    team.members[1].user = user2
+    team.is_active = False
+
+    with pytest.raises(TeamNotActiveException):
+        team.transfer_leadership(requester_id=user.user_id, target_user_id=user2.user_id)
+
+
+

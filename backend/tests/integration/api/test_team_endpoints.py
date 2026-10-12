@@ -883,4 +883,142 @@ class TestTeamEndpointsIntegration:
         assert rejoin_res.status_code == 200
         assert rejoin_res.json()["status"] == "success"
 
+    # =========================================================================
+    # USER STORY 7: Transferir liderazgo de un equipo
+    # =========================================================================
+
+    def test_transfer_leadership_success_as_current_leader_and_confirm(self, client, jwt_service, player_auth_headers, setup_data, mocker):
+        # Mock de notification_manager para verificar que se envían las notificaciones
+        mock_send = mocker.patch("app.infrastructure.api.controllers.team_controller.notification_manager.send_to_user", return_value=None)
+        mock_broadcast = mocker.patch("app.infrastructure.api.controllers.team_controller.teams_feed_manager.broadcast_event", return_value=None)
+
+        team_data = self._create_sample_team(client, player_auth_headers, setup_data)
+        team_id = team_data["team_id"]
+        target_slot_id = team_data["members"][1]["team_member_role_id"]
+
+        # janedoe se une al equipo
+        jane_user = setup_data["players"]["janedoe"]
+        headers_jane, _ = self._headers(jwt_service, jane_user)
+        client.post(f"/api/v1/teams/{team_id}/join",
+                    json={"target_team_member_role_id": target_slot_id},
+                    headers=headers_jane)
+
+        seed_user = setup_data["players"]["seed"]
+
+        # Líder actual (seed) transfiere el liderazgo a janedoe y confirma la acción
+        res = client.post(
+            f"/api/v1/teams/{team_id}/transfer-leadership/{jane_user.user_id}",
+            headers=player_auth_headers
+        )
+        assert res.status_code == 200
+        body = res.json()
+        assert body["status"] == "success"
+        assert f"El liderazgo del equipo fue transferido exitosamente a {jane_user.username}" in body["message"]
+
+        # Validar actualización de roles internos del equipo
+        members = body["data"]["members"]
+        old_leader_slot = next(m for m in members if m["user_id"] == seed_user.user_id)
+        new_leader_slot = next(m for m in members if m["user_id"] == jane_user.user_id)
+
+        assert old_leader_slot["is_leader"] is False
+        assert new_leader_slot["is_leader"] is True
+
+        # Validar que se enviaron las notificaciones a los integrantes
+        called_user_ids = [call.args[0] for call in mock_send.call_args_list]
+        assert jane_user.user_id in called_user_ids
+        assert seed_user.user_id in called_user_ids
+
+        # Validar evento en teams_feed_manager
+        mock_broadcast.assert_called()
+
+        # Validar persistencia consultando el equipo individualmente
+        get_res = client.get(f"/api/v1/teams/{team_id}", headers=player_auth_headers)
+        assert get_res.status_code == 200
+        get_members = get_res.json()["members"]
+        assert next(m for m in get_members if m["user_id"] == seed_user.user_id)["is_leader"] is False
+        assert next(m for m in get_members if m["user_id"] == jane_user.user_id)["is_leader"] is True
+
+
+    def test_transfer_leadership_as_regular_member_fails(self, client, jwt_service, player_auth_headers, setup_data):
+        team_data = self._create_sample_team(client, player_auth_headers, setup_data)
+        team_id = team_data["team_id"]
+        target_slot_id = team_data["members"][1]["team_member_role_id"]
+
+        jane_user = setup_data["players"]["janedoe"]
+        headers_jane, _ = self._headers(jwt_service, jane_user)
+        client.post(f"/api/v1/teams/{team_id}/join",
+                    json={"target_team_member_role_id": target_slot_id},
+                    headers=headers_jane)
+
+        seed_user = setup_data["players"]["seed"]
+
+        # janedoe (integrante regular) intenta transferir el liderazgo a seed
+        res = client.post(
+            f"/api/v1/teams/{team_id}/transfer-leadership/{seed_user.user_id}",
+            headers=headers_jane
+        )
+        assert res.status_code == 403
+        assert "no es el líder del equipo" in res.json()["error"]
+
+    def test_transfer_leadership_to_external_user_fails(self, client, player_auth_headers, setup_data):
+        team_data = self._create_sample_team(client, player_auth_headers, setup_data)
+        team_id = team_data["team_id"]
+
+        # Intentar transferir a un usuario externo que no pertenece al equipo (high rank)
+        high_user = setup_data["players"]["high"]
+        res = client.post(
+            f"/api/v1/teams/{team_id}/transfer-leadership/{high_user.user_id}",
+            headers=player_auth_headers
+        )
+        assert res.status_code == 400
+        assert "no pertenece al equipo" in res.json()["error"]
+
+    def test_transfer_leadership_to_self_fails(self, client, player_auth_headers, setup_data):
+        team_data = self._create_sample_team(client, player_auth_headers, setup_data)
+        team_id = team_data["team_id"]
+        seed_user = setup_data["players"]["seed"]
+
+        res = client.post(
+            f"/api/v1/teams/{team_id}/transfer-leadership/{seed_user.user_id}",
+            headers=player_auth_headers
+        )
+        assert res.status_code == 400
+        assert "sí mismo" in res.json()["error"]
+
+    def test_transfer_leadership_allows_previous_leader_to_leave_team(self, client, jwt_service, player_auth_headers, setup_data):
+        team_data = self._create_sample_team(client, player_auth_headers, setup_data)
+        team_id = team_data["team_id"]
+        target_slot_id = team_data["members"][1]["team_member_role_id"]
+
+        jane_user = setup_data["players"]["janedoe"]
+        headers_jane, _ = self._headers(jwt_service, jane_user)
+        client.post(f"/api/v1/teams/{team_id}/join",
+                    json={"target_team_member_role_id": target_slot_id},
+                    headers=headers_jane)
+
+        # Antes de transferir: el líder no puede salir
+        leave_before = client.delete(f"/api/v1/teams/{team_id}/leave", headers=player_auth_headers)
+        assert leave_before.status_code == 400
+        assert "El líder del equipo no puede salir directamente" in leave_before.json()["error"]
+
+        # Transfiere el liderazgo a Jane Doe
+        transfer_res = client.post(
+            f"/api/v1/teams/{team_id}/transfer-leadership/{jane_user.user_id}",
+            headers=player_auth_headers
+        )
+        assert transfer_res.status_code == 200
+
+        # Ahora el líder anterior puede salir del equipo sin disolverlo
+        leave_after = client.delete(f"/api/v1/teams/{team_id}/leave", headers=player_auth_headers)
+        assert leave_after.status_code == 200
+        assert leave_after.json()["status"] == "success"
+
+        # Verificar que Jane Doe sigue siendo el líder y el equipo sigue activo con 1 miembro
+        get_res = client.get(f"/api/v1/teams/{team_id}", headers=headers_jane)
+        assert get_res.status_code == 200
+        assert get_res.json()["player_count"] == 1
+        assert next(m for m in get_res.json()["members"] if m["user_id"] == jane_user.user_id)["is_leader"] is True
+
+
+
 

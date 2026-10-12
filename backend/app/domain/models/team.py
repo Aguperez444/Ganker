@@ -17,6 +17,7 @@ from app.domain.exceptions.team.invalid_rank_range_exception import InvalidRankR
 from app.domain.exceptions.team.catalog_item_videogame_mismatch_exception import CatalogItemVideogameMismatchException
 from app.domain.exceptions.team.leader_cannot_leave_team_exception import LeaderCannotLeaveTeamException
 from app.domain.exceptions.team.leader_cannot_kick_self_exception import LeaderCannotKickSelfException
+from app.domain.exceptions.team.leader_cannot_transfer_to_self_exception import LeaderCannotTransferToSelfException
 from app.domain.exceptions.team.user_not_in_team_exception import UserNotInTeamException
 from app.domain.exceptions.team.user_not_team_leader_exception import UserNotTeamLeaderException
 from app.domain.exceptions.domain_exception import DomainException
@@ -331,6 +332,44 @@ class Team:
             raise LeaderCannotKickSelfException(self.team_id)
 
         self._remove_member(target_user_id)
+
+    def transfer_leadership(self, requester_id: int, target_user_id: int) -> None:
+        """
+        Transfiere el rol de líder (OWNER) del equipo a otro integrante activo.
+        El líder actual pasa a ser un miembro regular (MEMBER).
+        En la conversación asociada, el nuevo líder pasa a ser ADMIN y el anterior a MEMBER.
+        """
+        if not self.is_active:
+            raise TeamNotActiveException(self.team_id)
+
+        if not self.is_leader(requester_id):
+            raise UserNotTeamLeaderException(requester_id, self.team_id)
+
+        if requester_id == target_user_id:
+            raise LeaderCannotTransferToSelfException(self.team_id)
+
+        target_slot = None
+        current_leader_slot = None
+        for member in self._members:
+            if member.user is not None:
+                if member.user.user_id == target_user_id:
+                    target_slot = member
+                if member.user.user_id == requester_id and member.team_role == TeamRoleEnum.OWNER:
+                    current_leader_slot = member
+
+        if not target_slot:
+            raise UserNotInTeamException(target_user_id, self.team_id)
+
+        if current_leader_slot:
+            current_leader_slot.team_role = TeamRoleEnum.MEMBER
+        target_slot.team_role = TeamRoleEnum.OWNER
+
+        if self._conversation and self._conversation.members:
+            for conv_member in self._conversation.members:
+                if conv_member.user and conv_member.user.user_id == requester_id:
+                    conv_member.role = ConversationMemberRoleEnum.MEMBER
+                elif conv_member.user and conv_member.user.user_id == target_user_id:
+                    conv_member.role = ConversationMemberRoleEnum.ADMIN
 
 
     def _remove_member(self, target_user_id: int) -> None:

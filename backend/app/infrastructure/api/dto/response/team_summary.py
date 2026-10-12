@@ -116,3 +116,10 @@ class KickMemberResponse(BaseModel):
     data: TeamSummaryResponse = Field(..., description="Estado actualizado del equipo")
 
 
+class TransferLeadershipResponse(BaseModel):
+    status: str = Field("success", description="Resultado de la operación")
+    message: str = Field(..., description="Mensaje de confirmación de la transferencia de liderazgo")
+    data: TeamSummaryResponse = Field(..., description="Estado actualizado del equipo")
+
+
+
