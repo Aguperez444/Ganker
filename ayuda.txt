@@ -1,0 +1,136 @@
+User Story — Chat de equipo (chatroom)
+
+Story
+Como miembro de un equipo, quiero enviar y recibir mensajes en tiempo real dentro del chat exclusivo de mi equipo, para coordinar estrategias, horarios y comunicarme con mis compañeros.
+
+Contexto
+- Cada equipo tiene una única sala de chat grupal (chatroom), creada junto con el equipo.
+- Solo los miembros del equipo forman parte de esa sala.
+- La recepción en tiempo real funciona por WebSocket; el historial se guarda y se consulta por HTTP contra la base de datos.
+- Las conversaciones privadas (1 a 1) son un flujo aparte y no se mezclan con las salas de equipo.
+
+Criterios de aceptación
+1. Solo un usuario autenticado que sea miembro del equipo asociado a la sala puede leer y enviar mensajes. Si no es miembro, la operación se rechaza con un error de permisos.
+2. El mensaje no puede estar vacío (se considera vacío también si contiene solo espacios).
+3. El mensaje no puede superar el límite máximo de 2000 caracteres.
+4. Los mensajes válidos se almacenan en la base de datos y quedan disponibles en el historial de la sala.
+5. Los mensajes se entregan en tiempo real a los demás miembros conectados a la sala.
+
+Pendiente
+- Si el equipo fue disuelto o desactivado, no se debe permitir enviar nuevos mensajes.
+  (No implementado: por ahora no existe la acción de disolver un equipo y el acceso al chatroom no valida que el equipo siga activo.)
+
+Pruebas de usuario
+1. Enviar un mensaje de texto válido siendo miembro del equipo.
+   Resultado esperado: el mensaje se envía, se guarda y se muestra en la sala.
+2. Enviar un mensaje a una sala de un equipo al que el usuario no pertenece.
+   Resultado esperado: la operación se rechaza con un error de permisos.
+3. Enviar un mensaje vacío o con solo espacios.
+   Resultado esperado: se rechaza con el error "El mensaje enviado no puede estar vacío".
+4. Enviar un mensaje que supere los 2000 caracteres.
+   Resultado esperado: se rechaza y no se envía.
+5. Intentar enviar un mensaje a una sala de un equipo disuelto o desactivado.
+   Resultado esperado: pendiente de implementación.
+
+
+
+User Story 2
+
+Story
+Como miembro de un equipo, quiero consultar el historial de mensajes de la sala chat de mi equipo, para poder revisar conversaciones pasadas, coordinaciones o acuerdos previos.
+
+Criterios de aceptación
+Se debe validar obligatoriamente que el usuario autenticado que solicita el historial sea un miembro activo del equipo al cual pertenece dicho chatroom.
+
+Pruebas de usuario
+Probar transferir el liderazgo a un miembro activo siendo el líder actual y confirmar la acción (pasa).
+
+Probar cancelar el proceso de transferencia antes de confirmar el liderazgo se mantiene sin cambios. (pasa).
+
+Probar intentar transferir el liderazgo siendo un integrante regular sin privilegios de líder (falla).
+
+Probar intentar transferir el liderazgo a un usuario externo que no pertenece al equipo (falla).
+
+
+User Story 3
+Como jugador, quiero buscar equipos para encontrar uno al que me pueda incorporar.
+
+Criterios de aceptación
+Se debe mostrar un listado con las salas o equipos disponibles que cuenten con cupos vacantes.
+
+Cada equipo listado debe exhibir su nombre, mensaje descriptivo, rango representativo de la sala, avatar y rango de los integrantes actuales, espacios vacantes y el contador de jugadores (por ejemplo, 4/5).
+
+Se debe permitir filtrar el listado de equipos por videojuego, región y rango.
+
+Se debe permitir filtrar el listado por cantidad de espacios vacantes en el equipo
+
+Se debe permitir filtrar equipos por roles disponibles en los slots vacantes
+
+Se debe permitir buscar equipos por texto mediante coincidencias en el nombre del equipo o descripción.
+
+Se debe permitir visualizar la opción o botón "Unirse al equipo" en cada tarjeta de equipo.
+
+Si el jugador no cumple con los requisitos del equipo (rango fuera del rango mínimo/máximo o restricción regional), el sistema debe reflejarlo indicando que no cumple los requisitos cuando intente unirse.
+
+Si no existen equipos que coincidan con los criterios de búsqueda o filtros ingresados, se debe mostrar un mensaje informando que no se encontraron resultados.
+
+Se debe permitir restablecer o limpiar los filtros para volver a ver la totalidad de los equipos disponibles.
+
+Pruebas de usuario
+Probar ingresar a la sección de búsqueda y visualizar el listado de equipos con sus datos, integrantes, vacantes y contador de jugadores (pasa).
+
+Probar filtrar equipos por un rango o región donde existan equipos disponibles (pasa).
+
+Probar buscar un equipo por un nombre o palabra clave existente en el nombre o descripción (pasa).
+
+Probar realizar una búsqueda o aplicar filtros con criterios que no coincidan con ningún equipo disponible (pasa, muestra mensaje de sin resultados).
+
+Probar visualizar equipos cuyos requisitos no coinciden con el perfil del jugador y verificar que no se permita el ingreso directo (pasa).
+
+Probar limpiar los filtros aplicados y verificar que se recargue el listado general de equipos disponibles (pasa).
+
+
+User Story 4
+
+Story
+Como creador de un equipo, quiero modificar la información del equipo para mantenerla actualizada.
+
+Criterios de aceptación
+Se debe validar que el usuario autenticado sea el creador o líder del equipo para permitir la edición.
+
+Se debe permitir modificar el nombre del equipo y el mensaje o descripción de búsqueda.
+
+Se debe permitir modificar el rango mínimo y el rango máximo requeridos para ingresar al equipo.
+
+Se debe permitir modificar la opción de admitir o no jugadores provenientes de otras regiones.
+
+Se debe permitir cambiar la región del equipo
+
+No se debe permitir cambiar el videojuego asignado al equipo desde esta funcionalidad.
+
+Se debe validar que los campos obligatorios (nombre y rangos) no queden vacíos.
+
+Se debe validar que el nuevo rango mínimo no sea superior al nuevo rango máximo.
+
+Se debe validar que el nuevo rango configurado contemple y sea compatible con el rango actual del líder y de los integrantes activos del equipo.
+
+Los datos modificados deben guardarse correctamente al confirmar los cambios y actualizarse en la lista general de equipos.
+
+Si algún dato no cumple con las validaciones, no se deben aplicar los cambios y se debe notificar el error correspondiente.
+
+El creador debe recibir un mensaje de confirmación cuando el equipo haya sido modificado exitosamente.
+
+Pruebas de usuario
+Probar modificar la información del equipo con datos válidos siendo el creador del equipo (pasa).
+
+Probar acceder a la modificación del equipo siendo un miembro sin rol de creador o un usuario ajeno (falla).
+
+Probar modificar el nombre del equipo dejando el campo vacío (falla).
+
+Probar modificar los requisitos estableciendo un rango mínimo superior al rango máximo (falla).
+
+Probar modificar los rangos a un intervalo que excluya el rango actual de alguno de los miembros ya pertenecientes al equipo (falla).
+
+Probar modificar únicamente la descripción y el permiso de región sin alterar los rangos (pasa).
+
+

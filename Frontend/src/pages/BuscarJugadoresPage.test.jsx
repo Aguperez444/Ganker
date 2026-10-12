@@ -280,8 +280,11 @@ describe("US 03 - Buscar jugadores", () => {
       screen.getByRole("button", { name: /limpiar filtros/i })
     );
 
+    // Hay un debounce de 350ms en el username, así que la lista se vuelve a
+    // cargar de forma asincrónica tras limpiar los filtros.
     expect(
-      screen.getAllByRole("button", { name: /enviar mensaje/i }).length
+      (await screen.findAllByRole("button", { name: /enviar mensaje/i }))
+        .length
     ).toBe(3);
   });
 
