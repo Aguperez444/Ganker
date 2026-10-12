@@ -47,6 +47,19 @@ class ConversationConnectionManager:
                 except Exception:
                     pass  # La desconexión la gestiona el except del endpoint
 
+    async def close_conversation(self, conversation_id: int) -> None:
+        """Cierra todos los WebSockets conectados a esta conversación y la remueve del mapa."""
+        users_in_room = self._active_connections.get(conversation_id, {})
+        for user_sockets in list(users_in_room.values()):
+            for socket in list(user_sockets):
+                # noinspection broad-exception
+                try:
+                    await socket.close(code=1000, reason="Chatroom cerrado")
+                except Exception:
+                    pass
+        if conversation_id in self._active_connections:
+            del self._active_connections[conversation_id]
+
 
 # Instancia global del manager de conexiones para ser usada en los controladores
 chat_manager = ConversationConnectionManager()

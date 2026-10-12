@@ -36,36 +36,49 @@ class TeamRepositoryImpl(ITeamRepository):
         if team_orm is None:
             raise TeamNotFoundException(target_team.team_id)
 
-        member_users_by_id = {
-            member.team_member_role_id: (
-                member.user.user_id if member.user is not None else None
-            )
+        members_by_id = {
+            member.team_member_role_id: member
             for member in target_team.members
+            if member.is_persisted()
         }
-        for member_orm in team_orm.members_roles:
-            if member_orm.team_member_role_id in member_users_by_id:
-                member_orm.user_id = member_users_by_id[member_orm.team_member_role_id]
 
-        # Obtener los IDs de usuario de los miembros de la conversación del equipo actualizado
-        target_conv_member_user_ids = {
-            m.user.user_id for m in target_team.conversation.members if m.user is not None
-        }
-        # Eliminar miembros que ya no estén en la conversación
-        team_orm.conversation.members = [
-            member for member in team_orm.conversation.members
-            if member.user_id in target_conv_member_user_ids
-        ]
-        # Agregar miembros nuevos
-        existing_conv_member_user_ids = {member.user_id for member in team_orm.conversation.members}
-        for conv_member in target_team.conversation.members:
-            if conv_member.user and conv_member.user.user_id not in existing_conv_member_user_ids:
-                new_member_orm = ConversationMemberORM(
-                    conversation_id=team_orm.conversation_id,
-                    user_id=conv_member.user.user_id,
-                    role=conv_member.role.value if conv_member.role else None
-                )
-                team_orm.conversation.members.append(new_member_orm)
-                existing_conv_member_user_ids.add(conv_member.user.user_id)
+        for member_orm in team_orm.members_roles:
+            if member_orm.team_member_role_id in members_by_id:
+                updated_member = members_by_id[member_orm.team_member_role_id]
+                member_orm.user_id = updated_member.user.user_id if updated_member.user is not None else None
+                member_orm.team_role_id = updated_member.team_role.value if hasattr(updated_member.team_role, 'value') else 3
+
+        if target_team.conversation and team_orm.conversation:
+            # Obtener los IDs de usuario de los miembros de la conversación del equipo actualizado
+            target_conv_member_user_ids = {
+                m.user.user_id for m in target_team.conversation.members if m.user is not None
+            }
+            # Eliminar miembros que ya no estén en la conversación
+            team_orm.conversation.members = [
+                member for member in team_orm.conversation.members
+                if member.user_id in target_conv_member_user_ids
+            ]
+            # Actualizar roles de los miembros existentes en la conversación
+            target_conv_member_roles = {
+                m.user.user_id: (m.role.value if m.role else None)
+                for m in target_team.conversation.members
+                if m.user is not None
+            }
+            for conv_member_orm in team_orm.conversation.members:
+                if conv_member_orm.user_id in target_conv_member_roles:
+                    conv_member_orm.role = target_conv_member_roles[conv_member_orm.user_id]
+
+            # Agregar miembros nuevos
+            existing_conv_member_user_ids = {member.user_id for member in team_orm.conversation.members}
+            for conv_member in target_team.conversation.members:
+                if conv_member.user and conv_member.user.user_id not in existing_conv_member_user_ids:
+                    new_member_orm = ConversationMemberORM(
+                        conversation_id=team_orm.conversation_id,
+                        user_id=conv_member.user.user_id,
+                        role=conv_member.role.value if conv_member.role else None
+                    )
+                    team_orm.conversation.members.append(new_member_orm)
+                    existing_conv_member_user_ids.add(conv_member.user.user_id)
 
         self.session.flush()
         self.session.expire(team_orm, ["members_roles"])
@@ -123,6 +136,26 @@ class TeamRepositoryImpl(ITeamRepository):
         self.session.add(team_orm)
         self.session.flush()
         return TeamMapper.orm_to_domain(team_orm)
+
+    def delete_team(self, target_team: 'Team') -> None:
+        team_orm = (
+            self.session.query(TeamORM)
+            .filter(TeamORM.team_id == target_team.team_id)
+            .first()
+        )
+        if team_orm is None:
+            raise TeamNotFoundException(target_team.team_id)
+
+        conversation_orm = team_orm.conversation
+
+        # Eliminar el equipo (y en cascada sus members_roles) de la base de datos
+        self.session.delete(team_orm)
+        self.session.flush()
+
+        # Eliminar la conversación (chatroom) asociada de la base de datos
+        if conversation_orm:
+            self.session.delete(conversation_orm)
+            self.session.flush()
 
     def get_team_info_by_conversation_ids(self, conversation_ids: list[int]) -> dict[int, tuple[int, Optional[str]]]:
         if not conversation_ids:

@@ -205,5 +205,3 @@ class TestDomainExceptions:
         exc_not_in = UserNotInTeamException(user_id=4, team_id=1)
         assert exc_not_in.status_code == 400
         assert "4" in exc_not_in.message
-
-

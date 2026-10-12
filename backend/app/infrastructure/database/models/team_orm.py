@@ -34,4 +34,7 @@ class TeamORM(Base):
     min_rank: Mapped["RankORM"] = relationship(foreign_keys=[min_rank_id])
     max_rank: Mapped["RankORM"] = relationship(foreign_keys=[max_rank_id])
     conversation: Mapped["ConversationORM"] = relationship(back_populates="teams")
-    members_roles: Mapped[List["TeamMemberRoleORM"]] = relationship(back_populates="team")
+    members_roles: Mapped[List["TeamMemberRoleORM"]] = relationship(
+        back_populates="team",
+        cascade="all, delete-orphan"
+    )
