@@ -122,4 +122,10 @@ class TransferLeadershipResponse(BaseModel):
     data: TeamSummaryResponse = Field(..., description="Estado actualizado del equipo")
 
 
+class DeactivateTeamResponse(BaseModel):
+    status: str = Field("success", description="Resultado de la operación")
+    message: str = Field(..., description="Mensaje de confirmación para el creador")
+    data: TeamSummaryResponse = Field(..., description="Estado actualizado del equipo")
+
+
 
