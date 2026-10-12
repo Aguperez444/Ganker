@@ -1,5 +1,6 @@
 import io
 import pytest
+from tests.conftest import VALID_PNG_BYTES, VALID_SVG_BYTES
 
 from app.infrastructure.database.models.game_profile_orm import GameProfileORM
 from app.infrastructure.database.models.character_priority_orm import CharacterPriorityORM
@@ -14,7 +15,7 @@ class TestCharacterEndpointsIntegration:
 
     def test_register_character_success(self, client, admin_auth_headers, seed_catalog_data):
         vg_id = seed_catalog_data["videogame"].videogame_id
-        file = ("tracer.png", io.BytesIO(b"fake-character-icon"), "image/png")
+        file = ("tracer.png", io.BytesIO(VALID_PNG_BYTES), "image/png")
         data = {
             "name": "Tracer",
             "videogame_id": vg_id
@@ -34,7 +35,7 @@ class TestCharacterEndpointsIntegration:
         assert res_data["icon_url"].startswith("/media/games/")
 
     def test_register_character_videogame_not_found(self, client, admin_auth_headers):
-        file = ("char.png", io.BytesIO(b"data"), "image/png")
+        file = ("char.png", io.BytesIO(VALID_PNG_BYTES), "image/png")
         data = {
             "name": "Ghost",
             "videogame_id": 99999
@@ -51,7 +52,7 @@ class TestCharacterEndpointsIntegration:
 
     def test_register_character_without_videogame(self, client, admin_auth_headers):
         # Probar registrar un personaje sin seleccionar un videojuego (falla)
-        file = ("char.png", io.BytesIO(b"data"), "image/png")
+        file = ("char.png", io.BytesIO(VALID_PNG_BYTES), "image/png")
         data = {"name": "NoGameChar"}
         response = client.post("/api/v1/characters/", data=data, files={"icon": file}, headers=admin_auth_headers)
         assert response.status_code == 422
@@ -59,7 +60,7 @@ class TestCharacterEndpointsIntegration:
     def test_register_character_without_name(self, client, admin_auth_headers, seed_catalog_data):
         # Probar registrar un personaje sin ingresar su nombre (falla)
         vg_id = seed_catalog_data["videogame"].videogame_id
-        file = ("char.png", io.BytesIO(b"data"), "image/png")
+        file = ("char.png", io.BytesIO(VALID_PNG_BYTES), "image/png")
         data = {"videogame_id": vg_id}
         response = client.post("/api/v1/characters/", data=data, files={"icon": file}, headers=admin_auth_headers)
         assert response.status_code == 422
@@ -73,7 +74,7 @@ class TestCharacterEndpointsIntegration:
         test_db_session.refresh(vg2)
 
         existing_char_name = seed_catalog_data["characters"][0].name
-        file = ("char.png", io.BytesIO(b"data"), "image/png")
+        file = ("char.png", io.BytesIO(VALID_PNG_BYTES), "image/png")
         data = {
             "name": existing_char_name,
             "videogame_id": vg2.videogame_id
@@ -93,7 +94,7 @@ class TestCharacterEndpointsIntegration:
     def test_register_character_duplicate_name(self, client, admin_auth_headers, seed_catalog_data):
         vg_id = seed_catalog_data["videogame"].videogame_id
         existing_char_name = seed_catalog_data["characters"][0].name
-        file = ("char.png", io.BytesIO(b"data"), "image/png")
+        file = ("char.png", io.BytesIO(VALID_PNG_BYTES), "image/png")
         data = {
             "name": existing_char_name,
             "videogame_id": vg_id
@@ -111,7 +112,7 @@ class TestCharacterEndpointsIntegration:
 
     def test_register_character_invalid_name(self, client, admin_auth_headers, seed_catalog_data):
         vg_id = seed_catalog_data["videogame"].videogame_id
-        file = ("char.png", io.BytesIO(b"data"), "image/png")
+        file = ("char.png", io.BytesIO(VALID_PNG_BYTES), "image/png")
         data = {
             "name": "  ",
             "videogame_id": vg_id
@@ -128,7 +129,7 @@ class TestCharacterEndpointsIntegration:
 
     def test_register_character_forbidden_for_player(self, client, player_auth_headers, seed_catalog_data):
         vg_id = seed_catalog_data["videogame"].videogame_id
-        file = ("char.png", io.BytesIO(b"data"), "image/png")
+        file = ("char.png", io.BytesIO(VALID_PNG_BYTES), "image/png")
         data = {"name": "ForbiddenChar", "videogame_id": vg_id}
 
         response = client.post("/api/v1/characters/", data=data, files={"icon": file}, headers=player_auth_headers)
@@ -136,7 +137,7 @@ class TestCharacterEndpointsIntegration:
 
     def test_register_character_unauthorized(self, client, seed_catalog_data):
         vg_id = seed_catalog_data["videogame"].videogame_id
-        file = ("char.png", io.BytesIO(b"data"), "image/png")
+        file = ("char.png", io.BytesIO(VALID_PNG_BYTES), "image/png")
         data = {"name": "UnauthorizedChar", "videogame_id": vg_id}
 
         response = client.post("/api/v1/characters/", data=data, files={"icon": file})
@@ -149,7 +150,7 @@ class TestCharacterEndpointsIntegration:
     def test_update_character_success(self, client, admin_auth_headers, seed_catalog_data):
         char_id = seed_catalog_data["characters"][0].character_id
         vg_id = seed_catalog_data["videogame"].videogame_id
-        file = ("new_icon.png", io.BytesIO(b"new-icon-data"), "image/png")
+        file = ("new_icon.png", io.BytesIO(VALID_PNG_BYTES), "image/png")
         data = {
             "name": "Updated Character Name",
             "videogame_id": vg_id
@@ -170,7 +171,7 @@ class TestCharacterEndpointsIntegration:
 
     def test_update_character_not_found(self, client, admin_auth_headers, seed_catalog_data):
         vg_id = seed_catalog_data["videogame"].videogame_id
-        file = ("icon.png", io.BytesIO(b"data"), "image/png")
+        file = ("icon.png", io.BytesIO(VALID_PNG_BYTES), "image/png")
         data = {
             "name": "Whatever",
             "videogame_id": vg_id
@@ -189,7 +190,7 @@ class TestCharacterEndpointsIntegration:
         char_to_update = seed_catalog_data["characters"][0]
         other_char = seed_catalog_data["characters"][1]
         vg_id = seed_catalog_data["videogame"].videogame_id
-        file = ("icon.png", io.BytesIO(b"data"), "image/png")
+        file = ("icon.png", io.BytesIO(VALID_PNG_BYTES), "image/png")
 
         data = {
             "name": other_char.name,
@@ -209,7 +210,7 @@ class TestCharacterEndpointsIntegration:
         # Probar modificar el nombre de un personaje dejando el campo vacío (falla)
         char_id = seed_catalog_data["characters"][0].character_id
         vg_id = seed_catalog_data["videogame"].videogame_id
-        file = ("icon.png", io.BytesIO(b"data"), "image/png")
+        file = ("icon.png", io.BytesIO(VALID_PNG_BYTES), "image/png")
         data = {"name": "   ", "videogame_id": vg_id}
 
         response = client.put(f"/api/v1/characters/{char_id}", data=data, files={"icon": file}, headers=admin_auth_headers)
@@ -219,7 +220,7 @@ class TestCharacterEndpointsIntegration:
         # Probar modificar un personaje manteniendo su nombre actual y cambiando únicamente su avatar (pasa)
         char = seed_catalog_data["characters"][0]
         vg_id = seed_catalog_data["videogame"].videogame_id
-        file = ("new_icon.png", io.BytesIO(b"new-icon-data"), "image/png")
+        file = ("new_icon.png", io.BytesIO(VALID_PNG_BYTES), "image/png")
         data = {
             "name": char.name,
             "videogame_id": vg_id
@@ -245,7 +246,7 @@ class TestCharacterEndpointsIntegration:
         test_db_session.commit()
 
         char_lol = seed_catalog_data["characters"][0]
-        file = ("icon.png", io.BytesIO(b"data"), "image/png")
+        file = ("icon.png", io.BytesIO(VALID_PNG_BYTES), "image/png")
         data = {
             "name": "Jett",
             "videogame_id": seed_catalog_data["videogame"].videogame_id
@@ -271,7 +272,7 @@ class TestCharacterEndpointsIntegration:
     def test_update_character_forbidden_for_player(self, client, player_auth_headers, seed_catalog_data):
         char_id = seed_catalog_data["characters"][0].character_id
         vg_id = seed_catalog_data["videogame"].videogame_id
-        file = ("icon.png", io.BytesIO(b"data"), "image/png")
+        file = ("icon.png", io.BytesIO(VALID_PNG_BYTES), "image/png")
         data = {"name": "ForbiddenUpdate", "videogame_id": vg_id}
 
         response = client.put(f"/api/v1/characters/{char_id}", data=data, files={"icon": file}, headers=player_auth_headers)
@@ -280,7 +281,7 @@ class TestCharacterEndpointsIntegration:
     def test_update_character_unauthorized(self, client, seed_catalog_data):
         char_id = seed_catalog_data["characters"][0].character_id
         vg_id = seed_catalog_data["videogame"].videogame_id
-        file = ("icon.png", io.BytesIO(b"data"), "image/png")
+        file = ("icon.png", io.BytesIO(VALID_PNG_BYTES), "image/png")
         data = {"name": "NoAuth", "videogame_id": vg_id}
 
         response = client.put(f"/api/v1/characters/{char_id}", data=data, files={"icon": file})

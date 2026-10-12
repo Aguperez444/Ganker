@@ -1,5 +1,6 @@
 import io
 import pytest
+from tests.conftest import VALID_PNG_BYTES, VALID_SVG_BYTES
 
 from app.infrastructure.database.models.videogame_orm import VideogameORM
 from app.infrastructure.database.models.role_orm import RoleORM
@@ -16,7 +17,7 @@ class TestRoleEndpointsIntegration:
 
     def test_create_role_admin_success(self, client, admin_auth_headers, seed_catalog_data):
         vg_id = seed_catalog_data["videogame"].videogame_id
-        file = ("duelist.png", io.BytesIO(b"fake-role-icon"), "image/png")
+        file = ("duelist.png", io.BytesIO(VALID_PNG_BYTES), "image/png")
         data = {
             "name": "Duelist",
             "videogame_id": vg_id
@@ -36,7 +37,7 @@ class TestRoleEndpointsIntegration:
         assert res_data["icon_url"].startswith("/media/games/")
 
     def test_create_role_videogame_not_found(self, client, admin_auth_headers):
-        file = ("role.png", io.BytesIO(b"data"), "image/png")
+        file = ("role.png", io.BytesIO(VALID_PNG_BYTES), "image/png")
         data = {
             "name": "Ghost Role",
             "videogame_id": 99999
@@ -53,7 +54,7 @@ class TestRoleEndpointsIntegration:
 
     def test_create_role_without_videogame(self, client, admin_auth_headers):
         # Probar registrar un rol sin seleccionar un videojuego (falla)
-        file = ("role.png", io.BytesIO(b"data"), "image/png")
+        file = ("role.png", io.BytesIO(VALID_PNG_BYTES), "image/png")
         data = {"name": "NoGameRole"}
         response = client.post("/api/v1/roles", data=data, files={"icon": file}, headers=admin_auth_headers)
         assert response.status_code == 422
@@ -61,7 +62,7 @@ class TestRoleEndpointsIntegration:
     def test_create_role_without_name(self, client, admin_auth_headers, seed_catalog_data):
         # Probar registrar un rol sin ingresar el nombre del rol (falla)
         vg_id = seed_catalog_data["videogame"].videogame_id
-        file = ("role.png", io.BytesIO(b"data"), "image/png")
+        file = ("role.png", io.BytesIO(VALID_PNG_BYTES), "image/png")
         data = {"videogame_id": vg_id}
         response = client.post("/api/v1/roles", data=data, files={"icon": file}, headers=admin_auth_headers)
         assert response.status_code == 422
@@ -74,7 +75,7 @@ class TestRoleEndpointsIntegration:
         test_db_session.refresh(vg2)
 
         existing_role_name = seed_catalog_data["roles"][0].name
-        file = ("role.png", io.BytesIO(b"data"), "image/png")
+        file = ("role.png", io.BytesIO(VALID_PNG_BYTES), "image/png")
         data = {
             "name": existing_role_name,
             "videogame_id": vg2.videogame_id
@@ -95,7 +96,7 @@ class TestRoleEndpointsIntegration:
     def test_create_role_duplicate_name(self, client, admin_auth_headers, seed_catalog_data):
         vg_id = seed_catalog_data["videogame"].videogame_id
         existing_role_name = seed_catalog_data["roles"][0].name
-        file = ("role.png", io.BytesIO(b"data"), "image/png")
+        file = ("role.png", io.BytesIO(VALID_PNG_BYTES), "image/png")
         data = {
             "name": existing_role_name,
             "videogame_id": vg_id
@@ -113,7 +114,7 @@ class TestRoleEndpointsIntegration:
 
     def test_create_role_invalid_name(self, client, admin_auth_headers, seed_catalog_data):
         vg_id = seed_catalog_data["videogame"].videogame_id
-        file = ("role.png", io.BytesIO(b"data"), "image/png")
+        file = ("role.png", io.BytesIO(VALID_PNG_BYTES), "image/png")
         data = {
             "name": "   ",
             "videogame_id": vg_id
@@ -145,7 +146,7 @@ class TestRoleEndpointsIntegration:
 
     def test_create_role_forbidden_for_player(self, client, player_auth_headers, seed_catalog_data):
         vg_id = seed_catalog_data["videogame"].videogame_id
-        file = ("role.png", io.BytesIO(b"data"), "image/png")
+        file = ("role.png", io.BytesIO(VALID_PNG_BYTES), "image/png")
         data = {
             "name": "ForbiddenRole",
             "videogame_id": vg_id
@@ -162,7 +163,7 @@ class TestRoleEndpointsIntegration:
 
     def test_create_role_unauthorized(self, client, seed_catalog_data):
         vg_id = seed_catalog_data["videogame"].videogame_id
-        file = ("role.png", io.BytesIO(b"data"), "image/png")
+        file = ("role.png", io.BytesIO(VALID_PNG_BYTES), "image/png")
         data = {"name": "NoAuthRole", "videogame_id": vg_id}
 
         response = client.post("/api/v1/roles", data=data, files={"icon": file})
@@ -197,7 +198,7 @@ class TestRoleEndpointsIntegration:
     def test_update_role_admin_success(self, client, admin_auth_headers, seed_catalog_data):
         # Probar modificar un rol ingresando información válida y confirmar los cambios (pasa)
         role = seed_catalog_data["roles"][0]
-        file = ("mid_carry.png", io.BytesIO(b"new-role-icon"), "image/png")
+        file = ("mid_carry.png", io.BytesIO(VALID_PNG_BYTES), "image/png")
         data = {
             "name": "Mid Carry"
         }
@@ -238,7 +239,7 @@ class TestRoleEndpointsIntegration:
     def test_update_role_keep_name_change_icon_success(self, client, admin_auth_headers, seed_catalog_data):
         # Probar modificar un rol manteniendo su nombre actual y cambiando únicamente su ícono o descripción (pasa)
         role = seed_catalog_data["roles"][0]
-        file = ("mid_shiny.png", io.BytesIO(b"shiny-mid-icon"), "image/png")
+        file = ("mid_shiny.png", io.BytesIO(VALID_PNG_BYTES), "image/png")
         data = {
             "name": role.name
         }
@@ -329,7 +330,7 @@ class TestRoleEndpointsIntegration:
 
     def test_update_role_invalid_icon_filename(self, client, admin_auth_headers, seed_catalog_data):
         role = seed_catalog_data["roles"][0]
-        file = ("", io.BytesIO(b"data"), "image/png")
+        file = ("", io.BytesIO(VALID_PNG_BYTES), "image/png")
         data = {
             "name": "Some Role"
         }

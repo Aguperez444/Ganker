@@ -7,6 +7,7 @@ from app.domain.models.conversation import Conversation
 from app.domain.models.conversation_member import ConversationMember
 from app.domain.models.conversation_type_enum import ConversationTypeEnum
 from app.domain.models.team_role_enum import TeamRoleEnum
+from app.domain.exceptions.domain_exception import DomainException
 from app.domain.exceptions.team.invalid_rank_exception import InvalidrankException
 from app.domain.exceptions.team.user_already_in_team_exception import UserAlreadyInTeamException
 from app.domain.services.catalog_validation_service import CatalogValidationService
@@ -147,6 +148,8 @@ class CreateTeam:
                         subfolder=f"teams/icons",
                         preserve_original_name=False
                     )
+                except DomainException:
+                    raise
                 except Exception as e:
                     # Si hay un error al subir la imagen, se lanza una excepción
                     raise Exception(f"Error inesperado al subir la nueva imagen del equipo: {str(e)}")

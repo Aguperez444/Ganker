@@ -1,5 +1,6 @@
 import io
 import pytest
+from tests.conftest import VALID_PNG_BYTES, VALID_SVG_BYTES
 
 
 class TestVideogameEndpointsIntegration:
@@ -9,7 +10,7 @@ class TestVideogameEndpointsIntegration:
     # ---------------------------------------------------------
 
     def test_register_videogame_success(self, client, admin_auth_headers):
-        file = ("game_icon.png", io.BytesIO(b"fake-game-icon-data"), "image/png")
+        file = ("game_icon.png", io.BytesIO(VALID_PNG_BYTES), "image/png")
         data = {"name": "Overwatch 2", "rank_per_role": True}
 
         response = client.post(
@@ -28,7 +29,7 @@ class TestVideogameEndpointsIntegration:
         assert res_data["has_characters"] is True
 
     def test_register_videogame_without_characters_success(self, client, admin_auth_headers):
-        file = ("cs2_icon.png", io.BytesIO(b"fake-cs2-icon-data"), "image/png")
+        file = ("cs2_icon.png", io.BytesIO(VALID_PNG_BYTES), "image/png")
         data = {"name": "Counter-Strike 2", "rank_per_role": False, "has_characters": False}
 
         response = client.post(
@@ -44,7 +45,7 @@ class TestVideogameEndpointsIntegration:
         assert res_data["has_characters"] is False
 
     def test_register_videogame_forbidden_for_player(self, client, player_auth_headers):
-        file = ("game_icon.png", io.BytesIO(b"data"), "image/png")
+        file = ("game_icon.png", io.BytesIO(VALID_PNG_BYTES), "image/png")
         data = {"name": "Apex Legends"}
 
         response = client.post(
@@ -57,14 +58,14 @@ class TestVideogameEndpointsIntegration:
         assert response.status_code == 403
 
     def test_register_videogame_unauthorized_without_token(self, client):
-        file = ("game_icon.png", io.BytesIO(b"data"), "image/png")
+        file = ("game_icon.png", io.BytesIO(VALID_PNG_BYTES), "image/png")
         data = {"name": "Apex Legends"}
 
         response = client.post("/api/v1/videogames/", data=data, files={"icon": file})
         assert response.status_code == 401
 
     def test_register_videogame_duplicate_name(self, client, admin_auth_headers, seed_catalog_data):
-        file = ("game_icon.png", io.BytesIO(b"data"), "image/png")
+        file = ("game_icon.png", io.BytesIO(VALID_PNG_BYTES), "image/png")
         existing_name = seed_catalog_data["videogame"].name
         data = {"name": existing_name, "rank_per_role": True}
 
@@ -79,7 +80,7 @@ class TestVideogameEndpointsIntegration:
         assert "ya existe" in response.json().get("error", "").lower()
 
     def test_register_videogame_empty_name(self, client, admin_auth_headers):
-        file = ("game_icon.png", io.BytesIO(b"data"), "image/png")
+        file = ("game_icon.png", io.BytesIO(VALID_PNG_BYTES), "image/png")
         data = {"name": "   ", "rank_per_role": True}
 
         response = client.post(
@@ -108,7 +109,7 @@ class TestVideogameEndpointsIntegration:
 
     def test_update_videogame_success(self, client, admin_auth_headers, seed_catalog_data):
         vg_id = seed_catalog_data["videogame"].videogame_id
-        file = ("updated_game_icon.png", io.BytesIO(b"updated-icon-data"), "image/png")
+        file = ("updated_game_icon.png", io.BytesIO(VALID_PNG_BYTES), "image/png")
         data = {"name": "Updated Game Name", "rank_per_role": False}
 
         response = client.put(
@@ -143,7 +144,7 @@ class TestVideogameEndpointsIntegration:
     def test_update_videogame_empty_name(self, client, admin_auth_headers, seed_catalog_data):
         # Probar modificar un videojuego sin ingresar el nombre (falla)
         vg_id = seed_catalog_data["videogame"].videogame_id
-        file = ("icon.png", io.BytesIO(b"data"), "image/png")
+        file = ("icon.png", io.BytesIO(VALID_PNG_BYTES), "image/png")
         data = {"name": "   ", "rank_per_role": False}
 
         response = client.put(
@@ -163,7 +164,7 @@ class TestVideogameEndpointsIntegration:
         test_db_session.refresh(vg2)
 
         vg1_id = seed_catalog_data["videogame"].videogame_id
-        file = ("icon.png", io.BytesIO(b"data"), "image/png")
+        file = ("icon.png", io.BytesIO(VALID_PNG_BYTES), "image/png")
         data = {"name": "Valorant", "rank_per_role": False}
 
         response = client.put(
@@ -176,7 +177,7 @@ class TestVideogameEndpointsIntegration:
         assert "ya existe" in response.json().get("error", "").lower()
 
     def test_update_videogame_not_found(self, client, admin_auth_headers):
-        file = ("icon.png", io.BytesIO(b"data"), "image/png")
+        file = ("icon.png", io.BytesIO(VALID_PNG_BYTES), "image/png")
         data = {"name": "Nonexistent", "rank_per_role": False}
 
         response = client.put(
@@ -190,7 +191,7 @@ class TestVideogameEndpointsIntegration:
 
     def test_update_videogame_forbidden_for_player(self, client, player_auth_headers, seed_catalog_data):
         vg_id = seed_catalog_data["videogame"].videogame_id
-        file = ("icon.png", io.BytesIO(b"data"), "image/png")
+        file = ("icon.png", io.BytesIO(VALID_PNG_BYTES), "image/png")
         data = {"name": "Forbidden Update"}
 
         response = client.put(
@@ -204,7 +205,7 @@ class TestVideogameEndpointsIntegration:
 
     def test_update_videogame_unauthorized(self, client, seed_catalog_data):
         vg_id = seed_catalog_data["videogame"].videogame_id
-        file = ("icon.png", io.BytesIO(b"data"), "image/png")
+        file = ("icon.png", io.BytesIO(VALID_PNG_BYTES), "image/png")
         data = {"name": "No Auth"}
 
         response = client.put(f"/api/v1/videogames/{vg_id}", data=data, files={"icon": file})
@@ -228,7 +229,7 @@ class TestVideogameEndpointsIntegration:
 
     def test_get_all_videogames_after_registering_new(self, client, admin_auth_headers, player_auth_headers):
         # Probar consultar la lista luego de registrar un nuevo videojuego (pasa)
-        file = ("cs2.png", io.BytesIO(b"icon-data"), "image/png")
+        file = ("cs2.png", io.BytesIO(VALID_PNG_BYTES), "image/png")
         reg_res = client.post(
             "/api/v1/videogames/",
             data={"name": "Counter-Strike 2", "rank_per_role": False},
@@ -245,7 +246,7 @@ class TestVideogameEndpointsIntegration:
     def test_get_all_videogames_after_modifying_name(self, client, admin_auth_headers, player_auth_headers, seed_catalog_data):
         # Probar consultar la lista luego de modificar el nombre de un videojuego (pasa)
         vg_id = seed_catalog_data["videogame"].videogame_id
-        file = ("icon.png", io.BytesIO(b"data"), "image/png")
+        file = ("icon.png", io.BytesIO(VALID_PNG_BYTES), "image/png")
         put_res = client.put(
             f"/api/v1/videogames/{vg_id}",
             data={"name": "League of Legends Remastered", "rank_per_role": True},

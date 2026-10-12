@@ -2,6 +2,7 @@ from typing import Optional, BinaryIO
 
 from app.application.ports.i_storage_service import IStorageService
 from app.application.ports.i_unit_of_work import IUnitOfWork
+from app.domain.exceptions.domain_exception import DomainException
 from app.domain.exceptions.file.file_name_not_null_exception import FileNameNotNullException
 from app.domain.exceptions.user.user_not_found_exception import UserNotFoundException
 from app.domain.services.catalog_validation_service import CatalogValidationService
@@ -49,6 +50,8 @@ class UpdateUser:
                         subfolder=f"users/icons",
                         preserve_original_name=False
                     )
+                except DomainException:
+                    raise
                 except Exception as e:
                     # Si hay un error al subir la imagen, se lanza una excepción
                     raise Exception(f"Error inesperado al subir la nueva imagen del jugador: {str(e)}")

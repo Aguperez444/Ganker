@@ -1,6 +1,7 @@
 from datetime import datetime
 import io
 import pytest
+from tests.conftest import VALID_PNG_BYTES, VALID_SVG_BYTES
 
 from app.domain.models.user_role import UserRole
 from app.infrastructure.database.models.character_orm import CharacterORM
@@ -148,7 +149,7 @@ class TestTeamEndpointsIntegration:
         response = client.post(
             "/api/v1/teams",
             data=self._team_form(payload),
-            files={"team_icon": ("vengadores.png", io.BytesIO(b"fake-team-icon"), "image/png")},
+            files={"team_icon": ("vengadores.png", io.BytesIO(VALID_PNG_BYTES), "image/png")},
             headers=player_auth_headers,
         )
         assert response.status_code == 201
@@ -187,6 +188,58 @@ class TestTeamEndpointsIntegration:
         get_res = client.get(f"/api/v1/teams/{data['team_id']}", headers=player_auth_headers)
         assert get_res.status_code == 200
         assert get_res.json()["team_id"] == data["team_id"]
+
+    def test_create_team_with_valid_svg_icon_success(self, client, player_auth_headers, setup_data):
+        vg = setup_data["videogame"]
+        ranks = setup_data["ranks"]
+        roles = setup_data["roles"]
+        reg = setup_data["regions"]["las"]
+        payload = {
+            "name": "Equipo Vector",
+            "description": "Equipo con icono SVG",
+            "allow_other_regions": False,
+            "videogame_id": vg.videogame_id,
+            "region_id": reg.region_id,
+            "min_rank_id": ranks["silver"].rank_id,
+            "max_rank_id": ranks["gold"].rank_id,
+            "creator_game_role_id": roles["duelist"].role_id,
+            "vacant_game_role_ids": [roles["controller"].role_id]
+        }
+        response = client.post(
+            "/api/v1/teams",
+            data=self._team_form(payload),
+            files={"team_icon": ("team_logo.svg", io.BytesIO(VALID_SVG_BYTES), "image/svg+xml")},
+            headers=player_auth_headers,
+        )
+        assert response.status_code == 201
+        data = response.json()
+        assert data["icon_url"].startswith("/media/teams/icons/")
+        assert data["icon_url"].endswith(".svg")
+
+    def test_create_team_with_malicious_svg_icon_fails(self, client, player_auth_headers, setup_data):
+        vg = setup_data["videogame"]
+        ranks = setup_data["ranks"]
+        roles = setup_data["roles"]
+        reg = setup_data["regions"]["las"]
+        evil_svg = b'<svg xmlns="http://www.w3.org/2000/svg"><script>alert("team-xss")</script></svg>'
+        payload = {
+            "name": "Equipo Malicioso",
+            "description": "Intento de XSS en icono",
+            "allow_other_regions": False,
+            "videogame_id": vg.videogame_id,
+            "region_id": reg.region_id,
+            "min_rank_id": ranks["silver"].rank_id,
+            "max_rank_id": ranks["gold"].rank_id,
+            "creator_game_role_id": roles["duelist"].role_id,
+            "vacant_game_role_ids": [roles["controller"].role_id]
+        }
+        response = client.post(
+            "/api/v1/teams",
+            data=self._team_form(payload),
+            files={"team_icon": ("evil.svg", io.BytesIO(evil_svg), "image/svg+xml")},
+            headers=player_auth_headers,
+        )
+        assert response.status_code == 400
 
     def test_create_team_empty_mandatory_fields_fails(self, client, player_auth_headers, setup_data):
         vg = setup_data["videogame"]

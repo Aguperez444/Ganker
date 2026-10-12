@@ -5,7 +5,7 @@ from typing import BinaryIO
 
 from app.application.ports.i_storage_service import IStorageService
 from app.domain.exceptions.file.storage_security_error import StorageSecurityError
-from app.domain.services.slug_service import SlugService
+from app.domain.services.file_validation_service import FileValidationService
 from app.infrastructure.config.settings import settings
 
 
@@ -37,8 +37,8 @@ class LocalDiskStorageService(IStorageService):
             subfolder: str,
             preserve_original_name: bool = False
     ) -> str:
-        # 1. Comprueba que la extensión sea permitida y genera slug del nombre
-        clean_stem, ext = SlugService.sanitize_image_filename(filename)
+        # 1. Comprueba extensión y valida contenido real del archivo
+        clean_stem, ext = FileValidationService.validate_image_file(file_content, filename)
 
         # 2. Resuelve la sub carpeta y asegura que no intente subir niveles
         target_dir = self._resolve_and_validate_path(subfolder)
