@@ -265,5 +265,8 @@ def client(monkeypatch, test_session_factory, jwt_service, tmp_path):
     import app.infrastructure.api.dependencies.auth as auth_dep
     monkeypatch.setattr(auth_dep, "token_service", jwt_service)
 
+    from app.infrastructure.api.dependencies.login_rate_limiter import login_rate_limiter
+    login_rate_limiter.reset()
+
     with TestClient(app) as test_client:
         yield test_client

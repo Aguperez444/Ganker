@@ -1480,6 +1480,96 @@ class TestTeamEndpointsIntegration:
         res_jane = client.post("/api/v1/teams", data=self._team_form(payload_jane), headers=headers_jane)
         assert res_jane.status_code == 201
 
+    # ---------------------------------------------------------
+    # WEBSOCKET AUTHENTICATION & ACCESS REVOCATION
+    # ---------------------------------------------------------
+
+    def test_team_feed_websocket_requires_authentication(self, client, jwt_service, seed_player):
+        from starlette.websockets import WebSocketDisconnect
+
+        # Sin token es rechazado con WS_1008_POLICY_VIOLATION
+        with pytest.raises(WebSocketDisconnect) as exc_info:
+            with client.websocket_connect("/api/v1/ws/teams"):
+                pass
+        assert exc_info.value.code == 1008
+
+        # Con token inválido es rechazado
+        with pytest.raises(WebSocketDisconnect) as exc_info:
+            with client.websocket_connect("/api/v1/ws/teams?token=token_invalido"):
+                pass
+        assert exc_info.value.code == 1008
+
+        # Con token válido de jugador se conecta exitosamente
+        _, valid_token = self._headers(jwt_service, seed_player)
+        with client.websocket_connect(f"/api/v1/ws/teams?token={valid_token}") as ws:
+            assert ws is not None
+
+    def test_kicked_member_websocket_is_closed_and_cannot_receive_messages(
+        self, client, jwt_service, player_auth_headers, setup_data
+    ):
+        from starlette.websockets import WebSocketDisconnect
+
+        team_data = self._create_sample_team(client, player_auth_headers, setup_data)
+        team_id = team_data["team_id"]
+        chatroom_id = team_data["conversation_id"]
+        target_slot_id = team_data["members"][1]["team_member_role_id"]
+
+        jane_user = setup_data["players"]["janedoe"]
+        headers_jane, token_jane = self._headers(jwt_service, jane_user)
+
+        # Jane se une al equipo
+        join_res = client.post(
+            f"/api/v1/teams/{team_id}/join",
+            json={"target_team_member_role_id": target_slot_id},
+            headers=headers_jane,
+        )
+        assert join_res.status_code == 200
+
+        # Jane se conecta al WebSocket del chatroom
+        with client.websocket_connect(f"/api/v1/ws/chat/chatroom/{chatroom_id}?token={token_jane}") as ws_jane:
+            # El líder expulsa a Jane
+            kick_res = client.delete(
+                f"/api/v1/teams/{team_id}/kick/{jane_user.user_id}",
+                headers=player_auth_headers,
+            )
+            assert kick_res.status_code == 200
+
+            # El socket de Jane debe haber sido cerrado con 1008
+            with pytest.raises(WebSocketDisconnect) as exc_info:
+                ws_jane.receive_text()
+            assert exc_info.value.code == 1008
+
+    def test_member_leaving_team_websocket_is_closed(
+        self, client, jwt_service, player_auth_headers, setup_data
+    ):
+        from starlette.websockets import WebSocketDisconnect
+
+        team_data = self._create_sample_team(client, player_auth_headers, setup_data)
+        team_id = team_data["team_id"]
+        chatroom_id = team_data["conversation_id"]
+        target_slot_id = team_data["members"][1]["team_member_role_id"]
+
+        jane_user = setup_data["players"]["janedoe"]
+        headers_jane, token_jane = self._headers(jwt_service, jane_user)
+
+        # Jane se une al equipo
+        client.post(
+            f"/api/v1/teams/{team_id}/join",
+            json={"target_team_member_role_id": target_slot_id},
+            headers=headers_jane,
+        )
+
+        # Jane se conecta al WebSocket del chatroom
+        with client.websocket_connect(f"/api/v1/ws/chat/chatroom/{chatroom_id}?token={token_jane}") as ws_jane:
+            # Jane sale del equipo
+            leave_res = client.delete(f"/api/v1/teams/{team_id}/leave", headers=headers_jane)
+            assert leave_res.status_code == 200
+
+            # El socket de Jane debe haber sido cerrado con 1008
+            with pytest.raises(WebSocketDisconnect) as exc_info:
+                ws_jane.receive_text()
+            assert exc_info.value.code == 1008
+
 
 
 
