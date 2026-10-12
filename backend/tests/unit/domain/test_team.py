@@ -414,5 +414,51 @@ def test_delete_team_when_inactive_succeeds(base_setup):
     assert team.members[0].user is None
 
 
+def test_deactivate_team_success(base_setup):
+    from app.domain.models.conversation_member import ConversationMember
+    from app.domain.models.conversation_member_role_enum import ConversationMemberRoleEnum
+    team, user, vg, region_team, _, role, _, _ = base_setup
+
+    user2 = User(2, "u2", "U2", "b@b.com", "pw", UserRole.PLAYER, [])
+    team.members[0].user = user
+    team.members[1].user = user2
+    team.conversation.members = [
+        ConversationMember(1, 1, user, ConversationMemberRoleEnum.ADMIN),
+        ConversationMember(2, 1, user2, ConversationMemberRoleEnum.MEMBER)
+    ]
+
+    team.deactivate(requester_id=user.user_id)
+
+    # El equipo queda inactivo
+    assert team.is_active is False
+    # Los miembros NO se desvinculan
+    assert team.members[0].user == user
+    assert team.members[1].user == user2
+    # El chatroom NO se vacía ni se cierra
+    assert len(team.conversation.members) == 2
+
+
+def test_deactivate_team_as_non_leader_fails(base_setup):
+    from app.domain.exceptions.team.user_not_team_leader_exception import UserNotTeamLeaderException
+    team, user, _, _, _, _, _, _ = base_setup
+    user2 = User(2, "u2", "U2", "b@b.com", "pw", UserRole.PLAYER, [])
+    team.members[0].user = user
+    team.members[1].user = user2
+
+    with pytest.raises(UserNotTeamLeaderException):
+        team.deactivate(requester_id=user2.user_id)
+
+
+def test_deactivate_team_already_inactive_fails(base_setup):
+    from app.domain.exceptions.team.team_not_active_exception import TeamNotActiveException
+    team, user, _, _, _, _, _, _ = base_setup
+    team.members[0].user = user
+    team.is_active = False
+
+    with pytest.raises(TeamNotActiveException):
+        team.deactivate(requester_id=user.user_id)
+
+
+
 
 
