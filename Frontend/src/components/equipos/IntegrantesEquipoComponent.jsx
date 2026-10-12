@@ -9,12 +9,15 @@ const CLASES_ETIQUETA = "shrink-0 rounded-full border font-semibold";
 // onExpulsar es opcional: la pagina solo lo pasa si quien mira es el lider.
 // El boton no aparece en las vacantes ni en la fila del lider, asi el lider
 // no puede elegirse a si mismo (el backend tambien lo rechaza).
+// onTransferirLiderazgo (US 43) sigue la misma regla: solo lo pasa el lider
+// y solo aparece en las filas de los otros integrantes.
 //
 // `compacto`: renglones de una sola linea, para las tarjetas de Buscar
 // equipos (US 17) donde entran varios equipos por pantalla.
 const IntegrantesEquipoComponent = ({
   integrantes,
   onExpulsar,
+  onTransferirLiderazgo,
   compacto = false,
 }) => {
   const tamanioAvatar = compacto ? "h-7 w-7" : "h-10 w-10";
@@ -107,15 +110,30 @@ const IntegrantesEquipoComponent = ({
               </span>
             )}
 
-            {onExpulsar && !integrante.is_vacant && !integrante.is_leader && (
-              <button
-                type="button"
-                onClick={() => onExpulsar(integrante)}
-                className="shrink-0 cursor-pointer rounded-lg px-3 py-2 text-sm font-semibold text-ganker-error transition hover:bg-ganker-error/10"
-              >
-                Expulsar
-              </button>
-            )}
+            {(onTransferirLiderazgo || onExpulsar) &&
+              !integrante.is_vacant &&
+              !integrante.is_leader && (
+                <div className="flex shrink-0 items-center gap-1">
+                  {onTransferirLiderazgo && (
+                    <button
+                      type="button"
+                      onClick={() => onTransferirLiderazgo(integrante)}
+                      className="cursor-pointer rounded-lg px-3 py-2 text-sm font-semibold text-ganker-purple-light transition hover:bg-ganker-purple/20 hover:text-ganker-text"
+                    >
+                      Hacer líder
+                    </button>
+                  )}
+                  {onExpulsar && (
+                    <button
+                      type="button"
+                      onClick={() => onExpulsar(integrante)}
+                      className="cursor-pointer rounded-lg px-3 py-2 text-sm font-semibold text-ganker-error transition hover:bg-ganker-error/10"
+                    >
+                      Expulsar
+                    </button>
+                  )}
+                </div>
+              )}
           </li>
         );
       })}

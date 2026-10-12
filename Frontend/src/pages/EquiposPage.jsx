@@ -1,4 +1,4 @@
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import FiltrosEquiposComponent from "../components/equipos/FiltrosEquiposComponent";
 import ModalUnirseEquipoComponent from "../components/equipos/ModalUnirseEquipoComponent";
 import TarjetaEquipoComponent from "../components/equipos/TarjetaEquipoComponent";
@@ -35,6 +35,8 @@ function MensajeResultados({ children, error = false }) {
 // (US 17) para unirse desde cada tarjeta (US 18).
 const EquiposPage = () => {
   const navigate = useNavigate();
+  // US 16 - Confirmacion al volver de eliminar el equipo.
+  const mensajeExito = useLocation().state?.mensajeExito ?? "";
   const { equipo, cargando, error } = useMiEquipo();
   const busqueda = useBuscarEquipos();
   const union = useUnirseEquipo({
@@ -105,6 +107,15 @@ const EquiposPage = () => {
             Creá tu equipo o buscá uno con vacantes afín a tu rango y tus roles.
           </p>
         </header>
+
+        {mensajeExito && (
+          <div
+            role="status"
+            className="rounded-lg border border-ganker-success/20 bg-ganker-success/10 px-4 py-3"
+          >
+            <p className="text-sm text-ganker-success">✓ {mensajeExito}</p>
+          </div>
+        )}
 
         <div className="rounded-2xl border border-white/10 bg-ganker-surface p-5 sm:p-6">
           {cargando ? (

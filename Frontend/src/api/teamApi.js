@@ -120,3 +120,27 @@ export function expulsarIntegrante(equipoId, usuarioId) {
     .delete(`/api/v1/teams/${equipoId}/kick/${usuarioId}`)
     .then((res) => res.data);
 }
+
+// US 43 - Transferir liderazgo de equipo.
+//   POST /api/v1/teams/{team_id}/transfer-leadership/{target_user_id}
+// Solo el lider puede transferirlo, a otro integrante del equipo (lo valida
+// el backend). El lider anterior queda como integrante comun y el backend
+// avisa del cambio a todos los integrantes por el socket de notificaciones.
+// Devuelve { status, message, data: TeamSummaryResponse }.
+export function transferirLiderazgo(equipoId, usuarioId) {
+  return axiosClient
+    .post(`/api/v1/teams/${equipoId}/transfer-leadership/${usuarioId}`)
+    .then((res) => res.data);
+}
+
+// US 16 - Eliminar equipo.
+//   DELETE /api/v1/teams/{team_id}
+// Solo el lider puede disolverlo (lo valida el backend). El backend
+// desvincula a todos los integrantes, cierra el chatroom del equipo y les
+// avisa por el socket de notificaciones.
+// Devuelve { status, message }.
+export function eliminarEquipo(equipoId) {
+  return axiosClient
+    .delete(`/api/v1/teams/${equipoId}`)
+    .then((res) => res.data);
+}

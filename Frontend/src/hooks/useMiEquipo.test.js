@@ -2,11 +2,18 @@ import { act, renderHook, waitFor } from "@testing-library/react";
 import { describe, it, expect, beforeEach, vi } from "vitest";
 
 import useMiEquipo from "./useMiEquipo";
-import { expulsarIntegrante, obtenerMiEquipo } from "../api/teamApi";
+import {
+  eliminarEquipo,
+  expulsarIntegrante,
+  obtenerMiEquipo,
+  transferirLiderazgo,
+} from "../api/teamApi";
 
 vi.mock("../api/teamApi", () => ({
   obtenerMiEquipo: vi.fn(),
   expulsarIntegrante: vi.fn(),
+  transferirLiderazgo: vi.fn(),
+  eliminarEquipo: vi.fn(),
 }));
 
 const equipoCompleto = {
@@ -122,5 +129,117 @@ describe("useMiEquipo", () => {
 
     act(() => result.current.limpiarErrorExpulsion());
     expect(result.current.errorExpulsion).toBe("");
+  });
+});
+
+describe("useMiEquipo - US 43 transferir liderazgo", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    obtenerMiEquipo.mockResolvedValue(equipoCompleto);
+  });
+
+  it("transfiere el liderazgo, refresca el equipo y devuelve el mensaje", async () => {
+    const { result } = await renderHookListo();
+    transferirLiderazgo.mockResolvedValue({
+      status: "success",
+      message: "El liderazgo del equipo fue transferido exitosamente a pepe",
+    });
+
+    let mensaje;
+    await act(async () => {
+      mensaje = await result.current.transferirLiderazgo(2);
+    });
+
+    expect(transferirLiderazgo).toHaveBeenCalledWith(3, 2);
+    expect(mensaje).toBe(
+      "El liderazgo del equipo fue transferido exitosamente a pepe"
+    );
+    expect(obtenerMiEquipo).toHaveBeenCalledTimes(2);
+    expect(result.current.errorTransferencia).toBe("");
+  });
+
+  it("rechaza con un mensaje propio si quien transfiere no es el líder (403)", async () => {
+    const { result } = await renderHookListo();
+    transferirLiderazgo.mockRejectedValue({
+      response: {
+        status: 403,
+        data: {
+          error: "El usuario con ID 2 no es el líder del equipo con ID 3.",
+        },
+      },
+    });
+
+    let mensaje;
+    await act(async () => {
+      mensaje = await result.current.transferirLiderazgo(1);
+    });
+
+    expect(mensaje).toBeNull();
+    expect(result.current.errorTransferencia).toBe(
+      "Solo el líder del equipo puede transferir el liderazgo."
+    );
+  });
+
+  it("rechaza si el jugador no pertenece al equipo (400 con IDs)", async () => {
+    const { result } = await renderHookListo();
+    transferirLiderazgo.mockRejectedValue({
+      response: {
+        status: 400,
+        data: { error: "El usuario con ID 9 no pertenece al equipo con ID 3." },
+      },
+    });
+
+    await act(async () => {
+      await result.current.transferirLiderazgo(9);
+    });
+
+    expect(result.current.errorTransferencia).toBe(
+      "Ese jugador ya no forma parte del equipo."
+    );
+  });
+});
+
+describe("useMiEquipo - US 16 eliminar equipo", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    obtenerMiEquipo.mockResolvedValue(equipoCompleto);
+  });
+
+  it("elimina el equipo y devuelve la confirmación del backend", async () => {
+    const { result } = await renderHookListo();
+    eliminarEquipo.mockResolvedValue({
+      status: "success",
+      message: "El equipo fue disuelto exitosamente.",
+    });
+
+    let mensaje;
+    await act(async () => {
+      mensaje = await result.current.eliminarEquipo();
+    });
+
+    expect(eliminarEquipo).toHaveBeenCalledWith(3);
+    expect(mensaje).toBe("El equipo fue disuelto exitosamente.");
+  });
+
+  it("deniega la eliminación a quien no es el líder (403)", async () => {
+    const { result } = await renderHookListo();
+    eliminarEquipo.mockRejectedValue({
+      response: {
+        status: 403,
+        data: {
+          error: "El usuario con ID 2 no es el líder del equipo con ID 3.",
+        },
+      },
+    });
+
+    let mensaje;
+    await act(async () => {
+      mensaje = await result.current.eliminarEquipo();
+    });
+
+    expect(mensaje).toBeNull();
+    expect(result.current.errorEliminacion).toBe(
+      "Solo el líder del equipo puede eliminarlo."
+    );
   });
 });

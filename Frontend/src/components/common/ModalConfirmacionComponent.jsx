@@ -1,10 +1,20 @@
 import { useEffect } from "react";
 
+// `confirmVariant`: "danger" (rojo, por defecto) para acciones destructivas
+// como expulsar o eliminar; "primary" para confirmaciones que no destruyen
+// nada (ej. transferir el liderazgo).
+const CLASES_BOTON_CONFIRMAR = {
+  danger: "bg-ganker-error hover:bg-ganker-error/80",
+  primary:
+    "bg-gradient-to-r from-ganker-orange to-ganker-purple hover:opacity-90",
+};
+
 const ModalConfirmacionComponent = ({
   isOpen,
   title,
   message,
   confirmLabel = "Confirmar",
+  confirmVariant = "danger",
   isLoading = false,
   error = "",
   onConfirm,
@@ -63,7 +73,10 @@ const ModalConfirmacionComponent = ({
             type="button"
             onClick={onConfirm}
             disabled={isLoading}
-            className="cursor-pointer rounded-lg bg-ganker-error px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-ganker-error/80 disabled:cursor-not-allowed disabled:opacity-50"
+            className={`cursor-pointer rounded-lg px-4 py-2.5 text-sm font-semibold text-white transition disabled:cursor-not-allowed disabled:opacity-50 ${
+              CLASES_BOTON_CONFIRMAR[confirmVariant] ??
+              CLASES_BOTON_CONFIRMAR.danger
+            }`}
           >
             {isLoading ? "Procesando..." : confirmLabel}
           </button>
