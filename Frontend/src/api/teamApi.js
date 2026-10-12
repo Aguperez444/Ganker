@@ -54,3 +54,14 @@ export function crearEquipo({
 export function obtenerMiEquipo() {
   return axiosClient.get("/api/v1/teams/me").then((res) => res.data);
 }
+
+// US - Expulsar jugador del equipo.
+//   DELETE /api/v1/teams/{team_id}/kick/{target_user_id}
+// Solo el lider puede expulsar y no puede expulsarse a si mismo (lo valida el
+// backend). Libera el cupo y saca al jugador del chatroom del equipo.
+// Devuelve { status, message, data: TeamSummaryResponse }.
+export function expulsarIntegrante(equipoId, usuarioId) {
+  return axiosClient
+    .delete(`/api/v1/teams/${equipoId}/kick/${usuarioId}`)
+    .then((res) => res.data);
+}

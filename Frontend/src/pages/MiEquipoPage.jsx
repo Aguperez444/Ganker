@@ -1,14 +1,56 @@
+import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import AvisoComponent from "../components/common/AvisoComponent";
+import ModalConfirmacionComponent from "../components/common/ModalConfirmacionComponent";
 import FichaEquipoComponent from "../components/equipos/FichaEquipoComponent";
 import IntegrantesEquipoComponent from "../components/equipos/IntegrantesEquipoComponent";
 import useMiEquipo from "../hooks/useMiEquipo";
 
 // US 14 - Crear equipo: vista del equipo a la que se redirige al crearlo.
+// US - Expulsar jugador: el lider expulsa integrantes desde la lista.
 const MiEquipoPage = () => {
   const location = useLocation();
-  const mensajeExito = location.state?.mensajeExito;
-  const { equipo, cargando, error } = useMiEquipo();
+  // Arranca con el mensaje de Crear equipo (si se llego desde ahi) y despues
+  // lo reemplaza el de la expulsion.
+  const [mensajeExito, setMensajeExito] = useState(
+    location.state?.mensajeExito ?? ""
+  );
+  const [integranteAExpulsar, setIntegranteAExpulsar] = useState(null);
+  const {
+    equipo,
+    cargando,
+    error,
+    expulsando,
+    errorExpulsion,
+    expulsarIntegrante,
+    limpiarErrorExpulsion,
+  } = useMiEquipo();
+
+  const esLider = Boolean(equipo?.consultant_player_info?.is_leader);
+
+  const handleAbrirExpulsion = (integrante) => {
+    limpiarErrorExpulsion();
+    setMensajeExito("");
+    setIntegranteAExpulsar(integrante);
+  };
+
+  const handleCancelarExpulsion = () => {
+    limpiarErrorExpulsion();
+    setIntegranteAExpulsar(null);
+  };
+
+  const handleConfirmarExpulsion = async () => {
+    if (!integranteAExpulsar) return;
+
+    const exito = await expulsarIntegrante(integranteAExpulsar.user_id);
+
+    if (!exito) return;
+
+    setMensajeExito(
+      `${integranteAExpulsar.username} fue expulsado del equipo correctamente.`
+    );
+    setIntegranteAExpulsar(null);
+  };
 
   let contenido;
 
@@ -39,7 +81,10 @@ const MiEquipoPage = () => {
           <h2 className="mb-4 font-heading text-lg font-semibold text-ganker-text">
             Integrantes
           </h2>
-          <IntegrantesEquipoComponent integrantes={equipo.members} />
+          <IntegrantesEquipoComponent
+            integrantes={equipo.members}
+            onExpulsar={esLider ? handleAbrirExpulsion : undefined}
+          />
         </div>
 
         {/* El chat grupal (abrir la sala, enviar y ver mensajes) es de las
@@ -79,6 +124,26 @@ const MiEquipoPage = () => {
 
         {contenido}
       </div>
+
+      <ModalConfirmacionComponent
+        isOpen={integranteAExpulsar !== null}
+        title="Expulsar jugador"
+        message={
+          <p>
+            ¿Seguro que querés expulsar a{" "}
+            <span className="font-semibold text-ganker-text">
+              {integranteAExpulsar?.username}
+            </span>{" "}
+            del equipo? Va a perder el acceso al chat del equipo y su lugar
+            quedará vacante.
+          </p>
+        }
+        confirmLabel="Expulsar"
+        isLoading={expulsando}
+        error={errorExpulsion}
+        onConfirm={handleConfirmarExpulsion}
+        onCancel={handleCancelarExpulsion}
+      />
     </section>
   );
 };
