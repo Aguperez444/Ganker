@@ -19,7 +19,13 @@ import { urlDeMedia } from "../../utils/media";
 // el boton de limpiar todos los filtros. Pensada para selects de filtro
 // (Buscar jugadores), no para selects que agregan a una lista (personajes
 // de un perfil de juego).
+//
+// `id`: se pone en el boton para asociarlo a un <label htmlFor> (accesible y
+// encontrable con getByLabelText en los tests). `error`: borde en rojo, igual
+// que los demas controles de formulario.
 function IconSelectComponent({
+  id,
+  error = false,
   value,
   onChange,
   options,
@@ -113,10 +119,14 @@ function IconSelectComponent({
   return (
     <div className="relative" ref={containerRef}>
       <button
+        id={id}
         type="button"
+        aria-expanded={isOpen}
         onClick={() => !disabled && (isOpen ? cerrar() : setIsOpen(true))}
         disabled={disabled}
-        className="flex w-full items-center gap-2 rounded-xl border border-white/10 bg-ganker-surface-light px-4 py-3 text-left text-sm text-ganker-text outline-none transition focus:border-ganker-purple-light disabled:cursor-not-allowed disabled:opacity-60"
+        className={`flex w-full items-center gap-2 rounded-xl border ${
+          error ? "border-ganker-error" : "border-white/10"
+        } bg-ganker-surface-light px-4 py-3 text-left text-sm text-ganker-text outline-none transition focus:border-ganker-purple-light disabled:cursor-not-allowed disabled:opacity-60`}
       >
         {selectedOption ? (
           <>

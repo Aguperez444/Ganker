@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { describe, it, expect, beforeEach, vi } from "vitest";
@@ -16,7 +16,11 @@ const { usuario } = vi.hoisted(() => ({
     profiles: [
       {
         game_profile_id: 7,
-        videogame: { id: 1, name: "League of Legends" },
+        videogame: {
+          id: 1,
+          name: "League of Legends",
+          icon_url: "/media/games/league_of_legends/lol.png",
+        },
         region: { region_id: 2, name: "LAS" },
         characters: [],
         role_profiles: [
@@ -120,13 +124,27 @@ function renderPagina() {
   );
 }
 
-async function elegirVideojuego(user) {
-  await user.selectOptions(screen.getByLabelText(/videojuego/i), "1");
-  // Espera a que lleguen los catalogos del juego.
-  await screen.findAllByRole("option", { name: "Diamante" });
+// Los desplegables con imagen (IconSelectComponent) no son <select> nativos:
+// se abre la lista con un click y se elige la opcion por su texto. (No por
+// el nombre del boton: si la opcion no tiene imagen, el componente muestra su
+// inicial y queda dentro del nombre accesible, ej. "H Hierro").
+async function elegirOpcion(user, label, opcion) {
+  const disparador = screen.getByLabelText(label);
+  await user.click(disparador);
+  const lista = within(disparador.parentElement).getByRole("list");
+  await user.click(within(lista).getByText(opcion));
 }
 
-async function completarFormulario(user, { minimo = "1", maximo = "5" } = {}) {
+async function elegirVideojuego(user) {
+  await elegirOpcion(user, /videojuego/i, "League of Legends");
+  // Espera a que lleguen los catalogos del juego.
+  await screen.findByRole("option", { name: "LAN" });
+}
+
+async function completarFormulario(
+  user,
+  { minimo = "Hierro", maximo = "Diamante" } = {}
+) {
   // El formulario aparece recien despues de verificar que no tenga equipo.
   await user.type(
     await screen.findByLabelText(/nombre del equipo/i),
@@ -137,12 +155,12 @@ async function completarFormulario(user, { minimo = "1", maximo = "5" } = {}) {
     "Buscamos jungla"
   );
   await elegirVideojuego(user);
-  await user.selectOptions(screen.getByLabelText(/rango mínimo/i), minimo);
-  await user.selectOptions(screen.getByLabelText(/rango máximo/i), maximo);
-  await user.selectOptions(screen.getByLabelText(/tu rol en el equipo/i), "10");
+  await elegirOpcion(user, /rango mínimo/i, minimo);
+  await elegirOpcion(user, /rango máximo/i, maximo);
+  await elegirOpcion(user, /tu rol en el equipo/i, "Mid (Oro)");
   await user.selectOptions(screen.getByLabelText(/cupos vacantes/i), "2");
-  await user.selectOptions(screen.getByLabelText(/rol del cupo 1/i), "12");
-  await user.selectOptions(screen.getByLabelText(/rol del cupo 2/i), "11");
+  await elegirOpcion(user, /rol del cupo 1/i, "Jungla");
+  await elegirOpcion(user, /rol del cupo 2/i, "Top");
 }
 
 describe("US 14 - Crear equipo", () => {
@@ -175,6 +193,10 @@ describe("US 14 - Crear equipo", () => {
 
     // La region arranca en la del perfil del jugador.
     expect(screen.getByLabelText(/^región/i)).toHaveValue("2");
+    // El desplegable muestra la imagen del videojuego elegido.
+    expect(
+      screen.getByLabelText(/videojuego/i).querySelector("img")
+    ).toHaveAttribute("src", expect.stringContaining("lol.png"));
 
     obtenerMiEquipo.mockResolvedValue(equipoCreado);
     await user.click(screen.getByRole("button", { name: /crear equipo/i }));
@@ -228,7 +250,7 @@ describe("US 14 - Crear equipo", () => {
     const user = userEvent.setup();
     renderPagina();
 
-    await completarFormulario(user, { minimo: "5", maximo: "1" });
+    await completarFormulario(user, { minimo: "Diamante", maximo: "Hierro" });
     await user.click(screen.getByRole("button", { name: /crear equipo/i }));
 
     expect(
@@ -242,7 +264,10 @@ describe("US 14 - Crear equipo", () => {
     renderPagina();
 
     // El jugador es Oro como Mid y el equipo solo admite Diamante.
-    await completarFormulario(user, { minimo: "5", maximo: "5" });
+    await completarFormulario(user, {
+      minimo: "Diamante",
+      maximo: "Diamante",
+    });
     await user.click(screen.getByRole("button", { name: /crear equipo/i }));
 
     expect(screen.getByText(/tu rango \(oro\)/i)).toBeInTheDocument();
