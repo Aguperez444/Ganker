@@ -257,17 +257,36 @@ class TestCharacterEndpointsIntegration:
         res_data = response.json()
         assert res_data["name"] == "Jett"
 
-    def test_update_character_missing_icon(self, client, admin_auth_headers, seed_catalog_data):
-        char_id = seed_catalog_data["characters"][0].character_id
+    def test_update_character_without_icon_success(self, client, admin_auth_headers, seed_catalog_data):
+        char = seed_catalog_data["characters"][0]
+        original_icon = char.icon_url
         vg_id = seed_catalog_data["videogame"].videogame_id
-        data = {"name": "NoIcon", "videogame_id": vg_id}
+        data = {"name": "NoIconUpdate", "videogame_id": vg_id}
 
         response = client.put(
-            f"/api/v1/characters/{char_id}",
+            f"/api/v1/characters/{char.character_id}",
             data=data,
             headers=admin_auth_headers
         )
-        assert response.status_code == 422
+        assert response.status_code == 200
+        res_data = response.json()
+        assert res_data["character_id"] == char.character_id
+        assert res_data["name"] == "NoIconUpdate"
+        assert res_data["icon_url"] == original_icon
+
+    def test_update_character_empty_filename_rejected(self, client, admin_auth_headers, seed_catalog_data):
+        char = seed_catalog_data["characters"][0]
+        vg_id = seed_catalog_data["videogame"].videogame_id
+        file = ("", io.BytesIO(VALID_PNG_BYTES), "image/png")
+        data = {"name": "EmptyFilename", "videogame_id": vg_id}
+
+        response = client.put(
+            f"/api/v1/characters/{char.character_id}",
+            data=data,
+            files={"icon": file},
+            headers=admin_auth_headers
+        )
+        assert response.status_code in [400, 422]
 
     def test_update_character_forbidden_for_player(self, client, player_auth_headers, seed_catalog_data):
         char_id = seed_catalog_data["characters"][0].character_id

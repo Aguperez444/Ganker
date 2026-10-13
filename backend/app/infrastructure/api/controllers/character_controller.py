@@ -50,18 +50,18 @@ def register_character(name: str = Form(..., description="Nombre del personaje")
 def update_character(character_id: int,
                            name: str = Form(..., description="Nombre del personaje"),
                            videogame_id: int = Form(..., description="ID del videojuego"),
-                           icon: UploadFile|None = File(description="Archivo de imagen del ícono"),
+                           icon: UploadFile | None = File(None, description="Archivo de imagen del ícono"),
                            ):
     icon_file = None
     file_name = None
 
     if icon:
-        icon_file = icon.file
         if not icon.filename:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="El archivo debe tener un nombre válido."
             )
+        icon_file = icon.file
         file_name = icon.filename
 
     uow = uow_factory()
