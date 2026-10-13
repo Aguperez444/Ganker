@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import DesplegableConImagenDelJuego from "../common/DesplegableConImagenDelJuego";
 import { resolveIconUrl } from "../../utils/media";
 
 const CharacterForm = ({
@@ -163,25 +164,16 @@ const CharacterForm = ({
             Videojuego <span className="text-ganker-orange">*</span>
           </label>
 
-          <select
+          <DesplegableConImagenDelJuego
             id="character-videogame"
             value={videogameId}
-            onChange={(event) => {
-              setVideogameId(event.target.value);
+            onChange={(videojuegoId) => {
+              setVideogameId(videojuegoId);
               if (validationError) setValidationError("");
             }}
+            options={games}
             disabled={isLoading}
-            className="w-full rounded-lg border border-white/10 bg-ganker-surface-light px-4 py-3 text-ganker-text outline-none transition-all duration-200 focus:border-ganker-purple-light focus:ring-2 focus:ring-ganker-purple/30 disabled:cursor-not-allowed disabled:opacity-50"
-          >
-            <option value="" disabled>
-              Seleccioná un videojuego
-            </option>
-            {games.map((game) => (
-              <option key={game.id} value={game.id}>
-                {game.name}
-              </option>
-            ))}
-          </select>
+          />
         </div>
 
         <div>

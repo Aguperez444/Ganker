@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import CharacterForm from "../../components/characters/CharacterFormComponent";
 import CharactersListComponent from "../../components/characters/CharactersListComponent";
+import DesplegableConImagenDelJuego from "../../components/common/DesplegableConImagenDelJuego";
 import useGames from "../../hooks/useGames";
 import useCharacters from "../../hooks/useCharacters";
 import ModalConfirmacionComponent from "../../components/common/ModalConfirmacionComponent";
@@ -186,20 +187,17 @@ const CharactersPage = () => {
                   >
                     Ver personajes de
                   </label>
-                  <select
-                    id="characters-videogame-filter"
-                    value={selectedGameId}
-                    onChange={(event) => setSelectedGameId(event.target.value)}
-                    disabled={isLoadingGames}
-                    className="w-full max-w-xs rounded-lg border border-white/10 bg-ganker-surface-light px-4 py-2.5 text-sm text-ganker-text outline-none transition-all duration-200 focus:border-ganker-purple-light focus:ring-2 focus:ring-ganker-purple/30 disabled:cursor-not-allowed disabled:opacity-50"
-                  >
-                    <option value="">Ver personajes de...</option>
-                    {games.map((game) => (
-                      <option key={game.id} value={game.id}>
-                        {game.name}
-                      </option>
-                    ))}
-                  </select>
+                  <div className="max-w-xs">
+                    <DesplegableConImagenDelJuego
+                      id="characters-videogame-filter"
+                      value={selectedGameId}
+                      onChange={setSelectedGameId}
+                      options={games}
+                      placeholder="Ver personajes de..."
+                      disabled={isLoadingGames}
+                      incluirOpcionCualquiera
+                    />
+                  </div>
                 </div>
               </div>
 
@@ -216,9 +214,9 @@ const CharactersPage = () => {
             {juegoSinPersonajes && (
               <div className="mb-4 rounded-lg border border-ganker-orange/20 bg-ganker-orange/10 px-4 py-3">
                 <p className="text-sm text-ganker-orange-light">
-                  {juegoSeleccionado.name} no tiene personajes (la opción
-                  "Tiene personajes" del videojuego está desactivada), así que
-                  no se le pueden registrar personajes nuevos.
+                  {juegoSeleccionado.name} no tiene personajes (la opción "Tiene
+                  personajes" del videojuego está desactivada), así que no se le
+                  pueden registrar personajes nuevos.
                 </p>
               </div>
             )}
@@ -270,7 +268,7 @@ const CharactersPage = () => {
           )}
         </div>
       </div>
-            <ModalConfirmacionComponent
+      <ModalConfirmacionComponent
         isOpen={Boolean(characterToDelete)}
         title="Eliminar personaje"
         message={
@@ -284,8 +282,8 @@ const CharactersPage = () => {
             </p>
             <p className="mt-2">
               Si algún jugador lo tiene entre sus personajes preferidos, se
-              quitará de su perfil y se reordenarán las prioridades. Esta
-              acción no se puede deshacer.
+              quitará de su perfil y se reordenarán las prioridades. Esta acción
+              no se puede deshacer.
             </p>
           </>
         }
@@ -296,7 +294,6 @@ const CharactersPage = () => {
         onCancel={handleCancelDelete}
       />
     </section>
-    
   );
 };
 

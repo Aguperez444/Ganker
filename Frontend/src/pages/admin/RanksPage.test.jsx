@@ -1,4 +1,4 @@
-import { render, screen, within } from "@testing-library/react";
+import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, it, expect, beforeEach, vi } from "vitest";
 
@@ -19,12 +19,17 @@ const RANGOS = [
   { rank_id: 2, name: "Oro", value: 3, icon_url: "/media/ranks/o.png" },
 ];
 
+async function elegirJuego(usuario, etiqueta, nombreJuego) {
+  const disparador = await screen.findByLabelText(etiqueta);
+  await waitFor(() => expect(disparador).toBeEnabled());
+  await usuario.click(disparador);
+  const lista = within(disparador.parentElement).getByRole("list");
+  await usuario.click(within(lista).getByText(nombreJuego));
+}
+
 async function abrirRangosDeLol(usuario) {
   render(<RanksPage />);
-  await usuario.selectOptions(
-    await screen.findByLabelText("Ver rangos de"),
-    "1"
-  );
+  await elegirJuego(usuario, "Ver rangos de", "League of Legends");
   await screen.findByText("Oro");
 }
 

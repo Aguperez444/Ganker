@@ -1,6 +1,7 @@
 import { useState } from "react";
 import CampoTexto from "../components/common/CampoTexto";
 import IconSelectComponent from "../components/common/IconSelectComponent";
+import DesplegableConImagenDelJuego from "../components/common/DesplegableConImagenDelJuego";
 import JugadorCardComponent from "../components/jugadores/JugadorCardComponent";
 import { useChat } from "../context/ChatContext";
 import { useBuscarJugadores } from "../hooks/useBuscarJugadores";
@@ -99,12 +100,10 @@ const BuscarJugadoresPage = () => {
               </p>
             ) : (
               <div className="max-w-sm">
-                <IconSelectComponent
+                <DesplegableConImagenDelJuego
                   value={selectedGameId}
                   onChange={selectGame}
                   options={games}
-                  placeholder="Seleccioná un videojuego"
-                  getOptionId={(game) => game.id}
                 />
               </div>
             )}

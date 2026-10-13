@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import RoleForm from "../../components/roles/RoleFormComponent";
 import RolesListComponent from "../../components/roles/RolesListComponent";
 import ModalConfirmacionComponent from "../../components/common/ModalConfirmacionComponent";
+import DesplegableConImagenDelJuego from "../../components/common/DesplegableConImagenDelJuego";
 import useGames from "../../hooks/useGames";
 import useRoles from "../../hooks/useRoles";
 
@@ -158,20 +159,17 @@ const RolesPage = () => {
                   <label htmlFor="roles-videogame-filter" className="sr-only">
                     Ver roles de
                   </label>
-                  <select
-                    id="roles-videogame-filter"
-                    value={selectedGameId}
-                    onChange={(event) => setSelectedGameId(event.target.value)}
-                    disabled={isLoadingGames}
-                    className="w-full max-w-xs rounded-lg border border-white/10 bg-ganker-surface-light px-4 py-2.5 text-sm text-ganker-text outline-none transition-all duration-200 focus:border-ganker-purple-light focus:ring-2 focus:ring-ganker-purple/30 disabled:cursor-not-allowed disabled:opacity-50"
-                  >
-                    <option value="">Ver roles de...</option>
-                    {games.map((game) => (
-                      <option key={game.id} value={game.id}>
-                        {game.name}
-                      </option>
-                    ))}
-                  </select>
+                  <div className="max-w-xs">
+                    <DesplegableConImagenDelJuego
+                      id="roles-videogame-filter"
+                      value={selectedGameId}
+                      onChange={setSelectedGameId}
+                      options={games}
+                      placeholder="Ver roles de..."
+                      disabled={isLoadingGames}
+                      incluirOpcionCualquiera
+                    />
+                  </div>
                 </div>
               </div>
 

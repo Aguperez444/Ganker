@@ -30,14 +30,18 @@ vi.mock("../../hooks/useCharacters", () => ({
 }));
 
 describe("CharactersPage - videojuegos sin personajes", () => {
+  async function elegirJuego(usuario, etiqueta, nombreJuego) {
+    const disparador = await screen.findByLabelText(etiqueta);
+    await usuario.click(disparador);
+    const lista = within(disparador.parentElement).getByRole("list");
+    await usuario.click(within(lista).getByText(nombreJuego));
+  }
+
   it("no ofrece registrar personajes en juegos con 'Tiene personajes' desactivado", async () => {
     const usuario = userEvent.setup();
     render(<CharactersPage />);
 
-    await usuario.selectOptions(
-      screen.getByLabelText("Ver personajes de"),
-      "2"
-    );
+    await elegirJuego(usuario, "Ver personajes de", "CS2");
     expect(
       screen.getByText(/no se le pueden registrar personajes nuevos/i)
     ).toBeInTheDocument();
@@ -47,13 +51,19 @@ describe("CharactersPage - videojuegos sin personajes", () => {
     );
 
     const selectJuego = screen.getByLabelText(/^Videojuego/);
-    const opciones = within(selectJuego)
-      .getAllByRole("option")
+    // CS2 estaba elegido en el filtro de la lista, pero no queda
+    // preseleccionado en el formulario.
+    expect(selectJuego).toHaveTextContent("Seleccioná un videojuego");
+
+    await usuario.click(selectJuego);
+    const lista = within(selectJuego.parentElement).getByRole("list");
+    const opciones = within(lista)
+      .getAllByRole("button")
       .map((opcion) => opcion.textContent);
 
-    expect(opciones).toContain("League of Legends");
-    expect(opciones).not.toContain("CS2");
-    // CS2 estaba elegido en la lista, pero no queda preseleccionado.
-    expect(selectJuego).toHaveValue("");
+    expect(opciones.some((texto) => texto.includes("League of Legends"))).toBe(
+      true
+    );
+    expect(opciones.some((texto) => texto.includes("CS2"))).toBe(false);
   });
 });

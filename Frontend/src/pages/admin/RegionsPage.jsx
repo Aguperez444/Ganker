@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import ModalConfirmacionComponent from "../../components/common/ModalConfirmacionComponent.jsx";
+import DesplegableConImagenDelJuego from "../../components/common/DesplegableConImagenDelJuego";
 import RegionForm from "../../components/region/RegionFormComponent";
 import RegionsListComponent from "../../components/region/RegionsListComponent";
 import useGames from "../../hooks/useGames";
@@ -35,9 +36,7 @@ const RegionsPage = () => {
     loadRegions(selectedGameId);
   }, [selectedGameId, loadRegions]);
 
-  const handleGameChange = (event) => {
-    const gameId = event.target.value;
-
+  const handleGameChange = (gameId) => {
     setSelectedGameId(gameId);
 
     setMode(null);
@@ -200,21 +199,17 @@ const RegionsPage = () => {
                       Ver regiones de
                     </label>
 
-                    <select
-                      id="regions-videogame-filter"
-                      value={selectedGameId}
-                      onChange={handleGameChange}
-                      disabled={isLoadingGames}
-                      className="w-full max-w-xs rounded-lg border border-white/10 bg-ganker-surface-light px-4 py-2.5 text-sm text-ganker-text outline-none transition-all duration-200 focus:border-ganker-purple-light focus:ring-2 focus:ring-ganker-purple/30 disabled:cursor-not-allowed disabled:opacity-50"
-                    >
-                      <option value="">Ver regiones de...</option>
-
-                      {games.map((game) => (
-                        <option key={game.id} value={game.id}>
-                          {game.name}
-                        </option>
-                      ))}
-                    </select>
+                    <div className="max-w-xs">
+                      <DesplegableConImagenDelJuego
+                        id="regions-videogame-filter"
+                        value={selectedGameId}
+                        onChange={handleGameChange}
+                        options={games}
+                        placeholder="Ver regiones de..."
+                        disabled={isLoadingGames}
+                        incluirOpcionCualquiera
+                      />
+                    </div>
                   </div>
 
                   {selectedGameId && (
