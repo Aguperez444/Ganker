@@ -1,4 +1,4 @@
-import { render, screen, within } from "@testing-library/react";
+import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, it, expect, beforeEach, vi } from "vitest";
 
@@ -19,12 +19,20 @@ const RANGOS = [
   { rank_id: 2, name: "Oro", value: 3, icon_url: "/media/ranks/o.png" },
 ];
 
+// El selector de videojuego usa IconSelectComponent (no un <select> nativo):
+// se espera a que carguen los juegos, se abre la lista y se elige por texto.
+async function elegirJuego(usuario, label, juego) {
+  const disparador = await screen.findByLabelText(label);
+  await waitFor(() => expect(disparador).toBeEnabled());
+  await usuario.click(disparador);
+  await usuario.click(
+    await within(disparador.parentElement).findByText(juego)
+  );
+}
+
 async function abrirRangosDeLol(usuario) {
   render(<RanksPage />);
-  await usuario.selectOptions(
-    await screen.findByLabelText("Ver rangos de"),
-    "1"
-  );
+  await elegirJuego(usuario, "Ver rangos de", "League of Legends");
   await screen.findByText("Oro");
 }
 

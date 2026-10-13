@@ -34,10 +34,11 @@ describe("CharactersPage - videojuegos sin personajes", () => {
     const usuario = userEvent.setup();
     render(<CharactersPage />);
 
-    await usuario.selectOptions(
-      screen.getByLabelText("Ver personajes de"),
-      "2"
-    );
+    // Los selectores de videojuego usan IconSelectComponent (no un <select>
+    // nativo): se abre la lista con un click y se elige por texto.
+    const filtro = screen.getByLabelText("Ver personajes de");
+    await usuario.click(filtro);
+    await usuario.click(within(filtro.parentElement).getByText("CS2"));
     expect(
       screen.getByText(/no se le pueden registrar personajes nuevos/i)
     ).toBeInTheDocument();
@@ -47,13 +48,12 @@ describe("CharactersPage - videojuegos sin personajes", () => {
     );
 
     const selectJuego = screen.getByLabelText(/^Videojuego/);
-    const opciones = within(selectJuego)
-      .getAllByRole("option")
-      .map((opcion) => opcion.textContent);
-
-    expect(opciones).toContain("League of Legends");
-    expect(opciones).not.toContain("CS2");
     // CS2 estaba elegido en la lista, pero no queda preseleccionado.
-    expect(selectJuego).toHaveValue("");
+    expect(selectJuego).toHaveTextContent("Seleccioná un videojuego");
+
+    await usuario.click(selectJuego);
+    const lista = within(selectJuego.parentElement).getByRole("list");
+    expect(within(lista).getByText("League of Legends")).toBeInTheDocument();
+    expect(within(lista).queryByText("CS2")).toBeNull();
   });
 });

@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import CharacterForm from "../../components/characters/CharacterFormComponent";
 import CharactersListComponent from "../../components/characters/CharactersListComponent";
+import IconSelectComponent from "../../components/common/IconSelectComponent";
 import useGames from "../../hooks/useGames";
 import useCharacters from "../../hooks/useCharacters";
 import ModalConfirmacionComponent from "../../components/common/ModalConfirmacionComponent";
@@ -186,20 +187,16 @@ const CharactersPage = () => {
                   >
                     Ver personajes de
                   </label>
-                  <select
-                    id="characters-videogame-filter"
-                    value={selectedGameId}
-                    onChange={(event) => setSelectedGameId(event.target.value)}
-                    disabled={isLoadingGames}
-                    className="w-full max-w-xs rounded-lg border border-white/10 bg-ganker-surface-light px-4 py-2.5 text-sm text-ganker-text outline-none transition-all duration-200 focus:border-ganker-purple-light focus:ring-2 focus:ring-ganker-purple/30 disabled:cursor-not-allowed disabled:opacity-50"
-                  >
-                    <option value="">Ver personajes de...</option>
-                    {games.map((game) => (
-                      <option key={game.id} value={game.id}>
-                        {game.name}
-                      </option>
-                    ))}
-                  </select>
+                  <div className="max-w-xs">
+                    <IconSelectComponent
+                      id="characters-videogame-filter"
+                      value={selectedGameId}
+                      onChange={setSelectedGameId}
+                      options={games}
+                      placeholder="Ver personajes de..."
+                      disabled={isLoadingGames}
+                    />
+                  </div>
                 </div>
               </div>
 

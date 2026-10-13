@@ -1,4 +1,5 @@
 import { useState } from "react";
+import IconSelectComponent from "../common/IconSelectComponent";
 
 const RegionForm = ({
   mode = "create",
@@ -75,29 +76,20 @@ const RegionForm = ({
             Videojuego <span className="text-ganker-orange">*</span>
           </label>
 
-          <select
+          <IconSelectComponent
             id="region-videogame"
             value={videogameId}
-            onChange={(event) => {
-              setVideogameId(event.target.value);
+            onChange={(gameId) => {
+              setVideogameId(gameId);
 
               if (validationError) {
                 setValidationError("");
               }
             }}
+            options={games}
+            placeholder="Seleccioná un videojuego"
             disabled={isLoading || isEditMode}
-            className="w-full rounded-lg border border-white/10 bg-ganker-surface-light px-4 py-3 text-ganker-text outline-none transition-all duration-200 focus:border-ganker-purple-light focus:ring-2 focus:ring-ganker-purple/30 disabled:cursor-not-allowed disabled:opacity-50"
-          >
-            <option value="" disabled>
-              Seleccioná un videojuego
-            </option>
-
-            {games.map((game) => (
-              <option key={game.id} value={game.id}>
-                {game.name}
-              </option>
-            ))}
-          </select>
+          />
 
           {isEditMode && (
             <p className="mt-2 text-xs text-ganker-muted">

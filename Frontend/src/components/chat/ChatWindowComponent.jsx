@@ -116,6 +116,7 @@ const ChatWindowComponent = ({
     };
   }, [
     conversacion.conversation_id,
+    conversacion.tipo,
     mensajesCacheados,
     cargarPaginaHistorial,
     sembrarMensajesDeConversacion,
