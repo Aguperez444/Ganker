@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import Campo from "../common/CampoFormularioComponent";
+import IconSelectComponent from "../common/IconSelectComponent";
 import Seccion from "../common/SeccionFormularioComponent";
 import {
   CUPOS_VACANTES_MAXIMO,
@@ -102,22 +103,15 @@ const CrearEquipoFormComponent = ({
           error={errores.videojuego}
           ayuda="Solo aparecen los videojuegos en los que tenés perfil."
         >
-          <select
+          <IconSelectComponent
             id="equipo-videojuego"
             value={formulario.videojuegoId}
-            onChange={(e) => onVideojuegoChange(e.target.value)}
+            onChange={onVideojuegoChange}
+            options={perfiles.map((perfil) => perfil.videogame)}
+            placeholder="Seleccioná un videojuego"
             disabled={enviando}
-            className={clasesControl(errores.videojuego)}
-          >
-            <option value="" disabled>
-              Seleccioná un videojuego
-            </option>
-            {perfiles.map((perfil) => (
-              <option key={perfil.videogame.id} value={perfil.videogame.id}>
-                {perfil.videogame.name}
-              </option>
-            ))}
-          </select>
+            error={Boolean(errores.videojuego)}
+          />
         </Campo>
 
         {errorCatalogos && (
@@ -176,24 +170,18 @@ const CrearEquipoFormComponent = ({
             obligatorio
             error={errores.rangoMinimo}
           >
-            <select
+            <IconSelectComponent
               id="equipo-rango-minimo"
               value={formulario.rangoMinimoId}
-              onChange={(e) =>
-                onCampoChange("rangoMinimoId", e.target.value, "rangoMinimo")
+              onChange={(rangoId) =>
+                onCampoChange("rangoMinimoId", rangoId, "rangoMinimo")
               }
+              options={rangos}
+              getOptionId={(rango) => rango.rank_id}
+              placeholder="Seleccioná un rango"
               disabled={catalogoDeshabilitado}
-              className={clasesControl(errores.rangoMinimo)}
-            >
-              <option value="" disabled>
-                Seleccioná un rango
-              </option>
-              {rangos.map((rango) => (
-                <option key={rango.rank_id} value={rango.rank_id}>
-                  {rango.name}
-                </option>
-              ))}
-            </select>
+              error={Boolean(errores.rangoMinimo)}
+            />
           </Campo>
 
           <Campo
@@ -202,24 +190,18 @@ const CrearEquipoFormComponent = ({
             obligatorio
             error={errores.rangoMaximo}
           >
-            <select
+            <IconSelectComponent
               id="equipo-rango-maximo"
               value={formulario.rangoMaximoId}
-              onChange={(e) =>
-                onCampoChange("rangoMaximoId", e.target.value, "rangoMaximo")
+              onChange={(rangoId) =>
+                onCampoChange("rangoMaximoId", rangoId, "rangoMaximo")
               }
+              options={rangos}
+              getOptionId={(rango) => rango.rank_id}
+              placeholder="Seleccioná un rango"
               disabled={catalogoDeshabilitado}
-              className={clasesControl(errores.rangoMaximo)}
-            >
-              <option value="" disabled>
-                Seleccioná un rango
-              </option>
-              {rangos.map((rango) => (
-                <option key={rango.rank_id} value={rango.rank_id}>
-                  {rango.name}
-                </option>
-              ))}
-            </select>
+              error={Boolean(errores.rangoMaximo)}
+            />
           </Campo>
         </div>
       </Seccion>
@@ -235,27 +217,22 @@ const CrearEquipoFormComponent = ({
           error={errores.rolCreador}
           ayuda="Solo los roles de tu perfil de juego, con tu rango en cada uno."
         >
-          <select
+          <IconSelectComponent
             id="equipo-rol-creador"
             value={formulario.rolCreadorId}
-            onChange={(e) =>
-              onCampoChange("rolCreadorId", e.target.value, "rolCreador")
+            onChange={(rolId) =>
+              onCampoChange("rolCreadorId", rolId, "rolCreador")
             }
+            options={rolesDelJugador}
+            getOptionId={(perfilRol) => perfilRol.role.role_id}
+            getOptionLabel={(perfilRol) =>
+              `${perfilRol.role.name} (${perfilRol.rank.name})`
+            }
+            getOptionIcon={(perfilRol) => perfilRol.role.icon_url}
+            placeholder="Seleccioná tu rol"
             disabled={catalogoDeshabilitado}
-            className={clasesControl(errores.rolCreador)}
-          >
-            <option value="" disabled>
-              Seleccioná tu rol
-            </option>
-            {rolesDelJugador.map((perfilRol) => (
-              <option
-                key={perfilRol.role_profile_id}
-                value={perfilRol.role.role_id}
-              >
-                {perfilRol.role.name} ({perfilRol.rank.name})
-              </option>
-            ))}
-          </select>
+            error={Boolean(errores.rolCreador)}
+          />
         </Campo>
 
         <Campo
@@ -289,22 +266,18 @@ const CrearEquipoFormComponent = ({
               label={`Rol del cupo ${indice + 1}`}
               obligatorio
             >
-              <select
+              <IconSelectComponent
                 id={`equipo-cupo-${indice}`}
                 value={rolId}
-                onChange={(e) => onRolVacanteChange(indice, e.target.value)}
+                onChange={(nuevoRolId) =>
+                  onRolVacanteChange(indice, nuevoRolId)
+                }
+                options={roles}
+                getOptionId={(rol) => rol.role_id}
+                placeholder="Seleccioná un rol"
                 disabled={catalogoDeshabilitado}
-                className={clasesControl(errores.rolesVacantes && !rolId)}
-              >
-                <option value="" disabled>
-                  Seleccioná un rol
-                </option>
-                {roles.map((rol) => (
-                  <option key={rol.role_id} value={rol.role_id}>
-                    {rol.name}
-                  </option>
-                ))}
-              </select>
+                error={Boolean(errores.rolesVacantes && !rolId)}
+              />
             </Campo>
           ))}
         </div>
