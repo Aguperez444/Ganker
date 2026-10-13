@@ -135,10 +135,13 @@ async function elegirOpcion(user, label, opcion) {
   await user.click(within(lista).getByText(opcion));
 }
 
+// El videojuego se elige por su tarjeta con imagen (mismo estilo que
+// GameProfileForm), no por un desplegable. El resto del formulario se revela
+// por pasos a medida que se completa.
 async function elegirVideojuego(user) {
-  await elegirOpcion(user, /videojuego/i, "League of Legends");
-  // Espera a que lleguen los catalogos del juego.
-  await screen.findByRole("option", { name: "LAN" });
+  await user.click(
+    await screen.findByRole("button", { name: /league of legends/i })
+  );
 }
 
 async function completarFormulario(
@@ -146,17 +149,21 @@ async function completarFormulario(
   { minimo = "Hierro", maximo = "Diamante" } = {}
 ) {
   // El formulario aparece recien despues de verificar que no tenga equipo.
-  await user.type(
-    await screen.findByLabelText(/nombre del equipo/i),
-    "Los Gankers"
-  );
+  await elegirVideojuego(user);
+  await user.type(screen.getByLabelText(/nombre del equipo/i), "Los Gankers");
   await user.type(
     screen.getByLabelText(/mensaje de búsqueda/i),
     "Buscamos jungla"
   );
-  await elegirVideojuego(user);
+
+  // Al completar los datos de la sala se revela Región + Rango permitido (y
+  // junto con ellos ya llegaron los catálogos del juego).
+  await screen.findByRole("option", { name: "LAN" });
+
   await elegirOpcion(user, /rango mínimo/i, minimo);
   await elegirOpcion(user, /rango máximo/i, maximo);
+
+  // Con región y rangos completos aparece Integrantes.
   await elegirOpcion(user, /tu rol en el equipo/i, "Mid (Oro)");
   await user.selectOptions(screen.getByLabelText(/cupos vacantes/i), "2");
   await elegirOpcion(user, /rol del cupo 1/i, "Jungla");
@@ -193,9 +200,11 @@ describe("US 14 - Crear equipo", () => {
 
     // La region arranca en la del perfil del jugador.
     expect(screen.getByLabelText(/^región/i)).toHaveValue("2");
-    // El desplegable muestra la imagen del videojuego elegido.
+    // La tarjeta del videojuego elegido muestra la imagen del juego.
     expect(
-      screen.getByLabelText(/videojuego/i).querySelector("img")
+      screen
+        .getByRole("button", { name: /league of legends/i })
+        .querySelector("img")
     ).toHaveAttribute("src", expect.stringContaining("lol.png"));
 
     obtenerMiEquipo.mockResolvedValue(equipoCreado);
@@ -231,19 +240,61 @@ describe("US 14 - Crear equipo", () => {
     const user = userEvent.setup();
     renderPagina();
 
-    await user.click(
-      await screen.findByRole("button", { name: /crear equipo/i })
-    );
+    // Sin videojuego elegido no se puede enviar ni aparece el resto.
+    const boton = await screen.findByRole("button", {
+      name: /crear equipo/i,
+    });
+    expect(boton).toBeDisabled();
+
+    await elegirVideojuego(user);
+    await user.click(boton);
 
     expect(
       screen.getByText("Ingresá el nombre del equipo.")
     ).toBeInTheDocument();
+    // Los pasos que todavía no se completaron se muestran igual para que se
+    // vean sus errores.
     expect(
-      screen.getByText("Elegí el videojuego del equipo.")
+      await screen.findByText("Elegí el rango mínimo.")
     ).toBeInTheDocument();
-    expect(screen.getByText("Elegí el rango mínimo.")).toBeInTheDocument();
     expect(screen.getByText("Elegí el rango máximo.")).toBeInTheDocument();
+    expect(
+      await screen.findByText("Elegí el rol con el que vas a jugar.")
+    ).toBeInTheDocument();
     expect(crearEquipo).not.toHaveBeenCalled();
+  });
+
+  it("revela los pasos a medida que se completa el formulario", async () => {
+    const user = userEvent.setup();
+    renderPagina();
+
+    // Antes de elegir el videojuego no hay ningún paso del formulario.
+    expect(
+      screen.queryByLabelText(/nombre del equipo/i)
+    ).not.toBeInTheDocument();
+
+    await elegirVideojuego(user);
+
+    // Paso "Datos de la sala": aparece con el videojuego elegido.
+    expect(screen.getByLabelText(/nombre del equipo/i)).toBeInTheDocument();
+    expect(screen.queryByLabelText(/^región/i)).not.toBeInTheDocument();
+    expect(
+      screen.queryByLabelText(/tu rol en el equipo/i)
+    ).not.toBeInTheDocument();
+
+    await user.type(screen.getByLabelText(/nombre del equipo/i), "Los Gankers");
+
+    // Al completar los datos de la sala aparece Región + Rango permitido.
+    expect(await screen.findByLabelText(/^región/i)).toBeInTheDocument();
+    expect(
+      screen.queryByLabelText(/tu rol en el equipo/i)
+    ).not.toBeInTheDocument();
+
+    await elegirOpcion(user, /rango mínimo/i, "Hierro");
+    await elegirOpcion(user, /rango máximo/i, "Diamante");
+
+    // Con región y rangos completos aparecen los Integrantes.
+    expect(screen.getByLabelText(/tu rol en el equipo/i)).toBeInTheDocument();
   });
 
   it("no deja crear el equipo con un rango mínimo superior al máximo", async () => {
@@ -327,7 +378,7 @@ describe("US 14 - Crear equipo", () => {
     await user.click(screen.getByRole("button", { name: /reintentar/i }));
 
     expect(
-      await screen.findByLabelText(/nombre del equipo/i)
+      await screen.findByRole("button", { name: /league of legends/i })
     ).toBeInTheDocument();
     expect(obtenerMiEquipo).toHaveBeenCalledTimes(2);
   });
