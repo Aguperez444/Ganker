@@ -1,5 +1,6 @@
 import CampoTexto from "../common/CampoTexto";
 import IconSelectComponent from "../common/IconSelectComponent";
+import DesplegableConImagenDelJuego from "../common/DesplegableConImagenDelJuego";
 import { OPCIONES_VACANTES_MINIMAS } from "../../hooks/useBuscarEquipos";
 
 const CLASES_ETIQUETA =
@@ -39,12 +40,10 @@ const FiltrosEquiposComponent = ({ busqueda }) => {
           <p className="text-sm text-ganker-muted">Cargando videojuegos...</p>
         ) : (
           <div className="max-w-sm">
-            <IconSelectComponent
+            <DesplegableConImagenDelJuego
               value={videojuegoId}
               onChange={seleccionarVideojuego}
               options={videojuegos}
-              placeholder="Seleccioná un videojuego"
-              getOptionId={(juego) => juego.id}
             />
           </div>
         )}
