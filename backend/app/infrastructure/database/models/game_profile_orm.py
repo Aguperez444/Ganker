@@ -12,6 +12,7 @@ if TYPE_CHECKING:
     from app.infrastructure.database.models.videogame_orm import VideogameORM
     from app.infrastructure.database.models.role_profile_orm import RoleProfileORM
     from app.infrastructure.database.models.region_orm import RegionORM
+    from app.infrastructure.database.models.riot_account_link_orm import RiotAccountLinkORM
 
 
 class GameProfileORM(Base):
@@ -32,6 +33,13 @@ class GameProfileORM(Base):
         back_populates="game_profile",
         cascade="all, delete-orphan",
         order_by="CharacterPriorityORM.priority"
+    )
+
+    # Cuenta de Riot vinculada (solo perfiles de League of Legends); se borra junto con el perfil
+    riot_account_link: Mapped[Optional["RiotAccountLinkORM"]] = relationship(
+        back_populates="game_profile",
+        cascade="all, delete-orphan",
+        uselist=False
     )
 
     # Constraints

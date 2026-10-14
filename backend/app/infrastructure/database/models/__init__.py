@@ -8,6 +8,7 @@ from app.infrastructure.database.models.message_orm import MessageORM
 from app.infrastructure.database.models.rank_orm import RankORM
 from app.infrastructure.database.models.refresh_token_orm import RefreshTokenORM
 from app.infrastructure.database.models.region_orm import RegionORM
+from app.infrastructure.database.models.riot_account_link_orm import RiotAccountLinkORM
 from app.infrastructure.database.models.role_orm import RoleORM
 from app.infrastructure.database.models.role_profile_orm import RoleProfileORM
 from app.infrastructure.database.models.team_orm import TeamORM
@@ -25,6 +26,7 @@ __all__ = [
     "RankORM",
     "RefreshTokenORM",
     "RegionORM",
+    "RiotAccountLinkORM",
     "RoleORM",
     "RoleProfileORM",
     "TeamORM",

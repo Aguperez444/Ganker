@@ -19,6 +19,7 @@ if TYPE_CHECKING:
     from app.application.ports.i_conversation_repository import IConversationRepository
     from app.application.ports.i_region_repository import IRegionRepository
     from app.application.ports.i_team_repository import ITeamRepository
+    from app.application.ports.i_riot_account_link_repository import IRiotAccountLinkRepository
 
 
 #abstract class
@@ -37,6 +38,7 @@ class IUnitOfWork(ABC):
     character_priority_repo: 'ICharacterPriorityRepository'
     team_repo: 'ITeamRepository'
     region_repo: 'IRegionRepository'
+    riot_account_link_repo: 'IRiotAccountLinkRepository'
 
 
     @abstractmethod

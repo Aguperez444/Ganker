@@ -31,8 +31,15 @@ class Settings(BaseSettings):
     riot_ddragon_locale: str = Field(default="es_AR", validation_alias="RIOT_DDRAGON_LOCALE")
     external_catalog_timeout_seconds: float = Field(default=10.0, validation_alias="EXTERNAL_CATALOG_TIMEOUT_SECONDS")
 
+    # API de Riot Games (cuentas, rangos y partidas de LoL). Requiere una clave de https://developer.riotgames.com
+    # que se carga en secrets.env como RIOT_API_KEY. Sin clave, vincular una cuenta responde un error claro.
+    riot_api_key: str = Field(default="", validation_alias="RIOT_API_KEY")
+    riot_match_history_count: int = Field(default=10, validation_alias="RIOT_MATCH_HISTORY_COUNT")
+    riot_stats_refresh_cooldown_minutes: int = Field(default=5, validation_alias="RIOT_STATS_REFRESH_COOLDOWN_MINUTES")
+
     model_config = SettingsConfigDict(
-        env_file=CONFIG_DIR / "secrets.env",
+        # secrets.local.env (ignorado por git) pisa a secrets.env: ahí van las claves personales, como RIOT_API_KEY
+        env_file=(CONFIG_DIR / "secrets.env", CONFIG_DIR / "secrets.local.env"),
         env_file_encoding="utf-8",
         extra="ignore"
     )

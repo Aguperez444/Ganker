@@ -10,6 +10,11 @@ vi.mock("../api/jugadoresApi", () => ({
   obtenerPerfilJugador: vi.fn(),
 }));
 
+// La cuenta de Riot se prueba en PanelRiotComponent.test.jsx.
+vi.mock("../api/riotApi", () => ({
+  getRiotAccount: vi.fn().mockResolvedValue({ supported: false, linked: false }),
+}));
+
 const chat = vi.hoisted(() => ({ currentUserId: 1, iniciarChat: null }));
 
 vi.mock("../context/ChatContext", () => ({

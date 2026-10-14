@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { obtenerPerfilJugador } from "../api/jugadoresApi";
 import { logError } from "../utils/logs";
 
@@ -37,12 +37,20 @@ const usePerfilJugador = (jugadorId) => {
     cargarPerfil({ jugadorId, setEstado });
   }, [jugadorId]);
 
+  // Vuelve a pedir el perfil sin pasar por "cargando" (ej. despues de que la
+  // cuenta de Riot le cambio el rango).
+  const recargar = useCallback(
+    () => cargarPerfil({ jugadorId, setEstado }),
+    [jugadorId]
+  );
+
   const cargando = estado.jugadorId !== jugadorId;
 
   return {
     perfil: cargando ? null : estado.perfil,
     cargando,
     error: cargando ? "" : estado.error,
+    recargar,
   };
 };
 

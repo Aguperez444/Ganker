@@ -14,6 +14,7 @@ from app.application.ports.i_refresh_token_repository import IRefreshTokenReposi
 from app.application.ports.i_role_repository import IRoleRepository
 from app.application.ports.i_team_repository import ITeamRepository
 from app.application.ports.i_region_repository import IRegionRepository
+from app.application.ports.i_riot_account_link_repository import IRiotAccountLinkRepository
 from app.application.ports.i_unit_of_work import IUnitOfWork
 from app.application.ports.i_videogame_repository import IVideogameRepository
 from app.infrastructure.database.repositories.character_priority_repository_impl import CharacterPriorityRepositoryImpl
@@ -28,6 +29,7 @@ from app.infrastructure.database.repositories.refresh_token_repository_impl impo
 from app.infrastructure.database.repositories.role_repository_impl import RoleRepositoryImpl
 from app.infrastructure.database.repositories.team_repository_impl import TeamRepositoryImpl
 from app.infrastructure.database.repositories.region_repository_impl import RegionRepositoryImpl
+from app.infrastructure.database.repositories.riot_account_link_repository_impl import RiotAccountLinkRepositoryImpl
 from app.infrastructure.database.repositories.videogame_repository_impl import VideogameRepositoryImpl
 from app.infrastructure.database.repositories.find_by_specification_repository_impl import FindBySpecificationsRepositoryImpl
 
@@ -57,6 +59,7 @@ class SqlAlchemyUnitOfWork(IUnitOfWork):
         self.character_priority_repo: ICharacterPriorityRepository
         self.team_repo: ITeamRepository
         self.region_repo: IRegionRepository
+        self.riot_account_link_repo: IRiotAccountLinkRepository
     # Context manager
     def __enter__(self) -> 'SqlAlchemyUnitOfWork':
         self.session: Session = self._sf()  # nueva Session por acción
@@ -73,6 +76,7 @@ class SqlAlchemyUnitOfWork(IUnitOfWork):
         self.character_priority_repo: ICharacterPriorityRepository = CharacterPriorityRepositoryImpl(self.session)
         self.team_repo: ITeamRepository = TeamRepositoryImpl(self.session)
         self.region_repo: IRegionRepository = RegionRepositoryImpl(self.session)
+        self.riot_account_link_repo: IRiotAccountLinkRepository = RiotAccountLinkRepositoryImpl(self.session)
         self.find_by_specification_repo: IFindBySpecificationsRepository = FindBySpecificationsRepositoryImpl(self.session)
         return self
 

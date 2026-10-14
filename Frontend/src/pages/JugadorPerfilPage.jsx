@@ -17,7 +17,7 @@ const JugadorPerfilPage = () => {
   const { jugadorId } = useParams();
   const [searchParams] = useSearchParams();
   const { currentUserId, iniciarChat } = useChat();
-  const { perfil, cargando, error } = usePerfilJugador(jugadorId);
+  const { perfil, cargando, error, recargar } = usePerfilJugador(jugadorId);
 
   // null = el juego que llega por la URL (o el primero).
   const [juegoElegidoId, setJuegoElegidoId] = useState(null);
@@ -142,7 +142,11 @@ const JugadorPerfilPage = () => {
               </div>
 
               <div role="tabpanel" className="mt-5">
-                <PerfilDeJuegoDetalleComponent perfil={perfilActivo} />
+                <PerfilDeJuegoDetalleComponent
+                  perfil={perfilActivo}
+                  esPropio={esUnoMismo}
+                  onRangoActualizado={recargar}
+                />
               </div>
             </>
           )}

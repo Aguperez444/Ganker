@@ -1,4 +1,5 @@
 import IconoChicoComponent from "../common/IconoChicoComponent";
+import PanelRiotComponent from "../riot/PanelRiotComponent";
 
 const CLASES_TITULO =
   "text-xs font-semibold tracking-[0.15em] text-ganker-purple-light uppercase";
@@ -24,8 +25,13 @@ function rangosUnicos(roleProfiles) {
 
 // Detalle de UN perfil de juego de otro jugador (GameProfileObjectResponse):
 // region, roles con su rango y personajes en orden de preferencia (el backend
-// ya los manda ordenados por prioridad).
-const PerfilDeJuegoDetalleComponent = ({ perfil }) => {
+// ya los manda ordenados por prioridad). Si es de LoL, abajo va la cuenta de
+// Riot vinculada (ver PanelRiotComponent).
+const PerfilDeJuegoDetalleComponent = ({
+  perfil,
+  esPropio = false,
+  onRangoActualizado,
+}) => {
   const { videogame, region, role_profiles: roleProfiles, characters } = perfil;
   const rangoPorRol = videogame.rank_per_role !== false;
   const tienePersonajes = videogame.has_characters !== false;
@@ -120,6 +126,13 @@ const PerfilDeJuegoDetalleComponent = ({ perfil }) => {
           )}
         </section>
       )}
+
+      <PanelRiotComponent
+        key={perfil.game_profile_id}
+        gameProfileId={perfil.game_profile_id}
+        esPropio={esPropio}
+        onRangoActualizado={onRangoActualizado}
+      />
     </div>
   );
 };
