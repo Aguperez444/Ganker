@@ -10,6 +10,11 @@ vi.mock("../api/jugadoresApi", () => ({
   obtenerPerfilJugador: vi.fn(),
 }));
 
+// Discord se prueba en components/discord/Discord.test.jsx.
+vi.mock("../api/discordApi", () => ({
+  getPlayerDiscord: vi.fn().mockResolvedValue({ linked: false }),
+}));
+
 // La cuenta de Riot se prueba en PanelRiotComponent.test.jsx.
 vi.mock("../api/riotApi", () => ({
   getRiotAccount: vi.fn().mockResolvedValue({ supported: false, linked: false }),

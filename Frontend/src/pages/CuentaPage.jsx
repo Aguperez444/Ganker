@@ -2,6 +2,7 @@ import { useAuth } from "../context/AuthContext";
 import { useModificarJugador } from "../hooks/useModificarJugador";
 import CuentaFormComponent from "../components/jugadores/CuentaFormComponent";
 import AvatarUsuarioComponent from "../components/common/AvatarUsuarioComponent";
+import CuentaDiscordComponent from "../components/discord/CuentaDiscordComponent";
 
 // US 02 - Modificar mis datos.
 // Se llega desde el boton "Cuenta" del sidebar (ruta /app/cuenta) y se
@@ -64,6 +65,8 @@ function CuentaPage() {
           onQuitarAvatar={handleQuitarAvatar}
           onSubmit={handleSubmit}
         />
+
+        <CuentaDiscordComponent />
       </div>
     </section>
   );

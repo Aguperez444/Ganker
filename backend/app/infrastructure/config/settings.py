@@ -37,6 +37,13 @@ class Settings(BaseSettings):
     riot_match_history_count: int = Field(default=10, validation_alias="RIOT_MATCH_HISTORY_COUNT")
     riot_stats_refresh_cooldown_minutes: int = Field(default=5, validation_alias="RIOT_STATS_REFRESH_COOLDOWN_MINUTES")
 
+    # "Conectar con Discord" (OAuth2). Aplicación creada en https://discord.com/developers/applications;
+    # el redirect tiene que estar cargado ahí tal cual. Client ID y Secret van en secrets.local.env.
+    discord_client_id: str = Field(default="", validation_alias="DISCORD_CLIENT_ID")
+    discord_client_secret: str = Field(default="", validation_alias="DISCORD_CLIENT_SECRET")
+    discord_redirect_uri: str = Field(default="http://localhost:5173/app/discord/callback",
+                                      validation_alias="DISCORD_REDIRECT_URI")
+
     model_config = SettingsConfigDict(
         # secrets.local.env (ignorado por git) pisa a secrets.env: ahí van las claves personales, como RIOT_API_KEY
         env_file=(CONFIG_DIR / "secrets.env", CONFIG_DIR / "secrets.local.env"),

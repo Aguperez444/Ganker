@@ -20,6 +20,7 @@ if TYPE_CHECKING:
     from app.application.ports.i_region_repository import IRegionRepository
     from app.application.ports.i_team_repository import ITeamRepository
     from app.application.ports.i_riot_account_link_repository import IRiotAccountLinkRepository
+    from app.application.ports.i_discord_account_link_repository import IDiscordAccountLinkRepository
 
 
 #abstract class
@@ -39,6 +40,7 @@ class IUnitOfWork(ABC):
     team_repo: 'ITeamRepository'
     region_repo: 'IRegionRepository'
     riot_account_link_repo: 'IRiotAccountLinkRepository'
+    discord_account_link_repo: 'IDiscordAccountLinkRepository'
 
 
     @abstractmethod

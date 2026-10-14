@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Link, useParams, useSearchParams } from "react-router-dom";
 import AvatarUsuarioComponent from "../components/common/AvatarUsuarioComponent";
 import AvisoComponent from "../components/common/AvisoComponent";
+import DiscordJugadorComponent from "../components/discord/DiscordJugadorComponent";
 import IconoChicoComponent from "../components/common/IconoChicoComponent";
 import PerfilDeJuegoDetalleComponent from "../components/jugadores/PerfilDeJuegoDetalleComponent";
 import { useChat } from "../context/ChatContext";
@@ -95,6 +96,9 @@ const JugadorPerfilPage = () => {
             </button>
           )}
         </div>
+
+        {/* Discord: solo aparece si el jugador lo comparte con quien mira */}
+        {!esUnoMismo && <DiscordJugadorComponent userId={perfil.user_id} />}
 
         <div className="rounded-2xl border border-white/10 bg-ganker-surface p-5 sm:p-6">
           <h2 className="font-heading text-xl font-semibold text-ganker-text">

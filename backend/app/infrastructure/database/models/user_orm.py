@@ -13,6 +13,7 @@ if TYPE_CHECKING:
     from app.infrastructure.database.models.refresh_token_orm import RefreshTokenORM
     from app.infrastructure.database.models.conversation_member_orm import ConversationMemberORM
     from app.infrastructure.database.models.message_orm import MessageORM
+    from app.infrastructure.database.models.discord_account_link_orm import DiscordAccountLinkORM
 
 
 class UserORM(Base):
@@ -38,4 +39,10 @@ class UserORM(Base):
     sent_messages: Mapped[List["MessageORM"]] = relationship(
         "MessageORM",
         back_populates="sender"
+    )
+    # Cuenta de Discord vinculada (opcional); se borra junto con el usuario
+    discord_account_link: Mapped[Optional["DiscordAccountLinkORM"]] = relationship(
+        back_populates="user",
+        cascade="all, delete-orphan",
+        uselist=False
     )

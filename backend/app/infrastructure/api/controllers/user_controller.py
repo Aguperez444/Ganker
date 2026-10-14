@@ -21,11 +21,30 @@ from app.infrastructure.api.auth.password_hash_service import PasswordHashServic
 from app.application.use_cases.register_player import RegisterPlayer
 from app.infrastructure.database.unit_of_work.uow_factory import uow_factory
 from app.infrastructure.storage.local_disk_storage_service import LocalDiskStorageService
+from app.application.use_cases.get_discord_authorization_url import GetDiscordAuthorizationUrl
+from app.application.use_cases.link_discord_account import LinkDiscordAccount
+from app.application.use_cases.query_discord_account import QueryDiscordAccount
+from app.application.use_cases.unlink_discord_account import UnlinkDiscordAccount
+from app.application.use_cases.update_discord_visibility import UpdateDiscordVisibility
+from app.infrastructure.api.auth.jwt_oauth_state_service import JwtOAuthStateService
+from app.infrastructure.api.dto.request.link_discord_account_request import LinkDiscordAccountRequest
+from app.infrastructure.api.dto.request.update_discord_visibility_request import UpdateDiscordVisibilityRequest
+from app.infrastructure.api.dto.response.delete.delete_discord_account_link_response import DeleteDiscordAccountLinkResponse
+from app.infrastructure.api.dto.response.get.get_discord_account_response import (
+    DiscordAuthorizationUrlResponse, GetDiscordAccountResponse,
+)
+from app.infrastructure.discord_api.discord_oauth_provider import DiscordOAuthProvider, discord_http_client
 
 router = APIRouter(prefix="/api/v1/users", tags=["Users"])
 
 def get_storage_service():
     return LocalDiskStorageService()
+
+def get_discord_oauth_provider():
+    return DiscordOAuthProvider(discord_http_client)
+
+def get_oauth_state_service():
+    return JwtOAuthStateService(settings.jwt_secret_key)
 
 @router.post("/register", response_model=AuthTokensResponse, status_code=201)
 def register_player(request: RegisterPlayerRequest) -> AuthTokensResponse:
@@ -92,3 +111,42 @@ def get_public_user_profile(user_id: int) -> GetPublicUserResponse:
     uow = uow_factory()
     query_users_use_case = QueryUsers(uow)
     return query_users_use_case.get_public_profile(user_id)
+
+
+
+# ---------------------------------------------------------
+# Cuenta de Discord vinculada al perfil general
+# ---------------------------------------------------------
+
+@router.get("/me/discord/authorize", response_model=DiscordAuthorizationUrlResponse, status_code=200, dependencies=[Depends(require_player)])
+def get_discord_authorization_url(user_id: int = Depends(get_current_user_id)):
+    use_case = GetDiscordAuthorizationUrl(get_discord_oauth_provider(), get_oauth_state_service())
+    return use_case.execute(user_id)
+
+@router.post("/me/discord", response_model=GetDiscordAccountResponse, status_code=200, dependencies=[Depends(require_player)])
+def link_discord_account(request: LinkDiscordAccountRequest, user_id: int = Depends(get_current_user_id)):
+    uow = uow_factory()
+    use_case = LinkDiscordAccount(get_discord_oauth_provider(), get_oauth_state_service(), uow)
+    return use_case.execute(user_id, request.code, request.state, request.visibility)
+
+@router.put("/me/discord/visibility", response_model=GetDiscordAccountResponse, status_code=200, dependencies=[Depends(require_player)])
+def update_discord_visibility(request: UpdateDiscordVisibilityRequest, user_id: int = Depends(get_current_user_id)):
+    uow = uow_factory()
+    return UpdateDiscordVisibility(uow).execute(user_id, request.visibility)
+
+@router.delete("/me/discord", response_model=DeleteDiscordAccountLinkResponse, status_code=200, dependencies=[Depends(require_player)])
+def unlink_discord_account(user_id: int = Depends(get_current_user_id)):
+    uow = uow_factory()
+    return UnlinkDiscordAccount(uow).execute(user_id)
+
+@router.get("/me/discord", response_model=GetDiscordAccountResponse, status_code=200, dependencies=[Depends(require_player)])
+def get_my_discord_account(user_id: int = Depends(get_current_user_id)):
+    # Declarado antes que /{owner_id}/discord para que "me" no se tome como un id
+    uow = uow_factory()
+    return QueryDiscordAccount(uow).execute(user_id, user_id)
+
+@router.get("/{owner_id}/discord", response_model=GetDiscordAccountResponse, status_code=200, dependencies=[Depends(require_player)])
+def get_discord_account(owner_id: int, user_id: int = Depends(get_current_user_id)):
+    # Solo devuelve la cuenta si quien consulta puede verla (visibilidad elegida por el dueño)
+    uow = uow_factory()
+    return QueryDiscordAccount(uow).execute(owner_id, user_id)
