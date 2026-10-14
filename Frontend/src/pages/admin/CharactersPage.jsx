@@ -43,13 +43,43 @@ const CharactersPage = () => {
     editCharacter,
     removeCharacter,
     clearActionError,
+    syncSupport,
+    isSyncing,
+    syncError,
+    loadSyncSupport,
+    syncFromCatalog,
   } = useCharacters();
 
   useEffect(() => {
     if (selectedGameId) {
       loadCharacters(selectedGameId);
     }
-  }, [selectedGameId, loadCharacters]);
+    loadSyncSupport(selectedGameId);
+  }, [selectedGameId, loadCharacters, loadSyncSupport]);
+
+  const handleSync = async () => {
+    clearActionError();
+    setSuccessMessage("");
+    setMode(null);
+    setSelectedCharacter(null);
+
+    const result = await syncFromCatalog(selectedGameId);
+
+    if (!result) {
+      return;
+    }
+
+    const nuevos = result.created.length;
+    let mensaje =
+      nuevos === 0
+        ? `No había personajes nuevos en ${result.source}`
+        : `Se importaron ${nuevos} personaje${nuevos === 1 ? "" : "s"} nuevo${nuevos === 1 ? "" : "s"} desde ${result.source}`;
+    mensaje += ` (${result.skipped_count} ya estaban registrados).`;
+    if (result.failed.length > 0) {
+      mensaje += ` No se pudieron importar: ${result.failed.join(", ")}.`;
+    }
+    setSuccessMessage(mensaje);
+  };
 
   const handleOpenRegister = () => {
     clearActionError();
@@ -200,15 +230,47 @@ const CharactersPage = () => {
                 </div>
               </div>
 
-              <button
-                type="button"
-                onClick={handleOpenRegister}
-                disabled={isSaving || juegosConPersonajes.length === 0}
-                className="cursor-pointer self-start rounded-lg bg-gradient-to-r from-ganker-orange via-ganker-orange-light to-ganker-purple px-4 py-2.5 text-sm font-semibold text-white shadow-lg transition-all duration-200 hover:-translate-y-0.5 hover:shadow-ganker-purple/30 disabled:cursor-not-allowed disabled:opacity-50"
-              >
-                + Registrar personaje
-              </button>
+              <div className="flex flex-wrap gap-3 self-start">
+                {syncSupport?.supported && (
+                  <button
+                    type="button"
+                    onClick={handleSync}
+                    disabled={isSaving || isSyncing}
+                    title={`Importa los personajes que falten desde ${syncSupport.source}`}
+                    className="cursor-pointer rounded-lg border border-ganker-purple-light/40 bg-ganker-purple/20 px-4 py-2.5 text-sm font-semibold text-ganker-text transition-all duration-200 hover:-translate-y-0.5 hover:bg-ganker-purple/30 disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    {isSyncing ? "Importando..." : "⟳ Importar desde API"}
+                  </button>
+                )}
+
+                <button
+                  type="button"
+                  onClick={handleOpenRegister}
+                  disabled={
+                    isSaving || isSyncing || juegosConPersonajes.length === 0
+                  }
+                  className="cursor-pointer rounded-lg bg-gradient-to-r from-ganker-orange via-ganker-orange-light to-ganker-purple px-4 py-2.5 text-sm font-semibold text-white shadow-lg transition-all duration-200 hover:-translate-y-0.5 hover:shadow-ganker-purple/30 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  + Registrar personaje
+                </button>
+              </div>
             </div>
+
+            {syncSupport?.supported && (
+              <div className="mb-4 rounded-lg border border-ganker-purple-light/20 bg-ganker-purple/10 px-4 py-3">
+                <p className="text-sm text-ganker-muted">
+                  Los personajes de este videojuego se pueden importar
+                  automáticamente desde {syncSupport.source}. Solo se agregan
+                  los que falten; también podés registrarlos a mano.
+                </p>
+              </div>
+            )}
+
+            {syncError && (
+              <div className="mb-4 rounded-lg border border-ganker-error/20 bg-ganker-error/10 px-4 py-3">
+                <p className="text-sm text-ganker-error">{syncError}</p>
+              </div>
+            )}
 
             {juegoSinPersonajes && (
               <div className="mb-4 rounded-lg border border-ganker-orange/20 bg-ganker-orange/10 px-4 py-3">

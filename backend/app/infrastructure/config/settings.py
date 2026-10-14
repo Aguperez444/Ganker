@@ -26,6 +26,11 @@ class Settings(BaseSettings):
     login_rate_limit_max_attempts: int = Field(default=5, validation_alias="LOGIN_RATE_LIMIT_MAX_ATTEMPTS")
     login_rate_limit_window_seconds: int = Field(default=60, validation_alias="LOGIN_RATE_LIMIT_WINDOW_SECONDS")
 
+    # Data Dragon: API pública y oficial de Riot Games con los campeones de League of Legends (no requiere API key)
+    riot_ddragon_base_url: str = Field(default="https://ddragon.leagueoflegends.com", validation_alias="RIOT_DDRAGON_BASE_URL")
+    riot_ddragon_locale: str = Field(default="es_AR", validation_alias="RIOT_DDRAGON_LOCALE")
+    external_catalog_timeout_seconds: float = Field(default=10.0, validation_alias="EXTERNAL_CATALOG_TIMEOUT_SECONDS")
+
     model_config = SettingsConfigDict(
         env_file=CONFIG_DIR / "secrets.env",
         env_file_encoding="utf-8",

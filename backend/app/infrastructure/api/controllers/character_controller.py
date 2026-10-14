@@ -4,19 +4,27 @@ from app.application.use_cases.query_characters import QueryCharacters
 from app.application.use_cases.create_character import CreateCharacter
 from app.application.use_cases.update_character import UpdateCharacter
 from app.application.use_cases.delete_character import DeleteCharacter
+from app.application.use_cases.query_character_sync_support import QueryCharacterSyncSupport
+from app.application.use_cases.sync_characters_from_catalog import SyncCharactersFromCatalog
 from app.infrastructure.api.dto.response.base_classes.character_object_response import CharacterObjectResponse
 from app.infrastructure.api.dto.response.get.get_characters_response import GetCharactersResponse
 from app.infrastructure.api.dto.response.delete.delete_character_response import DeleteCharacterResponse
+from app.infrastructure.api.dto.response.get.get_character_sync_support_response import GetCharacterSyncSupportResponse
+from app.infrastructure.api.dto.response.create_register.sync_characters_response import SyncCharactersResponse
 from app.infrastructure.api.dependencies.auth import require_admin, require_player
 
 
 from app.infrastructure.database.unit_of_work.uow_factory import uow_factory
 from app.infrastructure.storage.local_disk_storage_service import LocalDiskStorageService
+from app.infrastructure.catalog_providers.character_catalog_provider_resolver_impl import CharacterCatalogProviderResolverImpl
 
 router = APIRouter(prefix="/api/v1/characters", tags=["Characters"])
 
 def get_storage_service():
     return LocalDiskStorageService()
+
+def get_catalog_provider_resolver():
+    return CharacterCatalogProviderResolverImpl()
 
 @router.get("/{videogame_id}", response_model=GetCharactersResponse, status_code=200,dependencies=[Depends(require_player)])
 def get_characters_by_videogame_id(videogame_id: int):
@@ -79,3 +87,18 @@ def delete_game_character(character_id: int):
     storage_service = get_storage_service()
     use_case = DeleteCharacter(storage_service=storage_service, uow=uow)
     return use_case.execute(character_id=character_id)
+
+
+@router.get("/sync/{videogame_id}", status_code=200, response_model=GetCharacterSyncSupportResponse, dependencies=[Depends(require_admin)])
+def get_character_sync_support(videogame_id: int):
+    uow = uow_factory()
+    use_case = QueryCharacterSyncSupport(get_catalog_provider_resolver(), uow)
+    return use_case.execute(videogame_id)
+
+
+@router.post("/sync/{videogame_id}", status_code=200, response_model=SyncCharactersResponse, dependencies=[Depends(require_admin)])
+def sync_characters_from_catalog(videogame_id: int):
+    # Importa los personajes que falten desde la API externa del videojuego (ej. Riot Games para LoL)
+    uow = uow_factory()
+    use_case = SyncCharactersFromCatalog(get_catalog_provider_resolver(), get_storage_service(), uow)
+    return use_case.execute(videogame_id)

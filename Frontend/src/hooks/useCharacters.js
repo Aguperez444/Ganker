@@ -3,6 +3,8 @@ import {
   createCharacter,
   deleteCharacter,
   getCharactersByGame,
+  getCharacterSyncSupport,
+  syncCharacters,
   updateCharacter,
 } from "../api/characterApi";
 import { logError } from "../utils/logs";
@@ -37,6 +39,11 @@ const useCharacters = () => {
 
   const [error, setError] = useState("");
   const [actionError, setActionError] = useState("");
+
+  // Importación automática desde una API externa (ej. Riot Games para LoL).
+  const [syncSupport, setSyncSupport] = useState(null);
+  const [isSyncing, setIsSyncing] = useState(false);
+  const [syncError, setSyncError] = useState("");
 
   const loadCharacters = useCallback(async (videogameId) => {
     if (!videogameId) {
@@ -126,7 +133,39 @@ const useCharacters = () => {
     }
   };
 
-  
+  const loadSyncSupport = useCallback(async (videogameId) => {
+    setSyncSupport(null);
+    setSyncError("");
+
+    if (!videogameId) {
+      return;
+    }
+
+    try {
+      setSyncSupport(await getCharacterSyncSupport(videogameId));
+    } catch (error) {
+      // Si no se pudo consultar, simplemente no se ofrece la importación:
+      // la carga manual sigue disponible.
+      logError("Error al consultar la importación de personajes:", error);
+    }
+  }, []);
+
+  const syncFromCatalog = async (videogameId) => {
+    try {
+      setIsSyncing(true);
+      setSyncError("");
+
+      const result = await syncCharacters(videogameId);
+      await loadCharacters(videogameId);
+
+      return result;
+    } catch (error) {
+      setSyncError(mapearErrorAccion(error, "importar"));
+      return null;
+    } finally {
+      setIsSyncing(false);
+    }
+  };
 
   const clearActionError = () => {
     setActionError("");
@@ -143,6 +182,11 @@ const useCharacters = () => {
     editCharacter,
     removeCharacter,
     clearActionError,
+    syncSupport,
+    isSyncing,
+    syncError,
+    loadSyncSupport,
+    syncFromCatalog,
   };
 };
 
