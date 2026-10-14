@@ -40,6 +40,8 @@ const ProfilePage = () => {
 
     selectedGameId,
     selectedRegionId,
+    inGameName,
+    riotIdVinculado,
     selectedCharacters,
     selectedRoles,
     editingProfileId,
@@ -55,6 +57,7 @@ const ProfilePage = () => {
 
     selectGame,
     selectRegion,
+    changeInGameName,
     addCharacter,
     removeCharacter,
     moveCharacter,
@@ -165,6 +168,9 @@ const ProfilePage = () => {
             ranks={ranks}
             regions={regions}
             selectedRegionId={selectedRegionId}
+            inGameName={inGameName}
+            riotIdVinculado={riotIdVinculado}
+            onInGameNameChange={changeInGameName}
             selectedGameId={selectedGameId}
             selectedCharacters={selectedCharacters}
             selectedRoles={selectedRoles}

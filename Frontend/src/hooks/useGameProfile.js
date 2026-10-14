@@ -6,6 +6,7 @@ import { getCharactersByGame } from "../api/characterApi";
 import { getRolesByGame } from "../api/roleApi";
 import { getRanksByGame } from "../api/rankApi";
 import { getRegionsByGame } from "../api/regionApi";
+import { getRiotAccount } from "../api/riotApi";
 import { logError } from "../utils/logs";
 
 const useGameProfile = () => {
@@ -23,6 +24,11 @@ const useGameProfile = () => {
 
   // Region del perfil: opcional. "" = "Ninguna", que viaja como null.
   const [selectedRegionId, setSelectedRegionId] = useState("");
+
+  // Nick en el juego (opcional). Si el perfil tiene la cuenta de Riot
+  // vinculada, es su Riot ID y no se edita (el backend lo mantiene igual).
+  const [inGameName, setInGameName] = useState("");
+  const [riotIdVinculado, setRiotIdVinculado] = useState(null);
 
   // Rango unico del perfil, para juegos con rank_per_role = false. Se
   // propaga a todos los selectedRoles (ver setProfileRank), asi que el
@@ -145,6 +151,8 @@ const useGameProfile = () => {
     setProfileRankState("");
     setRegions([]);
     setSelectedRegionId("");
+    setInGameName("");
+    setRiotIdVinculado(null);
 
     setGameDataError("");
 
@@ -272,6 +280,15 @@ const useGameProfile = () => {
     setSelectedRegionId(
       profile.region?.region_id ? String(profile.region.region_id) : ""
     );
+    setInGameName(profile.in_game_name ?? "");
+    setRiotIdVinculado(null);
+    // Si no se puede consultar, el campo queda editable: el backend igual
+    // conserva el Riot ID si la cuenta esta vinculada.
+    getRiotAccount(profile.game_profile_id)
+      .then((cuenta) =>
+        setRiotIdVinculado(cuenta.linked ? cuenta.riot_id : null)
+      )
+      .catch(() => setRiotIdVinculado(null));
 
     const roleEntries = profile.role_profiles.map((roleProfile) => ({
       role_id: roleProfile.role.role_id,
@@ -306,6 +323,8 @@ const useGameProfile = () => {
     setProfileRankState("");
     setRegions([]);
     setSelectedRegionId("");
+    setInGameName("");
+    setRiotIdVinculado(null);
 
     setGameDataError("");
     setFormError("");
@@ -367,6 +386,8 @@ const useGameProfile = () => {
       })),
 
       region_id: selectedRegionId ? Number(selectedRegionId) : null,
+
+      in_game_name: inGameName.trim() || null,
     };
 
     try {
@@ -457,6 +478,8 @@ const useGameProfile = () => {
       // Siempre se manda: null le dice al backend que el perfil queda sin
       // region (si se omitiera, tambien la borraria).
       region_id: selectedRegionId ? Number(selectedRegionId) : null,
+
+      in_game_name: inGameName.trim() || null,
     };
 
     try {
@@ -507,6 +530,8 @@ const useGameProfile = () => {
 
     selectedGameId,
     selectedRegionId,
+    inGameName,
+    riotIdVinculado,
     selectedCharacters,
     selectedRoles,
     editingProfileId,
@@ -525,6 +550,7 @@ const useGameProfile = () => {
 
     selectGame,
     selectRegion: setSelectedRegionId,
+    changeInGameName: setInGameName,
     addCharacter,
     removeCharacter,
     moveCharacter,

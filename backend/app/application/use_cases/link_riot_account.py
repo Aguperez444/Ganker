@@ -67,6 +67,11 @@ class LinkRiotAccount:
             stats = provider.fetch_stats(account, account_server)
             rank_sync = apply_riot_rank(game_profile, stats, uow) if stats else None
 
+            # El nombre dentro del juego pasa a ser el Riot ID verificado
+            if game_profile.in_game_name != account.riot_id:
+                game_profile.in_game_name = account.riot_id
+                uow.game_profile_repo.update_game_profile(game_profile)
+
             uow.riot_account_link_repo.delete_by_game_profile_id(game_profile_id)
             link = uow.riot_account_link_repo.save(
                 RiotAccountLink(link_id=None, game_profile_id=game_profile_id, account=account, server=account_server,

@@ -67,6 +67,7 @@ const GameProfilesListComponent = ({
                     {cantidadRoles} rol
                     {cantidadRoles === 1 ? "" : "es"} ·{" "}
                     {profile.region?.name ?? "Sin región"}
+                    {profile.in_game_name && ` · ${profile.in_game_name}`}
                   </p>
                 </div>
               </div>

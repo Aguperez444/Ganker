@@ -134,6 +134,11 @@ const JugadorCardComponent = ({
         <p className="truncate text-sm text-ganker-muted">
           @{jugador.username}
         </p>
+        {perfilJuego?.in_game_name && (
+          <p className="truncate text-xs text-ganker-purple-light">
+            Nick: {perfilJuego.in_game_name}
+          </p>
+        )}
         {conexionReciente && (
           <p className="mt-0.5 truncate text-xs text-ganker-muted/80">
             {conexionReciente}

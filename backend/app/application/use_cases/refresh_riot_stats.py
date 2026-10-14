@@ -41,6 +41,11 @@ class RefreshRiotStats:
             stats = provider.fetch_stats(link.account, link.server)
             rank_sync = apply_riot_rank(game_profile, stats, uow)
 
+            # Perfiles vinculados antes de que existiera el nombre dentro del juego: se completa con el Riot ID
+            if game_profile.in_game_name != link.account.riot_id:
+                game_profile.in_game_name = link.account.riot_id
+                uow.game_profile_repo.update_game_profile(game_profile)
+
             link.update_stats(stats, now)
             link = uow.riot_account_link_repo.save(link)
 

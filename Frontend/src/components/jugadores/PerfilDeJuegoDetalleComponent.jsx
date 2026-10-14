@@ -32,13 +32,25 @@ const PerfilDeJuegoDetalleComponent = ({
   esPropio = false,
   onRangoActualizado,
 }) => {
-  const { videogame, region, role_profiles: roleProfiles, characters } = perfil;
+  const {
+    videogame,
+    region,
+    role_profiles: roleProfiles,
+    characters,
+    in_game_name: inGameName,
+  } = perfil;
   const rangoPorRol = videogame.rank_per_role !== false;
   const tienePersonajes = videogame.has_characters !== false;
 
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-sm text-ganker-muted">
+        {inGameName && (
+          <span>
+            Nick:{" "}
+            <span className="font-medium text-ganker-text">{inGameName}</span>
+          </span>
+        )}
         <span>
           Región:{" "}
           <span className="font-medium text-ganker-text">

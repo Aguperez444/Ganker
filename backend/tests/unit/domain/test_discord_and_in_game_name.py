@@ -1,6 +1,10 @@
 from unittest.mock import MagicMock
 
+import pytest
+
 from app.domain.models.discord_account_link import DiscordAccount, DiscordAccountLink, DiscordVisibility
+from app.domain.models.game_profile import GameProfile
+from app.domain.models.videogame import Videogame
 from app.domain.services.discord_visibility_service import DiscordVisibilityService
 
 OWNER_ID, TEAMMATE_ID, STRANGER_ID = 1, 2, 3
@@ -45,3 +49,12 @@ class TestDiscordAccount:
         link = DiscordAccountLink(link_id=None, user_id=OWNER_ID, account=ACCOUNT)
         assert link.visibility == DiscordVisibility.TEAMMATES
         assert not link.is_persisted()
+
+
+class TestGameProfileInGameName:
+
+    @pytest.mark.parametrize("value, expected", [("  Ana#1234  ", "Ana#1234"), ("", None), ("   ", None), (None, None)])
+    def test_in_game_name_is_trimmed_and_optional(self, value, expected):
+        profile = GameProfile(game_profile_id=1, player_id=1, videogame=Videogame(1, "Overwatch", "", True),
+                              characters_priority=[], role_profiles=[], in_game_name=value)
+        assert profile.in_game_name == expected

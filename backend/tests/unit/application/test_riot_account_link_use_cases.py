@@ -113,7 +113,10 @@ class TestLinkRiotAccount:
         assert (result.linked, result.requires_server, result.provides_stats) == (True, False, False)
         assert result.server == "latam"
         assert (result.stats, result.rank_sync, result.next_refresh_at) == (None, None, None)
-        uow.game_profile_repo.update_game_profile.assert_not_called()
+        # Sin estadísticas no se toca el rango, pero el nombre dentro del juego pasa a ser el Riot ID
+        updated_profile = uow.game_profile_repo.update_game_profile.call_args.args[0]
+        assert updated_profile.in_game_name == "Ana#LAS"
+        assert updated_profile.role_profiles[0].rank is BRONCE
         saved = uow.riot_account_link_repo.save.call_args.args[0]
         assert (saved.server, saved.stats, saved.last_synced_at) == ("latam", None, None)
 
@@ -209,6 +212,15 @@ class TestRefreshRiotStats:
         assert result.stats.summoner_level == 120
         assert result.rank_sync.status == "updated"
         assert result.next_refresh_at > datetime.now()
+
+    def test_refresh_fills_in_game_name_with_riot_id(self, deps):
+        uow, resolver, _, _ = deps
+        self._linked(uow, synced_minutes_ago=10)
+
+        RefreshRiotStats(resolver, uow, COOLDOWN).execute(1, 10)
+
+        updated_profile = uow.game_profile_repo.update_game_profile.call_args.args[0]
+        assert updated_profile.in_game_name == "Ana#LAS"
 
     def test_refresh_too_soon(self, deps):
         uow, resolver, lol, _ = deps

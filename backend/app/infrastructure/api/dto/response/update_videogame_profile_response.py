@@ -14,3 +14,4 @@ class UpdateGameProfileResponse(BaseModel):
     characters: List[CharacterObjectResponse] = Field(..., description="Personajes asociados al perfil de juego actualizado")
     role_profiles: List['RoleProfileObjectResponse'] = Field(..., description="Perfiles de rol asociados al perfil de juego actualizado")
     region: RegionObjectResponse | None = Field(..., description="Region de juego asociada al pefil de juego actualizado")
+    in_game_name: str | None = Field(None, description="Nombre del jugador dentro del juego")

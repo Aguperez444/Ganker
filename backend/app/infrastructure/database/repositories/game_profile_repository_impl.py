@@ -64,6 +64,7 @@ class GameProfileRepositoryImpl(IGameProfileRepository):
         )
 
         orm_existing.region_id = game_profile.region.region_id if game_profile.region else None
+        orm_existing.in_game_name = game_profile.in_game_name
 
         self._session.flush()
         return GameProfileMapper.orm_to_domain(orm_existing)

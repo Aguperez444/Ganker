@@ -275,6 +275,7 @@ const BuscarJugadoresPage = () => {
                         perfilJuego={{
                           characters: jugador.characters,
                           role_profiles: jugador.role_profiles,
+                          in_game_name: jugador.in_game_name,
                           characterIdFiltrado: characterId,
                           rangoPorRol,
                         }}

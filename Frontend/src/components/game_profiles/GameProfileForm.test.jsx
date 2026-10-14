@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, it, expect, vi } from "vitest";
 import GameProfileForm from "./GameProfileForm";
 
@@ -63,9 +63,13 @@ describe("GameProfileForm - resolución de imágenes", () => {
     expect(characterImg.getAttribute("src")).not.toBe(
       "/media/games/league_of_legends/characters/ahri.png"
     );
-    expect(characterImg.getAttribute("src")).toContain("/media/games/league_of_legends/characters/ahri.png");
+    expect(characterImg.getAttribute("src")).toContain(
+      "/media/games/league_of_legends/characters/ahri.png"
+    );
     if (import.meta.env.VITE_API_URL) {
-      expect(characterImg.getAttribute("src")).toContain(import.meta.env.VITE_API_URL);
+      expect(characterImg.getAttribute("src")).toContain(
+        import.meta.env.VITE_API_URL
+      );
     }
   });
 
@@ -81,7 +85,9 @@ describe("GameProfileForm - resolución de imágenes", () => {
     expect(roleImg.getAttribute("src")).not.toBe(
       "/media/games/league_of_legends/roles/mid.png"
     );
-    expect(roleImg.getAttribute("src")).toContain("/media/games/league_of_legends/roles/mid.png");
+    expect(roleImg.getAttribute("src")).toContain(
+      "/media/games/league_of_legends/roles/mid.png"
+    );
   });
 
   it("no renderiza etiqueta img si el rol tiene 'Sin icono'", () => {
@@ -93,5 +99,58 @@ describe("GameProfileForm - resolución de imágenes", () => {
     );
 
     expect(sinIconoImg).toBeUndefined();
+  });
+});
+
+describe("GameProfileForm - nick en el juego", () => {
+  const props = {
+    games: [{ id: 1, name: "Overwatch" }],
+    characters: [],
+    roles: [],
+    ranks: [],
+    selectedGameId: "1",
+    selectedCharacters: [],
+    selectedRoles: [],
+    isLoadingGames: false,
+    isLoadingGameData: false,
+    gamesError: "",
+    gameDataError: "",
+    onGameChange: vi.fn(),
+    onCancel: vi.fn(),
+    onSubmit: vi.fn(),
+  };
+
+  it("es editable y avisa cada cambio", () => {
+    const onInGameNameChange = vi.fn();
+    render(
+      <GameProfileForm
+        {...props}
+        inGameName="Ana#1234"
+        onInGameNameChange={onInGameNameChange}
+      />
+    );
+
+    const campo = screen.getByLabelText("Nick en el juego");
+    expect(campo).toHaveValue("Ana#1234");
+    expect(campo).toBeEnabled();
+    fireEvent.change(campo, { target: { value: "Ana#9999" } });
+    expect(onInGameNameChange).toHaveBeenCalledWith("Ana#9999");
+  });
+
+  it("con la cuenta de Riot vinculada muestra el Riot ID y no se edita", () => {
+    render(
+      <GameProfileForm
+        {...props}
+        inGameName="Manual"
+        riotIdVinculado="Ana#LAS"
+      />
+    );
+
+    const campo = screen.getByLabelText("Nick en el juego");
+    expect(campo).toHaveValue("Ana#LAS");
+    expect(campo).toBeDisabled();
+    expect(
+      screen.getByText(/Riot ID de tu cuenta de Riot vinculada/)
+    ).toBeInTheDocument();
   });
 });

@@ -18,3 +18,4 @@ class CreateGameProfileRequest(BaseModel):
         description="Lista de roles con su rango (debe indicar al menos un rol)"
     )
     region_id: Optional[int] = Field(None, description='ID de la región del jugador')
+    in_game_name: Optional[str] = Field(None, max_length=50, description="Nombre del jugador dentro del juego (opcional)")

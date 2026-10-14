@@ -1,5 +1,5 @@
 from typing import List, Optional
-from sqlalchemy import ForeignKey, UniqueConstraint
+from sqlalchemy import ForeignKey, String, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.infrastructure.database.base import Base
@@ -22,6 +22,7 @@ class GameProfileORM(Base):
     player_id: Mapped[int] = mapped_column(ForeignKey("user.user_id"), nullable=False)
     videogame_id: Mapped[int] = mapped_column(ForeignKey("videogame.videogame_id"), nullable=False)
     region_id: Mapped[Optional[int]] = mapped_column(ForeignKey("region.region_id"), nullable=True)
+    in_game_name: Mapped[Optional[str]] = mapped_column(String(50), nullable=True)
 
     # Relaciones
     user: Mapped["UserORM"] = relationship(back_populates="game_profiles")
