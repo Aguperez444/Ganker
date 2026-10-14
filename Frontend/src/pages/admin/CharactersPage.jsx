@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import CharacterForm from "../../components/characters/CharacterFormComponent";
 import CharactersListComponent from "../../components/characters/CharactersListComponent";
+import ListaConBuscadorComponent from "../../components/common/ListaConBuscadorComponent";
 import IconSelectComponent from "../../components/common/IconSelectComponent";
 import useGames from "../../hooks/useGames";
 import useCharacters from "../../hooks/useCharacters";
@@ -283,14 +284,25 @@ const CharactersPage = () => {
             )}
 
             {selectedGameId ? (
-              <CharactersListComponent
-                characters={characters}
+              <ListaConBuscadorComponent
+                key={selectedGameId}
+                items={characters}
                 isLoading={isLoadingCharacters}
                 error={charactersError}
-                selectedCharacterId={selectedCharacter?.id}
-                onEdit={handleOpenEdit}
-                onDelete={handleOpenDelete}
-              />
+                label="Buscar personaje"
+                placeholder="Buscar personaje por nombre..."
+              >
+                {(personajesFiltrados) => (
+                  <CharactersListComponent
+                    characters={personajesFiltrados}
+                    isLoading={isLoadingCharacters}
+                    error={charactersError}
+                    selectedCharacterId={selectedCharacter?.id}
+                    onEdit={handleOpenEdit}
+                    onDelete={handleOpenDelete}
+                  />
+                )}
+              </ListaConBuscadorComponent>
             ) : (
               <div className="rounded-xl border border-white/10 bg-ganker-surface-light p-6">
                 <p className="text-sm text-ganker-muted">

@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import ModalConfirmacionComponent from "../../components/common/ModalConfirmacionComponent.jsx";
 import RegionForm from "../../components/region/RegionFormComponent";
 import RegionsListComponent from "../../components/region/RegionsListComponent";
+import ListaConBuscadorComponent from "../../components/common/ListaConBuscadorComponent";
 import IconSelectComponent from "../../components/common/IconSelectComponent";
 import useGames from "../../hooks/useGames";
 import useRegions from "../../hooks/useRegions";
@@ -232,15 +233,26 @@ const RegionsPage = () => {
               </div>
 
               {selectedGameId ? (
-                <RegionsListComponent
-                  regions={regions}
+                <ListaConBuscadorComponent
+                  key={selectedGameId}
+                  items={regions}
                   isLoading={isLoadingRegions}
                   error={regionsError}
-                  selectedRegionId={selectedRegion?.id}
-                  deletingRegionId={isDeleting ? regionToDelete?.id : null}
-                  onEdit={handleOpenEdit}
-                  onDelete={handleOpenDelete}
-                />
+                  label="Buscar región"
+                  placeholder="Buscar región por nombre..."
+                >
+                  {(regionesFiltradas) => (
+                    <RegionsListComponent
+                      regions={regionesFiltradas}
+                      isLoading={isLoadingRegions}
+                      error={regionsError}
+                      selectedRegionId={selectedRegion?.id}
+                      deletingRegionId={isDeleting ? regionToDelete?.id : null}
+                      onEdit={handleOpenEdit}
+                      onDelete={handleOpenDelete}
+                    />
+                  )}
+                </ListaConBuscadorComponent>
               ) : (
                 <div className="rounded-xl border border-white/10 bg-ganker-surface-light p-6">
                   <p className="text-sm text-ganker-muted">

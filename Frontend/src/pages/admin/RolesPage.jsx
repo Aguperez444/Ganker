@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import RoleForm from "../../components/roles/RoleFormComponent";
 import RolesListComponent from "../../components/roles/RolesListComponent";
+import ListaConBuscadorComponent from "../../components/common/ListaConBuscadorComponent";
 import ModalConfirmacionComponent from "../../components/common/ModalConfirmacionComponent";
 import IconSelectComponent from "../../components/common/IconSelectComponent";
 import useGames from "../../hooks/useGames";
@@ -183,14 +184,25 @@ const RolesPage = () => {
             </div>
 
             {selectedGameId ? (
-              <RolesListComponent
-                roles={roles}
+              <ListaConBuscadorComponent
+                key={selectedGameId}
+                items={roles}
                 isLoading={isLoadingRoles}
                 error={rolesError}
-                selectedRoleId={selectedRole?.id}
-                onEdit={handleOpenEdit}
-                onDelete={handleOpenDelete}
-              />
+                label="Buscar rol"
+                placeholder="Buscar rol por nombre..."
+              >
+                {(rolesFiltrados) => (
+                  <RolesListComponent
+                    roles={rolesFiltrados}
+                    isLoading={isLoadingRoles}
+                    error={rolesError}
+                    selectedRoleId={selectedRole?.id}
+                    onEdit={handleOpenEdit}
+                    onDelete={handleOpenDelete}
+                  />
+                )}
+              </ListaConBuscadorComponent>
             ) : (
               <div className="rounded-xl border border-white/10 bg-ganker-surface-light p-6">
                 <p className="text-sm text-ganker-muted">
