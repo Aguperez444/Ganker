@@ -43,16 +43,28 @@ const MessageBubbleComponent = ({
   mostrarIndicadorLeido = esPropio,
   // US 44 - Nombre de quien escribio, en el chat del equipo.
   autor = null,
+  // Si viene, el nombre del autor lleva a su perfil.
+  onClickAutor,
 }) => {
   const indicadorLeido = esPropio && mostrarIndicadorLeido;
 
   return (
     <div className={`flex flex-col ${esPropio ? "items-end" : "items-start"}`}>
-      {autor && (
-        <span className="mb-1 px-1 text-[11px] font-semibold text-ganker-purple-light">
-          {autor}
-        </span>
-      )}
+      {autor &&
+        (onClickAutor ? (
+          <button
+            type="button"
+            onClick={onClickAutor}
+            title="Ver perfil"
+            className="mb-1 cursor-pointer px-1 text-[11px] font-semibold text-ganker-purple-light hover:underline"
+          >
+            {autor}
+          </button>
+        ) : (
+          <span className="mb-1 px-1 text-[11px] font-semibold text-ganker-purple-light">
+            {autor}
+          </span>
+        ))}
       <div
         className={`max-w-[75%] rounded-2xl px-4 py-2.5 text-sm break-words ${
           esPropio

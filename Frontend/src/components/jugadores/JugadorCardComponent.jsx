@@ -84,6 +84,9 @@ function InsigniaPerfil({ icon_url, name }) {
  * `perfilJuego.rangoPorRol` (opcional, true por defecto): en juegos con
  * rank_per_role = false todos los roles comparten el rango del perfil, asi
  * que se muestran los roles y el rango una sola vez en vez de repetirlo.
+ *
+ * `onVerPerfil` (opcional): si viene, el avatar, el nombre y el boton "Ver
+ * perfil" llevan al perfil completo del jugador (todos sus perfiles de juego).
  */
 const JugadorCardComponent = ({
   jugador,
@@ -91,6 +94,7 @@ const JugadorCardComponent = ({
   onEnviarMensaje,
   enviando,
   perfilJuego,
+  onVerPerfil,
 }) => {
   const esUnoMismo = jugador.user_id === currentUserId;
   const conexionReciente = formatearConexionReciente(jugador.last_connection);
@@ -102,14 +106,31 @@ const JugadorCardComponent = ({
 
   return (
     <div className="flex flex-col items-center gap-3 rounded-2xl border border-white/10 bg-ganker-surface p-6 text-center transition hover:border-ganker-purple/40">
-      <div className="flex h-16 w-16 items-center justify-center overflow-hidden rounded-full border border-ganker-purple/40 bg-ganker-surface-light text-lg font-semibold text-ganker-text">
+      <button
+        type="button"
+        onClick={() => onVerPerfil?.(jugador)}
+        disabled={!onVerPerfil}
+        tabIndex={-1}
+        aria-hidden="true"
+        className="flex h-16 w-16 items-center justify-center overflow-hidden rounded-full border border-ganker-purple/40 bg-ganker-surface-light text-lg font-semibold text-ganker-text transition enabled:cursor-pointer enabled:hover:border-ganker-purple"
+      >
         <AvatarUsuarioComponent user={jugador} />
-      </div>
+      </button>
 
       <div className="min-w-0">
-        <p className="truncate font-heading text-base font-semibold text-ganker-text">
-          {jugador.name}
-        </p>
+        {onVerPerfil ? (
+          <button
+            type="button"
+            onClick={() => onVerPerfil(jugador)}
+            className="block max-w-full cursor-pointer truncate font-heading text-base font-semibold text-ganker-text hover:underline"
+          >
+            {jugador.name}
+          </button>
+        ) : (
+          <p className="truncate font-heading text-base font-semibold text-ganker-text">
+            {jugador.name}
+          </p>
+        )}
         <p className="truncate text-sm text-ganker-muted">
           @{jugador.username}
         </p>
@@ -156,12 +177,22 @@ const JugadorCardComponent = ({
         </div>
       )}
 
+      {onVerPerfil && (
+        <button
+          type="button"
+          onClick={() => onVerPerfil(jugador)}
+          className={`${esUnoMismo ? "mt-auto " : ""}w-full cursor-pointer rounded-xl border border-ganker-purple/40 bg-ganker-purple/10 px-4 py-2 text-sm font-semibold text-ganker-text transition hover:bg-ganker-purple/25`}
+        >
+          Ver perfil
+        </button>
+      )}
+
       {!esUnoMismo && (
         <button
           type="button"
           onClick={() => onEnviarMensaje(jugador)}
           disabled={enviando}
-          className="mt-auto w-full rounded-xl border border-white/10 bg-ganker-surface-light px-4 py-2 text-sm font-semibold text-ganker-text transition hover:border-ganker-purple/40 hover:bg-ganker-purple/20 disabled:cursor-not-allowed disabled:opacity-60"
+          className={`${onVerPerfil ? "" : "mt-auto "}w-full rounded-xl border border-white/10 bg-ganker-surface-light px-4 py-2 text-sm font-semibold text-ganker-text transition hover:border-ganker-purple/40 hover:bg-ganker-purple/20 disabled:cursor-not-allowed disabled:opacity-60`}
         >
           {enviando ? "Abriendo chat..." : "Enviar mensaje"}
         </button>

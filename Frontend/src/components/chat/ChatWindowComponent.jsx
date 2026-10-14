@@ -59,12 +59,16 @@ function mensajeDeErrorHistorial(error, esDeEquipo) {
 //
 // La llamada HTTP ya no se hace directamente desde el componente:
 // useChatHistory se ocupa de la comunicación con la capa api.
+//
+// `onVerPerfil(userId)` (opcional): si viene, el encabezado del chat privado
+// y el nombre de quien escribe en el chat del equipo llevan a su perfil.
 const ChatWindowComponent = ({
   conversacion,
   currentUserId,
   onVolver,
   onCerrar,
   onMensaje,
+  onVerPerfil,
 }) => {
   const { obtenerMensajesDeConversacion, sembrarMensajesDeConversacion } =
     useChat();
@@ -139,6 +143,7 @@ const ChatWindowComponent = ({
       onVolver={onVolver}
       onCerrar={onCerrar}
       onMensaje={onMensaje}
+      onVerPerfil={onVerPerfil}
       mensajesIniciales={mensajesIniciales}
       errorHistorial={errorHistorial}
     />
@@ -151,6 +156,7 @@ const ChatWindowInterna = ({
   onVolver,
   onCerrar,
   onMensaje,
+  onVerPerfil,
   mensajesIniciales,
   errorHistorial,
 }) => {
@@ -185,6 +191,10 @@ const ChatWindowInterna = ({
   const nombreOtro = esDeEquipo
     ? conversacion.nombre || "Chat del equipo"
     : otroParticipante?.name || otroParticipante?.username || "Jugador";
+
+  const puedeVerPerfilDelOtro = Boolean(
+    !esDeEquipo && onVerPerfil && otroParticipante?.user_id
+  );
 
   // Si se reabre el panel/drawer con la conversación ya activa,
   // volvemos a marcarla como vista.
@@ -311,29 +321,43 @@ const ChatWindowInterna = ({
           </button>
         )}
 
-        <div className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-full border border-ganker-purple/40 bg-ganker-surface-light text-sm font-semibold text-ganker-text">
-          {esDeEquipo ? (
-            <IconoChicoComponent
-              src={conversacion.icon_url}
-              className="h-full w-full"
-            />
-          ) : (
-            <AvatarUsuarioComponent user={otroParticipante} alt={nombreOtro} />
-          )}
-        </div>
-
-        <div className="min-w-0 flex-1">
-          <h3 className="truncate font-heading text-sm font-semibold text-ganker-text">
-            {nombreOtro}
-          </h3>
-
-          <span className="text-[11px] text-ganker-muted">
-            {esDeEquipo && conversacion.member_count
-              ? `${conversacion.member_count} integrantes · `
-              : ""}
-            {TEXTO_ESTADO[estado] ?? estado}
+        <button
+          type="button"
+          onClick={() => onVerPerfil(otroParticipante.user_id)}
+          disabled={!puedeVerPerfilDelOtro}
+          aria-label={
+            puedeVerPerfilDelOtro ? `Ver perfil de ${nombreOtro}` : undefined
+          }
+          title={puedeVerPerfilDelOtro ? "Ver perfil" : undefined}
+          className="flex min-w-0 flex-1 items-center gap-2.5 rounded-lg text-left enabled:cursor-pointer enabled:hover:opacity-80"
+        >
+          <span className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-full border border-ganker-purple/40 bg-ganker-surface-light text-sm font-semibold text-ganker-text">
+            {esDeEquipo ? (
+              <IconoChicoComponent
+                src={conversacion.icon_url}
+                className="h-full w-full"
+              />
+            ) : (
+              <AvatarUsuarioComponent
+                user={otroParticipante}
+                alt={nombreOtro}
+              />
+            )}
           </span>
-        </div>
+
+          <span className="block min-w-0 flex-1">
+            <span className="block truncate font-heading text-sm font-semibold text-ganker-text">
+              {nombreOtro}
+            </span>
+
+            <span className="text-[11px] text-ganker-muted">
+              {esDeEquipo && conversacion.member_count
+                ? `${conversacion.member_count} integrantes · `
+                : ""}
+              {TEXTO_ESTADO[estado] ?? estado}
+            </span>
+          </span>
+        </button>
 
         {onCerrar && (
           <button
@@ -404,6 +428,11 @@ const ChatWindowInterna = ({
                 esPropio={mensaje.sender_id === currentUserId}
                 mostrarHora={mostrarHora}
                 autor={autor}
+                onClickAutor={
+                  autor && onVerPerfil
+                    ? () => onVerPerfil(mensaje.sender_id)
+                    : undefined
+                }
                 // El chatroom no informa quien leyo cada mensaje.
                 mostrarIndicadorLeido={
                   !esDeEquipo && indice === indiceUltimoMensajePropio

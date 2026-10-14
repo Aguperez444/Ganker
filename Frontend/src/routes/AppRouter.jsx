@@ -14,6 +14,7 @@ import ProtectedRoute from "./ProtectedRoute.jsx";
 import PublicOnlyRoute from "./PublicOnlyRoute.jsx";
 import ProfilePage from "../pages/ProfilePage.jsx";
 import BuscarJugadoresPage from "../pages/BuscarJugadoresPage.jsx";
+import JugadorPerfilPage from "../pages/JugadorPerfilPage.jsx";
 import EquiposPage from "../pages/EquiposPage.jsx";
 import CrearEquipoPage from "../pages/CrearEquipoPage.jsx";
 import MiEquipoPage from "../pages/MiEquipoPage.jsx";
@@ -49,6 +50,9 @@ function AppRouter() {
             <Route path="cuenta" element={<CuentaPage />} />
             {/* Páginas placeholder para funcionalidades en próximos sprints */}
             <Route path="jugadores" element={<BuscarJugadoresPage />} />
+            {/* Perfil de otro jugador con todos sus perfiles de juego. Se
+                entra desde Buscar jugadores, el chat o un equipo. */}
+            <Route path="jugadores/:jugadorId" element={<JugadorPerfilPage />} />
             <Route
               path="buscar"
               element={<Navigate to="/app/jugadores" replace />}

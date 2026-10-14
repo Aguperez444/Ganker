@@ -1,4 +1,6 @@
+import { useNavigate } from "react-router-dom";
 import { useChat } from "../../context/ChatContext";
+import { rutaPerfilJugador } from "../../utils/rutas";
 import ConversationListComponent from "./ConversationListComponent";
 import ChatWindowComponent from "./ChatWindowComponent";
 
@@ -8,6 +10,7 @@ import ChatWindowComponent from "./ChatWindowComponent";
  * desktop (AppLayout) como el drawer de mobile (ChatDrawer).
  */
 const ChatSidebarComponent = ({ onCerrar }) => {
+  const navigate = useNavigate();
   const {
     conversaciones,
     conversacionActiva,
@@ -21,6 +24,13 @@ const ChatSidebarComponent = ({ onCerrar }) => {
     manejarMensajeDeSalaActiva,
   } = useChat();
 
+  // En desktop el chat es un panel fijo y queda abierto al lado del perfil.
+  // En mobile es un drawer (onCerrar) que taparia el perfil, asi que se cierra.
+  const handleVerPerfil = (userId) => {
+    navigate(rutaPerfilJugador(userId));
+    onCerrar?.();
+  };
+
   if (conversacionActivaId && conversacionActiva) {
     return (
       <ChatWindowComponent
@@ -30,6 +40,7 @@ const ChatSidebarComponent = ({ onCerrar }) => {
         onVolver={cerrarConversacionActiva}
         onCerrar={onCerrar}
         onMensaje={manejarMensajeDeSalaActiva}
+        onVerPerfil={handleVerPerfil}
       />
     );
   }

@@ -19,3 +19,10 @@ export function esAdmin(user) {
 export function rutaInicialPara(user) {
   return esAdmin(user) ? "/app/admin" : "/app";
 }
+
+// Perfil de otro jugador. `videogameId` (opcional) deja ese juego
+// preseleccionado, ej. el que se estaba filtrando en Buscar jugadores.
+export function rutaPerfilJugador(userId, videogameId) {
+  const ruta = `/app/jugadores/${userId}`;
+  return videogameId ? `${ruta}?juego=${videogameId}` : ruta;
+}

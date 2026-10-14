@@ -9,6 +9,7 @@ from app.application.use_cases.update_user import UpdateUser
 from app.infrastructure.api.dependencies.auth import get_current_user_id, require_player, require_admin
 from app.infrastructure.api.dto.response.auth_tokens_response import AuthTokensResponse
 from app.infrastructure.api.dto.response.get.get_user_response import GetUserResponse
+from app.infrastructure.api.dto.response.get.get_public_user_response import GetPublicUserResponse
 from app.infrastructure.api.dto.request.register_user_request import RegisterUserRequest
 from app.infrastructure.api.dto.response.create_register.register_user_response import RegisterUserResponse
 from app.infrastructure.api.dto.response.update.update_user_response import UpdateUserResponse
@@ -84,3 +85,10 @@ def get_user(user_id: int = Depends(get_current_user_id)) -> GetUserResponse:
     user_dto = get_user_use_case.get_by_id(user_id)
     return user_dto
 
+
+@router.get("/{user_id}/profile", response_model=GetPublicUserResponse, status_code=200, dependencies=[Depends(require_player)])
+def get_public_user_profile(user_id: int) -> GetPublicUserResponse:
+    # Perfil de otro jugador (desde buscar jugadores, el chat o un equipo), sin sus datos privados
+    uow = uow_factory()
+    query_users_use_case = QueryUsers(uow)
+    return query_users_use_case.get_public_profile(user_id)
