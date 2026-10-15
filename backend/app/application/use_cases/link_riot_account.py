@@ -51,11 +51,13 @@ class LinkRiotAccount:
 
     def execute(self, player_id: int, game_profile_id: int, riot_id: str,
                 server: Optional[str]) -> GetRiotAccountLinkResponse:
+        # Separa el Riot ID en nombre de juego y tagline (ej: "Player#NA1" -> "Player", "NA1")
         game_name, tag_line = RiotIdService.parse(riot_id)
 
         with self.uow as uow:
             game_profile = CatalogValidationService.get_and_validate_exists_game_profile(game_profile_id, player_id, uow)
             provider = get_riot_provider_or_raise(self.provider_resolver, game_profile.videogame)
+
 
             account, account_server = provider.find_account(game_name, tag_line, server)
 

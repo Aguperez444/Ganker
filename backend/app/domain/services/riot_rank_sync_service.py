@@ -30,6 +30,10 @@ class RiotRankSyncService:
 
     @staticmethod
     def pick_main_entry(ranked: list[LolRankedEntry]) -> Optional[LolRankedEntry]:
+        '''
+        Devuelve la entrada de la cola más importante según PREFERRED_QUEUES, o None si no hay ninguna.
+        (en condiciones normales deuvelve ranked_solo_5x5, pero si el jugador no jugó esa cola, devuelve ranked_flex_sr.)
+        '''
         for queue_type in PREFERRED_QUEUES:
             for entry in ranked:
                 if entry.queue_type == queue_type:
@@ -42,10 +46,12 @@ class RiotRankSyncService:
         Busca en el catálogo del admin el rango equivalente al de Riot, por nombre y sin importar tildes
         ni mayúsculas. Si el admin cargó rangos con división ("Oro II") se prefiere ese; si no, la liga ("Oro").
         """
-        by_name = {_normalize(rank.name): rank for rank in ranks}
+        # diccionario de rangos de ganker, normalizados por nombre, para buscar equivalencias
+        ranks_by_name = {_normalize(rank.name): rank for rank in ranks}
+        # Genera un array del estilo de [Oro II, Oro] si entry.division existe, u [Oro] si no
         candidates = [f"{entry.tier} {entry.division}", entry.tier] if entry.division else [entry.tier]
         for candidate in candidates:
-            rank = by_name.get(_normalize(candidate))
+            rank = ranks_by_name.get(_normalize(candidate))
             if rank:
                 return rank
         return None

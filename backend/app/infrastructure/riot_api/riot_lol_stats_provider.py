@@ -16,7 +16,7 @@ from app.infrastructure.riot_api.riot_api_client import RiotApiClient
 
 # Las cuentas y las partidas se consultan por región ("routing value"); el resto, por servidor.
 # https://developer.riotgames.com/docs/lol#routing-values
-REGIONAL_ROUTING = {
+REGIONAL_ROUTING = { # esto es un diccionario que mapea LolServer a routing value, ej: LolServer.LAS -> "americas"
     LolServer.LAS: "americas", LolServer.LAN: "americas", LolServer.BR: "americas", LolServer.NA: "americas",
     LolServer.EUW: "europe", LolServer.EUNE: "europe", LolServer.TR: "europe", LolServer.RU: "europe",
     LolServer.ME: "europe",
@@ -73,7 +73,10 @@ class RiotLolStatsProvider(IRiotGameProvider):
         return True
 
     def find_account(self, game_name: str, tag_line: str, server: Optional[str]) -> tuple[RiotAccount, str]:
+        # convierte el str que representa al servidor un un objeto de nuestro Enum del dominio (ej: "LAS" -> LolServer.LAS)
         lol_server = self._lol_server(server)
+        # busca el perfil de Riot por su Riot ID (game_name#tag_line) en la API de Riot, usando el routing value de la región
+        # si no lo encuentra, lanza RiotAccountNotFoundException; si la API no responde, lanza RiotApiUnavailableException
         data = self.riot_api.get(
             REGIONAL_ROUTING[lol_server],
             f"/riot/account/v1/accounts/by-riot-id/{quote(game_name)}/{quote(tag_line)}",
@@ -183,19 +186,25 @@ class RiotLolStatsProvider(IRiotGameProvider):
         """Versión actual de Data Dragon y sus campeones por key numérica: {266: ("Aatrox", "Aatrox")}."""
         try:
             # Data Dragon es público: no lleva la clave de Riot
+            # busca las versiones o parches públicados
             versions = self.riot_api.http_client.get(f"{self.ddragon_base_url}/api/versions.json")
             versions.raise_for_status()
+            # guarda el parche más reciente (el número digamos ej 13.1.1)
             version = versions.json()[0]
 
+            # si ese parche no está en nuestro caché, pedimos todos los campeones de ese parche
+            # y los guardamos en caché para no pedirlos otra vez
             if version not in _champions_cache:
                 response = self.riot_api.http_client.get(
                     f"{self.ddragon_base_url}/cdn/{version}/data/{self.locale}/champion.json"
                 )
+
                 response.raise_for_status()
                 _champions_cache[version] = {
                     int(champion["key"]): (champion["id"], champion["name"])
                     for champion in response.json()["data"].values()
                 }
+
             return version, _champions_cache[version]
         except (httpx.HTTPError, ValueError, KeyError, IndexError, TypeError):
             raise RiotApiUnavailableException()
