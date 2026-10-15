@@ -19,3 +19,5 @@ typing-extensions
 colorama>=0.4.6
 psycopg2-binary>=2.9.9
 defusedxml>=0.7.1
+httpx>=0.28.1
+anyio>=4.15.1

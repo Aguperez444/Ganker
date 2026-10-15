@@ -54,3 +54,9 @@ class UserRepositoryImpl(IUserRepository):
             self.session.refresh(orm_user)
             return UserMapper.orm_to_domain(orm_user)
         return user
+
+    def update_user_password(self, user_id: int, new_hashed_password: str) -> None:
+        orm_user = self.session.query(UserORM).filter(UserORM.user_id == user_id).first()
+        if orm_user:
+            orm_user.password_hash = new_hashed_password
+            self.session.flush()

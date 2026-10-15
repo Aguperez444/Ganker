@@ -2,7 +2,8 @@ from abc import ABC, abstractmethod
 
 from typing import TYPE_CHECKING
 
-from app.application.ports.i_region_repository import IRegionRepository
+from app.application.ports.i_email_service import IEmailService
+from app.application.ports.i_password_reset_token_repository import IPasswordResetTokenRepository
 
 if TYPE_CHECKING:
     from app.application.ports.i_role_profile_repository import IRoleProfileRepository
@@ -37,6 +38,8 @@ class IUnitOfWork(ABC):
     character_priority_repo: 'ICharacterPriorityRepository'
     team_repo: 'ITeamRepository'
     region_repo: 'IRegionRepository'
+    reset_token_repo: 'IPasswordResetTokenRepository'
+    email_service: 'IEmailService'
 
 
     @abstractmethod

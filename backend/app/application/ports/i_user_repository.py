@@ -26,3 +26,6 @@ class IUserRepository(ABC):
     def get_user_by_mail(self, mail: str) -> Optional['User']:
         raise NotImplementedError
 
+    @abstractmethod
+    def update_user_password(self, user_id: int, new_hashed_password: str) -> None:
+        raise NotImplementedError

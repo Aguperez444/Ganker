@@ -7,6 +7,7 @@ from app.application.ports.i_conversation_repository import IConversationReposit
 from app.application.ports.i_find_by_specifications_service import IFindBySpecificationsRepository
 from app.application.ports.i_game_profile_repository import IGameProfileRepository
 from app.application.ports.i_message_repository import IMessageRepository
+from app.application.ports.i_password_reset_token_repository import IPasswordResetTokenRepository
 from app.application.ports.i_role_profile_repository import IRoleProfileRepository
 from app.application.ports.i_user_repository import IUserRepository
 from app.application.ports.i_rank_repository import IRankRepository
@@ -21,6 +22,8 @@ from app.infrastructure.database.repositories.character_repository_impl import C
 from app.infrastructure.database.repositories.conversation_repo_impl import ConversationRepositoryImpl
 from app.infrastructure.database.repositories.game_profile_repository_impl import GameProfileRepositoryImpl
 from app.infrastructure.database.repositories.message_repo_impl import MessageRepoImpl
+from app.infrastructure.database.repositories.password_reset_token_repository_impl import \
+    PasswordResetTokenRepositoryImpl
 from app.infrastructure.database.repositories.role_profile_repository_impl import RoleProfileRepositoryImpl
 from app.infrastructure.database.repositories.user_repository_impl import UserRepositoryImpl
 from app.infrastructure.database.repositories.rank_repository_impl import RankRepositoryImpl
@@ -57,6 +60,7 @@ class SqlAlchemyUnitOfWork(IUnitOfWork):
         self.character_priority_repo: ICharacterPriorityRepository
         self.team_repo: ITeamRepository
         self.region_repo: IRegionRepository
+        self.reset_token_repo: 'IPasswordResetTokenRepository'
     # Context manager
     def __enter__(self) -> 'SqlAlchemyUnitOfWork':
         self.session: Session = self._sf()  # nueva Session por acción
@@ -74,6 +78,7 @@ class SqlAlchemyUnitOfWork(IUnitOfWork):
         self.team_repo: ITeamRepository = TeamRepositoryImpl(self.session)
         self.region_repo: IRegionRepository = RegionRepositoryImpl(self.session)
         self.find_by_specification_repo: IFindBySpecificationsRepository = FindBySpecificationsRepositoryImpl(self.session)
+        self.reset_token_repo: 'IPasswordResetTokenRepository' = PasswordResetTokenRepositoryImpl(self.session)
         return self
 
 

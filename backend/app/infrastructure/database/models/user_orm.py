@@ -7,6 +7,7 @@ from app.infrastructure.database.base import Base
 
 from typing import TYPE_CHECKING
 
+from app.infrastructure.database.models.password_reset_token_orm import PasswordResetTokenORM
 
 if TYPE_CHECKING:
     from app.infrastructure.database.models.game_profile_orm import GameProfileORM
@@ -38,4 +39,9 @@ class UserORM(Base):
     sent_messages: Mapped[List["MessageORM"]] = relationship(
         "MessageORM",
         back_populates="sender"
+    )
+    password_reset_tokens: Mapped[List["PasswordResetTokenORM"]] = relationship(
+        "PasswordResetTokenORM",
+        back_populates="user",
+        cascade="all, delete, delete-orphan"
     )

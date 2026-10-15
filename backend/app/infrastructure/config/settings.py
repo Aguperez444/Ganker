@@ -26,6 +26,22 @@ class Settings(BaseSettings):
     login_rate_limit_max_attempts: int = Field(default=5, validation_alias="LOGIN_RATE_LIMIT_MAX_ATTEMPTS")
     login_rate_limit_window_seconds: int = Field(default=60, validation_alias="LOGIN_RATE_LIMIT_WINDOW_SECONDS")
 
+    # Configuración de correo por resend
+    resend_api_key: str = Field(default="", validation_alias="RESEND_API_KEY")
+    email_from: str = Field(default="", validation_alias="EMAIL_FROM")
+    email_api_url: str = Field(default="", validation_alias="EMAIL_API_URL")
+
+    # Configuración de correo por smtp con gmail
+    smtp_host: str = Field(default="", validation_alias="SMTP_HOST")
+    smtp_port: int = Field(default=0, validation_alias="SMTP_PORT")
+    smtp_username: str = Field(default="", validation_alias="SMTP_USERNAME")
+    smtp_password: str = Field(default="", validation_alias="SMTP_PASSWORD")
+    smtp_email_from: str = Field(default="", validation_alias="SMTP_EMAIL_FROM")
+
+    frontend_url: str = Field(
+        default="http://localhost:3000", validation_alias="FRONTEND_URL"
+    )
+
     model_config = SettingsConfigDict(
         env_file=CONFIG_DIR / "secrets.env",
         env_file_encoding="utf-8",
