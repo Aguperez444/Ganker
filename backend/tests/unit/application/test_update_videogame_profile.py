@@ -27,6 +27,8 @@ class TestUpdateVideogameProfileUseCase:
         uow.character_repo = MagicMock()
         uow.role_repo = MagicMock()
         uow.rank_repo = MagicMock()
+        # Sin cuenta de Riot vinculada: el nombre dentro del juego se toma del request
+        uow.riot_account_link_repo.get_by_game_profile_id.return_value = None
         return uow
 
     def test_update_videogame_profile_happy_path(self, mock_uow):

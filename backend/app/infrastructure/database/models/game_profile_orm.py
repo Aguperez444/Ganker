@@ -1,5 +1,5 @@
 from typing import List, Optional
-from sqlalchemy import ForeignKey, UniqueConstraint
+from sqlalchemy import ForeignKey, String, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.infrastructure.database.base import Base
@@ -12,6 +12,7 @@ if TYPE_CHECKING:
     from app.infrastructure.database.models.videogame_orm import VideogameORM
     from app.infrastructure.database.models.role_profile_orm import RoleProfileORM
     from app.infrastructure.database.models.region_orm import RegionORM
+    from app.infrastructure.database.models.riot_account_link_orm import RiotAccountLinkORM
 
 
 class GameProfileORM(Base):
@@ -21,6 +22,7 @@ class GameProfileORM(Base):
     player_id: Mapped[int] = mapped_column(ForeignKey("user.user_id"), nullable=False)
     videogame_id: Mapped[int] = mapped_column(ForeignKey("videogame.videogame_id"), nullable=False)
     region_id: Mapped[Optional[int]] = mapped_column(ForeignKey("region.region_id"), nullable=True)
+    in_game_name: Mapped[Optional[str]] = mapped_column(String(50), nullable=True)
 
     # Relaciones
     user: Mapped["UserORM"] = relationship(back_populates="game_profiles")
@@ -32,6 +34,13 @@ class GameProfileORM(Base):
         back_populates="game_profile",
         cascade="all, delete-orphan",
         order_by="CharacterPriorityORM.priority"
+    )
+
+    # Cuenta de Riot vinculada (solo perfiles de League of Legends); se borra junto con el perfil
+    riot_account_link: Mapped[Optional["RiotAccountLinkORM"]] = relationship(
+        back_populates="game_profile",
+        cascade="all, delete-orphan",
+        uselist=False
     )
 
     # Constraints

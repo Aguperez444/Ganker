@@ -413,3 +413,38 @@ class TestUserEndpointsIntegration:
     def test_get_user_me_unauthorized(self, client):
         response = client.get("/api/v1/users/me")
         assert response.status_code == 401
+
+    # ---------------------------------------------------------
+    # GET /api/v1/users/{user_id}/profile
+    # ---------------------------------------------------------
+
+    def test_get_public_profile_includes_game_profiles(self, client, player_auth_headers, admin_auth_headers,
+                                                       seed_player, seed_catalog_data):
+        # El jugador crea un perfil de juego y otro usuario entra a verlo
+        vg_id = seed_catalog_data["videogame"].videogame_id
+        payload = {
+            "videogame_id": vg_id,
+            "character_ids": [seed_catalog_data["characters"][0].character_id],
+            "roles": [{"role_id": seed_catalog_data["roles"][0].role_id,
+                       "rank_id": seed_catalog_data["ranks"][0].rank_id}]
+        }
+        assert client.post("/api/v1/game_profiles/", json=payload, headers=player_auth_headers).status_code == 201
+
+        response = client.get(f"/api/v1/users/{seed_player.user_id}/profile", headers=admin_auth_headers)
+
+        assert response.status_code == 200
+        data = response.json()
+        assert data["user_id"] == seed_player.user_id
+        assert data["username"] == seed_player.username
+        assert "mail" not in data
+        assert len(data["profiles"]) == 1
+        assert data["profiles"][0]["videogame"]["id"] == vg_id
+        assert data["profiles"][0]["characters"][0]["name"] == seed_catalog_data["characters"][0].name
+
+    def test_get_public_profile_not_found(self, client, player_auth_headers):
+        response = client.get("/api/v1/users/99999/profile", headers=player_auth_headers)
+        assert response.status_code == 404
+
+    def test_get_public_profile_unauthorized(self, client, seed_player):
+        response = client.get(f"/api/v1/users/{seed_player.user_id}/profile")
+        assert response.status_code == 401

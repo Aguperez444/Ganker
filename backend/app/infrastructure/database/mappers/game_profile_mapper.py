@@ -15,7 +15,8 @@ class GameProfileMapper:
             videogame=VideogameMapper.orm_to_domain(game_profile_orm.videogame),
             characters_priority=[CharacterPriorityMapper.orm_to_domain(char) for char in game_profile_orm.character_associations],
             role_profiles=[RoleProfileMapper.orm_to_domain(role_profile) for role_profile in game_profile_orm.role_profiles],
-            region=RegionMapper.orm_to_domain(game_profile_orm.region) if game_profile_orm.region else None
+            region=RegionMapper.orm_to_domain(game_profile_orm.region) if game_profile_orm.region else None,
+            in_game_name=game_profile_orm.in_game_name
         )
 
     @staticmethod
@@ -26,7 +27,8 @@ class GameProfileMapper:
                 videogame_id=game_profile_domain.videogame.videogame_id,
                 role_profiles=[RoleProfileMapper.domain_to_orm(role_profile) for role_profile in game_profile_domain.role_profiles],
                 character_associations=[CharacterPriorityMapper.domain_to_orm(char_priority) for char_priority in game_profile_domain.characters_priority],
-                region_id=game_profile_domain.region.region_id if game_profile_domain.region else None
+                region_id=game_profile_domain.region.region_id if game_profile_domain.region else None,
+                in_game_name=game_profile_domain.in_game_name
             )
         return GameProfileORM(
             game_profile_id=game_profile_domain.game_profile_id,
@@ -34,5 +36,6 @@ class GameProfileMapper:
             videogame_id=game_profile_domain.videogame.videogame_id,
             role_profiles=[RoleProfileMapper.domain_to_orm(role_profile) for role_profile in game_profile_domain.role_profiles],
             character_associations=[CharacterPriorityMapper.domain_to_orm(char_priority) for char_priority in game_profile_domain.characters_priority],
-            region_id=game_profile_domain.region.region_id if game_profile_domain.region else None
+            region_id=game_profile_domain.region.region_id if game_profile_domain.region else None,
+            in_game_name=game_profile_domain.in_game_name
         )

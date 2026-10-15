@@ -138,7 +138,8 @@ class FindBySpecificationsRepositoryImpl(IFindBySpecificationsRepository):
             region=RegionObjectResponse(
                 region_id=game_profile_domain.region.region_id,
                 name=game_profile_domain.region.name
-            ) if game_profile_domain.region else "Sin Especificar"
+            ) if game_profile_domain.region else "Sin Especificar",
+            in_game_name=game_profile_domain.in_game_name
         )
 
     def _apply_spec_team(self, query, spec: Specification):

@@ -18,7 +18,8 @@ class GameProfile:
                  videogame: 'Videogame',
                  characters_priority: list['CharacterPriority'],
                  role_profiles: list['RoleProfile'],
-                 region: Optional['Region'] = None
+                 region: Optional['Region'] = None,
+                 in_game_name: Optional[str] = None
                  ):
 
         self._game_profile_id: Optional[int] = game_profile_id
@@ -27,6 +28,7 @@ class GameProfile:
         self._characters_priority: list['CharacterPriority'] = characters_priority
         self._role_profiles: list['RoleProfile'] = role_profiles
         self._region: Optional['Region'] = region
+        self.in_game_name = in_game_name
 
     @property
     def game_profile_id(self) -> int:
@@ -75,6 +77,15 @@ class GameProfile:
     @region.setter
     def region(self, value: Optional['Region']) -> None:
         self._region = value
+
+    @property
+    def in_game_name(self) -> Optional[str]:
+        """Nombre del jugador dentro del juego (opcional). En juegos de Riot con cuenta vinculada es el Riot ID."""
+        return self._in_game_name
+    @in_game_name.setter
+    def in_game_name(self, value: Optional[str]) -> None:
+        cleaned = value.strip() if value else None
+        self._in_game_name = cleaned or None
 
     def is_persisted(self) -> bool:
         return self._game_profile_id is not None

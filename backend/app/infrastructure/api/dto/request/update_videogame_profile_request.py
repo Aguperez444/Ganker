@@ -15,3 +15,5 @@ class UpdateGameProfileRequest(BaseModel):
         description="Lista actualizada de roles con su rango"
     )
     region_id: Optional[int] = Field(None, description="Id de la region")
+    in_game_name: Optional[str] = Field(None, max_length=50, description="Nombre del jugador dentro del juego. "
+                                                                         "Se ignora si el perfil tiene una cuenta de Riot vinculada")

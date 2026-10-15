@@ -12,3 +12,4 @@ class GameProfileObjectResponse(BaseModel):
     characters: List[CharacterObjectResponse] = Field(..., description="Personajes asociados al perfil de juego")
     role_profiles: List['RoleProfileObjectResponse'] = Field(..., description="Perfiles de rol asociados al perfil de juego")
     region: RegionObjectResponse | None = Field(..., description="Region de juego asociado al perfil de juego")
+    in_game_name: str | None = Field(None, description="Nombre del jugador dentro del juego")
