@@ -32,6 +32,8 @@ pnpm-debug.log*
 .env
 .env.*
 !.env.example
+# Claves personales del backend (ej. RIOT_API_KEY): ver app/infrastructure/config/settings.py
+secrets.local.env
 
 # Builds
 dist/

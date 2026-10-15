@@ -72,3 +72,38 @@ class TestQueryUsersUseCase:
 
         assert exc_info.value.status_code == 404
         assert "999" in exc_info.value.message
+
+    def test_get_public_profile_hides_private_data(self, mock_deps):
+        use_case, uow = mock_deps
+
+        user = User(
+            user_id=3,
+            username="gamer3",
+            name="Gamer Three",
+            mail="gamer3@example.com",
+            password_hash="hash",
+            role=UserRole.PLAYER,
+            profiles=[],
+            icon_url="/media/users/icons/gamer3.png"
+        )
+        uow.user_repo.get_user_by_id.return_value = user
+
+        result = use_case.get_public_profile(3)
+
+        assert result.user_id == 3
+        assert result.username == "gamer3"
+        assert result.name == "Gamer Three"
+        assert result.icon_url == "/media/users/icons/gamer3.png"
+        assert result.profiles == []
+        assert "mail" not in result.model_dump()
+        assert "role" not in result.model_dump()
+
+    def test_get_public_profile_not_found_raises_exception(self, mock_deps):
+        use_case, uow = mock_deps
+
+        uow.user_repo.get_user_by_id.return_value = None
+
+        with pytest.raises(UserNotFoundException) as exc_info:
+            use_case.get_public_profile(999)
+
+        assert exc_info.value.status_code == 404

@@ -71,12 +71,13 @@ class CatalogValidationService:
         return character
 
     @staticmethod
-    def get_and_validate_exists_game_profile(game_profile_id: int, player_id: int, uow: 'IUnitOfWork') -> 'GameProfile':
+    def get_and_validate_exists_game_profile(game_profile_id: int, player_id: int|None, uow: 'IUnitOfWork') -> 'GameProfile':
         game_profile = uow.game_profile_repo.get_game_profile_by_id(game_profile_id)
         if not game_profile:
             raise GameProfileNotFoundException(game_profile_id)
-        if game_profile.player_id != player_id:
-            raise DoesNotBelongToProfileException("perfil de juego", f"{game_profile_id}")
+        if player_id:
+            if game_profile.player_id != player_id:
+                raise DoesNotBelongToProfileException("perfil de juego", f"{game_profile_id}")
         return game_profile
 
     @staticmethod

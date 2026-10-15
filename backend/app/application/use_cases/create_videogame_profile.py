@@ -80,7 +80,8 @@ class CreateVideogameProfile:
                 videogame = videogame,
                 characters_priority = prioritized_characters,
                 role_profiles = new_role_profiles,
-                region= region
+                region= region,
+                in_game_name = create_videogame_profile_request.in_game_name
             )
 
             # Persisto el game_profile en la base de datos

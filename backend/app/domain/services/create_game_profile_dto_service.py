@@ -36,7 +36,8 @@ class CreateGameProfileDTOService:
             region= RegionObjectResponse(
                 region_id=domain_game_profile.region.region_id,
                 name=domain_game_profile.region.name
-            ) if domain_game_profile.region else None
+            ) if domain_game_profile.region else None,
+            in_game_name=domain_game_profile.in_game_name
         )
 
     @staticmethod
@@ -65,5 +66,6 @@ class CreateGameProfileDTOService:
             region= RegionObjectResponse(
                 region_id=domain_game_profile.region.region_id,
                 name=domain_game_profile.region.name
-            ) if domain_game_profile.region else None
+            ) if domain_game_profile.region else None,
+            in_game_name=domain_game_profile.in_game_name
         )

@@ -60,6 +60,11 @@ class UpdateVideogameProfile:
             game_profile.role_profiles = new_role_profiles
             game_profile.region = region
 
+            # Con la cuenta de Riot vinculada, el nombre dentro del juego es su Riot ID (verificado) y no se edita
+            riot_link = uow.riot_account_link_repo.get_by_game_profile_id(game_profile_id)
+            game_profile.in_game_name = (riot_link.account.riot_id if riot_link
+                                         else update_videogame_profile_request.in_game_name)
+
             # Persistir los cambios del perfil en la base de datos
             updated_game_profile = uow.game_profile_repo.update_game_profile(game_profile)
 
