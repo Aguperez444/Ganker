@@ -2,7 +2,7 @@ from datetime import timedelta
 
 from app.application.ports.i_riot_game_provider_resolver import IRiotGameProviderResolver
 from app.application.ports.i_unit_of_work import IUnitOfWork
-from app.domain.exceptions.game_profile.game_profile_not_found_exception import GameProfileNotFoundException
+from app.domain.services.catalog_validation_service import CatalogValidationService
 from app.domain.services.create_riot_link_dto_service import CreateRiotLinkDTOService
 from app.infrastructure.api.dto.response.get.get_riot_account_link_response import GetRiotAccountLinkResponse
 
@@ -17,9 +17,7 @@ class QueryRiotAccountLink:
 
     def execute(self, game_profile_id: int) -> GetRiotAccountLinkResponse:
         with self.uow as uow:
-            game_profile = uow.game_profile_repo.get_game_profile_by_id(game_profile_id)
-            if game_profile is None:
-                raise GameProfileNotFoundException(game_profile_id)
+            game_profile = CatalogValidationService.get_and_validate_exists_game_profile(game_profile_id, None, uow)
 
             link = uow.riot_account_link_repo.get_by_game_profile_id(game_profile_id)
 
