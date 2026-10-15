@@ -9,7 +9,7 @@ from app.application.ports.i_character_catalog_provider import ICharacterCatalog
 from app.application.ports.i_character_catalog_provider_resolver import ICharacterCatalogProviderResolver
 from app.domain.models.videogame import Videogame
 from app.domain.models.character import Character
-from app.domain.models.catalog_character import CatalogCharacter
+from app.infrastructure.api.dto.request.catalog_character import CatalogCharacter
 from app.domain.exceptions.character.character_sync_not_supported_exception import CharacterSyncNotSupportedException
 from app.domain.exceptions.character.external_catalog_unavailable_exception import ExternalCatalogUnavailableException
 from app.domain.exceptions.file.invalid_file_content_error import InvalidFileContentError

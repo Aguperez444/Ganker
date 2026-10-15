@@ -5,7 +5,7 @@ from tests.conftest import VALID_PNG_BYTES
 import app.infrastructure.api.controllers.character_controller as char_ctrl_module
 from app.application.ports.i_character_catalog_provider import ICharacterCatalogProvider
 from app.domain.exceptions.character.external_catalog_unavailable_exception import ExternalCatalogUnavailableException
-from app.domain.models.catalog_character import CatalogCharacter
+from app.infrastructure.api.dto.request.catalog_character import CatalogCharacter
 from app.infrastructure.catalog_providers.character_catalog_provider_resolver_impl import CharacterCatalogProviderResolverImpl
 from app.infrastructure.database.models.character_orm import CharacterORM
 from app.infrastructure.database.models.videogame_orm import VideogameORM

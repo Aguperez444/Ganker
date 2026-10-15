@@ -2,7 +2,7 @@ import httpx
 import pytest
 
 from app.domain.exceptions.character.external_catalog_unavailable_exception import ExternalCatalogUnavailableException
-from app.domain.models.catalog_character import CatalogCharacter
+from app.infrastructure.api.dto.request.catalog_character import CatalogCharacter
 from app.domain.models.videogame import Videogame
 from app.infrastructure.catalog_providers.riot_data_dragon_provider import RiotDataDragonProvider
 from app.infrastructure.catalog_providers.character_catalog_provider_resolver_impl import CharacterCatalogProviderResolverImpl
