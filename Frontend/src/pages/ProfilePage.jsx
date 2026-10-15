@@ -14,7 +14,7 @@ const ProfilePage = () => {
 
   // La cuenta de Riot (que se maneja desde el perfil de cada juego) puede
   // haber cambiado el rango: se vuelven a pedir los perfiles al entrar, asi
-  // el formulario de "Modificar" no arranca con un rango viejo.
+  // el formulario de "Modificar" no arranca con un rango viejo..
   useEffect(() => {
     // Si falla, se sigue mostrando lo que ya estaba cargado en la sesion
     refrescarUsuario().catch(() => {});
