@@ -2,7 +2,7 @@ from abc import ABC, abstractmethod
 from typing import TYPE_CHECKING, BinaryIO
 
 if TYPE_CHECKING:
-    from app.domain.models.catalog_character import CatalogCharacter
+    from app.infrastructure.api.dto.request.catalog_character import CatalogCharacter
 
 
 class ICharacterCatalogProvider(ABC):

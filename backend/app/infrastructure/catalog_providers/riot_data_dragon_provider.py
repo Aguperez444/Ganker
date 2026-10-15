@@ -7,7 +7,7 @@ import httpx
 
 from app.application.ports.i_character_catalog_provider import ICharacterCatalogProvider
 from app.domain.exceptions.character.external_catalog_unavailable_exception import ExternalCatalogUnavailableException
-from app.domain.models.catalog_character import CatalogCharacter
+from app.infrastructure.api.dto.request.catalog_character import CatalogCharacter
 from app.infrastructure.config.settings import settings
 
 
