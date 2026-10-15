@@ -9,12 +9,7 @@ import RangoPermitidoComponent from "./RangoPermitidoComponent";
 // El boton "Unirse al equipo" (US 18) llama a onUnirse, que abre el modal
 // donde se ve si el jugador cumple los requisitos. `iconosDeRoles` se pasa
 // tal cual a la lista de integrantes.
-const TarjetaEquipoComponent = ({
-  equipo,
-  onUnirse,
-  iconosDeRoles,
-  onVerPerfil,
-}) => {
+const TarjetaEquipoComponent = ({ equipo, onUnirse, iconosDeRoles }) => {
   const info = equipo.consultant_player_info;
   const rangoRepresentativo = equipo.representative_rank;
 
@@ -78,7 +73,6 @@ const TarjetaEquipoComponent = ({
           integrantes={equipo.members}
           compacto
           iconosDeRoles={iconosDeRoles}
-          onVerPerfil={onVerPerfil}
         />
       </div>
 

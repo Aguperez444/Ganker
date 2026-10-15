@@ -10,7 +10,6 @@ import { useChat, useEventosEquipo } from "../context/ChatContext";
 import useEditarEquipo from "../hooks/useEditarEquipo";
 import useIconosDeRoles from "../hooks/useIconosDeRoles";
 import useMiEquipo from "../hooks/useMiEquipo";
-import { rutaPerfilJugador } from "../utils/rutas";
 
 // US 14 - Crear equipo: vista del equipo a la que se redirige al crearlo.
 // US - Expulsar jugador: el lider expulsa integrantes desde la lista.
@@ -242,7 +241,6 @@ const MiEquipoPage = () => {
           <IntegrantesEquipoComponent
             integrantes={equipo.members}
             iconosDeRoles={iconosDeRoles}
-            onVerPerfil={(userId) => navigate(rutaPerfilJugador(userId))}
             onExpulsar={esLider ? handleAbrirExpulsion : undefined}
             onTransferirLiderazgo={
               esLider ? handleAbrirTransferencia : undefined

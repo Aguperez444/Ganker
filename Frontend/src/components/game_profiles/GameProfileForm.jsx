@@ -11,8 +11,6 @@ const GameProfileForm = ({
 
   selectedGameId,
   selectedRegionId = "",
-  inGameName = "",
-  riotIdVinculado = null,
   selectedCharacters,
   selectedRoles,
   usesRankPerRole,
@@ -27,7 +25,6 @@ const GameProfileForm = ({
 
   onGameChange,
   onRegionChange,
-  onInGameNameChange,
   onAddCharacter,
   onRemoveCharacter,
   onMoveCharacter,
@@ -185,38 +182,6 @@ const GameProfileForm = ({
                       </option>
                     ))}
                   </select>
-                </div>
-              </div>
-
-              {/* Nick en el juego: opcional. Con la cuenta de Riot
-                  vinculada es el Riot ID y no se edita. */}
-              <div className="border-t border-white/10 pt-8">
-                <div className="mb-4">
-                  <h3 className="font-heading text-lg font-semibold text-ganker-text">
-                    Nick en el juego
-                  </h3>
-
-                  <p className="mt-1 text-sm text-ganker-muted">
-                    {riotIdVinculado
-                      ? "Es el Riot ID de tu cuenta de Riot vinculada. Para cambiarlo, desvinculá la cuenta desde \"Ver\"."
-                      : "Opcional. Cómo te encuentran en el juego (BattleTag, nombre de Steam...). En LoL y Valorant, si vinculás tu cuenta de Riot se completa solo con tu Riot ID."}
-                  </p>
-                </div>
-
-                <div className="max-w-xl">
-                  <label htmlFor="in-game-name" className="sr-only">
-                    Nick en el juego
-                  </label>
-                  <input
-                    id="in-game-name"
-                    value={riotIdVinculado ?? inGameName}
-                    onChange={(e) => onInGameNameChange?.(e.target.value)}
-                    disabled={Boolean(riotIdVinculado)}
-                    maxLength={50}
-                    autoComplete="off"
-                    placeholder="Ej.: Ana#1234"
-                    className="w-full rounded-lg border border-white/10 bg-ganker-surface-light px-3 py-2.5 text-sm text-ganker-text outline-none transition placeholder:text-ganker-muted focus:border-ganker-purple-light disabled:cursor-not-allowed disabled:opacity-60"
-                  />
                 </div>
               </div>
 

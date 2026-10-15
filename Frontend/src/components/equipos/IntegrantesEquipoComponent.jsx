@@ -20,9 +20,6 @@ const CLASES_ETIQUETA = "shrink-0 rounded-full border font-semibold";
 // icono del rol de cada integrante, asi que la pagina lo cruza con el
 // catalogo de roles del juego (ver hooks/useIconosDeRoles.js). Sin el, la
 // fila se muestra igual pero solo con el nombre del rol.
-//
-// `onVerPerfil(userId)` (opcional): si viene, el avatar y el nombre de cada
-// integrante (no de las vacantes) llevan a su perfil.
 function DetalleRolYRango({ perfilRol, iconoRol, rango }) {
   return (
     <span className="inline-flex min-w-0 items-center gap-1">
@@ -48,7 +45,6 @@ const IntegrantesEquipoComponent = ({
   onTransferirLiderazgo,
   compacto = false,
   iconosDeRoles = {},
-  onVerPerfil,
 }) => {
   const tamanioAvatar = compacto ? "h-7 w-7" : "h-10 w-10";
   const tamanioEtiqueta = compacto
@@ -76,21 +72,6 @@ const IntegrantesEquipoComponent = ({
         const colorNombre = integrante.is_vacant
           ? "text-ganker-muted"
           : "text-ganker-text";
-        const puedeVerPerfil = Boolean(
-          onVerPerfil && !integrante.is_vacant && integrante.user_id
-        );
-        const textoNombre = puedeVerPerfil ? (
-          <button
-            type="button"
-            onClick={() => onVerPerfil(integrante.user_id)}
-            title="Ver perfil"
-            className="max-w-full cursor-pointer truncate text-left hover:underline"
-          >
-            {nombre}
-          </button>
-        ) : (
-          nombre
-        );
 
         return (
           <li
@@ -106,14 +87,9 @@ const IntegrantesEquipoComponent = ({
                 <img
                   src={iconUrl}
                   alt=""
-                  onClick={
-                    puedeVerPerfil
-                      ? () => onVerPerfil(integrante.user_id)
-                      : undefined
-                  }
                   className={`${tamanioAvatar} shrink-0 rounded-full border border-white/10 object-cover ${
                     integrante.is_vacant ? "opacity-40" : ""
-                  } ${puedeVerPerfil ? "cursor-pointer hover:border-ganker-purple" : ""}`}
+                  }`}
                   onError={(e) => {
                     e.currentTarget.style.visibility = "hidden";
                   }}
@@ -127,7 +103,7 @@ const IntegrantesEquipoComponent = ({
               {compacto ? (
                 <div className="flex min-w-0 items-center gap-1.5 text-sm">
                   <span className={`truncate font-medium ${colorNombre}`}>
-                    {textoNombre}
+                    {nombre}
                   </span>
                   {detalle && (
                     <span className="flex min-w-0 items-center gap-1.5 text-xs text-ganker-muted">
@@ -139,7 +115,7 @@ const IntegrantesEquipoComponent = ({
               ) : (
                 <div className="min-w-0">
                   <p className={`truncate font-medium ${colorNombre}`}>
-                    {textoNombre}
+                    {nombre}
                   </p>
                   {detalle && (
                     <p className="mt-0.5 flex min-w-0 text-xs text-ganker-muted">

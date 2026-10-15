@@ -8,7 +8,6 @@ import useBuscarEquipos from "../hooks/useBuscarEquipos";
 import { iconosPorRol } from "../hooks/useIconosDeRoles";
 import useMiEquipo from "../hooks/useMiEquipo";
 import useUnirseEquipo from "../hooks/useUnirseEquipo";
-import { rutaPerfilJugador } from "../utils/rutas";
 
 const CLASES_BOTON_PRINCIPAL =
   "inline-block w-full shrink-0 rounded-xl bg-gradient-to-r from-ganker-orange to-ganker-purple px-5 py-3 text-center text-sm font-semibold text-white transition hover:opacity-90 sm:w-auto";
@@ -100,7 +99,6 @@ const EquiposPage = () => {
             equipo={equipoEncontrado}
             onUnirse={union.abrir}
             iconosDeRoles={iconosDeRoles}
-            onVerPerfil={(userId) => navigate(rutaPerfilJugador(userId))}
           />
         ))}
       </div>

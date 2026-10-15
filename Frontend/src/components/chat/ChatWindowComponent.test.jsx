@@ -1,12 +1,8 @@
 import { render, screen } from "@testing-library/react";
-import userEvent from "@testing-library/user-event";
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
 import ChatWindowComponent from "./ChatWindowComponent";
-import {
-  obtenerHistorialChatroom,
-  obtenerHistorialMensajes,
-} from "../../api/chatApi";
+import { obtenerHistorialChatroom } from "../../api/chatApi";
 
 vi.mock("../../api/chatApi", () => ({
   obtenerHistorialMensajes: vi.fn(),
@@ -96,77 +92,5 @@ describe("ChatWindowComponent - US 45 historial del chat del equipo", () => {
     expect(
       await screen.findByText("El chat de este equipo no existe.")
     ).toBeInTheDocument();
-  });
-});
-
-describe("ChatWindowComponent - acceso al perfil de otro jugador", () => {
-  beforeEach(() => vi.clearAllMocks());
-
-  it("en el chat privado, el encabezado lleva al perfil del otro jugador", async () => {
-    const usuario = userEvent.setup();
-    const onVerPerfil = vi.fn();
-    obtenerHistorialMensajes.mockResolvedValue([]);
-    render(
-      <ChatWindowComponent
-        conversacion={{
-          conversation_id: 4,
-          other_participant: {
-            user_id: 7,
-            username: "ana",
-            name: "Ana",
-            icon_url: "",
-          },
-        }}
-        currentUserId={1}
-        onVerPerfil={onVerPerfil}
-      />
-    );
-
-    await usuario.click(
-      await screen.findByRole("button", { name: "Ver perfil de Ana" })
-    );
-
-    expect(onVerPerfil).toHaveBeenCalledWith(7);
-  });
-
-  it("en el chat del equipo, el nombre de quien escribió lleva a su perfil", async () => {
-    const usuario = userEvent.setup();
-    const onVerPerfil = vi.fn();
-    obtenerHistorialChatroom.mockResolvedValue([
-      {
-        message_id: 1,
-        sender_id: 2,
-        sender_name: "Pepe",
-        content: "jugamos hoy?",
-        timestamp: "2026-10-12T20:00:00",
-      },
-    ]);
-    render(
-      <ChatWindowComponent
-        conversacion={chatDelEquipo}
-        currentUserId={1}
-        onVerPerfil={onVerPerfil}
-      />
-    );
-
-    await usuario.click(await screen.findByRole("button", { name: "Pepe" }));
-
-    expect(onVerPerfil).toHaveBeenCalledWith(2);
-  });
-
-  it("sin onVerPerfil el nombre del autor no es clickeable", async () => {
-    obtenerHistorialChatroom.mockResolvedValue([
-      {
-        message_id: 1,
-        sender_id: 2,
-        sender_name: "Pepe",
-        content: "jugamos hoy?",
-        timestamp: "2026-10-12T20:00:00",
-      },
-    ]);
-    renderChat();
-
-    expect(await screen.findByText("Pepe")).toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: "Pepe" })).toBeNull();
   });
 });

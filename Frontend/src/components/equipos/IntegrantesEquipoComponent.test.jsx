@@ -113,27 +113,4 @@ describe("IntegrantesEquipoComponent - íconos de rol y rango", () => {
     expect(screen.getByText("Mid")).toBeInTheDocument();
     expect(screen.getByText("Oro")).toBeInTheDocument();
   });
-
-  it("con onVerPerfil, el nombre de cada integrante lleva a su perfil", async () => {
-    const usuario = userEvent.setup();
-    const onVerPerfil = vi.fn();
-    render(
-      <IntegrantesEquipoComponent
-        integrantes={integrantes}
-        onVerPerfil={onVerPerfil}
-      />
-    );
-
-    await usuario.click(screen.getByRole("button", { name: "pepe" }));
-
-    expect(onVerPerfil).toHaveBeenCalledWith(2);
-    // Las vacantes no tienen perfil.
-    expect(screen.queryByRole("button", { name: "Mid" })).toBeNull();
-  });
-
-  it("sin onVerPerfil los nombres no son clickeables", () => {
-    render(<IntegrantesEquipoComponent integrantes={integrantes} />);
-
-    expect(screen.queryByRole("button", { name: "pepe" })).toBeNull();
-  });
 });

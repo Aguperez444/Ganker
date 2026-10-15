@@ -51,7 +51,6 @@ function mapearPerfilAJugador(perfil) {
     last_connection: perfil.player.last_connection,
     characters: perfil.characters,
     role_profiles: perfil.role_profiles,
-    in_game_name: perfil.in_game_name,
   };
 }
 

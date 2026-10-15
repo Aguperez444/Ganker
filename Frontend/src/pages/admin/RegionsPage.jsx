@@ -2,8 +2,6 @@ import { useEffect, useState } from "react";
 import ModalConfirmacionComponent from "../../components/common/ModalConfirmacionComponent.jsx";
 import RegionForm from "../../components/region/RegionFormComponent";
 import RegionsListComponent from "../../components/region/RegionsListComponent";
-import ListaConBuscadorComponent from "../../components/common/ListaConBuscadorComponent";
-import IconSelectComponent from "../../components/common/IconSelectComponent";
 import useGames from "../../hooks/useGames";
 import useRegions from "../../hooks/useRegions";
 
@@ -37,7 +35,9 @@ const RegionsPage = () => {
     loadRegions(selectedGameId);
   }, [selectedGameId, loadRegions]);
 
-  const handleGameChange = (gameId) => {
+  const handleGameChange = (event) => {
+    const gameId = event.target.value;
+
     setSelectedGameId(gameId);
 
     setMode(null);
@@ -200,16 +200,21 @@ const RegionsPage = () => {
                       Ver regiones de
                     </label>
 
-                    <div className="max-w-xs">
-                      <IconSelectComponent
-                        id="regions-videogame-filter"
-                        value={selectedGameId}
-                        onChange={handleGameChange}
-                        options={games}
-                        placeholder="Ver regiones de..."
-                        disabled={isLoadingGames}
-                      />
-                    </div>
+                    <select
+                      id="regions-videogame-filter"
+                      value={selectedGameId}
+                      onChange={handleGameChange}
+                      disabled={isLoadingGames}
+                      className="w-full max-w-xs rounded-lg border border-white/10 bg-ganker-surface-light px-4 py-2.5 text-sm text-ganker-text outline-none transition-all duration-200 focus:border-ganker-purple-light focus:ring-2 focus:ring-ganker-purple/30 disabled:cursor-not-allowed disabled:opacity-50"
+                    >
+                      <option value="">Ver regiones de...</option>
+
+                      {games.map((game) => (
+                        <option key={game.id} value={game.id}>
+                          {game.name}
+                        </option>
+                      ))}
+                    </select>
                   </div>
 
                   {selectedGameId && (
@@ -233,26 +238,15 @@ const RegionsPage = () => {
               </div>
 
               {selectedGameId ? (
-                <ListaConBuscadorComponent
-                  key={selectedGameId}
-                  items={regions}
+                <RegionsListComponent
+                  regions={regions}
                   isLoading={isLoadingRegions}
                   error={regionsError}
-                  label="Buscar región"
-                  placeholder="Buscar región por nombre..."
-                >
-                  {(regionesFiltradas) => (
-                    <RegionsListComponent
-                      regions={regionesFiltradas}
-                      isLoading={isLoadingRegions}
-                      error={regionsError}
-                      selectedRegionId={selectedRegion?.id}
-                      deletingRegionId={isDeleting ? regionToDelete?.id : null}
-                      onEdit={handleOpenEdit}
-                      onDelete={handleOpenDelete}
-                    />
-                  )}
-                </ListaConBuscadorComponent>
+                  selectedRegionId={selectedRegion?.id}
+                  deletingRegionId={isDeleting ? regionToDelete?.id : null}
+                  onEdit={handleOpenEdit}
+                  onDelete={handleOpenDelete}
+                />
               ) : (
                 <div className="rounded-xl border border-white/10 bg-ganker-surface-light p-6">
                   <p className="text-sm text-ganker-muted">

@@ -1,10 +1,5 @@
 import { describe, it, expect } from "vitest";
-import {
-  esAdmin,
-  rutaInicialPara,
-  rutaPerfilJugador,
-  ROLES_ADMIN,
-} from "./rutas";
+import { esAdmin, rutaInicialPara, ROLES_ADMIN } from "./rutas";
 
 // El backend manda el rol en MINUSCULA: el enum UserRole vale "owner",
 // "admin" y "player". Compararlo en mayuscula falla en silencio.
@@ -33,16 +28,5 @@ describe("roles y ruta inicial", () => {
     expect(rutaInicialPara({ role: "owner" })).toBe("/app/admin");
     expect(rutaInicialPara({ role: "player" })).toBe("/app");
     expect(rutaInicialPara(null)).toBe("/app");
-  });
-});
-
-describe("rutaPerfilJugador", () => {
-  it("arma la ruta al perfil de otro jugador", () => {
-    expect(rutaPerfilJugador(7)).toBe("/app/jugadores/7");
-  });
-
-  it("preselecciona el videojuego si se indica", () => {
-    expect(rutaPerfilJugador(7, 2)).toBe("/app/jugadores/7?juego=2");
-    expect(rutaPerfilJugador(7, "")).toBe("/app/jugadores/7");
   });
 });

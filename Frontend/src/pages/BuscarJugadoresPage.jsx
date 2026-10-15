@@ -1,14 +1,11 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
 import CampoTexto from "../components/common/CampoTexto";
 import IconSelectComponent from "../components/common/IconSelectComponent";
 import JugadorCardComponent from "../components/jugadores/JugadorCardComponent";
 import { useChat } from "../context/ChatContext";
 import { useBuscarJugadores } from "../hooks/useBuscarJugadores";
-import { rutaPerfilJugador } from "../utils/rutas";
 
 const BuscarJugadoresPage = () => {
-  const navigate = useNavigate();
   const { currentUserId, error: errorChat, iniciarChat } = useChat();
   const [enviandoAId, setEnviandoAId] = useState(null);
 
@@ -64,11 +61,6 @@ const BuscarJugadoresPage = () => {
   // US 10 - Al iniciar (o retomar) una conversacion, ChatContext ya deja
   // esa conversacion seleccionada y el panel/drawer de chat abierto: no
   // hace falta navegar a ningun lado, el jugador la ve aparecer ahi mismo.
-  // Al perfil completo del jugador, con el juego de la busqueda ya elegido.
-  const handleVerPerfil = (jugador) => {
-    navigate(rutaPerfilJugador(jugador.user_id, selectedGameId));
-  };
-
   const handleEnviarMensaje = async (jugador) => {
     setEnviandoAId(jugador.user_id);
     await iniciarChat(jugador.user_id);
@@ -271,11 +263,9 @@ const BuscarJugadoresPage = () => {
                         currentUserId={currentUserId}
                         onEnviarMensaje={handleEnviarMensaje}
                         enviando={enviandoAId === jugador.user_id}
-                        onVerPerfil={handleVerPerfil}
                         perfilJuego={{
                           characters: jugador.characters,
                           role_profiles: jugador.role_profiles,
-                          in_game_name: jugador.in_game_name,
                           characterIdFiltrado: characterId,
                           rangoPorRol,
                         }}

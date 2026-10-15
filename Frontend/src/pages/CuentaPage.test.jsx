@@ -7,11 +7,6 @@ import { AuthProvider, useAuth } from "../context/AuthContext";
 import CuentaPage from "./CuentaPage";
 import { actualizarJugador, obtenerJugadorActual } from "../api/jugadoresApi";
 
-// La seccion de Discord se prueba en components/discord/Discord.test.jsx
-vi.mock("../api/discordApi", () => ({
-  getMyDiscord: vi.fn().mockResolvedValue({ linked: false }),
-}));
-
 vi.mock("../api/jugadoresApi", () => ({
   registrarJugador: vi.fn(),
   obtenerJugadorActual: vi.fn(),

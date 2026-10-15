@@ -7,7 +7,6 @@ import useEquipo from "../hooks/useEquipo";
 import useIconosDeRoles from "../hooks/useIconosDeRoles";
 import useUnirseEquipo from "../hooks/useUnirseEquipo";
 import { elegibilidadDelEquipo } from "../utils/validacionesEquipos";
-import { rutaPerfilJugador } from "../utils/rutas";
 
 const CLASES_BOTON_PRINCIPAL =
   "inline-block w-full shrink-0 cursor-pointer rounded-xl bg-gradient-to-r from-ganker-orange to-ganker-purple px-5 py-3 text-center text-sm font-semibold text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto";
@@ -99,7 +98,6 @@ const EquipoPage = () => {
           <IntegrantesEquipoComponent
             integrantes={equipo.members}
             iconosDeRoles={iconosDeRoles}
-            onVerPerfil={(userId) => navigate(rutaPerfilJugador(userId))}
           />
         </div>
       </div>

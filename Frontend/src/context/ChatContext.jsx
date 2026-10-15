@@ -273,10 +273,6 @@ export function ChatProvider({ children }) {
 
       if (!esVista) {
         reproducirSonidoNotificacion();
-        // Si no se esta viendo, su ChatWindowComponent no esta montado y el
-        // mensaje no entro al cache: se descarta para que al abrirla se
-        // vuelva a pedir el historial en vez de mostrar uno desactualizado.
-        mensajesPorConversacionRef.current.delete(notificacion.conversation_id);
       }
 
       actualizarUltimoMensaje(
