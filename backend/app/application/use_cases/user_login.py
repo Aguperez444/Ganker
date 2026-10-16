@@ -5,7 +5,7 @@ from app.application.ports.i_token_service import ITokenService
 from app.application.ports.i_unit_of_work import IUnitOfWork
 from app.domain.exceptions.mail.mail_not_found_exception import EmailNotFoundException
 
-from typing import TYPE_CHECKING, cast
+from typing import TYPE_CHECKING
 
 from app.domain.exceptions.auth.wrong_password_exception import WrongPasswordException
 from app.infrastructure.api.dto.response.auth_tokens_response import AuthTokensResponse
@@ -30,7 +30,7 @@ class UserLogin:
                 raise EmailNotFoundException(user_data.mail)
 
             # caso que se haya encontrado el usuario, comprobar la contraseña contra la del usuario encontrado
-            if not self.pass_hasher.verify_password(user_data.password, cast(str, user.password_hash)): #TODO revisar este cast, cuando empecemos a usar cuentas por identidad federada puede llegar a darse el caso de que password sea None
+            if not user.password_hash or not self.pass_hasher.verify_password(user_data.password, user.password_hash):
                 raise WrongPasswordException(user_data.mail)
 
             user_id = user.user_id

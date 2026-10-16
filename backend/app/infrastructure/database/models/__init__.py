@@ -4,6 +4,7 @@ from app.infrastructure.database.models.character_priority_orm import CharacterP
 from app.infrastructure.database.models.conversation_orm import ConversationORM
 from app.infrastructure.database.models.conversation_member_orm import ConversationMemberORM
 from app.infrastructure.database.models.discord_account_link_orm import DiscordAccountLinkORM
+from app.infrastructure.database.models.federated_identity_orm import FederatedIdentityORM
 from app.infrastructure.database.models.game_profile_orm import GameProfileORM
 from app.infrastructure.database.models.message_orm import MessageORM
 from app.infrastructure.database.models.rank_orm import RankORM
@@ -23,6 +24,7 @@ __all__ = [
     "ConversationORM",
     "ConversationMemberORM",
     "DiscordAccountLinkORM",
+    "FederatedIdentityORM",
     "GameProfileORM",
     "MessageORM",
     "RankORM",
