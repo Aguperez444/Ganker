@@ -4,7 +4,7 @@ import HomePage from "../pages/HomePage.jsx";
 import RegistroPage from "../pages/RegistroPage.jsx";
 import CuentaPage from "../pages/CuentaPage.jsx";
 import LoginPage from "../pages/LoginPage.jsx";
-import FederatedCallbackPage from "../pages/FederatedCallbackPage.jsx";
+import CallbackFederadoPage from "../pages/CallbackFederadoPage.jsx";
 import CompletarRegistroFederadoPage from "../pages/CompletarRegistroFederadoPage.jsx";
 import AppLayout from "../components/layout/AppLayout.jsx";
 import AdminLayout from "../components/layout/AdminLayout.jsx";
@@ -40,7 +40,7 @@ function AppRouter() {
         <Route element={<PublicOnlyRoute />}>
           <Route path="/registro" element={<RegistroPage />} />
           <Route path="/login" element={<LoginPage />} />
-          <Route path="/auth/callback/:provider" element={<FederatedCallbackPage />} />
+          <Route path="/auth/callback/:provider" element={<CallbackFederadoPage />} />
           <Route path="/completar-registro" element={<CompletarRegistroFederadoPage />} />
         </Route>
 

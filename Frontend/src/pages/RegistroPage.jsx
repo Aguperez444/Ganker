@@ -1,12 +1,15 @@
 import { useNavigate } from "react-router-dom";
 import AuthLayout from "../components/common/AuthLayout";
+import BotonesAuthFederadoComponent from "../components/jugadores/BotonesAuthFederadoComponent";
 import JugadorForm from "../components/jugadores/JugadorForm";
+import { useAuthFederado } from "../hooks/useAuthFederado";
 import { useRegistrarJugador } from "../hooks/useRegistrarJugador";
 import { useAuth } from "../context/AuthContext";
 
 function RegistroPage() {
   const { valores, errores, cargando, errorServidor, handleChange, handleBlur, handleSubmit } =
     useRegistrarJugador();
+  const { proveedorCargando, errorFederado, conectar } = useAuthFederado();
   const { guardarSesion } = useAuth();
   const navigate = useNavigate();
 
@@ -38,7 +41,14 @@ function RegistroPage() {
         onChange={handleChange}
         onBlur={handleBlur}
         onSubmit={onSubmit}
-      />
+      >
+        <BotonesAuthFederadoComponent
+          proveedorCargando={proveedorCargando}
+          error={errorFederado}
+          deshabilitado={cargando}
+          onConectar={conectar}
+        />
+      </JugadorForm>
     </AuthLayout>
   );
 }

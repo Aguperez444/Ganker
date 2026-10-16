@@ -1,6 +1,5 @@
 import CampoContrasenaComponent from "../common/CampoContrasenaComponent";
 import CampoTexto from "../common/CampoTexto";
-import BotonesAuthFederado from "./BotonesAuthFederado";
 
 const ICONO_USUARIO = (
   <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
@@ -14,7 +13,7 @@ const ICONO_CANDADO = (
   </svg>
 );
 
-function FormLogin({ valores, errores, cargando, errorServidor, onChange, onSubmit }) {
+function FormLogin({ valores, errores, cargando, errorServidor, onChange, onSubmit, children }) {
   return (
     <form
       onSubmit={onSubmit}
@@ -54,7 +53,7 @@ function FormLogin({ valores, errores, cargando, errorServidor, onChange, onSubm
         {cargando ? "Iniciando sesión..." : "Iniciar sesión"}
       </button>
 
-      <BotonesAuthFederado deshabilitado={cargando} />
+      {children}
     </form>
   );
 }
