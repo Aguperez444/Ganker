@@ -5,11 +5,13 @@ from app.domain.exceptions.report.invalid_report_analysis_type_exception import 
 from app.domain.exceptions.report.invalid_report_date_range_exception import InvalidReportDateRangeException
 from app.domain.exceptions.report.no_usage_data_for_report_exception import NoUsageDataForReportException
 from app.domain.exceptions.report.rank_bands_required_exception import RankBandsRequiredException
-from app.domain.exceptions.report.report_start_date_before_previous_exception import ReportStartDateBeforePreviousException
 from app.domain.exceptions.team.invalid_rank_range_exception import InvalidRankRangeException
 from app.domain.models.game_usage_report import GameUsageReport
 from app.domain.models.game_usage_report_item import GameUsageReportItem
+from app.domain.models.report_analysis_type import ReportAnalysisType
 from app.domain.services.catalog_validation_service import CatalogValidationService
+from app.domain.services.report_period_service import ReportPeriodService
+from app.domain.services.report_variation_service import ReportVariationService
 from app.infrastructure.api.dto.request.generate_game_usage_report_request import GenerateGameUsageReportRequest
 from app.infrastructure.api.dto.response.get.game_usage_report_item_response import GameUsageReportItemResponse
 from app.infrastructure.api.dto.response.get.generate_game_usage_report_response import GenerateGameUsageReportResponse
@@ -22,43 +24,6 @@ if TYPE_CHECKING:
     from app.domain.models.videogame import Videogame
     from app.application.ports.i_unit_of_work import IUnitOfWork
     from app.infrastructure.api.dto.request.generate_game_usage_report_request import RankBandRequest
-
-ANALYSIS_RANKS = "ranks"
-ANALYSIS_CHARACTERS = "characters"
-ANALYSIS_TEAMS = "teams"
-VALID_ANALYSIS_TYPES = (ANALYSIS_RANKS, ANALYSIS_CHARACTERS, ANALYSIS_TEAMS)
-
-TREND_UP = "sube"
-TREND_DOWN = "baja"
-TREND_STABLE = "estable"
-
-_ANALYSIS_NOUNS = {
-    ANALYSIS_RANKS: "rangos",
-    ANALYSIS_CHARACTERS: "personajes",
-    ANALYSIS_TEAMS: "equipos",
-}
-
-# Catálogo de tipos de análisis disponibles, expuesto al frontend para poblar los selectores.
-ANALYSIS_TYPE_CATALOG = (
-    {
-        "value": ANALYSIS_RANKS,
-        "label": "Distribución por rangos",
-        "description": "Cantidad y porcentaje de jugadores distribuidos por cada rango del videojuego.",
-        "requires_rank_bands": False,
-    },
-    {
-        "value": ANALYSIS_CHARACTERS,
-        "label": "Personajes más utilizados",
-        "description": "Frecuencia de elección de cada personaje, ordenada de mayor a menor.",
-        "requires_rank_bands": False,
-    },
-    {
-        "value": ANALYSIS_TEAMS,
-        "label": "Equipos por franja de rangos",
-        "description": "Desglose de equipos por franjas de rangos definidas por el administrador, ordenadas de mayor a menor.",
-        "requires_rank_bands": True,
-    },
-)
 
 
 class GenerateGameUsageReport:
@@ -79,8 +44,8 @@ class GenerateGameUsageReport:
         return self._to_response(saved_report, has_previous_report=report.previous_report_id is not None)
 
     def _build_report(self, uow: 'IUnitOfWork', request: GenerateGameUsageReportRequest, admin_id: int) -> GameUsageReport:
-        analysis_type = (request.analysis_type or ANALYSIS_RANKS).strip().lower()
-        if analysis_type not in VALID_ANALYSIS_TYPES:
+        analysis_type = ReportAnalysisType.try_from_value(request.analysis_type or ReportAnalysisType.RANKS.value)
+        if analysis_type is None:
             raise InvalidReportAnalysisTypeException(request.analysis_type)
 
         start_datetime = self._to_start_datetime(request.start_date)
@@ -92,19 +57,15 @@ class GenerateGameUsageReport:
         # El videojuego es obligatorio: el reporte siempre se acota a un videojuego específico.
         videogame = CatalogValidationService.get_and_validate_exist_videogame(request.videogame_id, uow)
 
-        previous_report = uow.game_usage_report_repo.get_latest_report(videogame.videogame_id, analysis_type)
+        previous_report = uow.game_usage_report_repo.get_latest_report(videogame.videogame_id, analysis_type.value)
 
         # Criterio: la fecha inicial del nuevo reporte no puede ser menor a la fecha final del último reporte previo.
-        if (previous_report is not None
-                and start_datetime is not None
-                and previous_report.end_date is not None
-                and start_datetime < previous_report.end_date):
-            # noinspection bad-argument-type
-            raise ReportStartDateBeforePreviousException(previous_report.end_date)
+        if previous_report is not None:
+            ReportPeriodService.validate_start_not_before_previous(start_datetime, previous_report.end_date)
 
-        if analysis_type == ANALYSIS_RANKS:
+        if analysis_type is ReportAnalysisType.RANKS:
             items, total = self._build_rank_items(uow, videogame, start_datetime, end_datetime)
-        elif analysis_type == ANALYSIS_CHARACTERS:
+        elif analysis_type is ReportAnalysisType.CHARACTERS:
             items, total = self._build_character_items(uow, videogame, start_datetime, end_datetime)
         else:
             if not request.rank_bands:
@@ -119,7 +80,7 @@ class GenerateGameUsageReport:
         return GameUsageReport(
             report_id=None,
             generated_by=admin_id,
-            analysis_type=analysis_type,
+            analysis_type=analysis_type.value,
             videogame_id=videogame.videogame_id,
             videogame_name=videogame.name,
             icon_url=videogame.icon_url,
@@ -259,14 +220,8 @@ class GenerateGameUsageReport:
         for item in items:
             key = item.category_id if item.category_id is not None else item.name
             previous_count = previous_counts.get(key, 0)
-            item.variation = item.count - previous_count
-            item.variation_percentage = (
-                round(item.variation / previous_count * 100, 2) if previous_count > 0 else None
-            )
-            item.trend = (
-                TREND_UP if item.variation > 0
-                else TREND_DOWN if item.variation < 0
-                else TREND_STABLE
+            item.variation, item.variation_percentage, item.trend = ReportVariationService.compute(
+                item.count, previous_count
             )
 
     @staticmethod
@@ -282,8 +237,8 @@ class GenerateGameUsageReport:
         return 0
 
     @staticmethod
-    def _no_data_detail(videogame: 'Videogame', analysis_type: str) -> str:
-        noun = _ANALYSIS_NOUNS[analysis_type]
+    def _no_data_detail(videogame: 'Videogame', analysis_type: ReportAnalysisType) -> str:
+        noun = analysis_type.noun
         return (
             f'el videojuego "{videogame.name}" no cuenta con perfiles o datos de '
             f"{noun} registrados en el período seleccionado"

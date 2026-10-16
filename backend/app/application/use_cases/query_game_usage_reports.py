@@ -1,8 +1,8 @@
 from typing import Optional
 
 from app.application.ports.i_unit_of_work import IUnitOfWork
-from app.application.use_cases.generate_game_usage_report import VALID_ANALYSIS_TYPES
 from app.domain.exceptions.report.invalid_report_analysis_type_exception import InvalidReportAnalysisTypeException
+from app.domain.models.report_analysis_type import ReportAnalysisType
 from app.infrastructure.api.dto.response.get.game_usage_report_summary_response import GameUsageReportSummaryResponse
 from app.infrastructure.api.dto.response.get.get_game_usage_reports_response import GetGameUsageReportsResponse
 
@@ -20,9 +20,10 @@ class QueryGameUsageReports:
                 analysis_type: Optional[str] = None) -> GetGameUsageReportsResponse:
         normalized_type: Optional[str] = None
         if analysis_type is not None:
-            normalized_type = analysis_type.strip().lower()
-            if normalized_type not in VALID_ANALYSIS_TYPES:
+            analysis_type_enum = ReportAnalysisType.try_from_value(analysis_type)
+            if analysis_type_enum is None:
                 raise InvalidReportAnalysisTypeException(analysis_type)
+            normalized_type = analysis_type_enum.value
 
         with self.uow as uow:
             reports = uow.game_usage_report_repo.get_all_reports(videogame_id, normalized_type)

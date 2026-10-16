@@ -3,7 +3,8 @@ from urllib.parse import quote
 
 from fastapi import APIRouter, Depends, Query, Response
 
-from app.application.use_cases.export_game_profile_report import CSV_FORMAT, ExportGameProfileReport
+from app.application.services.report_export_service import CSV_FORMAT
+from app.application.use_cases.export_game_profile_report import ExportGameProfileReport
 from app.application.use_cases.export_game_usage_report import ExportGameUsageReport
 from app.application.use_cases.generate_game_profile_report import GenerateGameProfileReport
 from app.application.use_cases.generate_game_usage_report import GenerateGameUsageReport

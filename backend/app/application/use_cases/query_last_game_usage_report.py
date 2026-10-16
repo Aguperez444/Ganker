@@ -1,8 +1,8 @@
 from datetime import timedelta
 
 from app.application.ports.i_unit_of_work import IUnitOfWork
-from app.application.use_cases.generate_game_usage_report import VALID_ANALYSIS_TYPES
 from app.domain.exceptions.report.invalid_report_analysis_type_exception import InvalidReportAnalysisTypeException
+from app.domain.models.report_analysis_type import ReportAnalysisType
 from app.infrastructure.api.dto.response.get.get_last_game_usage_report_response import GetLastGameUsageReportResponse
 
 
@@ -16,12 +16,12 @@ class QueryLastGameUsageReport:
         self.uow: IUnitOfWork = unit_of_work
 
     def execute(self, videogame_id: int, analysis_type: str) -> GetLastGameUsageReportResponse:
-        normalized_type = (analysis_type or "").strip().lower()
-        if normalized_type not in VALID_ANALYSIS_TYPES:
+        analysis_type_enum = ReportAnalysisType.try_from_value(analysis_type)
+        if analysis_type_enum is None:
             raise InvalidReportAnalysisTypeException(analysis_type)
 
         with self.uow as uow:
-            report = uow.game_usage_report_repo.get_latest_report(videogame_id, normalized_type)
+            report = uow.game_usage_report_repo.get_latest_report(videogame_id, analysis_type_enum.value)
 
             if report is None:
                 return GetLastGameUsageReportResponse(has_report=False)

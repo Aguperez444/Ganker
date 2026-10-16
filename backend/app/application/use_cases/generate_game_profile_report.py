@@ -3,18 +3,14 @@ from datetime import date, datetime, time, timezone
 from app.application.ports.i_unit_of_work import IUnitOfWork
 from app.domain.exceptions.report.invalid_report_date_range_exception import InvalidReportDateRangeException
 from app.domain.exceptions.report.no_data_for_report_exception import NoDataForReportException
-from app.domain.exceptions.report.report_start_date_before_previous_exception import \
-    ReportStartDateBeforePreviousException
 from app.domain.models.game_profile_report import GameProfileReport
 from app.domain.models.game_profile_report_item import GameProfileReportItem
+from app.domain.services.report_period_service import ReportPeriodService
+from app.domain.services.report_variation_service import ReportVariationService
 from app.infrastructure.api.dto.request.generate_game_profile_report_request import GenerateGameProfileReportRequest
 from app.infrastructure.api.dto.response.get.game_profile_report_item_response import GameProfileReportItemResponse
 from app.infrastructure.api.dto.response.get.generate_game_profile_report_response import \
     GenerateGameProfileReportResponse
-
-TREND_UP = "sube"
-TREND_DOWN = "baja"
-TREND_STABLE = "estable"
 
 
 class GenerateGameProfileReport:
@@ -42,12 +38,8 @@ class GenerateGameProfileReport:
             previous_report = uow.game_profile_report_repo.get_latest_report()
 
             # Criterio: la fecha inicial del nuevo reporte no puede ser menor a la fecha final del último reporte previo
-            if (previous_report is not None
-                    and start_datetime is not None
-                    and previous_report.end_date is not None
-                    and start_datetime < previous_report.end_date):
-                # noinspection bad-argument-type
-                raise ReportStartDateBeforePreviousException(previous_report.end_date)
+            if previous_report is not None:
+                ReportPeriodService.validate_start_not_before_previous(start_datetime, previous_report.end_date)
 
             counts_by_videogame = uow.game_profile_repo.get_profile_counts_by_videogame(
                 start_datetime, end_datetime
@@ -106,9 +98,7 @@ class GenerateGameProfileReport:
         trend = None
         if previous_report is not None:
             previous_count = previous_counts.get(videogame.videogame_id, 0)
-            variation = profile_count - previous_count
-            variation_percentage = round((variation / previous_count) * 100, 2) if previous_count > 0 else None
-            trend = self._resolve_trend(variation)
+            variation, variation_percentage, trend = ReportVariationService.compute(profile_count, previous_count)
 
         return GameProfileReportItem(
             item_id=None,
@@ -121,13 +111,6 @@ class GenerateGameProfileReport:
             variation_percentage=variation_percentage,
             trend=trend,
         )
-
-    def _resolve_trend(self, variation: int) -> str:
-        if variation > 0:
-            return TREND_UP
-        if variation < 0:
-            return TREND_DOWN
-        return TREND_STABLE
 
     def _to_response(self, report: GameProfileReport, has_previous_report: bool) -> GenerateGameProfileReportResponse:
         return GenerateGameProfileReportResponse(
