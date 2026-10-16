@@ -8,6 +8,8 @@ from app.infrastructure.database.models.federated_identity_orm import FederatedI
 from app.infrastructure.database.models.game_profile_orm import GameProfileORM
 from app.infrastructure.database.models.game_profile_report_orm import GameProfileReportORM
 from app.infrastructure.database.models.game_profile_report_item_orm import GameProfileReportItemORM
+from app.infrastructure.database.models.game_usage_report_orm import GameUsageReportORM
+from app.infrastructure.database.models.game_usage_report_item_orm import GameUsageReportItemORM
 from app.infrastructure.database.models.message_orm import MessageORM
 from app.infrastructure.database.models.rank_orm import RankORM
 from app.infrastructure.database.models.refresh_token_orm import RefreshTokenORM
@@ -30,6 +32,8 @@ __all__ = [
     "GameProfileORM",
     "GameProfileReportORM",
     "GameProfileReportItemORM",
+    "GameUsageReportORM",
+    "GameUsageReportItemORM",
     "MessageORM",
     "RankORM",
     "RefreshTokenORM",

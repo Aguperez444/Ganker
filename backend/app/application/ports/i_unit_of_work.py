@@ -18,6 +18,7 @@ if TYPE_CHECKING:
     from app.application.ports.i_role_profile_repository import IRoleProfileRepository
     from app.application.ports.i_conversation_repository import IConversationRepository
     from app.application.ports.i_refresh_token_repository import IRefreshTokenRepository
+    from app.application.ports.i_game_usage_report_repository import IGameUsageReportRepository
     from app.application.ports.i_riot_account_link_repository import IRiotAccountLinkRepository
     from app.application.ports.i_character_priority_repository import ICharacterPriorityRepository
     from app.application.ports.i_federated_identity_repository import IFederatedIdentityRepository
@@ -44,6 +45,7 @@ class IUnitOfWork(ABC):
     refresh_token_repo: 'IRefreshTokenRepository'
     reset_token_repo: 'IPasswordResetTokenRepository'
     riot_account_link_repo: 'IRiotAccountLinkRepository'
+    game_usage_report_repo: 'IGameUsageReportRepository'
     character_priority_repo: 'ICharacterPriorityRepository'
     federated_identity_repo: 'IFederatedIdentityRepository'
     game_profile_report_repo: 'IGameProfileReportRepository'

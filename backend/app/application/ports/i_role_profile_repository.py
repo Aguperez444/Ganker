@@ -1,4 +1,9 @@
 from abc import ABC, abstractmethod
+from datetime import datetime
+from typing import TYPE_CHECKING, Optional
+
+if TYPE_CHECKING:
+    from app.domain.models.rank import Rank
 
 
 class IRoleProfileRepository(ABC):
@@ -37,5 +42,19 @@ class IRoleProfileRepository(ABC):
     def count_by_game_profile_id(self, game_profile_id: int) -> int:
         """
         Cuenta la cantidad de perfiles de rol asociados a un perfil de juego específico.
+        """
+        raise NotImplementedError
+
+    @abstractmethod
+    def get_rank_usage(
+        self,
+        videogame_id: Optional[int],
+        start_date: Optional[datetime],
+        end_date: Optional[datetime],
+    ) -> list[tuple["Rank", int]]:
+        """
+        Devuelve cada rango junto con la cantidad de jugadores (perfiles de juego distintos) que lo
+        tienen asignado, opcionalmente acotado a un videojuego y a un rango de fechas de creación de
+        los perfiles. Si no se especifica videojuego, se consideran los rangos de todos los videojuegos.
         """
         raise NotImplementedError

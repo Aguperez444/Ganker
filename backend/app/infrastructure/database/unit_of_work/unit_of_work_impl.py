@@ -7,6 +7,7 @@ from app.application.ports.i_conversation_repository import IConversationReposit
 from app.application.ports.i_find_by_specifications_service import IFindBySpecificationsRepository
 from app.application.ports.i_game_profile_repository import IGameProfileRepository
 from app.application.ports.i_game_profile_report_repository import IGameProfileReportRepository
+from app.application.ports.i_game_usage_report_repository import IGameUsageReportRepository
 from app.application.ports.i_message_repository import IMessageRepository
 from app.application.ports.i_password_reset_token_repository import IPasswordResetTokenRepository
 from app.application.ports.i_role_profile_repository import IRoleProfileRepository
@@ -26,6 +27,7 @@ from app.infrastructure.database.repositories.character_repository_impl import C
 from app.infrastructure.database.repositories.conversation_repo_impl import ConversationRepositoryImpl
 from app.infrastructure.database.repositories.game_profile_repository_impl import GameProfileRepositoryImpl
 from app.infrastructure.database.repositories.game_profile_report_repository_impl import GameProfileReportRepositoryImpl
+from app.infrastructure.database.repositories.game_usage_report_repository_impl import GameUsageReportRepositoryImpl
 from app.infrastructure.database.repositories.message_repo_impl import MessageRepoImpl
 from app.infrastructure.database.repositories.password_reset_token_repository_impl import PasswordResetTokenRepositoryImpl
 from app.infrastructure.database.repositories.role_profile_repository_impl import RoleProfileRepositoryImpl
@@ -56,6 +58,7 @@ class SqlAlchemyUnitOfWork(IUnitOfWork):
         self.user_repo: IUserRepository
         self.game_profile_repo: IGameProfileRepository
         self.game_profile_report_repo: IGameProfileReportRepository
+        self.game_usage_report_repo: IGameUsageReportRepository
         self.videogame_repo: IVideogameRepository
         self.role_repo: IRoleRepository
         self.rank_repo: IRankRepository
@@ -78,6 +81,7 @@ class SqlAlchemyUnitOfWork(IUnitOfWork):
         self.user_repo: IUserRepository = UserRepositoryImpl(self.session)
         self.game_profile_repo: IGameProfileRepository = GameProfileRepositoryImpl(self.session)
         self.game_profile_report_repo: IGameProfileReportRepository = GameProfileReportRepositoryImpl(self.session)
+        self.game_usage_report_repo: IGameUsageReportRepository = GameUsageReportRepositoryImpl(self.session)
         self.videogame_repo: IVideogameRepository = VideogameRepositoryImpl(self.session)
         self.role_repo: IRoleRepository = RoleRepositoryImpl(self.session)
         self.rank_repo: IRankRepository = RankRepositoryImpl(self.session)
