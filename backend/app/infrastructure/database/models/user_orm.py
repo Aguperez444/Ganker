@@ -15,6 +15,7 @@ if TYPE_CHECKING:
     from app.infrastructure.database.models.conversation_member_orm import ConversationMemberORM
     from app.infrastructure.database.models.message_orm import MessageORM
     from app.infrastructure.database.models.discord_account_link_orm import DiscordAccountLinkORM
+    from app.infrastructure.database.models.federated_identity_orm import FederatedIdentityORM
 
 
 class UserORM(Base):
@@ -51,4 +52,10 @@ class UserORM(Base):
         back_populates="user",
         cascade="all, delete-orphan",
         uselist=False
+    )
+    # Identidades federadas para inicio de sesión (Discord, Steam, Twitch, Google)
+    federated_identities: Mapped[List["FederatedIdentityORM"]] = relationship(
+        "FederatedIdentityORM",
+        back_populates="user",
+        cascade="all, delete-orphan"
     )

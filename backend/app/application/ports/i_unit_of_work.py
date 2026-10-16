@@ -22,6 +22,7 @@ if TYPE_CHECKING:
     from app.application.ports.i_team_repository import ITeamRepository
     from app.application.ports.i_riot_account_link_repository import IRiotAccountLinkRepository
     from app.application.ports.i_discord_account_link_repository import IDiscordAccountLinkRepository
+    from app.application.ports.i_federated_identity_repository import IFederatedIdentityRepository
 
 
 #abstract class
@@ -44,6 +45,7 @@ class IUnitOfWork(ABC):
     email_service: 'IEmailService'
     riot_account_link_repo: 'IRiotAccountLinkRepository'
     discord_account_link_repo: 'IDiscordAccountLinkRepository'
+    federated_identity_repo: 'IFederatedIdentityRepository'
 
 
     @abstractmethod
