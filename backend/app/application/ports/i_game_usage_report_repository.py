@@ -22,3 +22,15 @@ class IGameUsageReportRepository(ABC):
         variación y validar que las fechas no se solapen. None si no existe un reporte previo.
         """
         raise NotImplementedError
+
+    @abstractmethod
+    def get_all_reports(
+        self,
+        videogame_id: Optional[int] = None,
+        analysis_type: Optional[str] = None,
+    ) -> list['GameUsageReport']:
+        """
+        Devuelve todos los reportes generados, del más reciente al más antiguo, opcionalmente
+        filtrados por videojuego y tipo de análisis.
+        """
+        raise NotImplementedError

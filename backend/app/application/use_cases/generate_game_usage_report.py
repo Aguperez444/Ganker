@@ -38,6 +38,28 @@ _ANALYSIS_NOUNS = {
     ANALYSIS_TEAMS: "equipos",
 }
 
+# Catálogo de tipos de análisis disponibles, expuesto al frontend para poblar los selectores.
+ANALYSIS_TYPE_CATALOG = (
+    {
+        "value": ANALYSIS_RANKS,
+        "label": "Distribución por rangos",
+        "description": "Cantidad y porcentaje de jugadores distribuidos por cada rango del videojuego.",
+        "requires_rank_bands": False,
+    },
+    {
+        "value": ANALYSIS_CHARACTERS,
+        "label": "Personajes más utilizados",
+        "description": "Frecuencia de elección de cada personaje, ordenada de mayor a menor.",
+        "requires_rank_bands": False,
+    },
+    {
+        "value": ANALYSIS_TEAMS,
+        "label": "Equipos por franja de rangos",
+        "description": "Desglose de equipos por franjas de rangos definidas por el administrador, ordenadas de mayor a menor.",
+        "requires_rank_bands": True,
+    },
+)
+
 
 class GenerateGameUsageReport:
     """

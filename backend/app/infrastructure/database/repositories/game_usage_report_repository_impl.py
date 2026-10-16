@@ -36,3 +36,19 @@ class GameUsageReportRepositoryImpl(IGameUsageReportRepository):
             GameUsageReportORM.report_id.desc()
         ).first()
         return GameUsageReportMapper.orm_to_domain(found) if found else None
+
+    def get_all_reports(
+        self,
+        videogame_id: Optional[int] = None,
+        analysis_type: Optional[str] = None,
+    ) -> list['GameUsageReport']:
+        query = self._session.query(GameUsageReportORM)
+        if videogame_id is not None:
+            query = query.filter(GameUsageReportORM.videogame_id == videogame_id)
+        if analysis_type is not None:
+            query = query.filter(GameUsageReportORM.analysis_type == analysis_type)
+        found = query.order_by(
+            GameUsageReportORM.generated_at.desc(),
+            GameUsageReportORM.report_id.desc()
+        ).all()
+        return [GameUsageReportMapper.orm_to_domain(report) for report in found]
