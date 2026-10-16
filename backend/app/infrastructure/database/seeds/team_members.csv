@@ -1,0 +1,11 @@
+team_name,username,game_role,team_role
+Valorant Ranked Squad,testuser,Duelista,owner
+Valorant Ranked Squad,ana_player,Controlador,member
+Valorant Ranked Squad,bruno_player,Centinela,member
+Valorant Ranked Squad,caro_player,Iniciador,member
+Equipo Flex de LoL,ana_player,Jungla,owner
+Equipo Flex de LoL,testuser,Mid,member
+Equipo Flex de LoL,diego_player,Top,member
+Comp de Overwatch,bruno_player,Tanque,owner
+Comp de Overwatch,ana_player,Soporte,member
+Comp de Overwatch,caro_player,Daño,member
