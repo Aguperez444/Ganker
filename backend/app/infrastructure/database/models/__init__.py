@@ -6,6 +6,8 @@ from app.infrastructure.database.models.conversation_member_orm import Conversat
 from app.infrastructure.database.models.discord_account_link_orm import DiscordAccountLinkORM
 from app.infrastructure.database.models.federated_identity_orm import FederatedIdentityORM
 from app.infrastructure.database.models.game_profile_orm import GameProfileORM
+from app.infrastructure.database.models.game_profile_report_orm import GameProfileReportORM
+from app.infrastructure.database.models.game_profile_report_item_orm import GameProfileReportItemORM
 from app.infrastructure.database.models.message_orm import MessageORM
 from app.infrastructure.database.models.rank_orm import RankORM
 from app.infrastructure.database.models.refresh_token_orm import RefreshTokenORM
@@ -26,6 +28,8 @@ __all__ = [
     "DiscordAccountLinkORM",
     "FederatedIdentityORM",
     "GameProfileORM",
+    "GameProfileReportORM",
+    "GameProfileReportItemORM",
     "MessageORM",
     "RankORM",
     "RefreshTokenORM",
