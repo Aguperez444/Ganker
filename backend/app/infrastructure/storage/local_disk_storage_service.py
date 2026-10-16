@@ -71,6 +71,8 @@ class LocalDiskStorageService(IStorageService):
         return f"{self.base_url}/{url_path}"
 
     def delete_file(self, file_path: str) -> bool:
+        if file_path.startswith(("http://", "https://")):
+            return False
         # Extrae la ruta relativa quitando el base_url
         clean_relative = file_path.removeprefix(self.base_url).lstrip("/")
         full_path = self._resolve_and_validate_path(clean_relative)

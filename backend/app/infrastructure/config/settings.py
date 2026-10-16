@@ -63,6 +63,27 @@ class Settings(BaseSettings):
     discord_client_secret: str = Field(default="", validation_alias="DISCORD_CLIENT_SECRET")
     discord_redirect_uri: str = Field(default="http://localhost:5173/app/discord/callback",
                                       validation_alias="DISCORD_REDIRECT_URI")
+    discord_auth_redirect_uri: str = Field(default="http://localhost:5173/auth/callback/discord",
+                                           validation_alias="DISCORD_AUTH_REDIRECT_URI")
+
+    # Inicio de sesión federado con Google (OAuth2)
+    google_client_id: str = Field(default="", validation_alias="GOOGLE_CLIENT_ID")
+    google_client_secret: str = Field(default="", validation_alias="GOOGLE_CLIENT_SECRET")
+    google_redirect_uri: str = Field(default="http://localhost:5173/auth/callback/google",
+                                     validation_alias="GOOGLE_REDIRECT_URI")
+
+    # Inicio de sesión federado con Twitch (OAuth2)
+    twitch_client_id: str = Field(default="", validation_alias="TWITCH_CLIENT_ID")
+    twitch_client_secret: str = Field(default="", validation_alias="TWITCH_CLIENT_SECRET")
+    twitch_redirect_uri: str = Field(default="http://localhost:5173/auth/callback/twitch",
+                                     validation_alias="TWITCH_REDIRECT_URI")
+
+    # Inicio de sesión federado con Steam (OpenID 2.0 + Steam Web API)
+    steam_api_key: str = Field(default="", validation_alias="STEAM_API_KEY")
+    steam_redirect_uri: str = Field(default="http://localhost:5173/auth/callback/steam",
+                                    validation_alias="STEAM_REDIRECT_URI")
+    steam_realm: str = Field(default="http://localhost:5173",
+                             validation_alias="STEAM_REALM")
 
     model_config = SettingsConfigDict(
         # secrets.local.env (ignorado por git) pisa a secrets.env: ahí van las claves personales, como RIOT_API_KEY
