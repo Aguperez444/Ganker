@@ -1,14 +1,19 @@
-from fastapi import APIRouter, Depends, status, Request
+from fastapi import APIRouter, Depends, status, Request, BackgroundTasks
 from fastapi.security import OAuth2PasswordRequestForm
 
-
+from app.application.use_cases.forgot_password import ForgotPassword
+from app.application.use_cases.reset_password import ResetPassword
 from app.application.use_cases.user_login import UserLogin
 from app.application.use_cases.refresh_token import RefreshToken
 from app.application.use_cases.user_logout import UserLogout
+from app.domain.services.smtp_email_service import SMTPEmailService
 
 from app.infrastructure.api.auth.jwt_token_service import JwtTokenService
 from app.infrastructure.api.auth.password_hash_service import PasswordHashService
 from app.infrastructure.api.dependencies.login_rate_limiter import login_rate_limiter
+from app.infrastructure.api.dto.request.forgot_password_request import ForgotPasswordRequest
+from app.infrastructure.api.dto.request.reset_password_request import ResetPasswordRequest
+from app.infrastructure.api.dto.response.reset_password_message_response import ResetPasswordMessageResponse
 from app.infrastructure.database.unit_of_work.uow_factory import uow_factory
 from app.infrastructure.config.settings import settings
 
@@ -53,3 +58,36 @@ def logout(refresh_data: RefreshTokenRequest):
     logout_use_case = UserLogout(uow, token_service)
     logout_use_case.execute(refresh_data.refresh_token)
     return None
+
+
+@router.post("/forgot-password", response_model=ResetPasswordMessageResponse, status_code=status.HTTP_200_OK, summary="Solicitar enlace para restaurar la contraseña")
+async def forgot_password(request: ForgotPasswordRequest, background_tasks: BackgroundTasks):
+
+    uow = uow_factory()
+    email_service = SMTPEmailService()
+
+    use_case = ForgotPassword(uow)
+    raw_token = use_case.execute(request.email)
+
+    if raw_token:
+        background_tasks.add_task(
+            email_service.send_password_reset_email,
+            to_email=request.email,
+            raw_token=raw_token
+        )
+
+    return ResetPasswordMessageResponse(
+        message="Si el correo coincide con una cuenta activa, recibirás un enlace de recuperación"
+    )
+
+@router.post("/reset-password", response_model=ResetPasswordMessageResponse, status_code=status.HTTP_200_OK)
+def reset_password(request: ResetPasswordRequest):
+    uow = uow_factory()
+    hash_service = PasswordHashService()
+    use_case = ResetPassword(hash_service, uow)
+
+    use_case.execute(request.token, request.new_password)
+
+    return ResetPasswordMessageResponse(
+        message="La contraseña ha sido restablecida correctamente"
+    )
