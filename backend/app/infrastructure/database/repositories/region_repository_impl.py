@@ -18,20 +18,35 @@ class RegionRepositoryImpl(IRegionRepository):
         self.session = session
 
     def get_region_by_id(self, region_id: int) -> Optional['Region']:
-        found = self.session.query(RegionORM).filter(RegionORM.region_id == region_id).first()
+        found = self.session.query(RegionORM).filter(
+            RegionORM.region_id == region_id,
+            RegionORM.deleted == False,
+        ).first()
+        if found and found.videogame and getattr(found.videogame, "deleted", False):
+            return None
         domain_found = RegionMapper.orm_to_domain(found) if found else None
         return domain_found
 
     def get_regions_by_game_id(self, game_id: int) -> list[Region]:
-        found = self.session.query(RegionORM).filter(RegionORM.videogame_id == game_id)
-        domain_found = [RegionMapper.orm_to_domain(region) for region in found]
+        found = self.session.query(RegionORM).filter(
+            RegionORM.videogame_id == game_id,
+            RegionORM.deleted == False,
+        ).all()
+        domain_found = [
+            RegionMapper.orm_to_domain(region)
+            for region in found
+            if not (region.videogame and getattr(region.videogame, "deleted", False))
+        ]
         return domain_found
 
     def get_region_by_name_and_videogame(self, name: str, videogame_id: int) -> Optional['Region']:
         found = self.session.query(RegionORM).filter(
             func.lower(RegionORM.name) == func.lower(name.strip()),
-            RegionORM.videogame_id == videogame_id
+            RegionORM.videogame_id == videogame_id,
+            RegionORM.deleted == False,
         ).first()
+        if found and found.videogame and getattr(found.videogame, "deleted", False):
+            return None
         domain_found = RegionMapper.orm_to_domain(found) if found else None
         return domain_found
 
@@ -43,14 +58,17 @@ class RegionRepositoryImpl(IRegionRepository):
         return RegionMapper.orm_to_domain(orm_region)
 
     def update_region(self, region: 'Region') -> 'Region | None':
-        orm_region = self.session.query(RegionORM).filter(RegionORM.region_id == region.region_id).first()
+        orm_region = self.session.query(RegionORM).filter(
+            RegionORM.region_id == region.region_id,
+            RegionORM.deleted == False,
+        ).first()
         if orm_region:
             orm_region.name = region.name
             orm_region.videogame_id = region.videogame.videogame_id
             self.session.flush()
             self.session.refresh(orm_region)
             return RegionMapper.orm_to_domain(orm_region)
-        return region
+        return None
 
 
     def delete_region(self, region_id: int) -> bool:
@@ -63,4 +81,26 @@ class RegionRepositoryImpl(IRegionRepository):
 
     def count_associated_to_region(self, region_id) -> int:
 
-        return self.session.query(RegionORM).filter(RegionORM.region_id == region_id).count()
+        return self.session.query(RegionORM).filter(
+            RegionORM.region_id == region_id,
+            RegionORM.deleted == False,
+        ).count()
+
+    def soft_delete_region(self, region_id: int) -> bool:
+        orm_region = self.session.query(RegionORM).filter(
+            RegionORM.region_id == region_id,
+            RegionORM.deleted == False,
+        ).first()
+        if not orm_region:
+            return False
+        orm_region.deleted = True
+        self.session.flush()
+        return True
+
+    def soft_delete_by_videogame_id(self, videogame_id: int) -> int:
+        updated = self.session.query(RegionORM).filter(
+            RegionORM.videogame_id == videogame_id,
+            RegionORM.deleted == False,
+        ).update({RegionORM.deleted: True}, synchronize_session='fetch')
+        self.session.flush()
+        return updated

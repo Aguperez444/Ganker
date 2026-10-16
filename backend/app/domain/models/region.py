@@ -9,10 +9,11 @@ if TYPE_CHECKING:
 
 class Region:
 
-    def __init__(self, region_id: Optional[int], name: str, videogame: 'Videogame'):
+    def __init__(self, region_id: Optional[int], name: str, videogame: 'Videogame', deleted: bool = False):
         self._region_id: Optional[int] = region_id
         self._name: str = name
         self._videogame: 'Videogame' = videogame
+        self._deleted: bool = deleted
 
     @property
     def region_id(self) -> int:
@@ -38,6 +39,13 @@ class Region:
     @videogame.setter
     def videogame (self, videogame: Videogame) -> None:
         self._videogame = videogame
+
+    @property
+    def deleted(self) -> bool:
+        return self._deleted
+    @deleted.setter
+    def deleted(self, value: bool) -> None:
+        self._deleted = value
 
     def __eq__(self, other: object) -> bool:
         if isinstance(other, Region):

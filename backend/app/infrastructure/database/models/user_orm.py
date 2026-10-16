@@ -1,5 +1,6 @@
 from typing import List, Optional
-from sqlalchemy import String, DateTime
+from sqlalchemy import String, DateTime, Boolean, Index, text
+from sqlalchemy.sql import false
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from datetime import datetime
 
@@ -22,12 +23,30 @@ class UserORM(Base):
 
     user_id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     name: Mapped[str] = mapped_column(String, nullable=False)
-    username: Mapped[str] = mapped_column(String, unique=True, nullable=False)
-    mail: Mapped[Optional[str]] = mapped_column(String, unique=True, nullable=True)
+    username: Mapped[str] = mapped_column(String, nullable=False)
+    mail: Mapped[Optional[str]] = mapped_column(String, nullable=True)
     password_hash: Mapped[Optional[str]] = mapped_column(String, nullable=True)
     role: Mapped[str] = mapped_column(String, nullable=False, default="player")
     icon_url: Mapped[Optional[str]] = mapped_column(String, nullable=True)
     last_connection: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
+    deleted: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False, server_default=false(), index=True)
+
+    __table_args__ = (
+        Index(
+            "uq_user_username_active",
+            "username",
+            unique=True,
+            sqlite_where=text("deleted = 0"),
+            postgresql_where=text("deleted = false"),
+        ),
+        Index(
+            "uq_user_mail_active",
+            "mail",
+            unique=True,
+            sqlite_where=text("deleted = 0"),
+            postgresql_where=text("deleted = false"),
+        ),
+    )
 
 
     # Relaciones

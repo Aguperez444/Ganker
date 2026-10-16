@@ -10,7 +10,8 @@ class VideogameMapper:
             name = videogame_orm.name,
             icon_url = videogame_orm.icon_url,
             rank_per_role = videogame_orm.rank_per_role,
-            has_characters = videogame_orm.has_characters if videogame_orm.has_characters is not None else True
+            has_characters = videogame_orm.has_characters if videogame_orm.has_characters is not None else True,
+            deleted = bool(getattr(videogame_orm, "deleted", False)),
         )
 
     @staticmethod
@@ -20,12 +21,14 @@ class VideogameMapper:
                 name = videogame.name,
                 icon_url = videogame.icon_url,
                 rank_per_role = videogame.rank_per_role,
-                has_characters = videogame.has_characters
+                has_characters = videogame.has_characters,
+                deleted = videogame.deleted,
             )
         return VideogameORM(
             videogame_id = videogame.videogame_id,
             name = videogame.name,
             icon_url = videogame.icon_url,
             rank_per_role = videogame.rank_per_role,
-            has_characters = videogame.has_characters
+            has_characters = videogame.has_characters,
+            deleted = videogame.deleted,
         )

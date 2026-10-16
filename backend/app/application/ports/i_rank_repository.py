@@ -34,3 +34,11 @@ class IRankRepository(ABC):
     @abstractmethod
     def delete_rank(self, rank_id: int) -> bool:
         raise NotImplementedError
+
+    @abstractmethod
+    def soft_delete_rank(self, rank_id: int) -> bool:
+        raise NotImplementedError
+
+    @abstractmethod
+    def soft_delete_by_videogame_id(self, videogame_id: int) -> int:
+        raise NotImplementedError

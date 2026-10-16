@@ -8,11 +8,12 @@ if TYPE_CHECKING:
 
 
 class Role:
-    def __init__(self, role_id: Optional[int], name: str, videogame: 'Videogame', icon_url: str):
+    def __init__(self, role_id: Optional[int], name: str, videogame: 'Videogame', icon_url: str, deleted: bool = False):
         self._role_id: Optional[int] = role_id
         self._name: str = name
         self._videogame: 'Videogame' = videogame
         self._icon_url: str = icon_url
+        self._deleted: bool = bool(deleted) if deleted is not None else False
 
     @property
     def role_id(self) -> int:
@@ -43,6 +44,13 @@ class Role:
     @icon_url.setter
     def icon_url(self, value: str):
         self._icon_url = value
+
+    @property
+    def deleted(self) -> bool:
+        return self._deleted
+    @deleted.setter
+    def deleted(self, value: bool):
+        self._deleted = bool(value)
 
     def is_persisted(self) -> bool:
         return self._role_id is not None

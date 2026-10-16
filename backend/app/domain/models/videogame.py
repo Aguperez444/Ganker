@@ -5,12 +5,13 @@ from app.domain.exceptions.invalid_id_exception import InvalidIdException
 
 
 class Videogame:
-    def __init__(self, videogame_id: Optional[int], name: str, icon_url: str, rank_per_role: bool, has_characters: bool = True):
+    def __init__(self, videogame_id: Optional[int], name: str, icon_url: str, rank_per_role: bool, has_characters: bool = True, deleted: bool = False):
         self._videogame_id = videogame_id
         self._name = name
         self._icon_url: str = icon_url
         self._rank_per_role: bool = bool(rank_per_role) if rank_per_role is not None else False
         self._has_characters: bool = bool(has_characters) if has_characters is not None else True
+        self._deleted: bool = bool(deleted) if deleted is not None else False
 
     @property
     def videogame_id(self) -> int:
@@ -50,6 +51,13 @@ class Videogame:
     @has_characters.setter
     def has_characters(self, value: bool):
         self._has_characters = bool(value)
+
+    @property
+    def deleted(self) -> bool:
+        return self._deleted
+    @deleted.setter
+    def deleted(self, value: bool):
+        self._deleted = bool(value)
 
     def __eq__(self, other: object) -> bool:
         if isinstance(other, Videogame):

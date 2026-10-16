@@ -7,11 +7,12 @@ if TYPE_CHECKING:
     from app.domain.models.videogame import Videogame
 
 class Character:
-    def __init__(self, character_id: Optional[int], name: str, videogame: 'Videogame', icon_url: str):
+    def __init__(self, character_id: Optional[int], name: str, videogame: 'Videogame', icon_url: str, deleted: bool = False):
         self._character_id: Optional[int] = character_id
         self._name: str = name
         self._videogame: 'Videogame' = videogame
         self.icon_url: str = icon_url
+        self._deleted: bool = bool(deleted) if deleted is not None else False
 
     @property
     def character_id(self) -> int:
@@ -44,6 +45,13 @@ class Character:
     @icon_url.setter
     def icon_url(self, value: str) -> None:
         self._icon_url = value
+
+    @property
+    def deleted(self) -> bool:
+        return self._deleted
+    @deleted.setter
+    def deleted(self, value: bool) -> None:
+        self._deleted = bool(value)
 
     def is_persisted(self) -> bool:
         return self._character_id is not None

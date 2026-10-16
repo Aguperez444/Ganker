@@ -14,27 +14,45 @@ class RankRepositoryImpl(IRankRepository):
         self.session = session
 
     def get_rank_by_id(self, rank_id: int) -> Optional['Rank']:
-        found = self.session.query(RankORM).filter(RankORM.rank_id == rank_id).first()
+        found = self.session.query(RankORM).filter(
+            RankORM.rank_id == rank_id,
+            RankORM.deleted == False,
+        ).first()
+        if found and found.videogame and getattr(found.videogame, "deleted", False):
+            return None
         domain_found = RankMapper.orm_to_domain(found) if found else None
         return domain_found
 
     def get_ranks_by_game_id(self, game_id: int) -> list['Rank']:
-        found = self.session.query(RankORM).filter(RankORM.videogame_id == game_id).all()
-        domain_found = [RankMapper.orm_to_domain(rank) for rank in found]
+        found = self.session.query(RankORM).filter(
+            RankORM.videogame_id == game_id,
+            RankORM.deleted == False,
+        ).all()
+        domain_found = [
+            RankMapper.orm_to_domain(rank)
+            for rank in found
+            if not (rank.videogame and getattr(rank.videogame, "deleted", False))
+        ]
         return domain_found
 
     def get_rank_by_name_and_videogame(self, name: str, videogame_id: int) -> Optional['Rank']:
         found = self.session.query(RankORM).filter(
             func.lower(RankORM.name) == func.lower(name.strip()),
-            RankORM.videogame_id == videogame_id
+            RankORM.videogame_id == videogame_id,
+            RankORM.deleted == False,
         ).first()
+        if found and found.videogame and getattr(found.videogame, "deleted", False):
+            return None
         return RankMapper.orm_to_domain(found) if found else None
 
     def get_rank_by_value_and_videogame(self, value: int, videogame_id: int) -> Optional['Rank']:
         found = self.session.query(RankORM).filter(
             RankORM.value == value,
-            RankORM.videogame_id == videogame_id
+            RankORM.videogame_id == videogame_id,
+            RankORM.deleted == False,
         ).first()
+        if found and found.videogame and getattr(found.videogame, "deleted", False):
+            return None
         return RankMapper.orm_to_domain(found) if found else None
 
     def save_rank(self, rank: 'Rank') -> 'Rank':
@@ -45,7 +63,10 @@ class RankRepositoryImpl(IRankRepository):
         return RankMapper.orm_to_domain(orm_rank)
 
     def update_rank(self, rank: 'Rank') -> 'Rank':
-        orm_rank = self.session.query(RankORM).filter(RankORM.rank_id == rank.rank_id).first()
+        orm_rank = self.session.query(RankORM).filter(
+            RankORM.rank_id == rank.rank_id,
+            RankORM.deleted == False,
+        ).first()
         if orm_rank:
             orm_rank.name = rank.name
             orm_rank.value = rank.value
@@ -62,3 +83,22 @@ class RankRepositoryImpl(IRankRepository):
             self.session.flush()
             return True
         return False
+
+    def soft_delete_rank(self, rank_id: int) -> bool:
+        orm_rank = self.session.query(RankORM).filter(
+            RankORM.rank_id == rank_id,
+            RankORM.deleted == False,
+        ).first()
+        if not orm_rank:
+            return False
+        orm_rank.deleted = True
+        self.session.flush()
+        return True
+
+    def soft_delete_by_videogame_id(self, videogame_id: int) -> int:
+        updated = self.session.query(RankORM).filter(
+            RankORM.videogame_id == videogame_id,
+            RankORM.deleted == False,
+        ).update({RankORM.deleted: True}, synchronize_session='fetch')
+        self.session.flush()
+        return updated

@@ -29,11 +29,13 @@ class UpdateCharacter:
             character = CatalogValidationService.get_and_validate_exist_character(character_id, uow)
 
             new_icon_url = None
-            if icon and icon_filename:
+            effective_filename = icon_filename or (getattr(icon, "filename", None) if icon else None)
+            if icon and effective_filename:
                 game_folder = SlugService.to_slug(videogame.name)
+                file_content = getattr(icon, "file", icon)
                 new_icon_url = self.storage_service.save_image_file(
-                    file_content=icon,
-                    filename=icon_filename,
+                    file_content=file_content,
+                    filename=effective_filename,
                     subfolder=f"games/{game_folder}/characters",
                     preserve_original_name=True
                 )

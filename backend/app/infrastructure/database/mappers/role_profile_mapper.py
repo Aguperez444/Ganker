@@ -10,7 +10,8 @@ class RoleProfileMapper:
         return RoleProfile(
             role_profile_id=role_profile_orm.role_profile_id,
             role=RoleMapper.orm_to_domain(role_profile_orm.role),
-            rank=RankMapper.orm_to_domain(role_profile_orm.rank)
+            rank=RankMapper.orm_to_domain(role_profile_orm.rank),
+            deleted=bool(getattr(role_profile_orm, "deleted", False)),
         )
 
     @staticmethod
@@ -18,10 +19,12 @@ class RoleProfileMapper:
         if not role_profile.is_persisted():
             return RoleProfileORM(
                 role_id=role_profile.role.role_id,
-                rank_id=role_profile.rank.rank_id
+                rank_id=role_profile.rank.rank_id,
+                deleted=role_profile.deleted,
             )
         return RoleProfileORM(
             role_profile_id=role_profile.role_profile_id,
             role_id=role_profile.role.role_id,
-            rank_id=role_profile.rank.rank_id
+            rank_id=role_profile.rank.rank_id,
+            deleted=role_profile.deleted,
         )

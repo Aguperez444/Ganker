@@ -8,12 +8,13 @@ if TYPE_CHECKING:
 
 
 class Rank:
-    def __init__(self, rank_id: Optional[int], name: str, value: int, videogame: 'Videogame', icon_url: str):
+    def __init__(self, rank_id: Optional[int], name: str, value: int, videogame: 'Videogame', icon_url: str, deleted: bool = False):
         self._rank_id: Optional[int] = rank_id
         self._name: str = name
         self._value: int = value
         self._videogame: 'Videogame' = videogame
         self._icon_url: str = icon_url
+        self._deleted: bool = bool(deleted) if deleted is not None else False
 
     @property
     def rank_id(self) -> int:
@@ -53,6 +54,13 @@ class Rank:
     @icon_url.setter
     def icon_url(self, value: str) -> None:
         self._icon_url = value
+
+    @property
+    def deleted(self) -> bool:
+        return self._deleted
+    @deleted.setter
+    def deleted(self, value: bool) -> None:
+        self._deleted = bool(value)
 
     def is_persisted(self) -> bool:
         return self._rank_id is not None

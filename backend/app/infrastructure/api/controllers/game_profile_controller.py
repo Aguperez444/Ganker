@@ -22,6 +22,8 @@ from app.infrastructure.api.dto.response.get.get_riot_account_link_response impo
 from app.infrastructure.config.settings import settings
 from app.infrastructure.database.unit_of_work.uow_factory import uow_factory
 from app.infrastructure.riot_api.riot_game_provider_resolver_impl import RiotGameProviderResolverImpl
+from app.application.use_cases.delete_game_profile import DeleteGameProfileUseCase
+from app.infrastructure.api.dto.response.delete.delete_game_profile_response import DeleteGameProfileResponse
 
 router = APIRouter(prefix="/api/v1/game_profiles", tags=["Game Profiles"])
 
@@ -57,6 +59,15 @@ def search_game_profile(request: SearchVideogameProfilesRequest, player_id: int 
 
     response = game_profiles
     return response
+
+@router.delete("/{game_profile_id}", response_model=DeleteGameProfileResponse, status_code=200)
+def delete_game_profile(game_profile_id: int, token_data: dict = Depends(require_player)) -> DeleteGameProfileResponse:
+    uow = uow_factory()
+    return DeleteGameProfileUseCase(uow).execute(
+        game_profile_id=game_profile_id,
+        player_id=token_data["user_id"],
+        requester_role=token_data["role"],
+    )
 
 
 # ---------------------------------------------------------
