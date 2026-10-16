@@ -43,7 +43,7 @@ class CharacterPriorityRepositoryImpl(ICharacterPriorityRepository):
                     item.priority = new_priority
                     self.session.flush()
 
-    def soft_delete_and_readjust_for_character(self, character_id: int) -> None:
+    def soft_delete_character(self, character_id: int) -> None:
         associations = self.session.query(CharacterPriorityORM).filter(
             CharacterPriorityORM.character_id == character_id,
             CharacterPriorityORM.deleted == False,
@@ -57,17 +57,6 @@ class CharacterPriorityRepositoryImpl(ICharacterPriorityRepository):
         for assoc in associations:
             assoc.deleted = True
         self.session.flush()
-
-        for profile_id in affected_profile_ids:
-            remaining = self.session.query(CharacterPriorityORM).filter(
-                CharacterPriorityORM.game_profile_id == profile_id,
-                CharacterPriorityORM.deleted == False,
-            ).order_by(CharacterPriorityORM.priority.asc()).all()
-
-            for new_priority, item in enumerate(remaining, start=1):
-                if item.priority != new_priority:
-                    item.priority = new_priority
-                    self.session.flush()
 
     def soft_delete_by_game_profile_id(self, game_profile_id: int) -> int:
         updated = self.session.query(CharacterPriorityORM).filter(

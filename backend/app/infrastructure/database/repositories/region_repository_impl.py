@@ -86,17 +86,6 @@ class RegionRepositoryImpl(IRegionRepository):
             RegionORM.deleted == False,
         ).count()
 
-    def soft_delete_region(self, region_id: int) -> bool:
-        orm_region = self.session.query(RegionORM).filter(
-            RegionORM.region_id == region_id,
-            RegionORM.deleted == False,
-        ).first()
-        if not orm_region:
-            return False
-        orm_region.deleted = True
-        self.session.flush()
-        return True
-
     def soft_delete_by_videogame_id(self, videogame_id: int) -> int:
         updated = self.session.query(RegionORM).filter(
             RegionORM.videogame_id == videogame_id,

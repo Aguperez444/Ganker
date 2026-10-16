@@ -1,5 +1,7 @@
 from typing import TYPE_CHECKING, BinaryIO
 
+from fastapi import UploadFile
+
 from app.application.ports.i_storage_service import IStorageService
 from app.domain.services.catalog_validation_service import CatalogValidationService
 from app.domain.services.slug_service import SlugService
@@ -15,8 +17,7 @@ class UpdateCharacter:
         self.storage_service: IStorageService = storage_service
         self.uow: 'IUnitOfWork' = uow
 
-    def execute(self, character_id: int, name: str, videogame_id: int, icon: BinaryIO|None = None,
-                icon_filename: str | None = None) -> CharacterObjectResponse:
+    def execute(self, character_id: int, name: str, videogame_id: int, icon: UploadFile |None = None) -> CharacterObjectResponse:
         # Validar que el nombre no esté vacío
         StaticValidationService.validate_character_name_format(name)
 
@@ -29,13 +30,11 @@ class UpdateCharacter:
             character = CatalogValidationService.get_and_validate_exist_character(character_id, uow)
 
             new_icon_url = None
-            effective_filename = icon_filename or (getattr(icon, "filename", None) if icon else None)
-            if icon and effective_filename:
+            if icon and icon.filename:
                 game_folder = SlugService.to_slug(videogame.name)
-                file_content = getattr(icon, "file", icon)
                 new_icon_url = self.storage_service.save_image_file(
-                    file_content=file_content,
-                    filename=effective_filename,
+                    file_content=icon.file,
+                    filename=icon.filename,
                     subfolder=f"games/{game_folder}/characters",
                     preserve_original_name=True
                 )

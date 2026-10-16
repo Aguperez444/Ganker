@@ -15,7 +15,7 @@ class SoftDeleteCharacterUseCase:
 
             associated_count = uow.character_priority_repo.count_associated_to_character(character_id)
             if associated_count > 0:
-                uow.character_priority_repo.soft_delete_and_readjust_for_character(character_id)
+                uow.character_priority_repo.soft_delete_character(character_id)
 
             uow.character_repo.soft_delete_character(character_id)
 

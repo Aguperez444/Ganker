@@ -102,7 +102,6 @@ class GameProfileRepositoryImpl(IGameProfileRepository):
         self._session.flush()
 
 
-
     def delete_game_profile(self, game_profile_id: int) -> bool:
         orm_game_profile = self._session.query(GameProfileORM).filter(
             GameProfileORM.game_profile_id == game_profile_id

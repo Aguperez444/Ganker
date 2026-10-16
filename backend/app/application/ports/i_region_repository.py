@@ -37,9 +37,5 @@ class IRegionRepository(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    def soft_delete_region(self, region_id: int) -> bool:
-        raise NotImplementedError
-
-    @abstractmethod
     def soft_delete_by_videogame_id(self, videogame_id: int) -> int:
         raise NotImplementedError

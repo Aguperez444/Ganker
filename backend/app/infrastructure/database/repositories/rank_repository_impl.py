@@ -84,16 +84,6 @@ class RankRepositoryImpl(IRankRepository):
             return True
         return False
 
-    def soft_delete_rank(self, rank_id: int) -> bool:
-        orm_rank = self.session.query(RankORM).filter(
-            RankORM.rank_id == rank_id,
-            RankORM.deleted == False,
-        ).first()
-        if not orm_rank:
-            return False
-        orm_rank.deleted = True
-        self.session.flush()
-        return True
 
     def soft_delete_by_videogame_id(self, videogame_id: int) -> int:
         updated = self.session.query(RankORM).filter(
