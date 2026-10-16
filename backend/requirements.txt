@@ -22,3 +22,5 @@ defusedxml>=0.7.1
 httpx>=0.28.1
 anyio>=4.15.1
 logging>=0.4.9.6
+openpyxl>=3.1.5
+reportlab>=4.2.5

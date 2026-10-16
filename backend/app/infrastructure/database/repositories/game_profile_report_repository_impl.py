@@ -33,3 +33,10 @@ class GameProfileReportRepositoryImpl(IGameProfileReportRepository):
             GameProfileReportORM.report_id.desc()
         ).first()
         return GameProfileReportMapper.orm_to_domain(found) if found else None
+
+    def get_all_reports(self) -> list['GameProfileReport']:
+        found = self._session.query(GameProfileReportORM).order_by(
+            GameProfileReportORM.generated_at.desc(),
+            GameProfileReportORM.report_id.desc()
+        ).all()
+        return [GameProfileReportMapper.orm_to_domain(report) for report in found]

@@ -19,3 +19,8 @@ class IGameProfileReportRepository(ABC):
     def get_latest_report(self) -> Optional['GameProfileReport']:
         """Devuelve el último reporte generado (el más reciente por fecha de generación)."""
         raise NotImplementedError
+
+    @abstractmethod
+    def get_all_reports(self) -> list['GameProfileReport']:
+        """Devuelve todos los reportes generados, del más reciente al más antiguo."""
+        raise NotImplementedError

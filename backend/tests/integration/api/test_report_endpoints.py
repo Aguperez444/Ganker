@@ -180,3 +180,163 @@ class TestReportEndpointsIntegration:
     def test_export_report_forbidden_for_player(self, client, player_auth_headers, report_data):
         response = client.get("/api/v1/reports/game-profiles/1/export", headers=player_auth_headers)
         assert response.status_code == 403
+
+    def test_export_report_pdf(self, client, admin_auth_headers, report_data):
+        generated = client.post("/api/v1/reports/game-profiles", json={}, headers=admin_auth_headers)
+        report_id = generated.json()["report_id"]
+
+        exported = client.get(
+            f"/api/v1/reports/game-profiles/{report_id}/export?report_output_format=pdf",
+            headers=admin_auth_headers,
+        )
+
+        assert exported.status_code == 200
+        assert exported.headers["content-type"] == "application/pdf"
+        assert "attachment" in exported.headers["content-disposition"]
+        assert exported.headers["content-disposition"].endswith(".pdf")
+        assert exported.content.startswith(b"%PDF")
+
+    def test_export_report_excel_integrity(self, client, admin_auth_headers, report_data):
+        from openpyxl import load_workbook
+
+        generated = client.post("/api/v1/reports/game-profiles", json={}, headers=admin_auth_headers)
+        report = generated.json()
+        report_id = report["report_id"]
+
+        exported = client.get(
+            f"/api/v1/reports/game-profiles/{report_id}/export?report_output_format=excel",
+            headers=admin_auth_headers,
+        )
+
+        assert exported.status_code == 200
+        assert "spreadsheetml" in exported.headers["content-type"]
+        assert exported.headers["content-disposition"].endswith(".xlsx")
+        assert exported.content.startswith(b"PK")  # xlsx es un zip
+
+        workbook = load_workbook(io.BytesIO(exported.content))
+        worksheet = workbook.active
+
+        header_row_index = next(
+            row[0].row for row in worksheet.iter_rows(min_col=1, max_col=1)
+            if row[0].value == "VIDEOJUEGO"
+        )
+        data = {
+            worksheet.cell(row=row, column=1).value
+            for row in range(header_row_index + 1, worksheet.max_row)
+        }
+        assert "League of Legends" in data
+        assert "Valorant" in data
+        assert "Counter-Strike 2" in data
+
+        counts = {
+            worksheet.cell(row=row, column=1).value: worksheet.cell(row=row, column=2).value
+            for row in range(header_row_index + 1, worksheet.max_row)
+        }
+        assert counts["League of Legends"] == 3
+        assert counts["Valorant"] == 1
+        assert counts["Counter-Strike 2"] == 0
+
+    def test_export_report_unsupported_format(self, client, admin_auth_headers, report_data):
+        generated = client.post("/api/v1/reports/game-profiles", json={}, headers=admin_auth_headers)
+        report_id = generated.json()["report_id"]
+
+        response = client.get(
+            f"/api/v1/reports/game-profiles/{report_id}/export?report_output_format=xml",
+            headers=admin_auth_headers,
+        )
+        assert response.status_code == 400
+        assert "no es soportado" in response.json().get("error", "").lower()
+
+    # ---------------------------------------------------------
+    # GET /api/v1/reports/game-profiles/last
+    # ---------------------------------------------------------
+
+    def test_get_last_report_without_reports(self, client, admin_auth_headers, seed_catalog_data):
+        response = client.get("/api/v1/reports/game-profiles/last", headers=admin_auth_headers)
+
+        assert response.status_code == 200
+        data = response.json()
+        assert data["has_report"] is False
+        assert data["report_id"] is None
+        assert data["end_date"] is None
+        assert data["suggested_start_date"] is None
+
+    def test_get_last_report_after_generation(self, client, admin_auth_headers, report_data):
+        generated = client.post(
+            "/api/v1/reports/game-profiles",
+            json={"start_date": "2026-06-01", "end_date": "2026-06-30"},
+            headers=admin_auth_headers,
+        )
+        assert generated.status_code == 201
+        report = generated.json()
+
+        response = client.get("/api/v1/reports/game-profiles/last", headers=admin_auth_headers)
+
+        assert response.status_code == 200
+        data = response.json()
+        assert data["has_report"] is True
+        assert data["report_id"] == report["report_id"]
+        assert data["total_profiles"] == report["total_profiles"]
+        assert data["end_date"].startswith("2026-06-30")
+        # El próximo reporte debe empezar el día siguiente al fin del último
+        assert data["suggested_start_date"] == "2026-07-01"
+
+    def test_get_last_report_forbidden_for_player(self, client, player_auth_headers):
+        response = client.get("/api/v1/reports/game-profiles/last", headers=player_auth_headers)
+        assert response.status_code == 403
+
+    # ---------------------------------------------------------
+    # GET /api/v1/reports/game-profiles
+    # ---------------------------------------------------------
+
+    def test_list_reports_without_reports(self, client, admin_auth_headers, seed_catalog_data):
+        response = client.get("/api/v1/reports/game-profiles", headers=admin_auth_headers)
+
+        assert response.status_code == 200
+        assert response.json()["reports"] == []
+
+    def test_list_reports_after_generation(self, client, admin_auth_headers, report_data, test_db_session):
+        # Perfil con fecha de julio para que el segundo reporte tenga datos en su rango
+        test_db_session.add(
+            GameProfileORM(
+                player_id=report_data["players"][0].user_id,
+                videogame_id=report_data["cs2"].videogame_id,
+                created_at=datetime(2026, 7, 15, 12, 0, 0),
+            )
+        )
+        test_db_session.commit()
+
+        first = client.post(
+            "/api/v1/reports/game-profiles",
+            json={"start_date": "2026-06-01", "end_date": "2026-06-30"},
+            headers=admin_auth_headers,
+        )
+        assert first.status_code == 201
+
+        second = client.post(
+            "/api/v1/reports/game-profiles",
+            json={"start_date": "2026-07-01", "end_date": "2026-07-31"},
+            headers=admin_auth_headers,
+        )
+        assert second.status_code == 201
+
+        response = client.get("/api/v1/reports/game-profiles", headers=admin_auth_headers)
+
+        assert response.status_code == 200
+        reports = response.json()["reports"]
+        assert len(reports) == 2
+        # Del más reciente al más antiguo
+        assert reports[0]["report_id"] == second.json()["report_id"]
+        assert reports[1]["report_id"] == first.json()["report_id"]
+        # Solo se exponen id y fechas
+        assert set(reports[0].keys()) == {"report_id", "generated_at", "start_date", "end_date"}
+        assert reports[0]["start_date"].startswith("2026-07-01")
+        assert reports[0]["end_date"].startswith("2026-07-31")
+
+    def test_list_reports_forbidden_for_player(self, client, player_auth_headers):
+        response = client.get("/api/v1/reports/game-profiles", headers=player_auth_headers)
+        assert response.status_code == 403
+
+    def test_list_reports_unauthorized_without_token(self, client):
+        response = client.get("/api/v1/reports/game-profiles")
+        assert response.status_code == 401
