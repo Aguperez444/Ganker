@@ -1,6 +1,13 @@
 ﻿videogame_id,name,icon_url
+1,Duelista,/media/games/valorant/roles/duelist.png
+1,Controlador,/media/games/valorant/roles/controller.png
+1,Iniciador,/media/games/valorant/roles/initiator.png
+1,Centinela,/media/games/valorant/roles/sentinel.png
 2,Mid,/media/games/league_of_legends/roles/mid.png
 2,Jungla,/media/games/league_of_legends/roles/jungle.svg
 2,Top,/media/games/league_of_legends/roles/top.svg
 2,Support,/media/games/league_of_legends/roles/sup.svg
 2,ADC,/media/games/league_of_legends/roles/adc.svg
+3,Tanque,/media/games/overwatch/roles/tank.svg
+3,Daño,/media/games/overwatch/roles/damage.svg
+3,Soporte,/media/games/overwatch/roles/support.svg

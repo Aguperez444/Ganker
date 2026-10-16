@@ -1,0 +1,4 @@
+name,videogame,description,allow_other_regions,icon_url,min_rank,max_rank
+Valorant Ranked Squad,Valorant,Equipo para subir a Diamante en ranked,1,/media/teams/icons/default_icon.png,Oro 1,Diamante 3
+Equipo Flex de LoL,League of Legends,Armamos flex los fines de semana,1,/media/teams/icons/default_icon.png,Plata,Diamante
+Comp de Overwatch,Overwatch,Scrims y ranked competitivo,1,/media/teams/icons/default_icon.png,Oro,Gran Maestro

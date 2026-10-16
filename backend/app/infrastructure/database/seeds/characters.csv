@@ -1,5 +1,17 @@
 ﻿videogame_id,name,icon_url
+1,Jett,/media/games/valorant/characters/jett.jpg
+1,Killjoy,/media/games/valorant/characters/killjoy.jpg
+1,Viper,/media/games/valorant/characters/viper.png
+1,Skye,/media/games/valorant/characters/skye.jpg
+1,Harbor,/media/games/valorant/characters/harbor.jpg
+1,Yoru,/media/games/valorant/characters/yoru.png
 2,Swain,/media/games/league_of_legends/characters/swain.png
 2,Jinx,/media/games/league_of_legends/characters/jinx.png
 2,Aatrox,/media/games/league_of_legends/characters/aatrox.jpg
 2,Miss Fortune,/media/games/league_of_legends/characters/miss_fortune.jpg
+3,Reinhardt,/media/games/overwatch/characters/reinhardt.png
+3,Kiriko,/media/games/overwatch/characters/kiriko.png
+3,Genji,/media/games/overwatch/characters/genji.jpg
+3,Hanzo,/media/games/overwatch/characters/hanzo.jpg
+3,Orisa,/media/games/overwatch/characters/orisa.jpg
+3,Ana,/media/games/overwatch/characters/ana.jpg

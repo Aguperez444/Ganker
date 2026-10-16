@@ -1,5 +1,44 @@
 ﻿videogame_id,name,value,icon_url
-1,Hierro,1,/media/games/valorant/ranks/iron_1.png
-2,Bronce,1,/media/games/league_of_legends/ranks/bronze.png
-2,Oro,2,/media/games/league_of_legends/ranks/gold.png
-2,Diamante,3,/media/games/league_of_legends/ranks/diamond.png
+1,Hierro 1,1,/media/games/valorant/ranks/iron_1.svg
+1,Hierro 2,2,/media/games/valorant/ranks/iron_2.svg
+1,Hierro 3,3,/media/games/valorant/ranks/iron_3.svg
+1,Bronce 1,4,/media/games/valorant/ranks/bronze_1.svg
+1,Bronce 2,5,/media/games/valorant/ranks/bronze_2.svg
+1,Bronce 3,6,/media/games/valorant/ranks/bronze_3.svg
+1,Plata 1,7,/media/games/valorant/ranks/silver_1.svg
+1,Plata 2,8,/media/games/valorant/ranks/silver_2.svg
+1,Plata 3,9,/media/games/valorant/ranks/silver_3.svg
+1,Oro 1,10,/media/games/valorant/ranks/gold_1.svg
+1,Oro 2,11,/media/games/valorant/ranks/gold_2.svg
+1,Oro 3,12,/media/games/valorant/ranks/gold_3.svg
+1,Platino 1,13,/media/games/valorant/ranks/platinum_1.svg
+1,Platino 2,14,/media/games/valorant/ranks/platinum_2.svg
+1,Platino 3,15,/media/games/valorant/ranks/platinum_3.svg
+1,Diamante 1,16,/media/games/valorant/ranks/diamond_1.svg
+1,Diamante 2,17,/media/games/valorant/ranks/diamond_2.svg
+1,Diamante 3,18,/media/games/valorant/ranks/diamond_3.svg
+1,Ascendente 1,19,/media/games/valorant/ranks/ascendant_1.svg
+1,Ascendente 2,20,/media/games/valorant/ranks/ascendant_2.svg
+1,Ascendente 3,21,/media/games/valorant/ranks/ascendant_3.svg
+1,Inmortal 1,22,/media/games/valorant/ranks/immortal_1.svg
+1,Inmortal 2,23,/media/games/valorant/ranks/immortal_2.svg
+1,Inmortal 3,24,/media/games/valorant/ranks/immortal_3.svg
+1,Radiante,25,/media/games/valorant/ranks/radiant.svg
+2,Hierro,1,/media/games/league_of_legends/ranks/iron.png
+2,Bronce,2,/media/games/league_of_legends/ranks/bronze.png
+2,Plata,3,/media/games/league_of_legends/ranks/silver.png
+2,Oro,4,/media/games/league_of_legends/ranks/gold.png
+2,Platino,5,/media/games/league_of_legends/ranks/platinum.png
+2,Esmeralda,6,/media/games/league_of_legends/ranks/emerald.png
+2,Diamante,7,/media/games/league_of_legends/ranks/diamond.png
+2,Maestro,8,/media/games/league_of_legends/ranks/master.png
+2,Gran Maestro,9,/media/games/league_of_legends/ranks/grandmaster.png
+2,Desafiante,10,/media/games/league_of_legends/ranks/challenger.png
+3,Bronce,1,/media/games/overwatch/ranks/bronze.webp
+3,Plata,2,/media/games/overwatch/ranks/silver.webp
+3,Oro,3,/media/games/overwatch/ranks/gold.webp
+3,Platino,4,/media/games/overwatch/ranks/platinum.webp
+3,Diamante,5,/media/games/overwatch/ranks/diamond.webp
+3,Maestro,6,/media/games/overwatch/ranks/master.webp
+3,Gran Maestro,7,/media/games/overwatch/ranks/grandmaster.webp
+3,Top 500,8,/media/games/overwatch/ranks/top-500.webp
