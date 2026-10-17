@@ -21,8 +21,7 @@ class ICharacterPriorityRepository(ABC):
     @abstractmethod
     def soft_delete_character(self, character_id: int) -> None:
         """
-        Marca como eliminadas lógicamente las asociaciones del personaje y reajusta
-        las prioridades restantes activas de cada perfil.
+        Marca como eliminadas lógicamente las asociaciones del personaje
         """
         raise NotImplementedError
 
