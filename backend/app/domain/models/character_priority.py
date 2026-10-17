@@ -9,10 +9,11 @@ if TYPE_CHECKING:
 
 
 class CharacterPriority:
-    def __init__(self, priority_id: Optional[int], character: Character, priority: int):
+    def __init__(self, priority_id: Optional[int], character: Character, priority: int, deleted: bool = False):
         self._priority_id: Optional[int] = priority_id
         self._character: Character = character
         self._priority: int = priority
+        self._deleted: bool = deleted
 
     @property
     def character(self) -> Character:
@@ -38,6 +39,13 @@ class CharacterPriority:
         if isinstance(value, bool) or not isinstance(value, int):
             raise InvalidIdException(value)
         self._priority_id = value
+
+    @property
+    def deleted(self) -> bool:
+        return self._deleted
+    @deleted.setter
+    def deleted(self, value: bool) -> None:
+        self._deleted = value
 
     def is_persisted(self) -> bool:
         return self._priority_id is not None

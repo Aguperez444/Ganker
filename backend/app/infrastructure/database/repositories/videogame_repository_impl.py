@@ -25,19 +25,28 @@ class VideogameRepositoryImpl(IVideogameRepository):
 
     def get_videogame_by_id(self, videogame_id: int) -> Optional['Videogame']:
 
-        found = self.session.query(VideogameORM).filter(VideogameORM.videogame_id == videogame_id).first()
+        found = self.session.query(VideogameORM).filter(
+            VideogameORM.videogame_id == videogame_id,
+            VideogameORM.deleted == False,
+        ).first()
         domain_found = VideogameMapper.orm_to_domain(found) if found else None
         return domain_found
 
     def get_videogame_by_name(self, videogame_name: str) -> Optional['Videogame']:
 
-        found = self.session.query(VideogameORM).filter(func.lower(VideogameORM.name) == func.lower(videogame_name.strip())).first()
+        found = self.session.query(VideogameORM).filter(
+            func.lower(VideogameORM.name) == func.lower(videogame_name.strip()),
+            VideogameORM.deleted == False,
+        ).first()
         domain_found = VideogameMapper.orm_to_domain(found) if found else None
         return domain_found
 
     def update_videogame(self, videogame: Videogame) -> 'Videogame':
 
-        orm_videogame = self.session.query(VideogameORM).filter(VideogameORM.videogame_id == videogame.videogame_id).first()
+        orm_videogame = self.session.query(VideogameORM).filter(
+            VideogameORM.videogame_id == videogame.videogame_id,
+            VideogameORM.deleted == False,
+        ).first()
         if orm_videogame:
             orm_videogame.name = videogame.name
             orm_videogame.icon_url = videogame.icon_url
@@ -49,6 +58,19 @@ class VideogameRepositoryImpl(IVideogameRepository):
         return videogame
 
     def get_all_videogames(self) -> list['Videogame']:
-        orm_videogames = self.session.query(VideogameORM).all()
+        orm_videogames = self.session.query(VideogameORM).filter(
+            VideogameORM.deleted == False
+        ).all()
         domain_videogames = [VideogameMapper.orm_to_domain(v) for v in orm_videogames]
         return domain_videogames
+
+    def soft_delete_videogame(self, videogame_id: int) -> bool:
+        orm_videogame = self.session.query(VideogameORM).filter(
+            VideogameORM.videogame_id == videogame_id,
+            VideogameORM.deleted == False,
+        ).first()
+        if not orm_videogame:
+            return False
+        orm_videogame.deleted = True
+        self.session.flush()
+        return True

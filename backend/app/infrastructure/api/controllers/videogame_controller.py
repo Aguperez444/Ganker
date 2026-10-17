@@ -8,6 +8,8 @@ from app.infrastructure.api.dto.response.base_classes.videogame_object_response 
 from app.infrastructure.database.unit_of_work.uow_factory import uow_factory
 from app.infrastructure.api.dependencies.auth import require_admin, require_player
 from app.infrastructure.storage.local_disk_storage_service import LocalDiskStorageService
+from app.application.use_cases.delete_videogame import DeleteVideogameUseCase
+from app.infrastructure.api.dto.response.delete.delete_videogame_response import DeleteVideogameResponse
 
 router = APIRouter(prefix="/api/v1/videogames", tags=["Videogames"])
 
@@ -64,3 +66,8 @@ def get_all_videogames():
     uow = uow_factory()
     query_games_use_case = QueryVideogames(uow)
     return query_games_use_case.get_all_videogames()
+
+@router.delete("/{videogame_id}", response_model=DeleteVideogameResponse, status_code=200, dependencies=[Depends(require_admin)])
+def delete_videogame(videogame_id: int) -> DeleteVideogameResponse:
+    uow = uow_factory()
+    return DeleteVideogameUseCase(uow).execute(videogame_id)

@@ -13,10 +13,24 @@ class GameProfileMapper:
             game_profile_id=game_profile_orm.game_profile_id,
             player_id=game_profile_orm.player_id,
             videogame=VideogameMapper.orm_to_domain(game_profile_orm.videogame),
-            characters_priority=[CharacterPriorityMapper.orm_to_domain(char) for char in game_profile_orm.character_associations],
-            role_profiles=[RoleProfileMapper.orm_to_domain(role_profile) for role_profile in game_profile_orm.role_profiles],
-            region=RegionMapper.orm_to_domain(game_profile_orm.region) if game_profile_orm.region else None,
-            in_game_name=game_profile_orm.in_game_name
+            characters_priority=[
+                CharacterPriorityMapper.orm_to_domain(char)
+                for char in game_profile_orm.character_associations
+                if not getattr(char, "deleted", False)
+                and (char.character is None or not getattr(char.character, "deleted", False))
+            ],
+            role_profiles=[
+                RoleProfileMapper.orm_to_domain(role_profile)
+                for role_profile in game_profile_orm.role_profiles
+                if not getattr(role_profile, "deleted", False)
+                and (role_profile.role is None or not getattr(role_profile.role, "deleted", False))
+                and (role_profile.rank is None or not getattr(role_profile.rank, "deleted", False))
+            ],
+            region=RegionMapper.orm_to_domain(game_profile_orm.region)
+            if game_profile_orm.region and not getattr(game_profile_orm.region, "deleted", False)
+            else None,
+            in_game_name=game_profile_orm.in_game_name,
+            deleted=bool(getattr(game_profile_orm, "deleted", False)),
         )
 
     @staticmethod
@@ -28,7 +42,8 @@ class GameProfileMapper:
                 role_profiles=[RoleProfileMapper.domain_to_orm(role_profile) for role_profile in game_profile_domain.role_profiles],
                 character_associations=[CharacterPriorityMapper.domain_to_orm(char_priority) for char_priority in game_profile_domain.characters_priority],
                 region_id=game_profile_domain.region.region_id if game_profile_domain.region else None,
-                in_game_name=game_profile_domain.in_game_name
+                in_game_name=game_profile_domain.in_game_name,
+                deleted=game_profile_domain.deleted,
             )
         return GameProfileORM(
             game_profile_id=game_profile_domain.game_profile_id,
@@ -37,5 +52,6 @@ class GameProfileMapper:
             role_profiles=[RoleProfileMapper.domain_to_orm(role_profile) for role_profile in game_profile_domain.role_profiles],
             character_associations=[CharacterPriorityMapper.domain_to_orm(char_priority) for char_priority in game_profile_domain.characters_priority],
             region_id=game_profile_domain.region.region_id if game_profile_domain.region else None,
-            in_game_name=game_profile_domain.in_game_name
+            in_game_name=game_profile_domain.in_game_name,
+            deleted=game_profile_domain.deleted,
         )

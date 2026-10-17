@@ -39,9 +39,15 @@ class TestUpdateCharacterUseCase:
         uow.character_repo.update_character.side_effect = lambda c: c
 
         mock_icon = MagicMock()
+        mock_icon.file = MagicMock()
         mock_icon.filename = "new_ahri.png"
 
-        result = use_case.execute(character_id=10, name="Ahri Spirit", videogame_id=1, icon=mock_icon)
+        result = use_case.execute(
+            character_id=10,
+            name="Ahri Spirit",
+            videogame_id=1,
+            icon=mock_icon
+        )
 
         assert result.character_id == 10
         assert result.name == "Ahri Spirit"
@@ -107,9 +113,15 @@ class TestUpdateCharacterUseCase:
         uow.character_repo.update_character.side_effect = lambda c: c
 
         mock_icon = MagicMock()
+        mock_icon.file = MagicMock()
         mock_icon.filename = "new_icon.png"
 
-        result = use_case.execute(character_id=10, name="Ahri", videogame_id=1, icon=mock_icon)
+        result = use_case.execute(
+            character_id=10,
+            name="Ahri",
+            videogame_id=1,
+            icon=mock_icon
+        )
 
         assert result.character_id == 10
         assert result.name == "Ahri"

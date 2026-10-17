@@ -14,3 +14,7 @@ class IRefreshTokenRepository(ABC):
     @abstractmethod
     def is_valid(self, jti: str) -> bool:
         pass
+
+    @abstractmethod
+    def revoke_all_by_user_id(self, user_id: int) -> int:
+        pass

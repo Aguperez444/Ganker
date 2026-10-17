@@ -46,3 +46,15 @@ class RefreshTokenRepositoryImpl(IRefreshTokenRepository):
             .first()
         )
         return token_record is not None
+
+    def revoke_all_by_user_id(self, user_id: int) -> int:
+        updated = (
+            self.session.query(RefreshTokenORM)
+            .filter(
+                RefreshTokenORM.user_id == user_id,
+                RefreshTokenORM.revoked == False,
+            )
+            .update({RefreshTokenORM.revoked: True}, synchronize_session='fetch')
+        )
+        self.session.flush()
+        return updated

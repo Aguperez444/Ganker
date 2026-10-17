@@ -33,6 +33,27 @@ class IGameProfileRepository(ABC):
         """
         raise NotImplementedError
 
+    @abstractmethod
+    def soft_delete_game_profile(self, game_profile_id: int) -> bool:
+        """
+        Marca como eliminado lógicamente un perfil de juego por su ID.
+        """
+        raise NotImplementedError
+
+    @abstractmethod
+    def soft_delete_by_player_id(self, player_id: int) -> list[int]:
+        """
+        Marca como eliminados lógicamente todos los perfiles de juego de un jugador y retorna sus IDs.
+        """
+        raise NotImplementedError
+
+    @abstractmethod
+    def soft_delete_by_videogame_id(self, videogame_id: int) -> list[int]:
+        """
+        Marca como eliminados lógicamente todos los perfiles de juego de un videojuego y retorna sus IDs.
+        """
+        raise NotImplementedError
+
     def get_by_user_id_and_game_id(self, user_id, game_id):
         """
         Obtiene un perfil de juego por el ID del usuario asignado y el id del juego asignado.

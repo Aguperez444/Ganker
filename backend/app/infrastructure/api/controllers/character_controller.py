@@ -76,7 +76,7 @@ def update_character(character_id: int,
     storage_service = get_storage_service()
     update_character_use_case = UpdateCharacter(storage_service, uow)
 
-    updated_character = update_character_use_case.execute(character_id, name, videogame_id, icon_file, file_name)
+    updated_character = update_character_use_case.execute(character_id, name, videogame_id, icon)
 
     return updated_character
 

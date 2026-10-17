@@ -1,5 +1,6 @@
 from typing import List, Optional
-from sqlalchemy import ForeignKey, String, UniqueConstraint
+from sqlalchemy import ForeignKey, String, Boolean, Index, text
+from sqlalchemy.sql import false
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.infrastructure.database.base import Base
@@ -23,6 +24,7 @@ class GameProfileORM(Base):
     videogame_id: Mapped[int] = mapped_column(ForeignKey("videogame.videogame_id"), nullable=False)
     region_id: Mapped[Optional[int]] = mapped_column(ForeignKey("region.region_id"), nullable=True)
     in_game_name: Mapped[Optional[str]] = mapped_column(String(50), nullable=True)
+    deleted: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False, server_default=false(), index=True)
 
     # Relaciones
     user: Mapped["UserORM"] = relationship(back_populates="game_profiles")
@@ -44,4 +46,13 @@ class GameProfileORM(Base):
     )
 
     # Constraints
-    __table_args__ = (UniqueConstraint("player_id", "videogame_id", name="uq_profile_x_videogame"),)
+    __table_args__ = (
+        Index(
+            "uq_profile_x_videogame",
+            "player_id",
+            "videogame_id",
+            unique=True,
+            sqlite_where=text("deleted = 0"),
+            postgresql_where=text("deleted = false"),
+        ),
+    )

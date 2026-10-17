@@ -1,4 +1,5 @@
-from sqlalchemy import ForeignKey, UniqueConstraint
+from sqlalchemy import ForeignKey, Boolean, Index, text
+from sqlalchemy.sql import false
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.infrastructure.database.base import Base
@@ -18,6 +19,7 @@ class RoleProfileORM(Base):
     game_profile_id: Mapped[int] = mapped_column(ForeignKey("game_profile.game_profile_id"), nullable=False)
     role_id: Mapped[int] = mapped_column(ForeignKey("role.role_id"), nullable=False)
     rank_id: Mapped[int] = mapped_column(ForeignKey("rank.rank_id"), nullable=False)
+    deleted: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False, server_default=false(), index=True)
 
     # Relaciones
     game_profile: Mapped["GameProfileORM"] = relationship(back_populates="role_profiles")
@@ -26,4 +28,13 @@ class RoleProfileORM(Base):
 
 
     # Constraints
-    __table_args__ = (UniqueConstraint("game_profile_id", "role_id", name="uq_profile_role"),)
+    __table_args__ = (
+        Index(
+            "uq_profile_role",
+            "game_profile_id",
+            "role_id",
+            unique=True,
+            sqlite_where=text("deleted = 0"),
+            postgresql_where=text("deleted = false"),
+        ),
+    )

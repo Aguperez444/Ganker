@@ -21,7 +21,8 @@ class User:
                  role: UserRole,
                  profiles: list['GameProfile'],
                  icon_url: Optional[str] = None,
-                 last_connection: Optional[datetime] = None
+                 last_connection: Optional[datetime] = None,
+                 deleted: bool = False
                  ):
         self._user_id: Optional[int] = user_id
         self._username: str = username
@@ -32,6 +33,7 @@ class User:
         self._profiles: list['GameProfile'] = profiles
         self._icon_url: Optional[str] = icon_url
         self._last_connection: Optional[datetime] = last_connection
+        self._deleted: bool = bool(deleted) if deleted is not None else False
 
     @property
     def user_id(self) -> int:
@@ -102,6 +104,13 @@ class User:
     @last_connection.setter
     def last_connection(self, value: datetime) -> None:
         self._last_connection = value
+
+    @property
+    def deleted(self) -> bool:
+        return self._deleted
+    @deleted.setter
+    def deleted(self, value: bool) -> None:
+        self._deleted = bool(value)
 
     def __repr__(self) -> str:
         return (f"User(user_id={self.user_id or 'sin_id'}, username='{self.username}',"
