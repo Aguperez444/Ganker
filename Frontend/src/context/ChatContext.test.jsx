@@ -116,6 +116,12 @@ function Harness() {
       <button onClick={() => chat.seleccionarConversacion(9)}>
         seleccionar-9
       </button>
+      <span data-testid="cache-1">
+        {chat.obtenerMensajesDeConversacion(1) ? "con-cache" : "sin-cache"}
+      </span>
+      <button onClick={() => chat.sembrarMensajesDeConversacion(1, [])}>
+        sembrar-cache-1
+      </button>
     </div>
   );
 }
@@ -240,6 +246,55 @@ describe("ChatContext", () => {
       expect(screen.getByTestId("conv-1")).toHaveTextContent("owner_user:0")
     );
     expect(screen.getByTestId("total-no-leidos")).toHaveTextContent("0");
+  });
+
+  // Bug: con la lista de chats abierta (sin entrar a la conversacion) los
+  // mensajes nuevos no entraban al cache, y al abrirla se mostraba el
+  // historial viejo hasta refrescar la pagina.
+  it("descarta el cache de mensajes de una conversación notificada que no se está viendo", async () => {
+    const usuario = userEvent.setup();
+    await renderConSesion();
+    await usuario.click(screen.getByText("sembrar-cache-1"));
+
+    const socket = MockWebSocket.instances[0];
+    act(() => socket.simularApertura());
+    act(() =>
+      socket.simularNotificacion({
+        type: "NEW_MESSAGE_NOTIFICATION",
+        conversation_id: 1,
+        sender_id: 2,
+        content: "hola",
+        timestamp: "2026-01-01T00:00:00Z",
+      })
+    );
+
+    await waitFor(() =>
+      expect(screen.getByTestId("cache-1")).toHaveTextContent("sin-cache")
+    );
+  });
+
+  it("conserva el cache de la conversación que se está viendo", async () => {
+    const usuario = userEvent.setup();
+    await renderConSesion();
+    await usuario.click(screen.getByText("seleccionar-1"));
+    await usuario.click(screen.getByText("sembrar-cache-1"));
+
+    const socket = MockWebSocket.instances[0];
+    act(() => socket.simularApertura());
+    act(() =>
+      socket.simularNotificacion({
+        type: "NEW_MESSAGE_NOTIFICATION",
+        conversation_id: 1,
+        sender_id: 2,
+        content: "hola",
+        timestamp: "2026-01-01T00:00:00Z",
+      })
+    );
+
+    await waitFor(() =>
+      expect(screen.getByTestId("conv-1")).toHaveTextContent("owner_user:0")
+    );
+    expect(screen.getByTestId("cache-1")).toHaveTextContent("con-cache");
   });
 
   it("limpia el contador de no leídos al seleccionar la conversación", async () => {

@@ -4,7 +4,14 @@ import { urlDeMedia } from "../../utils/media";
 // Lista los perfiles de juego del jugador (salen de user.profiles, via
 // AuthContext) para que elija cual editar. Sigue el mismo patron visual que
 // GamesListComponent/RanksListComponent: fila con icono + nombre + accion.
-const GameProfilesListComponent = ({ profiles, selectedProfileId, onEdit }) => {
+// `onView` (opcional): boton "Ver" que abre el perfil completo de ese juego
+// (con la cuenta de Riot y sus estadisticas, si es LoL o Valorant).
+const GameProfilesListComponent = ({
+  profiles,
+  selectedProfileId,
+  onEdit,
+  onView,
+}) => {
   if (!profiles || profiles.length === 0) {
     return (
       <div className="flex min-h-48 flex-col items-center justify-center rounded-xl border border-white/10 bg-ganker-surface-light p-6 text-center">
@@ -60,17 +67,29 @@ const GameProfilesListComponent = ({ profiles, selectedProfileId, onEdit }) => {
                     {cantidadRoles} rol
                     {cantidadRoles === 1 ? "" : "es"} ·{" "}
                     {profile.region?.name ?? "Sin región"}
+                    {profile.in_game_name && ` · ${profile.in_game_name}`}
                   </p>
                 </div>
               </div>
 
-              <button
-                type="button"
-                onClick={() => onEdit(profile)}
-                className="shrink-0 cursor-pointer rounded-lg px-3 py-2 text-sm font-semibold text-ganker-purple-light transition hover:bg-ganker-purple/20 hover:text-ganker-text"
-              >
-                Modificar
-              </button>
+              <div className="flex shrink-0 items-center gap-1">
+                {onView && (
+                  <button
+                    type="button"
+                    onClick={() => onView(profile)}
+                    className="cursor-pointer rounded-lg px-3 py-2 text-sm font-semibold text-ganker-text transition hover:bg-white/5"
+                  >
+                    Ver
+                  </button>
+                )}
+                <button
+                  type="button"
+                  onClick={() => onEdit(profile)}
+                  className="cursor-pointer rounded-lg px-3 py-2 text-sm font-semibold text-ganker-purple-light transition hover:bg-ganker-purple/20 hover:text-ganker-text"
+                >
+                  Modificar
+                </button>
+              </div>
             </li>
           );
         })}

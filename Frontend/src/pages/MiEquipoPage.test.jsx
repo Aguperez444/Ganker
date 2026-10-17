@@ -1,4 +1,4 @@
-import { act, render, screen, within } from "@testing-library/react";
+import { act, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { describe, it, expect, beforeEach, vi } from "vitest";
@@ -309,8 +309,19 @@ describe("MiEquipoPage", () => {
       await usuario.click(
         await screen.findByRole("button", { name: "Modificar equipo" })
       );
-      // Espera a que carguen los rangos del juego.
-      await screen.findAllByRole("option", { name: "Platino" });
+      // Espera a que carguen los rangos del juego (el maximo precargado es
+      // Platino y se muestra en el boton del desplegable).
+      const rangoMaximo = await screen.findByLabelText(/Rango máximo/);
+      await waitFor(() => expect(rangoMaximo).toHaveTextContent("Platino"));
+    }
+
+    // Los rangos usan IconSelectComponent (no un <select> nativo): se abre
+    // la lista con un click y se elige la opcion por su texto.
+    async function elegirRango(usuario, label, rango) {
+      const disparador = screen.getByLabelText(label);
+      await usuario.click(disparador);
+      const lista = within(disparador.parentElement).getByRole("list");
+      await usuario.click(within(lista).getByText(rango));
     }
 
     it("el líder modifica la descripción y el permiso de región sin tocar los rangos", async () => {
@@ -370,8 +381,8 @@ describe("MiEquipoPage", () => {
       const usuario = userEvent.setup();
       await abrirEdicion(usuario);
 
-      await usuario.selectOptions(screen.getByLabelText(/Rango mínimo/), "4");
-      await usuario.selectOptions(screen.getByLabelText(/Rango máximo/), "2");
+      await elegirRango(usuario, /Rango mínimo/, "Platino");
+      await elegirRango(usuario, /Rango máximo/, "Plata");
       await usuario.click(
         screen.getByRole("button", { name: "Guardar cambios" })
       );
@@ -387,7 +398,7 @@ describe("MiEquipoPage", () => {
       await abrirEdicion(usuario);
 
       // Los integrantes son Oro: Platino a Platino los deja afuera.
-      await usuario.selectOptions(screen.getByLabelText(/Rango mínimo/), "4");
+      await elegirRango(usuario, /Rango mínimo/, "Platino");
       await usuario.click(
         screen.getByRole("button", { name: "Guardar cambios" })
       );

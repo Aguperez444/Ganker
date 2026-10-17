@@ -1,11 +1,30 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import GameProfileForm from "../components/game_profiles/GameProfileForm";
 import GameProfilesListComponent from "../components/game_profiles/GameProfilesListComponent";
 import { useAuth } from "../context/AuthContext";
+import { useChat } from "../context/ChatContext";
 import useGameProfile from "../hooks/useGameProfile";
+import { rutaPerfilJugador } from "../utils/rutas";
 
 const ProfilePage = () => {
-  const { user } = useAuth();
+  const { user, refrescarUsuario } = useAuth();
+  const { currentUserId } = useChat();
+  const navigate = useNavigate();
+
+  // La cuenta de Riot (que se maneja desde el perfil de cada juego) puede
+  // haber cambiado el rango: se vuelven a pedir los perfiles al entrar, asi
+  // el formulario de "Modificar" no arranca con un rango viejo.
+  useEffect(() => {
+    // Si falla, se sigue mostrando lo que ya estaba cargado en la sesion
+    refrescarUsuario().catch(() => {});
+  }, [refrescarUsuario]);
+
+  // El perfil completo de ese juego, el mismo que ven los demas jugadores
+  // (con la cuenta de Riot para vincular o actualizar, si es LoL o Valorant).
+  const handleView = (profile) => {
+    navigate(rutaPerfilJugador(currentUserId, profile.videogame.id));
+  };
 
   // null = se ve la lista de perfiles. "create" / "edit" = se ve el
   // formulario a pantalla completa (reemplaza la lista, no conviven).
@@ -21,6 +40,8 @@ const ProfilePage = () => {
 
     selectedGameId,
     selectedRegionId,
+    inGameName,
+    riotIdVinculado,
     selectedCharacters,
     selectedRoles,
     editingProfileId,
@@ -36,6 +57,7 @@ const ProfilePage = () => {
 
     selectGame,
     selectRegion,
+    changeInGameName,
     addCharacter,
     removeCharacter,
     moveCharacter,
@@ -131,6 +153,7 @@ const ProfilePage = () => {
               profiles={user?.profiles}
               selectedProfileId={editingProfileId}
               onEdit={handleOpenEdit}
+              onView={currentUserId ? handleView : undefined}
             />
           </div>
         )}
@@ -145,6 +168,9 @@ const ProfilePage = () => {
             ranks={ranks}
             regions={regions}
             selectedRegionId={selectedRegionId}
+            inGameName={inGameName}
+            riotIdVinculado={riotIdVinculado}
+            onInGameNameChange={changeInGameName}
             selectedGameId={selectedGameId}
             selectedCharacters={selectedCharacters}
             selectedRoles={selectedRoles}

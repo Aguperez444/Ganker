@@ -14,6 +14,8 @@ import ProtectedRoute from "./ProtectedRoute.jsx";
 import PublicOnlyRoute from "./PublicOnlyRoute.jsx";
 import ProfilePage from "../pages/ProfilePage.jsx";
 import BuscarJugadoresPage from "../pages/BuscarJugadoresPage.jsx";
+import JugadorPerfilPage from "../pages/JugadorPerfilPage.jsx";
+import DiscordCallbackPage from "../pages/DiscordCallbackPage.jsx";
 import EquiposPage from "../pages/EquiposPage.jsx";
 import CrearEquipoPage from "../pages/CrearEquipoPage.jsx";
 import MiEquipoPage from "../pages/MiEquipoPage.jsx";
@@ -47,8 +49,14 @@ function AppRouter() {
             <Route path="perfil" element={<ProfilePage />} />
             {/* US 02 - Modificar mis datos. Es el boton "Cuenta" del sidebar. */}
             <Route path="cuenta" element={<CuentaPage />} />
+            {/* Vuelta de "Conectar con Discord" (redirect cargado en el
+                Discord Developer Portal). */}
+            <Route path="discord/callback" element={<DiscordCallbackPage />} />
             {/* Páginas placeholder para funcionalidades en próximos sprints */}
             <Route path="jugadores" element={<BuscarJugadoresPage />} />
+            {/* Perfil de otro jugador con todos sus perfiles de juego. Se
+                entra desde Buscar jugadores, el chat o un equipo. */}
+            <Route path="jugadores/:jugadorId" element={<JugadorPerfilPage />} />
             <Route
               path="buscar"
               element={<Navigate to="/app/jugadores" replace />}

@@ -56,3 +56,22 @@ export const deleteCharacter = async (characterId) => {
 
   return response.data;
 };
+
+// Indica si los personajes del juego se pueden importar desde una API externa
+// (por ahora solo League of Legends, desde la API oficial de Riot Games).
+export const getCharacterSyncSupport = async (videogameId) => {
+  const response = await axiosClient.get(
+    `/api/v1/characters/sync/${videogameId}`
+  );
+
+  return response.data;
+};
+
+// Importa los personajes que falten. Los que ya existen no se modifican.
+export const syncCharacters = async (videogameId) => {
+  const response = await axiosClient.post(
+    `/api/v1/characters/sync/${videogameId}`
+  );
+
+  return response.data;
+};
