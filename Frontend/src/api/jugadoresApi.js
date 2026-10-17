@@ -44,3 +44,13 @@ export function actualizarJugador({ nombre, username, mail, icon }) {
     })
     .then((res) => res.data);
 }
+
+// Perfil de OTRO jugador (para entrar desde buscar jugadores, el chat o un
+// equipo): sus datos visibles y todos sus perfiles de juego. No trae el mail.
+//
+// Devuelve { user_id, username, name, icon_url, last_connection, profiles }.
+export function obtenerPerfilJugador(userId) {
+  return axiosClient
+    .get(`/api/v1/users/${userId}/profile`)
+    .then((res) => res.data);
+}

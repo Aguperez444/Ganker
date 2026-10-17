@@ -75,3 +75,19 @@ export function validarFormularioCuenta({ nombre, username, mail }) {
 
   return errores;
 }
+
+export function validarFormularioRegistroFederado({ nombre, username, mail }) {
+  const errores = {};
+
+  if (!nombre || !nombre.trim()) {
+    errores.nombre = "Ingresá tu nombre completo.";
+  }
+  if (!username || !username.trim()) {
+    errores.username = "Elegí un nombre de usuario.";
+  }
+  if (mail && mail.trim() && !esEmailValido(mail)) {
+    errores.mail = "El email no tiene un formato válido.";
+  }
+
+  return errores;
+}

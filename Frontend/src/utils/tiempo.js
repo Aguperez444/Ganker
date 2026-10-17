@@ -20,3 +20,23 @@ export function formatearConexionReciente(timestamp) {
   const dias = Math.floor(horas / 24);
   return `Conectado hace ${dias} d`;
 }
+
+// Texto relativo corto para una fecha pasada: "hace instantes", "hace 5 min",
+// "hace 2 h", "hace 3 d". Usado en las estadisticas de Riot.
+export function formatearTiempoRelativo(timestamp) {
+  if (!timestamp) return "";
+
+  const fecha = new Date(timestamp);
+  if (Number.isNaN(fecha.getTime())) return "";
+
+  const segundos = Math.max(0, Math.floor((Date.now() - fecha.getTime()) / 1000));
+  if (segundos < 60) return "hace instantes";
+
+  const minutos = Math.floor(segundos / 60);
+  if (minutos < 60) return `hace ${minutos} min`;
+
+  const horas = Math.floor(minutos / 60);
+  if (horas < 24) return `hace ${horas} h`;
+
+  return `hace ${Math.floor(horas / 24)} d`;
+}

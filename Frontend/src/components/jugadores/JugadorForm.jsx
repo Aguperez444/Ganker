@@ -19,7 +19,7 @@ const ICONO_CANDADO = (
   </svg>
 );
 
-function JugadorForm({ valores, errores, cargando, errorServidor, onChange, onBlur, onSubmit }) {
+function JugadorForm({ valores, errores, cargando, errorServidor, onChange, onBlur, onSubmit, children }) {
   return (
     <form
       onSubmit={onSubmit}
@@ -90,6 +90,8 @@ function JugadorForm({ valores, errores, cargando, errorServidor, onChange, onBl
       >
         {cargando ? "Creando cuenta..." : "Crear mi cuenta"}
       </button>
+
+      {children}
     </form>
   );
 }

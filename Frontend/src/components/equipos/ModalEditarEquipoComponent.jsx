@@ -1,5 +1,6 @@
 import { useEffect } from "react";
 import Campo from "../common/CampoFormularioComponent";
+import IconSelectComponent from "../common/IconSelectComponent";
 import {
   LARGO_MAXIMO_DESCRIPCION_EQUIPO,
   LARGO_MAXIMO_NOMBRE_EQUIPO,
@@ -151,22 +152,16 @@ const ModalEditarEquipoComponent = ({
             obligatorio
             error={errores.rangoMinimo}
           >
-            <select
+            <IconSelectComponent
               id="editar-equipo-rango-minimo"
               value={formulario.rangoMinimoId}
-              onChange={(e) => onCampoChange("rangoMinimoId", e.target.value)}
+              onChange={(rangoId) => onCampoChange("rangoMinimoId", rangoId)}
+              options={rangos}
+              getOptionId={(rango) => rango.rank_id}
+              placeholder="Seleccioná un rango"
               disabled={catalogoDeshabilitado}
-              className={clasesControl(errores.rangoMinimo || errores.rangos)}
-            >
-              <option value="" disabled>
-                Seleccioná un rango
-              </option>
-              {rangos.map((rango) => (
-                <option key={rango.rank_id} value={rango.rank_id}>
-                  {rango.name}
-                </option>
-              ))}
-            </select>
+              error={Boolean(errores.rangoMinimo || errores.rangos)}
+            />
           </Campo>
 
           <Campo
@@ -175,22 +170,16 @@ const ModalEditarEquipoComponent = ({
             obligatorio
             error={errores.rangoMaximo}
           >
-            <select
+            <IconSelectComponent
               id="editar-equipo-rango-maximo"
               value={formulario.rangoMaximoId}
-              onChange={(e) => onCampoChange("rangoMaximoId", e.target.value)}
+              onChange={(rangoId) => onCampoChange("rangoMaximoId", rangoId)}
+              options={rangos}
+              getOptionId={(rango) => rango.rank_id}
+              placeholder="Seleccioná un rango"
               disabled={catalogoDeshabilitado}
-              className={clasesControl(errores.rangoMaximo || errores.rangos)}
-            >
-              <option value="" disabled>
-                Seleccioná un rango
-              </option>
-              {rangos.map((rango) => (
-                <option key={rango.rank_id} value={rango.rank_id}>
-                  {rango.name}
-                </option>
-              ))}
-            </select>
+              error={Boolean(errores.rangoMaximo || errores.rangos)}
+            />
           </Campo>
         </div>
 

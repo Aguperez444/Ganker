@@ -13,7 +13,7 @@ const ICONO_CANDADO = (
   </svg>
 );
 
-function FormLogin({ valores, errores, cargando, errorServidor, onChange, onSubmit }) {
+function FormLogin({ valores, errores, cargando, errorServidor, onChange, onSubmit, children }) {
   return (
     <form
       onSubmit={onSubmit}
@@ -52,6 +52,8 @@ function FormLogin({ valores, errores, cargando, errorServidor, onChange, onSubm
       >
         {cargando ? "Iniciando sesión..." : "Iniciar sesión"}
       </button>
+
+      {children}
     </form>
   );
 }

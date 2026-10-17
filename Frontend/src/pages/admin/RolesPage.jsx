@@ -1,7 +1,9 @@
 import { useEffect, useState } from "react";
 import RoleForm from "../../components/roles/RoleFormComponent";
 import RolesListComponent from "../../components/roles/RolesListComponent";
+import ListaConBuscadorComponent from "../../components/common/ListaConBuscadorComponent";
 import ModalConfirmacionComponent from "../../components/common/ModalConfirmacionComponent";
+import IconSelectComponent from "../../components/common/IconSelectComponent";
 import useGames from "../../hooks/useGames";
 import useRoles from "../../hooks/useRoles";
 
@@ -158,20 +160,16 @@ const RolesPage = () => {
                   <label htmlFor="roles-videogame-filter" className="sr-only">
                     Ver roles de
                   </label>
-                  <select
-                    id="roles-videogame-filter"
-                    value={selectedGameId}
-                    onChange={(event) => setSelectedGameId(event.target.value)}
-                    disabled={isLoadingGames}
-                    className="w-full max-w-xs rounded-lg border border-white/10 bg-ganker-surface-light px-4 py-2.5 text-sm text-ganker-text outline-none transition-all duration-200 focus:border-ganker-purple-light focus:ring-2 focus:ring-ganker-purple/30 disabled:cursor-not-allowed disabled:opacity-50"
-                  >
-                    <option value="">Ver roles de...</option>
-                    {games.map((game) => (
-                      <option key={game.id} value={game.id}>
-                        {game.name}
-                      </option>
-                    ))}
-                  </select>
+                  <div className="max-w-xs">
+                    <IconSelectComponent
+                      id="roles-videogame-filter"
+                      value={selectedGameId}
+                      onChange={setSelectedGameId}
+                      options={games}
+                      placeholder="Ver roles de..."
+                      disabled={isLoadingGames}
+                    />
+                  </div>
                 </div>
               </div>
 
@@ -186,14 +184,25 @@ const RolesPage = () => {
             </div>
 
             {selectedGameId ? (
-              <RolesListComponent
-                roles={roles}
+              <ListaConBuscadorComponent
+                key={selectedGameId}
+                items={roles}
                 isLoading={isLoadingRoles}
                 error={rolesError}
-                selectedRoleId={selectedRole?.id}
-                onEdit={handleOpenEdit}
-                onDelete={handleOpenDelete}
-              />
+                label="Buscar rol"
+                placeholder="Buscar rol por nombre..."
+              >
+                {(rolesFiltrados) => (
+                  <RolesListComponent
+                    roles={rolesFiltrados}
+                    isLoading={isLoadingRoles}
+                    error={rolesError}
+                    selectedRoleId={selectedRole?.id}
+                    onEdit={handleOpenEdit}
+                    onDelete={handleOpenDelete}
+                  />
+                )}
+              </ListaConBuscadorComponent>
             ) : (
               <div className="rounded-xl border border-white/10 bg-ganker-surface-light p-6">
                 <p className="text-sm text-ganker-muted">

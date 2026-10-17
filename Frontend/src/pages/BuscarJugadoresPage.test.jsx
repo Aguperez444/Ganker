@@ -1,5 +1,6 @@
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { MemoryRouter, Route, Routes, useLocation } from "react-router-dom";
 import { describe, it, expect, beforeEach, vi } from "vitest";
 
 import { AuthProvider, useAuth } from "../context/AuthContext";
@@ -179,6 +180,12 @@ function EstadoDelChat() {
   );
 }
 
+// Destino de "Ver perfil": muestra a donde se navego (ruta + query).
+function PerfilDestino() {
+  const { pathname, search } = useLocation();
+  return <p data-testid="perfil-destino">{`${pathname}${search}`}</p>;
+}
+
 async function renderPagina({ userId = 2 } = {}) {
   localStorage.setItem("access_token", tokenFalso(userId));
   localStorage.setItem("refresh_token", "refresco");
@@ -187,7 +194,15 @@ async function renderPagina({ userId = 2 } = {}) {
     <AuthProvider>
       <ConSesion>
         <ChatProvider>
-          <BuscarJugadoresPage />
+          <MemoryRouter initialEntries={["/app/jugadores"]}>
+            <Routes>
+              <Route path="/app/jugadores" element={<BuscarJugadoresPage />} />
+              <Route
+                path="/app/jugadores/:jugadorId"
+                element={<PerfilDestino />}
+              />
+            </Routes>
+          </MemoryRouter>
           <EstadoDelChat />
         </ChatProvider>
       </ConSesion>
@@ -245,6 +260,21 @@ describe("US 03 - Buscar jugadores", () => {
       screen.getAllByRole("button", { name: /enviar mensaje/i }).length
     ).toBe(3);
     expect(screen.getAllByText("Oro").length).toBeGreaterThan(0);
+  });
+
+  it("'Ver perfil' lleva al perfil del jugador con el videojuego elegido", async () => {
+    const usuario = userEvent.setup();
+    await renderPagina({ userId: 999 });
+
+    await seleccionarVideojuego(usuario);
+    const verPerfil = screen.getAllByRole("button", { name: /ver perfil/i });
+    expect(verPerfil.length).toBe(3);
+
+    await usuario.click(screen.getByRole("button", { name: "owner_user" }));
+
+    expect(await screen.findByTestId("perfil-destino")).toHaveTextContent(
+      "/app/jugadores/3?juego=1"
+    );
   });
 
   it("filtra por rango y muestra un mensaje claro si no hay coincidencias", async () => {
