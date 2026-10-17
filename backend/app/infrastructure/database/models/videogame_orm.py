@@ -1,6 +1,6 @@
 from typing import List
-from sqlalchemy import String, Boolean
-from sqlalchemy.sql import true
+from sqlalchemy import String, Boolean, Index, text
+from sqlalchemy.sql import true, false
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.infrastructure.database.base import Base
@@ -20,10 +20,21 @@ class VideogameORM(Base):
     __tablename__ = "videogame"
 
     videogame_id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
-    name: Mapped[str] = mapped_column(String, unique=True, nullable=False)
+    name: Mapped[str] = mapped_column(String, nullable=False)
     icon_url: Mapped[str] = mapped_column(String, nullable=False)
     rank_per_role: Mapped[bool] = mapped_column(Boolean, nullable=True)
     has_characters: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True, server_default=true())
+    deleted: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False, server_default=false(), index=True)
+
+    __table_args__ = (
+        Index(
+            "uq_videogame_name_active",
+            "name",
+            unique=True,
+            sqlite_where=text("deleted = 0"),
+            postgresql_where=text("deleted = false"),
+        ),
+    )
 
     # Relaciones
     characters: Mapped[List["CharacterORM"]] = relationship(back_populates="videogame")

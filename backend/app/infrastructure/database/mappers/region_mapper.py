@@ -13,6 +13,7 @@ class RegionMapper:
             region_id = region_orm.region_id,
             name = region_orm.name,
             videogame = VideogameMapper.orm_to_domain(region_orm.videogame),
+            deleted = bool(getattr(region_orm, "deleted", False)),
         )
 
     @staticmethod
@@ -22,11 +23,13 @@ class RegionMapper:
         if not region.is_persisted():
             return RegionORM(
                 name = region.name,
-                videogame_id = region.videogame.videogame_id
+                videogame_id = region.videogame.videogame_id,
+                deleted = region.deleted,
             )
 
         return RegionORM(
             region_id = region.region_id,
             name = region.name,
-            videogame_id=region.videogame.videogame_id
+            videogame_id = region.videogame.videogame_id,
+            deleted = region.deleted,
         )

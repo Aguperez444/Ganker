@@ -19,7 +19,8 @@ class GameProfile:
                  characters_priority: list['CharacterPriority'],
                  role_profiles: list['RoleProfile'],
                  region: Optional['Region'] = None,
-                 in_game_name: Optional[str] = None
+                 in_game_name: Optional[str] = None,
+                 deleted: bool = False
                  ):
 
         self._game_profile_id: Optional[int] = game_profile_id
@@ -29,6 +30,7 @@ class GameProfile:
         self._role_profiles: list['RoleProfile'] = role_profiles
         self._region: Optional['Region'] = region
         self.in_game_name = in_game_name
+        self._deleted: bool = bool(deleted) if deleted is not None else False
 
     @property
     def game_profile_id(self) -> int:
@@ -86,6 +88,13 @@ class GameProfile:
     def in_game_name(self, value: Optional[str]) -> None:
         cleaned = value.strip() if value else None
         self._in_game_name = cleaned or None
+
+    @property
+    def deleted(self) -> bool:
+        return self._deleted
+    @deleted.setter
+    def deleted(self, value: bool) -> None:
+        self._deleted = bool(value)
 
     def is_persisted(self) -> bool:
         return self._game_profile_id is not None

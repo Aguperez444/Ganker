@@ -24,26 +24,34 @@ class UserRepositoryImpl(IUserRepository):
 
     def get_user_by_mail(self, mail: str) -> Optional['User']:
         found = self.session.query(UserORM).filter(
-            func.lower(UserORM.mail) == func.lower(mail.strip())
+            func.lower(UserORM.mail) == func.lower(mail.strip()),
+            UserORM.deleted == False,
         ).first()
         domain_found = UserMapper.orm_to_domain(found) if found else None
         return domain_found
 
     def get_user_by_id(self, user_id: int) -> Optional['User']:
-        found = self.session.query(UserORM).filter(UserORM.user_id == user_id).first()
+        found = self.session.query(UserORM).filter(
+            UserORM.user_id == user_id,
+            UserORM.deleted == False,
+        ).first()
         domain_found = UserMapper.orm_to_domain(found) if found else None
         return domain_found
 
 
     def get_user_by_username(self, username: str) -> Optional['User']:
         found = self.session.query(UserORM).filter(
-            func.lower(UserORM.username) == func.lower(username.strip())
+            func.lower(UserORM.username) == func.lower(username.strip()),
+            UserORM.deleted == False,
         ).first()
         domain_found = UserMapper.orm_to_domain(found) if found else None
         return domain_found
 
     def update_user(self, user: 'User') -> 'User':
-        orm_user = self.session.query(UserORM).filter(UserORM.user_id == user.user_id).first()
+        orm_user = self.session.query(UserORM).filter(
+            UserORM.user_id == user.user_id,
+            UserORM.deleted == False,
+        ).first()
         if orm_user:
             orm_user.name = user.name
             orm_user.username = user.username
@@ -56,7 +64,21 @@ class UserRepositoryImpl(IUserRepository):
         return user
 
     def update_user_password(self, user_id: int, new_hashed_password: str) -> None:
-        orm_user = self.session.query(UserORM).filter(UserORM.user_id == user_id).first()
+        orm_user = self.session.query(UserORM).filter(
+            UserORM.user_id == user_id,
+            UserORM.deleted == False,
+        ).first()
         if orm_user:
             orm_user.password_hash = new_hashed_password
             self.session.flush()
+
+    def soft_delete_user(self, user_id: int) -> bool:
+        orm_user = self.session.query(UserORM).filter(
+            UserORM.user_id == user_id,
+            UserORM.deleted == False,
+        ).first()
+        if not orm_user:
+            return False
+        orm_user.deleted = True
+        self.session.flush()
+        return True

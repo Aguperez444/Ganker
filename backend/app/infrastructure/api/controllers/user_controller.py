@@ -34,7 +34,8 @@ from app.infrastructure.api.dto.response.get.get_discord_account_response import
     DiscordAuthorizationUrlResponse, GetDiscordAccountResponse,
 )
 from app.infrastructure.discord_api.discord_oauth_provider import DiscordOAuthProvider, discord_http_client
-
+from app.application.use_cases.delete_user import DeleteUserUseCase
+from app.infrastructure.api.dto.response.delete.delete_user_response import DeleteUserResponse
 router = APIRouter(prefix="/api/v1/users", tags=["Users"])
 
 def get_storage_service():
@@ -112,6 +113,20 @@ def get_public_user_profile(user_id: int) -> GetPublicUserResponse:
     query_users_use_case = QueryUsers(uow)
     return query_users_use_case.get_public_profile(user_id)
 
+@router.delete("/me", response_model=DeleteUserResponse, status_code=200, dependencies=[Depends(require_player)])
+def delete_my_user(user_id: int = Depends(get_current_user_id)) -> DeleteUserResponse:
+    uow = uow_factory()
+    return DeleteUserUseCase(uow).execute(target_user_id=user_id, requester_id=user_id)
+
+
+@router.delete("/{user_id}", response_model=DeleteUserResponse, status_code=200)
+def delete_user_by_id(user_id: int, token_data: dict = Depends(require_admin)) -> DeleteUserResponse:
+    uow = uow_factory()
+    return DeleteUserUseCase(uow).execute(
+        target_user_id=user_id,
+        requester_id=token_data["user_id"],
+        requester_role=token_data["role"],
+    )
 
 
 # ---------------------------------------------------------

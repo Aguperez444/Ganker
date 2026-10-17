@@ -10,7 +10,8 @@ class CharacterPriorityMapper:
         return CharacterPriority(
             priority_id=character_priority_orm.character_priority_id,
             character=CharacterMapper.orm_to_domain(character_priority_orm.character),
-            priority=character_priority_orm.priority
+            priority=character_priority_orm.priority,
+            deleted=bool(getattr(character_priority_orm, "deleted", False)),
         )
 
     @staticmethod
@@ -19,9 +20,11 @@ class CharacterPriorityMapper:
             return CharacterPriorityORM(
                 character_id=character_priority_domain.character.character_id,
                 priority=character_priority_domain.priority,
+                deleted=character_priority_domain.deleted,
             )
         return CharacterPriorityORM(
             character_priority_id=character_priority_domain.priority_id,
             character_id=character_priority_domain.character.character_id,
             priority=character_priority_domain.priority,
+            deleted=character_priority_domain.deleted,
         )

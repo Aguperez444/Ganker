@@ -29,3 +29,7 @@ class IUserRepository(ABC):
     @abstractmethod
     def update_user_password(self, user_id: int, new_hashed_password: str) -> None:
         raise NotImplementedError
+
+    @abstractmethod
+    def soft_delete_user(self, user_id: int) -> bool:
+        raise NotImplementedError

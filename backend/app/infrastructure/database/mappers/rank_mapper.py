@@ -10,7 +10,8 @@ class RankMapper:
             name = rank_orm.name,
             value = rank_orm.value,
             videogame = VideogameMapper.orm_to_domain(rank_orm.videogame),
-            icon_url= rank_orm.icon_url
+            icon_url = rank_orm.icon_url,
+            deleted = bool(getattr(rank_orm, "deleted", False)),
         )
 
     @staticmethod
@@ -20,12 +21,14 @@ class RankMapper:
                 name = rank.name,
                 value = rank.value,
                 videogame_id = rank.videogame.videogame_id,
-                icon_url = rank.icon_url
+                icon_url = rank.icon_url,
+                deleted = rank.deleted,
             )
         return RankORM(
             rank_id = rank.rank_id,
             name = rank.name,
             value = rank.value,
             videogame_id = rank.videogame.videogame_id,
-            icon_url = rank.icon_url
+            icon_url = rank.icon_url,
+            deleted = rank.deleted,
         )

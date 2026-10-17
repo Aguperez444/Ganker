@@ -23,17 +23,34 @@ class GameProfileRepositoryImpl(IGameProfileRepository):
         self._session: Session = session
 
     def get_game_profile_by_id(self, game_profile_id: int) -> Optional['GameProfile']:
-        found = self._session.query(GameProfileORM).filter(GameProfileORM.game_profile_id == game_profile_id).first()
+        found = self._session.query(GameProfileORM).filter(
+            GameProfileORM.game_profile_id == game_profile_id,
+            GameProfileORM.deleted == False,
+        ).first()
+        if found and (
+            (found.user and getattr(found.user, "deleted", False))
+            or (found.videogame and getattr(found.videogame, "deleted", False))
+        ):
+            return None
         domain_found = GameProfileMapper.orm_to_domain(found) if found else None
         return domain_found
 
     def get_game_profile_by_player_and_videogame(self, player_id: int, videogame_id: int) -> Optional['GameProfile']:
         found = self._session.query(GameProfileORM).filter(
             GameProfileORM.player_id == player_id,
-            GameProfileORM.videogame_id == videogame_id
+            GameProfileORM.videogame_id == videogame_id,
+            GameProfileORM.deleted == False,
         ).first()
+        if found and (
+            (found.user and getattr(found.user, "deleted", False))
+            or (found.videogame and getattr(found.videogame, "deleted", False))
+        ):
+            return None
         domain_found = GameProfileMapper.orm_to_domain(found) if found else None
         return domain_found
+
+    def get_by_user_id_and_game_id(self, user_id: int, game_id: int) -> Optional['GameProfile']:
+        return self.get_game_profile_by_player_and_videogame(user_id, game_id)
 
     def create_game_profile(self, game_profile: 'GameProfile') -> 'GameProfile':
         orm_game_profile = GameProfileMapper.domain_to_orm(game_profile)
@@ -45,7 +62,8 @@ class GameProfileRepositoryImpl(IGameProfileRepository):
     def update_game_profile(self, game_profile: 'GameProfile') -> 'GameProfile':
         # 1. Obtenemos la entidad gestionada por la sesión actual
         orm_existing = self._session.query(GameProfileORM).filter(
-            GameProfileORM.game_profile_id == game_profile.game_profile_id
+            GameProfileORM.game_profile_id == game_profile.game_profile_id,
+            GameProfileORM.deleted == False,
         ).first()
 
         if not orm_existing:
@@ -78,7 +96,10 @@ class GameProfileRepositoryImpl(IGameProfileRepository):
 
     def disassociate_region(self, region_id: int) -> None:
 
-        associations = self._session.query(GameProfileORM).filter(GameProfileORM.region_id == region_id).all()
+        associations = self._session.query(GameProfileORM).filter(
+            GameProfileORM.region_id == region_id,
+            GameProfileORM.deleted == False,
+        ).all()
         if not associations:
             return
 
@@ -86,7 +107,6 @@ class GameProfileRepositoryImpl(IGameProfileRepository):
             game_profile.region_id = None
 
         self._session.flush()
-
 
 
     def delete_game_profile(self, game_profile_id: int) -> bool:
@@ -119,3 +139,40 @@ class GameProfileRepositoryImpl(IGameProfileRepository):
             .all()
         )
         return [(VideogameMapper.orm_to_domain(videogame), int(count)) for videogame, count in rows]
+
+    def soft_delete_game_profile(self, game_profile_id: int) -> bool:
+        orm_game_profile = self._session.query(GameProfileORM).filter(
+            GameProfileORM.game_profile_id == game_profile_id,
+            GameProfileORM.deleted == False,
+        ).first()
+        if not orm_game_profile:
+            return False
+        orm_game_profile.deleted = True
+        self._session.flush()
+        return True
+
+    def soft_delete_by_player_id(self, player_id: int) -> list[int]:
+        profiles = self._session.query(GameProfileORM).filter(
+            GameProfileORM.player_id == player_id,
+            GameProfileORM.deleted == False,
+        ).all()
+        if not profiles:
+            return []
+        affected_ids = [p.game_profile_id for p in profiles]
+        for profile in profiles:
+            profile.deleted = True
+        self._session.flush()
+        return affected_ids
+
+    def soft_delete_by_videogame_id(self, videogame_id: int) -> list[int]:
+        profiles = self._session.query(GameProfileORM).filter(
+            GameProfileORM.videogame_id == videogame_id,
+            GameProfileORM.deleted == False,
+        ).all()
+        if not profiles:
+            return []
+        affected_ids = [p.game_profile_id for p in profiles]
+        for profile in profiles:
+            profile.deleted = True
+        self._session.flush()
+        return affected_ids

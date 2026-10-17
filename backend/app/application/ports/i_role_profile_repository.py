@@ -58,3 +58,26 @@ class IRoleProfileRepository(ABC):
         los perfiles. Si no se especifica videojuego, se consideran los rangos de todos los videojuegos.
         """
         raise NotImplementedError
+
+
+    @abstractmethod
+    def soft_delete_by_role_id(self, role_id: int) -> list[int]:
+        """
+        Marca como eliminados lógicamente todos los perfiles de rol asociados a un rol específico
+        y retorna la lista de IDs de perfiles de juego afectados.
+        """
+        raise NotImplementedError
+
+    @abstractmethod
+    def soft_delete_by_game_profile_id(self, game_profile_id: int) -> int:
+        """
+        Marca como eliminados lógicamente todos los perfiles de rol asociados a un perfil de juego.
+        """
+        raise NotImplementedError
+
+    @abstractmethod
+    def soft_delete_by_game_profile_ids(self, game_profile_ids: list[int]) -> int:
+        """
+        Marca como eliminados lógicamente todos los perfiles de rol asociados a una lista de perfiles de juego.
+        """
+        raise NotImplementedError

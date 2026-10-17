@@ -18,13 +18,15 @@ class CharacterPriorityRepositoryImpl(ICharacterPriorityRepository):
 
     def count_associated_to_character(self, character_id: int) -> int:
         return self.session.query(CharacterPriorityORM).filter(
-            CharacterPriorityORM.character_id == character_id
+            CharacterPriorityORM.character_id == character_id,
+            CharacterPriorityORM.deleted == False,
         ).count()
 
     def delete_and_readjust_for_character(self, character_id: int) -> None:
         # 1. Obtener todas las asociaciones para este personaje
         associations = self.session.query(CharacterPriorityORM).filter(
-            CharacterPriorityORM.character_id == character_id
+            CharacterPriorityORM.character_id == character_id,
+            CharacterPriorityORM.deleted == False,
         ).all()
 
         if not associations:
@@ -41,7 +43,8 @@ class CharacterPriorityRepositoryImpl(ICharacterPriorityRepository):
         # 3. Para cada perfil afectado, reajustar las prioridades restantes en orden secuencial (1, 2, 3...)
         for profile_id in affected_profile_ids:
             remaining = self.session.query(CharacterPriorityORM).filter(
-                CharacterPriorityORM.game_profile_id == profile_id
+                CharacterPriorityORM.game_profile_id == profile_id,
+                CharacterPriorityORM.deleted == False,
             ).order_by(CharacterPriorityORM.priority.asc()).all()
 
             for new_priority, item in enumerate(remaining, start=1):
@@ -78,3 +81,36 @@ class CharacterPriorityRepositoryImpl(ICharacterPriorityRepository):
 
         rows = query.group_by(CharacterORM.character_id).all()
         return [(CharacterMapper.orm_to_domain(character), int(count)) for character, count in rows]
+
+    def soft_delete_character(self, character_id: int) -> None:
+        associations = self.session.query(CharacterPriorityORM).filter(
+            CharacterPriorityORM.character_id == character_id,
+            CharacterPriorityORM.deleted == False,
+        ).all()
+
+        if not associations:
+            return
+
+        affected_profile_ids = {assoc.game_profile_id for assoc in associations}
+
+        for assoc in associations:
+            assoc.deleted = True
+        self.session.flush()
+
+    def soft_delete_by_game_profile_id(self, game_profile_id: int) -> int:
+        updated = self.session.query(CharacterPriorityORM).filter(
+            CharacterPriorityORM.game_profile_id == game_profile_id,
+            CharacterPriorityORM.deleted == False,
+        ).update({CharacterPriorityORM.deleted: True}, synchronize_session='fetch')
+        self.session.flush()
+        return updated
+
+    def soft_delete_by_game_profile_ids(self, game_profile_ids: list[int]) -> int:
+        if not game_profile_ids:
+            return 0
+        updated = self.session.query(CharacterPriorityORM).filter(
+            CharacterPriorityORM.game_profile_id.in_(game_profile_ids),
+            CharacterPriorityORM.deleted == False,
+        ).update({CharacterPriorityORM.deleted: True}, synchronize_session='fetch')
+        self.session.flush()
+        return updated

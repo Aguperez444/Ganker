@@ -10,10 +10,11 @@ if TYPE_CHECKING:
 
 
 class RoleProfile:
-    def __init__(self, role_profile_id: Optional[int], role: Role, rank: Rank):
+    def __init__(self, role_profile_id: Optional[int], role: Role, rank: Rank, deleted: bool = False):
         self._role_profile_id: Optional[int] = role_profile_id
         self._role: Role = role
         self._rank: Rank= rank
+        self._deleted: bool = deleted
 
     @property
     def role(self) -> Role:
@@ -39,6 +40,13 @@ class RoleProfile:
         if isinstance(value, bool) or not isinstance(value, int):
             raise InvalidIdException(value)
         self._role_profile_id = value
+
+    @property
+    def deleted(self) -> bool:
+        return self._deleted
+    @deleted.setter
+    def deleted(self, value: bool) -> None:
+        self._deleted = value
 
     def is_persisted(self) -> bool:
         return self._role_profile_id is not None
