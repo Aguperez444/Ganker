@@ -35,6 +35,7 @@ import app.infrastructure.api.controllers.videogame_controller as vg_ctrl_module
 import app.infrastructure.api.controllers.character_controller as char_ctrl_module
 import app.infrastructure.api.controllers.role_controller as role_ctrl_module
 import app.infrastructure.api.controllers.rank_controller as rank_ctrl_module
+import app.infrastructure.api.controllers.report_controller as report_ctrl_module
 
 from app.domain.models.user_role import UserRole
 
@@ -232,6 +233,8 @@ def client(monkeypatch, test_session_factory, jwt_service, tmp_path):
     monkeypatch.setattr(role_ctrl_module, "uow_factory", test_uow_factory)
     # noinspection PyUnresolvedReferences
     monkeypatch.setattr(rank_ctrl_module, "uow_factory", test_uow_factory)
+    # noinspection PyUnresolvedReferences
+    monkeypatch.setattr(report_ctrl_module, "uow_factory", test_uow_factory)
 
     import app.infrastructure.api.controllers.chat_controller as chat_ctrl_module
     import app.infrastructure.api.controllers.chat_websocket as chat_ws_module

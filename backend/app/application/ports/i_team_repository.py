@@ -1,9 +1,11 @@
 from abc import ABC, abstractmethod
 
+from datetime import datetime
 from typing import TYPE_CHECKING, Optional, List
 
 if TYPE_CHECKING:
     from app.domain.models.team import Team
+    from app.domain.models.rank import Rank
 
 
 class ITeamRepository(ABC):
@@ -64,4 +66,17 @@ class ITeamRepository(ABC):
     @abstractmethod
     def get_team_info_by_conversation_ids(self, conversation_ids: List[int]) -> dict[int, tuple[int, Optional[str]]]:
         """Devuelve un diccionario conversation_id -> (team_id, icon_url) para las conversaciones que pertenecen a un equipo."""
+        raise NotImplementedError
+
+    @abstractmethod
+    def get_team_counts_by_min_rank(
+        self,
+        videogame_id: int,
+        start_date: Optional[datetime],
+        end_date: Optional[datetime],
+    ) -> list[tuple["Rank", int]]:
+        """
+        Devuelve cada rango mínimo de equipo del videojuego junto con la cantidad de equipos registrados
+        en esa franja, opcionalmente acotado a un rango de fechas de creación de los equipos.
+        """
         raise NotImplementedError

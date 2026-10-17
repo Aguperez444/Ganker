@@ -2,14 +2,21 @@ from sqlalchemy.orm import Session
 
 from typing import TYPE_CHECKING, Optional
 
+from datetime import datetime
+
+from sqlalchemy import func, and_
+
 from app.application.ports.i_game_profile_repository import IGameProfileRepository
 from app.infrastructure.database.mappers.character_priority_mapper import CharacterPriorityMapper
 from app.infrastructure.database.mappers.game_profile_mapper import GameProfileMapper
 from app.infrastructure.database.mappers.role_profile_mapper import RoleProfileMapper
+from app.infrastructure.database.mappers.videogame_mapper import VideogameMapper
 from app.infrastructure.database.models.game_profile_orm import GameProfileORM
+from app.infrastructure.database.models.videogame_orm import VideogameORM
 
 if TYPE_CHECKING:
     from app.domain.models.game_profile import GameProfile
+    from app.domain.models.videogame import Videogame
 
 class GameProfileRepositoryImpl(IGameProfileRepository):
     def __init__(self, session: Session):
@@ -111,6 +118,27 @@ class GameProfileRepositoryImpl(IGameProfileRepository):
             self._session.flush()
             return True
         return False
+
+    def get_profile_counts_by_videogame(
+        self,
+        start_date: Optional[datetime] = None,
+        end_date: Optional[datetime] = None
+    ) -> list[tuple['Videogame', int]]:
+        # LEFT JOIN contra los perfiles para incluir también los videojuegos sin perfiles (cantidad 0).
+        # El filtro de fechas va en la condición del JOIN para no descartar dichos videojuegos.
+        join_conditions = [VideogameORM.videogame_id == GameProfileORM.videogame_id]
+        if start_date is not None:
+            join_conditions.append(GameProfileORM.created_at >= start_date)
+        if end_date is not None:
+            join_conditions.append(GameProfileORM.created_at <= end_date)
+
+        rows = (
+            self._session.query(VideogameORM, func.count(GameProfileORM.game_profile_id))
+            .outerjoin(GameProfileORM, and_(*join_conditions))
+            .group_by(VideogameORM.videogame_id)
+            .all()
+        )
+        return [(VideogameMapper.orm_to_domain(videogame), int(count)) for videogame, count in rows]
 
     def soft_delete_game_profile(self, game_profile_id: int) -> bool:
         orm_game_profile = self._session.query(GameProfileORM).filter(

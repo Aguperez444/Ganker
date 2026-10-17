@@ -1,17 +1,22 @@
+from datetime import datetime
 from typing import TYPE_CHECKING, Optional
 
+from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from app.application.ports.i_team_repository import ITeamRepository
 from app.domain.exceptions.team.team_not_found_exception import TeamNotFoundException
 from app.infrastructure.database.mappers.team_mapper import TeamMapper
+from app.infrastructure.database.mappers.rank_mapper import RankMapper
 from app.infrastructure.database.models.team_orm import TeamORM
+from app.infrastructure.database.models.rank_orm import RankORM
 from app.infrastructure.database.models.conversation_member_orm import ConversationMemberORM
 from app.infrastructure.database.models.team_member_role_orm import TeamMemberRoleORM
 from app.infrastructure.database.mappers.conversation_mapper import ConversationMapper
 
 if TYPE_CHECKING:
     from app.domain.models.team import Team
+    from app.domain.models.rank import Rank
 
 
 class TeamRepositoryImpl(ITeamRepository):
@@ -179,3 +184,23 @@ class TeamRepositoryImpl(ITeamRepository):
             TeamORM.conversation_id.in_(conversation_ids)
         ).all()
         return {conversation_id: (team_id, icon_url) for conversation_id, team_id, icon_url in rows}
+
+    def get_team_counts_by_min_rank(
+        self,
+        videogame_id: int,
+        start_date: Optional[datetime] = None,
+        end_date: Optional[datetime] = None,
+    ) -> list[tuple['Rank', int]]:
+        """Cuenta los equipos de un videojuego agrupados por su rango mínimo (opcionalmente en un período)."""
+        query = (
+            self.session.query(RankORM, func.count(TeamORM.team_id))
+            .join(TeamORM, TeamORM.min_rank_id == RankORM.rank_id)
+            .filter(TeamORM.videogame_id == videogame_id)
+        )
+        if start_date is not None:
+            query = query.filter(TeamORM.created_at >= start_date)
+        if end_date is not None:
+            query = query.filter(TeamORM.created_at <= end_date)
+
+        rows = query.group_by(RankORM.rank_id).all()
+        return [(RankMapper.orm_to_domain(rank), int(count)) for rank, count in rows]

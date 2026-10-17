@@ -1,8 +1,10 @@
 from abc import abstractmethod, ABC
+from datetime import datetime
 from typing import TYPE_CHECKING, Optional
 
 if TYPE_CHECKING:
     from app.domain.models.game_profile import GameProfile
+    from app.domain.models.videogame import Videogame
 
 class IGameProfileRepository(ABC):
 
@@ -57,5 +59,18 @@ class IGameProfileRepository(ABC):
     def get_by_user_id_and_game_id(self, user_id, game_id):
         """
         Obtiene un perfil de juego por el ID del usuario asignado y el id del juego asignado.
+        """
+        raise NotImplementedError
+
+    @abstractmethod
+    def get_profile_counts_by_videogame(
+        self,
+        start_date: Optional[datetime] = None,
+        end_date: Optional[datetime] = None
+    ) -> list[tuple['Videogame', int]]:
+        """
+        Devuelve cada videojuego registrado junto con la cantidad de perfiles de jugador asociados,
+        opcionalmente acotado a un rango de fechas de creación de los perfiles.
+        Los videojuegos sin perfiles se incluyen con cantidad 0.
         """
         raise NotImplementedError

@@ -1,5 +1,14 @@
+from datetime import datetime
+from typing import TYPE_CHECKING, Optional
+
+from sqlalchemy import func
+
 from app.application.ports.i_character_priority_repository import ICharacterPriorityRepository
-from app.infrastructure.database.models import CharacterPriorityORM
+from app.infrastructure.database.mappers.character_mapper import CharacterMapper
+from app.infrastructure.database.models import CharacterORM, CharacterPriorityORM, GameProfileORM
+
+if TYPE_CHECKING:
+    from app.domain.models.character import Character
 
 
 class CharacterPriorityRepositoryImpl(ICharacterPriorityRepository):
@@ -42,6 +51,36 @@ class CharacterPriorityRepositoryImpl(ICharacterPriorityRepository):
                 if item.priority != new_priority:
                     item.priority = new_priority
                     self.session.flush()
+
+    def get_character_usage(
+        self,
+        videogame_id: Optional[int],
+        start_date: Optional[datetime],
+        end_date: Optional[datetime],
+    ) -> list[tuple['Character', int]]:
+        """
+        Devuelve cada personaje junto con la cantidad de jugadores (perfiles de juego distintos) que
+        lo seleccionaron, opcionalmente acotado a un videojuego y a un rango de fechas de creación de
+        los perfiles. Si no se especifica videojuego, se consideran los personajes de todos los videojuegos.
+        """
+        query = (
+            self.session.query(
+                CharacterORM,
+                func.count(func.distinct(CharacterPriorityORM.game_profile_id)),
+            )
+            .join(CharacterPriorityORM, CharacterPriorityORM.character_id == CharacterORM.character_id)
+            .join(GameProfileORM, GameProfileORM.game_profile_id == CharacterPriorityORM.game_profile_id)
+        )
+
+        if videogame_id is not None:
+            query = query.filter(CharacterORM.videogame_id == videogame_id)
+        if start_date is not None:
+            query = query.filter(GameProfileORM.created_at >= start_date)
+        if end_date is not None:
+            query = query.filter(GameProfileORM.created_at <= end_date)
+
+        rows = query.group_by(CharacterORM.character_id).all()
+        return [(CharacterMapper.orm_to_domain(character), int(count)) for character, count in rows]
 
     def soft_delete_character(self, character_id: int) -> None:
         associations = self.session.query(CharacterPriorityORM).filter(

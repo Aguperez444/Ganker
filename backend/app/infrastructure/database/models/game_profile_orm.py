@@ -1,5 +1,6 @@
+from datetime import datetime, timezone
 from typing import List, Optional
-from sqlalchemy import ForeignKey, String, Boolean, Index, text
+from sqlalchemy import DateTime, ForeignKey, String, UniqueConstraint, text, Boolean, Index
 from sqlalchemy.sql import false
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -7,6 +8,10 @@ from app.infrastructure.database.base import Base
 from app.infrastructure.database.models.character_priority_orm import CharacterPriorityORM
 
 from typing import TYPE_CHECKING
+
+
+def _now_utc_naive() -> datetime:
+    return datetime.now(timezone.utc).replace(tzinfo=None)
 
 if TYPE_CHECKING:
     from app.infrastructure.database.models.user_orm import UserORM
@@ -24,6 +29,9 @@ class GameProfileORM(Base):
     videogame_id: Mapped[int] = mapped_column(ForeignKey("videogame.videogame_id"), nullable=False)
     region_id: Mapped[Optional[int]] = mapped_column(ForeignKey("region.region_id"), nullable=True)
     in_game_name: Mapped[Optional[str]] = mapped_column(String(50), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime, nullable=False, default=_now_utc_naive, server_default=text("CURRENT_TIMESTAMP")
+    )
     deleted: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False, server_default=false(), index=True)
 
     # Relaciones

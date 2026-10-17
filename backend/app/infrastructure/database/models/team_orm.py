@@ -1,5 +1,6 @@
+from datetime import datetime, timezone
 from typing import List, Optional
-from sqlalchemy import String, Boolean, ForeignKey, true
+from sqlalchemy import String, Boolean, DateTime, ForeignKey, text, true
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.infrastructure.database.base import Base
@@ -13,10 +14,18 @@ if TYPE_CHECKING:
     from app.infrastructure.database.models.team_member_role_orm import TeamMemberRoleORM
 
 
+def _now_utc_naive() -> datetime:
+    return datetime.now(timezone.utc).replace(tzinfo=None)
+
+
 class TeamORM(Base):
     __tablename__ = "team"
 
     team_id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
+
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime, nullable=False, default=_now_utc_naive, server_default=text("CURRENT_TIMESTAMP")
+    )
     name: Mapped[str] = mapped_column(String, nullable=False)
     description: Mapped[Optional[str]] = mapped_column(String, nullable=True)
     allow_other_regions: Mapped[bool] = mapped_column(Boolean, nullable=False)
