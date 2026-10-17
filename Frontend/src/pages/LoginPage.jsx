@@ -1,6 +1,8 @@
 import { useNavigate } from "react-router-dom";
 import AuthLayout from "../components/common/AuthLayout";
+import BotonesAuthFederadoComponent from "../components/jugadores/BotonesAuthFederadoComponent";
 import FormLogin from "../components/jugadores/FormLogin";
+import { useAuthFederado } from "../hooks/useAuthFederado";
 import { useIniciarSesion } from "../hooks/useIniciarSesion";
 import { rutaInicialPara } from "../utils/rutas";
 
@@ -13,6 +15,7 @@ function LoginPage() {
     handleChange,
     handleSubmit,
   } = useIniciarSesion();
+  const { proveedorCargando, errorFederado, conectar } = useAuthFederado();
   const navigate = useNavigate();
 
   async function onSubmit(e) {
@@ -32,7 +35,14 @@ function LoginPage() {
         errorServidor={errorServidor}
         onChange={handleChange}
         onSubmit={onSubmit}
-      />
+      >
+        <BotonesAuthFederadoComponent
+          proveedorCargando={proveedorCargando}
+          error={errorFederado}
+          deshabilitado={cargando}
+          onConectar={conectar}
+        />
+      </FormLogin>
     </AuthLayout>
   );
 }

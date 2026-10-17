@@ -1,6 +1,5 @@
 import CampoContrasenaComponent from "../common/CampoContrasenaComponent";
 import CampoTexto from "../common/CampoTexto";
-import BotonesAuthFederado from "./BotonesAuthFederado";
 
 const ICONO_USUARIO = (
   <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
@@ -20,7 +19,7 @@ const ICONO_CANDADO = (
   </svg>
 );
 
-function JugadorForm({ valores, errores, cargando, errorServidor, onChange, onBlur, onSubmit }) {
+function JugadorForm({ valores, errores, cargando, errorServidor, onChange, onBlur, onSubmit, children }) {
   return (
     <form
       onSubmit={onSubmit}
@@ -92,7 +91,7 @@ function JugadorForm({ valores, errores, cargando, errorServidor, onChange, onBl
         {cargando ? "Creando cuenta..." : "Crear mi cuenta"}
       </button>
 
-      <BotonesAuthFederado deshabilitado={cargando} />
+      {children}
     </form>
   );
 }

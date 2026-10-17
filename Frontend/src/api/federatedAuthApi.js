@@ -14,7 +14,10 @@ export function obtenerUrlAutorizacionFederada(provider) {
  * Paso 2: envía el código OAuth2 o los parámetros OpenID 2.0 (Steam) junto con el state
  * para autenticar al jugador o recibir el token temporal de registro.
  */
-export function procesarCallbackFederado(provider, { state, code, openidParams }) {
+export function procesarCallbackFederado(
+  provider,
+  { state, code, openidParams }
+) {
   return axiosClient
     .post(`/auth/v1/oauth/${provider}/callback`, {
       state,

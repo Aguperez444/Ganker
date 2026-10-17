@@ -91,4 +91,3 @@ export function validarFormularioRegistroFederado({ nombre, username, mail }) {
 
   return errores;
 }
-
