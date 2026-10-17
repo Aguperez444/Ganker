@@ -21,11 +21,11 @@ class IRegionRepository(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    def save_region(self, region: 'Region') -> 'Region':
+    def save_region(self, region: 'Region') -> 'Region | None':
         raise NotImplementedError
 
     @abstractmethod
-    def update_region(self, region: 'Region') -> 'Region':
+    def update_region(self, region: 'Region') -> 'Region | None':
         raise NotImplementedError
 
     @abstractmethod
@@ -34,4 +34,8 @@ class IRegionRepository(ABC):
 
     @abstractmethod
     def count_associated_to_region(self, region_id) -> int:
+        raise NotImplementedError
+
+    @abstractmethod
+    def soft_delete_by_videogame_id(self, videogame_id: int) -> int:
         raise NotImplementedError

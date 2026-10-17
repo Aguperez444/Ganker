@@ -1,4 +1,5 @@
-from sqlalchemy import ForeignKey, String, UniqueConstraint
+from sqlalchemy import ForeignKey, String, Boolean, Index, text
+from sqlalchemy.sql import false
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.infrastructure.database.base import Base
@@ -18,6 +19,7 @@ class RankORM(Base):
     name: Mapped[str] = mapped_column(String, nullable=False)
     value: Mapped[int] = mapped_column(nullable=False)
     icon_url: Mapped[str] = mapped_column(String, nullable=False)
+    deleted: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False, server_default=false(), index=True)
 
     # Relaciones
     videogame: Mapped["VideogameORM"] = relationship(back_populates="ranks")
@@ -25,6 +27,20 @@ class RankORM(Base):
 
     # Constraints
     __table_args__ = (
-        UniqueConstraint("videogame_id", "name", name="uq_videogame_rank_name"),
-        UniqueConstraint("videogame_id", "value", name="uq_videogame_rank_value"),
+        Index(
+            "uq_videogame_rank_name",
+            "videogame_id",
+            "name",
+            unique=True,
+            sqlite_where=text("deleted = 0"),
+            postgresql_where=text("deleted = false"),
+        ),
+        Index(
+            "uq_videogame_rank_value",
+            "videogame_id",
+            "value",
+            unique=True,
+            sqlite_where=text("deleted = 0"),
+            postgresql_where=text("deleted = false"),
+        ),
     )

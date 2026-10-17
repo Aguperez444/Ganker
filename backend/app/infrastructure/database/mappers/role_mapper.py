@@ -9,7 +9,8 @@ class RoleMapper:
             role_id = role_orm.role_id,
             name = role_orm.name,
             videogame = VideogameMapper.orm_to_domain(role_orm.videogame),
-            icon_url=role_orm.icon_url
+            icon_url = role_orm.icon_url,
+            deleted = bool(getattr(role_orm, "deleted", False)),
         )
 
     @staticmethod
@@ -18,11 +19,13 @@ class RoleMapper:
             return RoleORM(
                 name = role.name,
                 videogame_id = role.videogame.videogame_id,
-                icon_url=role.icon_url
+                icon_url = role.icon_url,
+                deleted = role.deleted,
             )
         return RoleORM(
             role_id = role.role_id,
             name = role.name,
             videogame_id = role.videogame.videogame_id,
-            icon_url=role.icon_url
+            icon_url = role.icon_url,
+            deleted = role.deleted,
         )

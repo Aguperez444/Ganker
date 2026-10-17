@@ -26,3 +26,7 @@ class IVideogameRepository(ABC):
     @abstractmethod
     def get_all_videogames(self) -> list['Videogame']:
         raise NotImplementedError
+
+    @abstractmethod
+    def soft_delete_videogame(self, videogame_id: int) -> bool:
+        raise NotImplementedError

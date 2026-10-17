@@ -12,7 +12,11 @@ class TeamMemberRoleMapper:
             team_member_role_id = team_member_role_orm.team_member_role_id,
             team_role= TeamRoleEnum(team_member_role_orm.team_role_id),
             team_id = team_member_role_orm.team_id,
-            user = UserMapper.orm_to_domain(team_member_role_orm.user) if team_member_role_orm.user else None,
+            user = (
+                UserMapper.orm_to_domain(team_member_role_orm.user)
+                if team_member_role_orm.user and not getattr(team_member_role_orm.user, "deleted", False)
+                else None
+            ),
             game_role=RoleMapper.orm_to_domain(team_member_role_orm.game_role)
         )
 

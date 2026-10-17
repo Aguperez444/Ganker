@@ -28,3 +28,7 @@ class ICharacterRepository(ABC):
     @abstractmethod
     def delete_character(self, character_id: int) -> bool:
         raise NotImplementedError
+
+    @abstractmethod
+    def soft_delete_by_videogame_id(self, videogame_id: int) -> int:
+        raise NotImplementedError

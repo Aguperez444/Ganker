@@ -26,8 +26,19 @@ from app.infrastructure.api.dto.response.get.get_game_profile_response import Ge
     PlayerObjectResponse
 from app.infrastructure.database.mappers.game_profile_mapper import GameProfileMapper
 from app.infrastructure.database.mappers.team_mapper import TeamMapper
-from app.infrastructure.database.models import GameProfileORM, CharacterPriorityORM, RoleProfileORM, UserORM, TeamORM, \
-    TeamMemberRoleORM, RankORM
+from app.infrastructure.database.models import (
+    GameProfileORM,
+    CharacterPriorityORM,
+    RoleProfileORM,
+    UserORM,
+    TeamORM,
+    TeamMemberRoleORM,
+    RankORM,
+    VideogameORM,
+    RoleORM,
+    CharacterORM,
+    RegionORM,
+)
 from app.domain.specifications.regions_specification import ByRegionsSpecification
 
 
@@ -53,42 +64,85 @@ class FindBySpecificationsRepositoryImpl(IFindBySpecificationsRepository):
         if isinstance(spec, ByRegionsSpecification):
             val = spec.to_expression()
             if isinstance(val, (list, tuple, set)):
-                return query.filter(GameProfileORM.region_id.in_(val))
-            return query.filter(GameProfileORM.region_id == val)
+                return query.filter(
+                    GameProfileORM.region_id.in_(val),
+                    GameProfileORM.region.has(RegionORM.deleted == False),
+                )
+            return query.filter(
+                GameProfileORM.region_id == val,
+                GameProfileORM.region.has(RegionORM.deleted == False),
+            )
 
         if isinstance(spec, ByCharactersSpecification):
             return query.filter(
-                GameProfileORM.character_associations.any(CharacterPriorityORM.character_id.in_(spec.to_expression())))
+                GameProfileORM.character_associations.any(
+                    CharacterPriorityORM.character_id.in_(spec.to_expression())
+                    & (CharacterPriorityORM.deleted == False)
+                    & CharacterPriorityORM.character.has(CharacterORM.deleted == False)
+                )
+            )
 
         if isinstance(spec, ByRolesSpecification):
             val = spec.to_expression()
-            if isinstance(val, (list, tuple, set)):
-                return query.filter(GameProfileORM.role_profiles.any(RoleProfileORM.role_id.in_(val)))
-            return query.filter(GameProfileORM.role_profiles.any(RoleProfileORM.role_id == val))
+            role_cond = (
+                RoleProfileORM.role_id.in_(val)
+                if isinstance(val, (list, tuple, set))
+                else (RoleProfileORM.role_id == val)
+            )
+            return query.filter(
+                GameProfileORM.role_profiles.any(
+                    role_cond
+                    & (RoleProfileORM.deleted == False)
+                    & RoleProfileORM.role.has(RoleORM.deleted == False)
+                    & RoleProfileORM.rank.has(RankORM.deleted == False)
+                )
+            )
 
         if isinstance(spec, ByRanksSpecification):
             val = spec.to_expression()
-            if isinstance(val, (list, tuple, set)):
-                return query.filter(GameProfileORM.role_profiles.any(RoleProfileORM.rank_id.in_(val)))
-            return query.filter(GameProfileORM.role_profiles.any(RoleProfileORM.rank_id == val))
+            rank_cond = (
+                RoleProfileORM.rank_id.in_(val)
+                if isinstance(val, (list, tuple, set))
+                else (RoleProfileORM.rank_id == val)
+            )
+            return query.filter(
+                GameProfileORM.role_profiles.any(
+                    rank_cond
+                    & (RoleProfileORM.deleted == False)
+                    & RoleProfileORM.role.has(RoleORM.deleted == False)
+                    & RoleProfileORM.rank.has(RankORM.deleted == False)
+                )
+            )
 
         # TODO Deberíamos hacer un índice para que esta no destruya el rendimiento recorriendo todos los registros
         if isinstance(spec, ByLastConnectionSpecification):
-            return query.join(GameProfileORM.user).filter(UserORM.last_connection >= spec.to_expression())
+            return query.join(GameProfileORM.user).filter(
+                UserORM.last_connection >= spec.to_expression(),
+                UserORM.deleted == False,
+            )
 
         if isinstance(spec, ByNamePlayerSpecification):
             name_pattern = f"%{spec.to_expression()}%"
             return query.filter(
                 GameProfileORM.user.has(
-                    (UserORM.username.ilike(name_pattern)) | (UserORM.name.ilike(name_pattern))
+                    ((UserORM.username.ilike(name_pattern)) | (UserORM.name.ilike(name_pattern)))
+                    & (UserORM.deleted == False)
                 )
             )
 
         return query
 
     def get_videogame_profiles(self, spec: Specification, skip: int, limit: int = 5) -> list['GetGameProfileResponse']:
-        # Creamos la query base sobre el modelo de SQLAlchemy
-        query = self.session.query(GameProfileORM).options(joinedload(GameProfileORM.user))
+        # Creamos la query base sobre el modelo de SQLAlchemy excluyendo entidades borradas lógicamente
+        query = (
+            self.session.query(GameProfileORM)
+            .options(joinedload(GameProfileORM.user))
+            .filter(
+                GameProfileORM.deleted == False,
+                GameProfileORM.user.has(UserORM.deleted == False),
+                GameProfileORM.videogame.has(VideogameORM.deleted == False),
+            )
+        )
 
         # Le aplicamos los filtros
         if spec:
@@ -204,7 +258,9 @@ class FindBySpecificationsRepositoryImpl(IFindBySpecificationsRepository):
 
     def get_teams(self, spec: Specification, skip: int, limit: int = 5) -> List[Team]:
         # Creamos la query base sobre el modelo de SQLAlchemy
-        query = self.session.query(TeamORM)
+        query = self.session.query(TeamORM).filter(
+            TeamORM.videogame.has(VideogameORM.deleted == False)
+        )
 
         # Le aplicamos los filtros
         if spec:

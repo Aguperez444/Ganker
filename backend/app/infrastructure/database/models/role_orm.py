@@ -1,5 +1,6 @@
 from typing import List
-from sqlalchemy import ForeignKey, String, UniqueConstraint
+from sqlalchemy import ForeignKey, String, Boolean, Index, text
+from sqlalchemy.sql import false
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.infrastructure.database.base import Base
@@ -17,10 +18,20 @@ class RoleORM(Base):
     videogame_id: Mapped[int] = mapped_column(ForeignKey("videogame.videogame_id"), nullable=False)
     name: Mapped[str] = mapped_column(String, nullable=False)
     icon_url: Mapped[str] = mapped_column(String, nullable=False)
+    deleted: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False, server_default=false(), index=True)
 
     # Relaciones
     videogame: Mapped["VideogameORM"] = relationship(back_populates="roles")
     role_profiles: Mapped[List["RoleProfileORM"]] = relationship(back_populates="role")
 
     # Constraints
-    __table_args__ = (UniqueConstraint("videogame_id", "name", name="uq_videogame_role_name"),)
+    __table_args__ = (
+        Index(
+            "uq_videogame_role_name",
+            "videogame_id",
+            "name",
+            unique=True,
+            sqlite_where=text("deleted = 0"),
+            postgresql_where=text("deleted = false"),
+        ),
+    )
