@@ -1,0 +1,32 @@
+username,videogame,in_game_name,role,rank
+testuser,Valorant,testuser#LAS,Duelista,Oro 1
+testuser,Valorant,testuser#LAS,Controlador,Plata 3
+testuser,League of Legends,testuser,Mid,Oro
+testuser,League of Legends,testuser,ADC,Plata
+testuser,Overwatch,testuser,Daño,Oro
+testuser,Overwatch,testuser,Tanque,Plata
+ana_player,Valorant,ana_player#LAS,Duelista,Platino 1
+ana_player,Valorant,ana_player#LAS,Controlador,Oro 2
+ana_player,Valorant,ana_player#LAS,Iniciador,Oro 1
+ana_player,League of Legends,ana_player,Jungla,Platino
+ana_player,League of Legends,ana_player,Mid,Oro
+ana_player,Overwatch,ana_player,Soporte,Platino
+ana_player,Overwatch,ana_player,Tanque,Oro
+bruno_player,Valorant,bruno_player#LAS,Centinela,Diamante 1
+bruno_player,Valorant,bruno_player#LAS,Iniciador,Platino 2
+bruno_player,League of Legends,bruno_player,Top,Diamante
+bruno_player,League of Legends,bruno_player,Jungla,Platino
+bruno_player,Overwatch,bruno_player,Tanque,Diamante
+bruno_player,Overwatch,bruno_player,Daño,Platino
+caro_player,Valorant,caro_player#LAS,Duelista,Plata 1
+caro_player,Valorant,caro_player#LAS,Iniciador,Oro 3
+caro_player,League of Legends,caro_player,Top,Oro
+caro_player,League of Legends,caro_player,Support,Plata
+caro_player,Overwatch,caro_player,Daño,Platino
+caro_player,Overwatch,caro_player,Soporte,Oro
+diego_player,Valorant,diego_player#LAS,Centinela,Oro 2
+diego_player,Valorant,diego_player#LAS,Iniciador,Oro 1
+diego_player,League of Legends,diego_player,Top,Platino
+diego_player,League of Legends,diego_player,Jungla,Oro
+diego_player,Overwatch,diego_player,Daño,Oro
+diego_player,Overwatch,diego_player,Tanque,Plata
