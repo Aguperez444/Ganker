@@ -56,13 +56,13 @@ class TestExportGameUsageReportUseCase:
 
         exported = use_case.execute(7, "csv")
 
-        assert exported.filename == "reporte_uso_ranks_videojuego_1.csv"
+        assert exported.filename == "reporte_uso_ranks_videojuego_1_7.csv"
         assert exported.media_type == "text/csv"
         content = exported.content.decode("utf-8")
         assert "RANGO,JUGADORES,PORCENTAJE,VARIACION,VARIACION %,TENDENCIA" in content
         assert "Gold,2,66.67,1,100.0,sube" in content
         assert "Platinum,1,33.33,0,0.0,estable" in content
-        assert "TOTAL,3,100.0" in content
+        assert "TOTAL,3,,,," in content
 
     def test_export_characters_uses_its_headers(self, mock_deps):
         use_case, uow = mock_deps
@@ -70,7 +70,7 @@ class TestExportGameUsageReportUseCase:
 
         exported = use_case.execute(7, "csv")
 
-        assert exported.filename == "reporte_uso_characters_videojuego_1.csv"
+        assert exported.filename == "reporte_uso_characters_videojuego_1_7.csv"
         content = exported.content.decode("utf-8")
         assert "PERSONAJE,VECES_ELEGIDO,PORCENTAJE" in content
 
@@ -80,7 +80,7 @@ class TestExportGameUsageReportUseCase:
 
         exported = use_case.execute(7, "csv")
 
-        assert exported.filename == "reporte_uso_teams_videojuego_1.csv"
+        assert exported.filename == "reporte_uso_teams_videojuego_1_7.csv"
         content = exported.content.decode("utf-8")
         assert "FRANJA,EQUIPOS,PORCENTAJE" in content
 

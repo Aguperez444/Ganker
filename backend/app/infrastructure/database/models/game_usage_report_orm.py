@@ -21,7 +21,7 @@ class GameUsageReportORM(Base):
     generated_by: Mapped[int] = mapped_column(ForeignKey("user.user_id"), nullable=False)
     analysis_type: Mapped[str] = mapped_column(String(20), nullable=False)
     # Snapshot del videojuego al momento de generar el reporte (no es FK para que el reporte sobreviva a bajas del catálogo)
-    videogame_id: Mapped[int] = mapped_column(Integer, nullable=False)
+    videogame_id: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
     videogame_name: Mapped[str] = mapped_column(String, nullable=False)
     icon_url: Mapped[Optional[str]] = mapped_column(String, nullable=True)
     previous_report_id: Mapped[Optional[int]] = mapped_column(

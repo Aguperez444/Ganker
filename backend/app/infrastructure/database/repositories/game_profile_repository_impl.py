@@ -126,7 +126,11 @@ class GameProfileRepositoryImpl(IGameProfileRepository):
     ) -> list[tuple['Videogame', int]]:
         # LEFT JOIN contra los perfiles para incluir también los videojuegos sin perfiles (cantidad 0).
         # El filtro de fechas va en la condición del JOIN para no descartar dichos videojuegos.
-        join_conditions = [VideogameORM.videogame_id == GameProfileORM.videogame_id]
+        join_conditions = [
+            VideogameORM.videogame_id == GameProfileORM.videogame_id,
+            GameProfileORM.deleted.is_(False),
+            GameProfileORM.user.has(deleted=False),
+        ]
         if start_date is not None:
             join_conditions.append(GameProfileORM.created_at >= start_date)
         if end_date is not None:
@@ -135,6 +139,7 @@ class GameProfileRepositoryImpl(IGameProfileRepository):
         rows = (
             self._session.query(VideogameORM, func.count(GameProfileORM.game_profile_id))
             .outerjoin(GameProfileORM, and_(*join_conditions))
+            .filter(VideogameORM.deleted.is_(False))
             .group_by(VideogameORM.videogame_id)
             .all()
         )

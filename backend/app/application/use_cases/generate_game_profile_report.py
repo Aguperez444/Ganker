@@ -1,7 +1,6 @@
-from datetime import date, datetime, time, timezone
+from datetime import datetime, timezone
 
 from app.application.ports.i_unit_of_work import IUnitOfWork
-from app.domain.exceptions.report.invalid_report_date_range_exception import InvalidReportDateRangeException
 from app.domain.exceptions.report.no_data_for_report_exception import NoDataForReportException
 from app.domain.models.game_profile_report import GameProfileReport
 from app.domain.models.game_profile_report_item import GameProfileReportItem
@@ -28,11 +27,7 @@ class GenerateGameProfileReport:
         self.uow: IUnitOfWork = unit_of_work
 
     def execute(self, request: GenerateGameProfileReportRequest, admin_id: int) -> GenerateGameProfileReportResponse:
-        start_datetime = self._to_start_datetime(request.start_date)
-        end_datetime = self._to_end_datetime(request.end_date)
-
-        if start_datetime is not None and end_datetime is not None and start_datetime > end_datetime:
-            raise InvalidReportDateRangeException()
+        start_datetime, end_datetime = ReportPeriodService.normalize(request.start_date, request.end_date)
 
         with self.uow as uow:
             previous_report = uow.game_profile_report_repo.get_latest_report()
@@ -56,7 +51,7 @@ class GenerateGameProfileReport:
                 for videogame, count in counts_by_videogame
             ]
             # Orden descendente por popularidad (mayor cantidad de perfiles primero)
-            items.sort(key=lambda item: item.profile_count, reverse=True)
+            items.sort(key=lambda item: (-item.profile_count, item.videogame_name))
 
             report = GameProfileReport(
                 report_id=None,
@@ -71,12 +66,6 @@ class GenerateGameProfileReport:
 
             saved_report = uow.game_profile_report_repo.create_report(report)
             return self._to_response(saved_report, previous_report is not None)
-
-    def _to_start_datetime(self, start_date: date | None) -> datetime | None:
-        return datetime.combine(start_date, time.min) if start_date else None
-
-    def _to_end_datetime(self, end_date: date | None) -> datetime | None:
-        return datetime.combine(end_date, time.max) if end_date else None
 
     def _build_previous_counts(self, previous_report: GameProfileReport | None) -> dict[int, int]:
         if previous_report is None:

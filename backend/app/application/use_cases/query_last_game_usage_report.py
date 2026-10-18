@@ -15,7 +15,7 @@ class QueryLastGameUsageReport:
     def __init__(self, unit_of_work: IUnitOfWork):
         self.uow: IUnitOfWork = unit_of_work
 
-    def execute(self, videogame_id: int, analysis_type: str) -> GetLastGameUsageReportResponse:
+    def execute(self, videogame_id: int | None, analysis_type: str) -> GetLastGameUsageReportResponse:
         analysis_type_enum = ReportAnalysisType.try_from_value(analysis_type)
         if analysis_type_enum is None:
             raise InvalidReportAnalysisTypeException(analysis_type)
