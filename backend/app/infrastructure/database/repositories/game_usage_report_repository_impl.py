@@ -1,6 +1,6 @@
 from typing import Optional, TYPE_CHECKING
 
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, selectinload
 
 from app.application.ports.i_game_usage_report_repository import IGameUsageReportRepository
 from app.infrastructure.database.mappers.game_usage_report_mapper import GameUsageReportMapper
@@ -22,13 +22,13 @@ class GameUsageReportRepositoryImpl(IGameUsageReportRepository):
         return GameUsageReportMapper.orm_to_domain(orm_report)
 
     def get_report_by_id(self, report_id: int) -> Optional['GameUsageReport']:
-        found = self._session.query(GameUsageReportORM).filter(
+        found = self._session.query(GameUsageReportORM).options(selectinload(GameUsageReportORM.items)).filter(
             GameUsageReportORM.report_id == report_id
         ).first()
         return GameUsageReportMapper.orm_to_domain(found) if found else None
 
-    def get_latest_report(self, videogame_id: int, analysis_type: str) -> Optional['GameUsageReport']:
-        found = self._session.query(GameUsageReportORM).filter(
+    def get_latest_report(self, videogame_id: Optional[int], analysis_type: str) -> Optional['GameUsageReport']:
+        found = self._session.query(GameUsageReportORM).options(selectinload(GameUsageReportORM.items)).filter(
             GameUsageReportORM.videogame_id == videogame_id,
             GameUsageReportORM.analysis_type == analysis_type,
         ).order_by(
@@ -41,12 +41,15 @@ class GameUsageReportRepositoryImpl(IGameUsageReportRepository):
         self,
         videogame_id: Optional[int] = None,
         analysis_type: Optional[str] = None,
+        general_only: bool = False,
     ) -> list['GameUsageReport']:
-        query = self._session.query(GameUsageReportORM)
+        query = self._session.query(GameUsageReportORM).options(selectinload(GameUsageReportORM.items))
         if videogame_id is not None:
             query = query.filter(GameUsageReportORM.videogame_id == videogame_id)
         if analysis_type is not None:
             query = query.filter(GameUsageReportORM.analysis_type == analysis_type)
+        if general_only:
+            query = query.filter(GameUsageReportORM.videogame_id.is_(None))
         found = query.order_by(
             GameUsageReportORM.generated_at.desc(),
             GameUsageReportORM.report_id.desc()

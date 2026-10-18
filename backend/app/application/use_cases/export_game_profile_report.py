@@ -1,3 +1,4 @@
+from app.domain.services.report_period_service import ReportPeriodService
 from app.application.ports.i_unit_of_work import IUnitOfWork
 from app.domain.exceptions.report.report_not_found_exception import ReportNotFoundException
 from app.application.services.report_export_service import (
@@ -58,6 +59,10 @@ class ExportGameProfileReport:
                 self._period_label(report),
                 f"Generado el {report.generated_at.strftime('%Y-%m-%d %H:%M')}",
                 f"Total general de perfiles: {report.total_profiles}",
+                f"Videojuegos con perfiles: {sum(item.profile_count > 0 for item in report.items)} de {len(report.items)}",
+                f"Videojuegos sin perfiles: {sum(item.profile_count == 0 for item in report.items)}",
+                "Perfiles vigentes creados en el período; una persona puede tener perfiles en varios juegos.",
+                f"Reporte #{report.report_id}; comparación: {report.previous_report_id or 'sin reporte previo'}",
             ],
             headers=_ITEM_HEADERS,
             rows=[self._row_values(item) for item in report.items],
@@ -68,11 +73,7 @@ class ExportGameProfileReport:
 
     @staticmethod
     def _period_label(report) -> str:
-        if report.start_date is None and report.end_date is None:
-            return "Período: histórico total"
-        start = report.start_date.date().isoformat() if report.start_date else "inicio"
-        end = report.end_date.date().isoformat() if report.end_date else "hoy"
-        return f"Período: {start} a {end}"
+        return ReportPeriodService.label(report.start_date, report.end_date)
 
     @staticmethod
     def _row_values(item) -> list:

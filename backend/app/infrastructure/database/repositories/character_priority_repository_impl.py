@@ -1,6 +1,7 @@
 from datetime import datetime
 from typing import TYPE_CHECKING, Optional
 
+from sqlalchemy.orm import selectinload
 from sqlalchemy import func
 
 from app.application.ports.i_character_priority_repository import ICharacterPriorityRepository
@@ -70,6 +71,13 @@ class CharacterPriorityRepositoryImpl(ICharacterPriorityRepository):
             )
             .join(CharacterPriorityORM, CharacterPriorityORM.character_id == CharacterORM.character_id)
             .join(GameProfileORM, GameProfileORM.game_profile_id == CharacterPriorityORM.game_profile_id)
+            .filter(
+                CharacterORM.deleted.is_(False),
+                CharacterORM.videogame.has(deleted=False),
+                CharacterPriorityORM.deleted.is_(False),
+                GameProfileORM.deleted.is_(False),
+                GameProfileORM.user.has(deleted=False),
+            )
         )
 
         if videogame_id is not None:
@@ -79,6 +87,7 @@ class CharacterPriorityRepositoryImpl(ICharacterPriorityRepository):
         if end_date is not None:
             query = query.filter(GameProfileORM.created_at <= end_date)
 
+        query = query.options(selectinload(CharacterORM.videogame))
         rows = query.group_by(CharacterORM.character_id).all()
         return [(CharacterMapper.orm_to_domain(character), int(count)) for character, count in rows]
 
