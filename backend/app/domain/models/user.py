@@ -22,7 +22,8 @@ class User:
                  profiles: list['GameProfile'],
                  icon_url: Optional[str] = None,
                  last_connection: Optional[datetime] = None,
-                 deleted: bool = False
+                 deleted: bool = False,
+                 banned: bool = False
                  ):
         self._user_id: Optional[int] = user_id
         self._username: str = username
@@ -33,7 +34,8 @@ class User:
         self._profiles: list['GameProfile'] = profiles
         self._icon_url: Optional[str] = icon_url
         self._last_connection: Optional[datetime] = last_connection
-        self._deleted: bool = bool(deleted) if deleted is not None else False
+        self._deleted: bool = deleted
+        self._banned: bool = banned
 
     @property
     def user_id(self) -> int:
@@ -112,10 +114,18 @@ class User:
     def deleted(self, value: bool) -> None:
         self._deleted = bool(value)
 
+    @property
+    def banned(self) -> bool:
+        return self._banned
+    @banned.setter
+    def banned(self, value: bool) -> None:
+        self._banned = bool(value)
+
     def __repr__(self) -> str:
         return (f"User(user_id={self.user_id or 'sin_id'}, username='{self.username}',"
                 f" name='{self.name}', mail='{self.mail or 'sin_mail'}', password_hash='{self.password_hash or 'sin_password'}',"
-                f" role={self.role}, profiles={self.profiles}, icon_url='{self.icon_url or 'sin_icon'}', last_connection='{self.last_connection or 'sin_last_connection'}')")
+                f" role={self.role}, profiles={self.profiles}, icon_url='{self.icon_url or 'sin_icon'}', last_connection='{self.last_connection or 'sin_last_connection'}',"
+                f" deleted={self.deleted}, banned={self.banned})")
 
 
     def is_persisted(self) -> bool:

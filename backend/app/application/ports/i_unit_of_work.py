@@ -2,7 +2,7 @@ from abc import ABC, abstractmethod
 
 from typing import TYPE_CHECKING
 
-
+from app.application.ports.i_moderation_repository import IModerationRepository
 
 if TYPE_CHECKING:
     from app.application.ports.i_email_service import IEmailService # todo chequear, esto debería ir en la UOW?
@@ -51,6 +51,7 @@ class IUnitOfWork(ABC):
     game_profile_report_repo: 'IGameProfileReportRepository'
     discord_account_link_repo: 'IDiscordAccountLinkRepository'
     find_by_specification_repo: 'IFindBySpecificationsRepository'
+    moderation_repo: 'IModerationRepository'
 
 
     @abstractmethod
