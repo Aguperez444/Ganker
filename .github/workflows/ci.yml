@@ -1,0 +1,65 @@
+name: CI - Tests & Build
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  backend-tests:
+    name: Backend (Pytest)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./backend
+    env:
+      JWT_SECRET_KEY: "ci_test_secret_key_minimum_32_bytes_length_123456"
+      DATABASE_URL: "sqlite:///:memory:"
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.14"
+          cache: "pip"
+          cache-dependency-path: backend/requirements.txt
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Run pytest suite
+        run: pytest
+
+  frontend-checks:
+    name: Frontend (Lint, Test & Build)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./Frontend
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Run tests
+        env:
+          VITE_API_URL: "http://localhost:8000"
+          VITE_WS_URL: "ws://localhost:8000"
+        run: npm test
+
+      - name: Build production bundle
+        env:
+          VITE_API_URL: ""
+        run: npm run build

@@ -52,16 +52,31 @@ async def lifespan(app: FastAPI):
     engine.dispose()
 
 
+IS_PRODUCTION = settings.environment.strip().lower() == "production"
+
 # noinspection redeclaration
-app = FastAPI(title="Ganker", version="1.0.0", lifespan=lifespan)
+app = FastAPI(
+    title="Ganker",
+    version="1.0.0",
+    lifespan=lifespan,
+    docs_url=None if IS_PRODUCTION else "/docs",
+    redoc_url=None if IS_PRODUCTION else "/redoc",
+    openapi_url=None if IS_PRODUCTION else "/openapi.json",
+)
 
 # CORS
+allowed_origins = [
+    origin.strip()
+    for origin in settings.cors_origins.split(",")
+    if origin.strip()
+]
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173","http://localhost:5174"],
+    allow_origins=allowed_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
+    expose_headers=["Content-Disposition"],
 )
 
 class SecuredStaticFiles(StaticFiles):

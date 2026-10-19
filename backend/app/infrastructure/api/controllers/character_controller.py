@@ -26,7 +26,7 @@ def get_storage_service():
 def get_catalog_provider_resolver():
     return CharacterCatalogProviderResolverImpl()
 
-@router.get("/{videogame_id}", response_model=GetCharactersResponse, status_code=200,dependencies=[Depends(require_player)])
+@router.get("/{videogame_id}", response_model=GetCharactersResponse, status_code=200, dependencies=[Depends(require_player)])
 def get_characters_by_videogame_id(videogame_id: int):
     # lo del player_id está para que el endpoint esté protegido, pero no se usa en la lógica de este endpoint
     uow = uow_factory()

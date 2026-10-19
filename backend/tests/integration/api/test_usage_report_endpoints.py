@@ -433,3 +433,84 @@ class TestGameUsageReportEndpointsIntegration:
     def test_export_report_forbidden_for_player(self, client, player_auth_headers, usage_data):
         response = client.get("/api/v1/reports/game-usage/1/export", headers=player_auth_headers)
         assert response.status_code == 403
+
+    @pytest.mark.parametrize("analysis", ["ranks", "characters", "teams"])
+    def test_general_reports_persist_export_and_have_independent_history(self, client, admin_auth_headers, usage_data, analysis):
+        game_id = usage_data["lol"].videogame_id
+        if analysis != "teams":
+            individual = self._generate(client, admin_auth_headers, game_id, analysis)
+            assert individual.status_code == 201
+        response = self._generate(client, admin_auth_headers, None, analysis)
+        assert response.status_code == 201
+        report = response.json()
+        assert report["videogame_id"] is None
+        assert report["videogame_name"] == "Todos los videojuegos"
+        assert report["has_previous_report"] is False
+        if analysis == "teams":
+            assert [(item["name"], item["count"]) for item in report["items"]] == [("League of Legends", 2)]
+        else:
+            assert report["total"] == 3
+            assert all(item["name"].startswith("League of Legends / ") for item in report["items"])
+        for format in ["csv", "pdf", "excel"]:
+            exported = client.get(f"/api/v1/reports/game-usage/{report['report_id']}/export",
+                                  params={"report_output_format": format}, headers=admin_auth_headers)
+            assert exported.status_code == 200
+            assert "general" in exported.headers["content-disposition"]
+            assert exported.content
+        latest = client.get("/api/v1/reports/game-usage/last", params={"analysis_type": analysis}, headers=admin_auth_headers)
+        assert latest.status_code == 200
+        assert latest.json()["report_id"] == report["report_id"]
+        reports = client.get("/api/v1/reports/game-usage", params={"general_only": True}, headers=admin_auth_headers).json()["reports"]
+        assert [row["report_id"] for row in reports] == [report["report_id"]]
+        second = self._generate(client, admin_auth_headers, None, analysis).json()
+        assert second["previous_report_id"] == report["report_id"]
+        assert all(item["variation"] == 0 for item in second["items"])
+
+    @pytest.mark.parametrize("deleted_entity", ["profile", "user", "game", "rank", "role_profile", "character", "character_priority"])
+    def test_usage_aggregates_exclude_soft_deleted_entities(self, client, admin_auth_headers, usage_data, test_db_session, deleted_entity):
+        profile = usage_data["profiles"][0]
+        entities = {
+            "profile": profile,
+            "user": usage_data["players"][0],
+            "game": usage_data["lol"],
+            "rank": usage_data["gold"],
+            "role_profile": test_db_session.query(RoleProfileORM).filter_by(game_profile_id=profile.game_profile_id).first(),
+            "character": usage_data["ahri"],
+            "character_priority": test_db_session.query(CharacterPriorityORM).filter_by(game_profile_id=profile.game_profile_id).first(),
+        }
+        entities[deleted_entity].deleted = True
+        test_db_session.commit()
+        analysis = "characters" if deleted_entity in ("character", "character_priority") else "ranks"
+        result = self._generate(client, admin_auth_headers, None, analysis)
+        if deleted_entity == "game":
+            assert result.status_code == 404
+            return
+        assert result.status_code == 201
+        report = result.json()
+        assert report["total"] == (2 if deleted_entity in ("profile", "user") else 3)
+        counts = {item["name"].split(" / ")[-1]: item["count"] for item in report["items"]}
+        if deleted_entity in ("rank", "character"):
+            assert ("Gold" if analysis == "ranks" else "Ahri") not in counts
+        else:
+            assert counts["Gold" if analysis == "ranks" else "Ahri"] == 1
+
+    def test_general_report_keeps_same_named_ranks_of_different_games_separate(self, client, admin_auth_headers, usage_data, test_db_session):
+        game = usage_data["valorant"]
+        rank = RankORM(name="Gold", value=100, videogame_id=game.videogame_id, icon_url="/gold.png")
+        role = RoleORM(name="Duelist", videogame_id=game.videogame_id, icon_url="/role.png")
+        profile = GameProfileORM(player_id=usage_data["players"][0].user_id, videogame_id=game.videogame_id)
+        test_db_session.add_all([rank, role, profile])
+        test_db_session.flush()
+        test_db_session.add(RoleProfileORM(game_profile_id=profile.game_profile_id, role_id=role.role_id, rank_id=rank.rank_id))
+        test_db_session.commit()
+        response = client.post("/api/v1/reports/game-usage", json={"analysis_type": "ranks"}, headers=admin_auth_headers)
+        assert response.status_code == 201
+        report = response.json()
+        assert report["total"] == 4
+        assert {item["name"]: item["count"] for item in report["items"]} == {
+            "League of Legends / Gold": 2, "League of Legends / Platinum": 1, "Valorant / Gold": 1,
+        }
+
+    def test_general_report_requires_admin(self, client, player_auth_headers):
+        response = client.post("/api/v1/reports/game-usage", json={"analysis_type": "ranks"}, headers=player_auth_headers)
+        assert response.status_code == 403

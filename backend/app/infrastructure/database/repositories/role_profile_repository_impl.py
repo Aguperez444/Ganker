@@ -1,6 +1,7 @@
 from datetime import datetime
 from typing import TYPE_CHECKING, Optional
 
+from sqlalchemy.orm import selectinload
 from sqlalchemy import func
 
 from app.application.ports.i_role_profile_repository import IRoleProfileRepository
@@ -73,6 +74,13 @@ class RoleProfileRepositoryImpl(IRoleProfileRepository):
             )
             .join(RoleProfileORM, RoleProfileORM.rank_id == RankORM.rank_id)
             .join(GameProfileORM, GameProfileORM.game_profile_id == RoleProfileORM.game_profile_id)
+            .filter(
+                RankORM.deleted.is_(False),
+                RankORM.videogame.has(deleted=False),
+                RoleProfileORM.deleted.is_(False),
+                GameProfileORM.deleted.is_(False),
+                GameProfileORM.user.has(deleted=False),
+            )
         )
 
         if videogame_id is not None:
@@ -82,6 +90,7 @@ class RoleProfileRepositoryImpl(IRoleProfileRepository):
         if end_date is not None:
             query = query.filter(GameProfileORM.created_at <= end_date)
 
+        query = query.options(selectinload(RankORM.videogame))
         rows = query.group_by(RankORM.rank_id).all()
         return [(RankMapper.orm_to_domain(rank), int(count)) for rank, count in rows]
 

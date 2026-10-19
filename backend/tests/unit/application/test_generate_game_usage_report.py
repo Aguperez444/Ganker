@@ -280,3 +280,92 @@ class TestGenerateGameUsageReportUseCase:
         assert platinum.variation == -1
         assert platinum.variation_percentage == -50.0
         assert platinum.trend == "baja"
+
+    @pytest.mark.parametrize("analysis", ["ranks", "characters"])
+    def test_general_report_identifies_games_and_uses_all_profiles(self, mock_deps, analysis):
+        use_case, uow = mock_deps
+        first, second = _videogame(), _videogame(2, "Valorant")
+        if analysis == "ranks":
+            uow.role_profile_repo.get_rank_usage.return_value = [(_rank(1, "Gold", 1000, first), 2), (_rank(2, "Gold", 1000, second), 1)]
+        else:
+            uow.character_priority_repo.get_character_usage.return_value = [(_character(1, "Hero", first), 2), (_character(2, "Hero", second), 1)]
+        uow.game_profile_repo.get_profile_counts_by_videogame.return_value = [(first, 2), (second, 2)]
+        result = use_case.execute(GenerateGameUsageReportRequest(analysis_type=analysis), 7)
+        assert result.videogame_id is None
+        assert result.total == 4
+        assert result.items[0].percentage == 50.0
+        assert result.items[0].name.startswith("League of Legends / ")
+        assert result.items[1].name.startswith("Valorant / ")
+        uow.game_usage_report_repo.get_latest_report.assert_called_once_with(None, analysis)
+        uow.videogame_repo.get_videogame_by_id.assert_not_called()
+
+    def test_general_teams_aggregate_ranks_of_each_game(self, mock_deps):
+        use_case, uow = mock_deps
+        first, second = _videogame(), _videogame(2, "Valorant")
+        uow.team_repo.get_team_counts_by_min_rank.return_value = [
+            (_rank(1, "Gold", 1000, first), 2), (_rank(2, "Diamond", 2000, first), 1),
+            (_rank(3, "Gold", 1000, second), 1),
+        ]
+        result = use_case.execute(GenerateGameUsageReportRequest(analysis_type="teams"), 7)
+        assert result.total == 4
+        assert [(item.category_id, item.count, item.percentage) for item in result.items] == [(1, 3, 75.0), (2, 1, 25.0)]
+        uow.rank_repo.get_rank_by_id.assert_not_called()
+
+    def test_team_bands_cannot_overlap_or_use_other_games(self, mock_deps):
+        from app.domain.exceptions.report.invalid_report_bands_exception import InvalidReportBandsException
+        use_case, uow = mock_deps
+        game = _videogame()
+        ranks = {1: _rank(1, "Gold", 1000, game), 2: _rank(2, "Diamond", 2000, game),
+                 3: _rank(3, "Other", 3000, _videogame(2))}
+        uow.rank_repo.get_rank_by_id.side_effect = ranks.get
+        for bands in [[(1, 2), (2, 2)], [(1, 3)]]:
+            with pytest.raises(InvalidReportBandsException):
+                use_case.execute(GenerateGameUsageReportRequest(videogame_id=1, analysis_type="teams",
+                    rank_bands=[RankBandRequest(min_rank_id=lower, max_rank_id=upper) for lower, upper in bands]), 7)
+        uow.game_usage_report_repo.create_report.assert_not_called()
+
+    def test_teams_outside_bands_are_visible(self, mock_deps):
+        use_case, uow = mock_deps
+        game = _videogame()
+        gold, diamond = _rank(1, "Gold", 1000, game), _rank(2, "Diamond", 2000, game)
+        uow.rank_repo.get_rank_by_id.return_value = gold
+        uow.team_repo.get_team_counts_by_min_rank.return_value = [(gold, 2), (diamond, 1)]
+        result = use_case.execute(GenerateGameUsageReportRequest(videogame_id=1, analysis_type="teams",
+            rank_bands=[RankBandRequest(min_rank_id=1, max_rank_id=1)]), 7)
+        assert result.total == sum(item.count for item in result.items) == 3
+        assert result.items[1].name == "Fuera de las franjas"
+        assert result.items[1].count == 1
+
+    def test_disappearing_categories_show_decline_to_zero(self, mock_deps):
+        use_case, uow = mock_deps
+        game = _videogame()
+        uow.game_usage_report_repo.get_latest_report.return_value = _previous_report(items=[(1, "Gold", 2), (2, "Platinum", 1)])
+        uow.role_profile_repo.get_rank_usage.return_value = [(_rank(1, "Gold", 1000, game), 1)]
+        uow.game_profile_repo.get_profile_counts_by_videogame.return_value = [(game, 1)]
+        result = use_case.execute(GenerateGameUsageReportRequest(videogame_id=1), 7)
+        missing = result.items[1]
+        assert (missing.count, missing.variation, missing.variation_percentage, missing.trend) == (0, -1, -100.0, "baja")
+
+    def test_changed_team_bands_do_not_create_a_false_comparison(self, mock_deps):
+        use_case, uow = mock_deps
+        game = _videogame()
+        uow.game_usage_report_repo.get_latest_report.return_value = GameUsageReport(
+            10, 7, "teams", 1, game.name, None, datetime(2026, 6, 1), 2,
+            [GameUsageReportItem(None, None, "Old band", None, 2, 100.0, rank_range="1000 - 3000")],
+        )
+        gold = _rank(1, "Gold", 1000, game)
+        uow.rank_repo.get_rank_by_id.return_value = gold
+        uow.team_repo.get_team_counts_by_min_rank.return_value = [(gold, 2)]
+        result = use_case.execute(GenerateGameUsageReportRequest(videogame_id=1, analysis_type="teams",
+            rank_bands=[RankBandRequest(min_rank_id=1, max_rank_id=1)]), 7)
+        assert result.has_previous_report is False
+        assert result.previous_report_id is None
+        assert result.items[0].variation is None
+
+    def test_renamed_band_keeps_comparison_by_range(self):
+        current = [GameUsageReportItem(None, None, "New name", None, 3, 100.0, rank_range="1000 - 2000")]
+        previous = _previous_report()
+        previous.items.append(GameUsageReportItem(None, None, "Old name", None, 2, 100.0, rank_range="1000 - 2000"))
+        GenerateGameUsageReport._apply_variation(current, previous)
+        assert len(current) == 1
+        assert current[0].variation == 1

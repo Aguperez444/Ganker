@@ -32,6 +32,10 @@ export default defineConfig(({ mode }) => {
                                 globals: true,
                                 setupFiles: "./src/setupTests.js",
                                 css: true,
+                                env: {
+                                  VITE_API_URL: env.VITE_API_URL || "http://localhost:8000",
+                                  VITE_WS_URL: env.VITE_WS_URL || "ws://localhost:8000",
+                                },
                               },
   };
 });

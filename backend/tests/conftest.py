@@ -1,4 +1,5 @@
 import pytest
+from contextlib import asynccontextmanager
 from pathlib import Path
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, Session
@@ -276,5 +277,12 @@ def client(monkeypatch, test_session_factory, jwt_service, tmp_path):
     from app.infrastructure.api.dependencies.login_rate_limiter import login_rate_limiter
     login_rate_limiter.reset()
 
+    # Tests own their in-memory schema and fixtures. Production startup seeds the local
+    # database through a separate engine and must never run from TestClient.
+    @asynccontextmanager
+    async def isolated_lifespan(_app):
+        yield
+
+    monkeypatch.setattr(app.router, "lifespan_context", isolated_lifespan)
     with TestClient(app) as test_client:
         yield test_client

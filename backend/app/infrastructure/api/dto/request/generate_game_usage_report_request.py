@@ -5,14 +5,14 @@ from pydantic import BaseModel, Field
 
 
 class RankBandRequest(BaseModel):
-    min_rank_id: int = Field(..., description='id del rango minimo que delimita la franja (inclusive).')
-    max_rank_id: int = Field(..., description='id del rango máximo que delimita la franja (inclusive).')
+    min_rank_id: int = Field(..., gt=0, description='id del rango minimo que delimita la franja (inclusive).')
+    max_rank_id: int = Field(..., gt=0, description='id del rango máximo que delimita la franja (inclusive).')
 
 
 class GenerateGameUsageReportRequest(BaseModel):
-    videogame_id: int = Field(
-        ...,
-        description='ID del videojuego a analizar. Es obligatorio: el reporte siempre se acota a un videojuego.'
+    videogame_id: Optional[int] = Field(
+        None, gt=0,
+        description='ID del videojuego. Omitir o enviar null para analizar todos los videojuegos.'
     )
 
     analysis_type: str = Field(
@@ -32,5 +32,5 @@ class GenerateGameUsageReportRequest(BaseModel):
 
     rank_bands: Optional[List[RankBandRequest]] = Field(
         None,
-        description='Franjas de rangos definidas por el administrador para el análisis de equipos. Es obligatorio definirlas cuando el tipo de análisis es teams.'
+        description='Franjas de rangos definidas por el administrador para el análisis de equipos. Obligatorias para teams por juego. En teams general se omiten y se agrupa por videojuego.'
     )

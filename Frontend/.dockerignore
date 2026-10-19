@@ -1,0 +1,17 @@
+node_modules/
+dist/
+build/
+coverage/
+.vite/
+.cache/
+.env
+.env.*
+!.env.example
+*.log
+.git/
+.gitignore
+.idea/
+.vscode/
+src/**/*.test.js
+src/**/*.test.jsx
+src/setupTests.js

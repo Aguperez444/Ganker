@@ -1,12 +1,14 @@
 import csv
 import io
 from dataclasses import dataclass
+from xml.sax.saxutils import escape
 
 from openpyxl import Workbook
-from openpyxl.styles import Font
+from openpyxl.styles import Font, PatternFill, Alignment
+from openpyxl.utils import get_column_letter
 from reportlab.lib import colors
-from reportlab.lib.pagesizes import A4
-from reportlab.lib.styles import getSampleStyleSheet
+from reportlab.lib.pagesizes import A4, landscape
+from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.lib.units import cm
 from reportlab.platypus import Paragraph, SimpleDocTemplate, Spacer, Table, TableStyle
 
@@ -69,7 +71,7 @@ class ReportExportService:
 
     @staticmethod
     def ensure_supported_format(report_format: str) -> str:
-        normalized = (report_format or CSV_FORMAT).lower()
+        normalized = (report_format or CSV_FORMAT).strip().lower()
         if normalized not in SUPPORTED_FORMATS:
             raise UnsupportedReportFormatException(normalized)
         return normalized
@@ -92,7 +94,7 @@ class ReportExportService:
     def _build_csv(cls, table: ReportTable) -> bytes:
         buffer = io.StringIO()
         writer = csv.writer(buffer)
-        writer.writerow(table.headers)
+        writer.writerow(cls._csv_cells(table.headers))
         for row in table.rows:
             writer.writerow(cls._csv_cells(row))
         writer.writerow([])
@@ -101,7 +103,12 @@ class ReportExportService:
 
     @staticmethod
     def _csv_cells(row: list) -> list:
-        return ["" if cell is None else cell for cell in row]
+        # Spreadsheet programs interpret these string prefixes as formulas.
+        return [
+            "" if cell is None else
+            "'" + cell if isinstance(cell, str) and cell.lstrip().startswith(("=", "+", "-", "@")) else cell
+            for cell in row
+        ]
 
     # ---------------------------------------------------------
     # PDF
@@ -110,22 +117,41 @@ class ReportExportService:
     @classmethod
     def _build_pdf(cls, table: ReportTable) -> bytes:
         buffer = io.BytesIO()
-        document = SimpleDocTemplate(buffer, pagesize=A4, title=table.title, author=_REPORT_AUTHOR)
+        page_size = landscape(A4) if len(table.headers) > 4 else A4
+        document = SimpleDocTemplate(buffer, pagesize=page_size, title=table.title, author=_REPORT_AUTHOR,
+                                     leftMargin=1.2 * cm, rightMargin=1.2 * cm,
+                                     topMargin=1.3 * cm, bottomMargin=1.5 * cm)
         styles = getSampleStyleSheet()
 
-        elements = [Paragraph(table.title, styles["Title"])]
-        elements += [Paragraph(line, styles["Normal"]) for line in table.meta_lines]
+        elements = [Paragraph(escape(table.title), styles["Title"])]
+        elements += [Paragraph(escape(line), styles["Normal"]) for line in table.meta_lines]
         elements.append(Spacer(1, 0.5 * cm))
 
         data = [table.headers]
         data += [cls._pdf_cells(row, table.pdf_decimal_columns) for row in table.rows]
         data.append(cls._pdf_cells(table.total_row, table.pdf_decimal_columns))
 
-        pdf_table = Table(data, repeatRows=1, hAlign="LEFT")
+        # Paragraphs wrap long names and escape catalog text interpreted as markup.
+        cell_style = ParagraphStyle("ReportCell", parent=styles["Normal"], fontSize=8, leading=10)
+        header_style = ParagraphStyle("ReportHeader", parent=cell_style, textColor=colors.white,
+                                      fontName="Helvetica-Bold")
+        data = [[Paragraph(escape(str(value)), header_style if row_index == 0 else cell_style)
+                 for value in row] for row_index, row in enumerate(data)]
+        weights = table.column_widths or [1] * len(table.headers)
+        col_widths = [document.width * width / sum(weights) for width in weights]
+        pdf_table = Table(data, colWidths=col_widths, repeatRows=1, hAlign="LEFT")
         pdf_table.setStyle(TableStyle(_PDF_TABLE_STYLE))
         elements.append(pdf_table)
 
-        document.build(elements)
+        def footer(canvas, doc):
+            canvas.saveState()
+            canvas.setFont("Helvetica", 8)
+            canvas.setFillColor(colors.HexColor("#526174"))
+            canvas.drawString(doc.leftMargin, 0.7 * cm, "Ganker | Administración")
+            canvas.drawRightString(page_size[0] - doc.rightMargin, 0.7 * cm, f"Página {doc.page}")
+            canvas.restoreState()
+
+        document.build(elements, onFirstPage=footer, onLaterPages=footer)
         return buffer.getvalue()
 
     @staticmethod
@@ -158,14 +184,45 @@ class ReportExportService:
         worksheet.append(table.headers)
         header_row = worksheet.max_row
         for cell in worksheet[header_row]:
-            cell.font = Font(bold=True)
+            cell.font = Font(bold=True, color="FFFFFF")
+            cell.fill = PatternFill("solid", fgColor="2C3E50")
+            cell.alignment = Alignment(wrap_text=True)
+        worksheet.row_dimensions[header_row].height = 30
 
         for row in table.rows:
             worksheet.append(row)
         worksheet.append(table.total_row)
 
+        last_column = get_column_letter(len(table.headers))
+        worksheet.freeze_panes = f"B{header_row + 1}"
+        worksheet.auto_filter.ref = f"A{header_row}:{last_column}{worksheet.max_row - 1}"
+        worksheet.print_title_rows = f"{header_row}:{header_row}"
+        worksheet.sheet_properties.pageSetUpPr.fitToPage = True
+        worksheet.page_setup.orientation = "landscape"
+        worksheet.page_setup.paperSize = worksheet.PAPERSIZE_A4
+        worksheet.page_setup.fitToWidth = 1
+        worksheet.page_setup.fitToHeight = 0
+        worksheet.oddFooter.center.text = "Ganker | Página &P de &N"
+        worksheet["A1"].font = Font(size=18, bold=True, color="2C3E50")
+        for row_index in range(1, header_row - 1):
+            worksheet.merge_cells(start_row=row_index, start_column=1,
+                                  end_row=row_index, end_column=len(table.headers))
+            worksheet.cell(row_index, 1).alignment = Alignment(wrap_text=True, vertical="top")
+            worksheet.row_dimensions[row_index].height = 32
+        for row in worksheet.iter_rows():
+            for cell in row:
+                # Keep catalog text literal, including strings beginning with '='.
+                if isinstance(cell.value, str):
+                    cell.data_type = "s"
+                if cell.row > header_row:
+                    cell.alignment = Alignment(wrap_text=True, vertical="top")
+                    if cell.column - 1 in table.pdf_decimal_columns and isinstance(cell.value, (int, float)):
+                        cell.number_format = '0.00'
+                    if cell.row == worksheet.max_row:
+                        cell.font = Font(bold=True)
+                        cell.fill = PatternFill("solid", fgColor="ECEFF1")
         for column_index, width in enumerate(table.column_widths, start=1):
-            worksheet.column_dimensions[chr(64 + column_index)].width = width
+            worksheet.column_dimensions[get_column_letter(column_index)].width = width
 
         buffer = io.BytesIO()
         workbook.save(buffer)

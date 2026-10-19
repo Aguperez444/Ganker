@@ -1,0 +1,33 @@
+# Entornos virtuales y cachés de Python
+.venv/
+venv/
+env/
+__pycache__/
+*.py[codz]
+*$py.class
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.coverage
+.coverage.*
+htmlcov/
+
+# Tests y bases de datos locales
+tests/
+*.db
+*.sqlite3
+
+# Secretos locales (en producción se inyectan por variables de entorno desde docker-compose.prod.yml)
+app/infrastructure/config/secrets.env
+app/infrastructure/config/secrets.local.env
+.env
+.env.*
+
+# Imágenes de prueba de desarrollo (no deben empaquetarse en producción)
+media/
+
+# Git y editores
+.git/
+.gitignore
+.idea/
+.vscode/

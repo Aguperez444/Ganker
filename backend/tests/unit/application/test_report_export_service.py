@@ -101,3 +101,31 @@ class TestReportExportService:
     def test_pdf_cells_formats_decimal_columns_and_empty_values(self):
         cells = ReportExportService._pdf_cells(["Gold", 2, 66.666, 1, 100.0, None], (2, 4))
         assert cells == ["Gold", "2", "66.67", "1", "100.00", ""]
+
+    @pytest.mark.parametrize("name", ["=SUM(1,2)", "+1+1", "-1+1", "@SUM(A1)", "\t=1+1"])
+    def test_csv_neutralizes_formula_strings_but_preserves_negative_numbers(self, name):
+        assert ReportExportService._csv_cells([name, -3, None]) == ["'" + name, -3, ""]
+
+    def test_excel_keeps_formula_like_catalog_text_literal_and_supports_wide_tables(self):
+        table = _sample_table()
+        table.rows[0][0] = "=1+1"
+        table.headers = [f"Column {index}" for index in range(28)]
+        table.column_widths = [15] * 28
+        exported = ReportExportService.build("excel", "wide", table)
+        sheet = load_workbook(io.BytesIO(exported.content), data_only=False).active
+        header = next(cell.row for row in sheet for cell in row if cell.value == "Column 0")
+        assert sheet.cell(header + 1, 1).value == "=1+1"
+        assert sheet.cell(header + 1, 1).data_type == "s"
+        assert sheet.cell(header + 1, 4).value == 1
+        assert sheet.cell(header + 1, 3).number_format == "0.00"
+        assert sheet.freeze_panes == f"B{header + 1}"
+        assert sheet.auto_filter.ref == f"A{header}:AB{header + 2}"
+        assert sheet.column_dimensions["AB"].width == 15
+
+    def test_pdf_handles_markup_in_catalog_names_and_long_labels(self):
+        table = _sample_table()
+        table.title = "Report <script> & names"
+        table.meta_lines.append("Game: <b>untrusted & text</b>")
+        table.rows[0][0] = "Game <img src='file:///etc/passwd'> & " + "long name " * 15
+        table.headers[0] = "Category <test>"
+        assert ReportExportService.build("pdf", "escaped", table).content.startswith(b"%PDF")

@@ -2,7 +2,7 @@ from datetime import datetime
 from typing import TYPE_CHECKING, Optional
 
 from sqlalchemy import func
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, selectinload
 
 from app.application.ports.i_team_repository import ITeamRepository
 from app.domain.exceptions.team.team_not_found_exception import TeamNotFoundException
@@ -225,7 +225,7 @@ class TeamRepositoryImpl(ITeamRepository):
 
     def get_team_counts_by_min_rank(
         self,
-        videogame_id: int,
+        videogame_id: Optional[int],
         start_date: Optional[datetime] = None,
         end_date: Optional[datetime] = None,
     ) -> list[tuple['Rank', int]]:
@@ -233,12 +233,15 @@ class TeamRepositoryImpl(ITeamRepository):
         query = (
             self.session.query(RankORM, func.count(TeamORM.team_id))
             .join(TeamORM, TeamORM.min_rank_id == RankORM.rank_id)
-            .filter(TeamORM.videogame_id == videogame_id)
+            .filter(TeamORM.videogame.has(deleted=False))
         )
+        if videogame_id is not None:
+            query = query.filter(TeamORM.videogame_id == videogame_id)
         if start_date is not None:
             query = query.filter(TeamORM.created_at >= start_date)
         if end_date is not None:
             query = query.filter(TeamORM.created_at <= end_date)
 
+        query = query.options(selectinload(RankORM.videogame))
         rows = query.group_by(RankORM.rank_id).all()
         return [(RankMapper.orm_to_domain(rank), int(count)) for rank, count in rows]

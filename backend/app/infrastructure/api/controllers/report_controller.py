@@ -37,7 +37,7 @@ def generate_game_profile_report(request: GenerateGameProfileReportRequest, admi
 
 @router.post("/game-usage", response_model=GenerateGameUsageReportResponse, status_code=201, dependencies=[Depends(require_admin)])
 def generate_game_usage_report(request: GenerateGameUsageReportRequest, admin_id: int = Depends(get_current_user_id)):
-    # Genera y persiste un reporte de uso para un videojuego específico: distribución de jugadores por
+    # Genera y persiste un reporte de uso para un juego o todos: distribución de perfiles por
     # rango, personajes más utilizados o equipos por franja de rangos. Devuelve el reporte con su id.
     uow = uow_factory()
     use_case = GenerateGameUsageReport(uow)
@@ -62,11 +62,12 @@ def export_game_usage_report(report_id: int, report_output_format: str = CSV_FOR
 def get_game_usage_reports(
     videogame_id: Optional[int] = Query(None, description="Filtra los reportes por videojuego."),
     analysis_type: Optional[str] = Query(None, description="Filtra los reportes por tipo de análisis: ranks, characters o teams."),
+    general_only: bool = Query(False, description="Devuelve únicamente reportes generales."),
 ):
     # Listado de reportes de uso generados (id, período, tipo de análisis y videojuego)
     uow = uow_factory()
     use_case = QueryGameUsageReports(uow)
-    return use_case.execute(videogame_id, analysis_type)
+    return use_case.execute(videogame_id, analysis_type, general_only)
 
 
 @router.get("/game-usage/analysis-types", response_model=GetGameUsageAnalysisTypesResponse, status_code=200, dependencies=[Depends(require_admin)])
@@ -79,7 +80,7 @@ def get_game_usage_analysis_types():
 @router.get("/game-usage/last", response_model=GetLastGameUsageReportResponse, status_code=200, dependencies=[Depends(require_admin)])
 def get_last_game_usage_report(
     analysis_type: str = Query(..., description="Tipo de análisis a consultar: ranks, characters o teams."),
-    videogame_id: int = Query(..., description="ID del videojuego del que se busca el último reporte."),
+    videogame_id: Optional[int] = Query(None, gt=0, description="ID del videojuego; omitido consulta el último reporte general."),
 ):
     # Fecha (y datos) del último reporte de un videojuego y tipo de análisis, para preseleccionar un rango válido
     uow = uow_factory()

@@ -17,7 +17,7 @@ class QueryGameUsageReports:
         self.uow: IUnitOfWork = unit_of_work
 
     def execute(self, videogame_id: Optional[int] = None,
-                analysis_type: Optional[str] = None) -> GetGameUsageReportsResponse:
+                analysis_type: Optional[str] = None, general_only: bool = False) -> GetGameUsageReportsResponse:
         normalized_type: Optional[str] = None
         if analysis_type is not None:
             analysis_type_enum = ReportAnalysisType.try_from_value(analysis_type)
@@ -26,7 +26,8 @@ class QueryGameUsageReports:
             normalized_type = analysis_type_enum.value
 
         with self.uow as uow:
-            reports = uow.game_usage_report_repo.get_all_reports(videogame_id, normalized_type)
+            reports = (uow.game_usage_report_repo.get_all_reports(videogame_id, normalized_type, general_only=True)
+                       if general_only else uow.game_usage_report_repo.get_all_reports(videogame_id, normalized_type))
             return GetGameUsageReportsResponse(
                 reports=[
                     GameUsageReportSummaryResponse(

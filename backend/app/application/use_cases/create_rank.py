@@ -9,6 +9,7 @@ from app.domain.exceptions.rank.invalid_rank_value_exception import InvalidRankV
 from app.domain.models.rank import Rank
 from app.domain.services.catalog_validation_service import CatalogValidationService
 from app.domain.services.slug_service import SlugService
+
 from app.infrastructure.api.dto.response.base_classes.rank_object_response import RankObjectResponse
 
 

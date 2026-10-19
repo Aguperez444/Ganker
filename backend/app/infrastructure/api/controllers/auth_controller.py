@@ -9,7 +9,7 @@ from app.application.use_cases.reset_password import ResetPassword
 from app.application.use_cases.user_login import UserLogin
 from app.application.use_cases.refresh_token import RefreshToken
 from app.application.use_cases.user_logout import UserLogout
-from app.domain.services.smtp_email_service import SMTPEmailService
+from app.domain.services.resend_email_service import ResendEmailService
 
 from app.infrastructure.api.auth.jwt_federated_state_service import JwtFederatedStateService
 from app.infrastructure.api.auth.jwt_token_service import JwtTokenService
@@ -86,7 +86,7 @@ def logout(refresh_data: RefreshTokenRequest):
 async def forgot_password(request: ForgotPasswordRequest, background_tasks: BackgroundTasks):
 
     uow = uow_factory()
-    email_service = SMTPEmailService()
+    email_service = ResendEmailService()
 
     use_case = ForgotPassword(uow)
     raw_token = use_case.execute(request.email)
