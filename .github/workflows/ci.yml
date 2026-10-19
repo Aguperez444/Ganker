@@ -54,6 +54,9 @@ jobs:
         run: npm install
 
       - name: Run tests
+        env:
+          VITE_API_URL: "http://localhost:8000"
+          VITE_WS_URL: "ws://localhost:8000"
         run: npm test
 
       - name: Build production bundle
