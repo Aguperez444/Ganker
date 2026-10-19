@@ -41,7 +41,7 @@ COMPOSE_FILE="docker-compose.prod.yml"
 
 # Configuración de la VM. Sobrescribible con variables de entorno del runner
 # o de la terminal (sin editar este archivo para cada despliegue).
-OCI_HOST="${OCI_HOST:-140.238.191.104}"
+OCI_HOST="${OCI_HOST:-ganker-oci}"
 OCI_USER="${OCI_USER:-opc}"
 OCI_SSH_KEY="${OCI_SSH_KEY:-}"
 REMOTE_DIR="${REMOTE_DIR:-/home/$OCI_USER/Ganker}"
