@@ -1,0 +1,42 @@
+name: CD - Deploy to OCI Production
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch: # Permite lanzarlo también manualmente con un botón desde la pestaña Actions de GitHub
+
+# Evita que dos merges seguidos desplieguen al mismo tiempo pisándose entre sí
+concurrency:
+  group: oci-production-deploy
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: Build & Deploy on OCI (ARM64)
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Configurar clave SSH para OCI
+        run: |
+          mkdir -p ~/.ssh
+          chmod 700 ~/.ssh
+          printf '%s\n' "${{ secrets.OCI_SSH_PRIVATE_KEY }}" > ~/.ssh/oci_cd_key
+          chmod 600 ~/.ssh/oci_cd_key
+
+
+      - name: Ejecutar deploy.sh hacia OCI
+        env:
+          OCI_HOST: "${{ secrets.OCI_HOST }}"
+          OCI_USER: "opc"
+          OCI_SSH_KEY: "/home/runner/.ssh/oci_cd_key"
+        run: |
+          chmod +x scripts/deploy.sh scripts/probar-stack.sh
+          bash scripts/deploy.sh --ci
+
+      - name: Limpiar clave SSH temporal
+        if: always()
+        run: rm -f ~/.ssh/oci_cd_key
