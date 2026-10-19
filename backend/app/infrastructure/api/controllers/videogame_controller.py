@@ -1,4 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException, status, Form, File, UploadFile
+from pydantic import AliasPath
 
 from app.application.use_cases.query_videogames import QueryVideogames
 from app.application.use_cases.register_videogame import RegisterVideogame
@@ -20,7 +21,11 @@ def register_videogame(
     name: str = Form(..., description="Nombre del videojuego"),
     icon: UploadFile = File(..., description="Archivo de imagen del ícono"),
     rank_per_role: bool = Form(..., description="Indica si el videojuego rankea a los jugadores por rol"),
-    has_characters: bool = Form(True, description="Indica si el videojuego posee selección de personajes"),
+    has_characters: bool = Form(
+        True,
+        validation_alias=AliasPath("has_characters"),
+        description="Indica si el videojuego posee selección de personajes",
+    ),
 ):
 
     # Asegurarse de que la petición incluya un archivo con nombre
@@ -43,7 +48,11 @@ def update_videogame(
     name: str = Form(..., description="Nombre del videojuego"),
     icon: UploadFile | None = File(None, description="Archivo de imagen del ícono"),
     rank_per_role: bool = Form(..., description="Indica si el videojuego rankea a los jugadores por rol"),
-    has_characters: bool = Form(True, description="Indica si el videojuego posee selección de personajes"),
+    has_characters: bool = Form(
+        True,
+        validation_alias=AliasPath("has_characters"),
+        description="Indica si el videojuego posee selección de personajes",
+    ),
 ):
 
     if icon and not icon.filename:
