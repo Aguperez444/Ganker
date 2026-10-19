@@ -16,6 +16,8 @@ import app.infrastructure.database.models.game_profile_orm
 import app.infrastructure.database.models.role_profile_orm
 import app.infrastructure.database.models.character_priority_orm
 import app.infrastructure.database.models.refresh_token_orm
+import app.infrastructure.database.models.player_report_orm
+import app.infrastructure.database.models.users_banned
 
 from app.infrastructure.database.models.videogame_orm import VideogameORM
 from app.infrastructure.database.models.character_orm import CharacterORM
@@ -36,6 +38,7 @@ import app.infrastructure.api.controllers.character_controller as char_ctrl_modu
 import app.infrastructure.api.controllers.role_controller as role_ctrl_module
 import app.infrastructure.api.controllers.rank_controller as rank_ctrl_module
 import app.infrastructure.api.controllers.report_controller as report_ctrl_module
+import app.infrastructure.api.controllers.moderation_controller as moderation_ctrl_module
 
 from app.domain.models.user_role import UserRole
 
@@ -235,6 +238,8 @@ def client(monkeypatch, test_session_factory, jwt_service, tmp_path):
     monkeypatch.setattr(rank_ctrl_module, "uow_factory", test_uow_factory)
     # noinspection PyUnresolvedReferences
     monkeypatch.setattr(report_ctrl_module, "uow_factory", test_uow_factory)
+    # noinspection PyUnresolvedReferences
+    monkeypatch.setattr(moderation_ctrl_module, "uow_factory", test_uow_factory)
 
     import app.infrastructure.api.controllers.chat_controller as chat_ctrl_module
     import app.infrastructure.api.controllers.chat_websocket as chat_ws_module

@@ -6,7 +6,9 @@ from app.application.ports.i_find_by_specifications_service import IFindBySpecif
 from app.domain.models.team import Team
 from app.domain.specifications.banned_players.banned_by_specification import ByBannedBySpecification
 from app.domain.specifications.banned_players.banned_user_specfication import ByBannedUsersSpecification
-from app.domain.specifications.banned_players.create_at_specification import ByCreateAtSpecification
+from app.domain.specifications.banned_players.create_at_specification import (
+    ByCreateAtSpecification as ByBannedCreateAtSpecification,
+)
 from app.domain.specifications.banned_players.expires_at_specification import ByExpiresAtSpecification
 from app.domain.specifications.banned_players.reason_specification import ByReasonSpecification
 from app.domain.specifications.base import Specification, AndSpecification
@@ -16,12 +18,15 @@ from app.domain.specifications.different_player_id_specification import \
 from app.domain.specifications.last_connection_specification import ByLastConnectionSpecification
 from app.domain.specifications.name_player_specification import ByNamePlayerSpecification
 from app.domain.specifications.ranks_specification import ByRanksSpecification
+from app.domain.specifications.reports_players.reason_specification import ByReasonsSpecification
 from app.domain.specifications.reports_players.reported_by_specification import ByReportedBySpecification
 from app.domain.specifications.reports_players.reported_user_specification import ByReportedUserSpecification
 from app.domain.specifications.reports_players.resolved_at_specification import ByResolvedAtSpecification
 from app.domain.specifications.reports_players.resolved_by_specification import ByResolvedBySpecification
 from app.domain.specifications.reports_players.status_specification import ByStatusSpecification
-from app.domain.specifications.reports_players.create_at_specification import ByCreateAtSpecification
+from app.domain.specifications.reports_players.create_at_specification import (
+    ByCreateAtSpecification as ByReportCreateAtSpecification,
+)
 from app.domain.specifications.roles_specification import ByRolesSpecification
 from app.domain.specifications.team.is_active_specification import ByIsActiveSpecification
 from app.domain.specifications.team.search_terms_specification import BySearchTermsSpecification
@@ -248,7 +253,10 @@ class FindBySpecificationsRepositoryImpl(IFindBySpecificationsRepository):
             target_slots = spec.to_expression()
             subquery = (
                 select(TeamMemberRoleORM.team_id)
-                .where(TeamMemberRoleORM.user_id.is_(None))
+                .where(
+                    TeamMemberRoleORM.user_id.is_(None)
+                    | TeamMemberRoleORM.user.has((UserORM.deleted == True) | (UserORM.banned == True))
+                )
                 .group_by(TeamMemberRoleORM.team_id)
                 .having(func.count(TeamMemberRoleORM.team_member_role_id) >= target_slots)
                 .scalar_subquery()
@@ -261,7 +269,11 @@ class FindBySpecificationsRepositoryImpl(IFindBySpecificationsRepository):
             val = spec.to_expression()
             role_filter = TeamMemberRoleORM.game_role_id.in_(val) if isinstance(val, (list, tuple, set)) else (TeamMemberRoleORM.game_role_id == val)
             return query.filter(TeamORM.members_roles.any(
-                role_filter & TeamMemberRoleORM.user_id.is_(None)))
+                role_filter & (
+                    TeamMemberRoleORM.user_id.is_(None)
+                    | TeamMemberRoleORM.user.has((UserORM.deleted == True) | (UserORM.banned == True))
+                )
+            ))
 
         if isinstance(spec, BySearchTermsSpecification):
             return query.filter(or_(TeamORM.name.ilike(spec.to_expression(), escape="\\"),
@@ -272,9 +284,13 @@ class FindBySpecificationsRepositoryImpl(IFindBySpecificationsRepository):
         return query
 
     def get_teams(self, spec: Specification, skip: int, limit: int = 5) -> List[Team]:
-        # Creamos la query base sobre el modelo de SQLAlchemy
+        # Creamos la query base sobre el modelo de SQLAlchemy excluyendo equipos cuyo líder esté baneado o eliminado
         query = self.session.query(TeamORM).filter(
-            TeamORM.videogame.has(VideogameORM.deleted == False)
+            TeamORM.videogame.has(VideogameORM.deleted == False),
+            ~TeamORM.members_roles.any(
+                (TeamMemberRoleORM.team_role_id == 1)
+                & TeamMemberRoleORM.user.has((UserORM.deleted == True) | (UserORM.banned == True))
+            ),
         )
 
         # Le aplicamos los filtros
@@ -307,7 +323,7 @@ class FindBySpecificationsRepositoryImpl(IFindBySpecificationsRepository):
             return (query.join(player_alias, player_alias.user_id == UsersBanned.banned_user)
                     .filter(player_alias.username.ilike(f"%{spec.to_expression()}%"), player_alias.deleted == False))
 
-        if isinstance(spec, ByCreateAtSpecification):
+        if isinstance(spec, ByBannedCreateAtSpecification):
             min_date, max_date = spec.to_expression()
             if min_date is not None:
                 query = query.filter(UsersBanned.create_at >= min_date)
@@ -373,7 +389,7 @@ class FindBySpecificationsRepositoryImpl(IFindBySpecificationsRepository):
                     .filter(resolver_alias.username.ilike(f"%{spec.to_expression()}%"), resolver_alias.deleted == False)
                     )
 
-        if isinstance(spec, ByReasonSpecification):
+        if isinstance(spec, (ByReasonsSpecification, ByReasonSpecification)):
             return query.filter(PlayerReportORM.reason == spec.to_expression())
 
         if isinstance(spec, ByResolvedAtSpecification):
@@ -387,7 +403,7 @@ class FindBySpecificationsRepositoryImpl(IFindBySpecificationsRepository):
         if isinstance(spec, ByStatusSpecification):
             return query.filter(PlayerReportORM.status == spec.to_expression())
 
-        if isinstance(spec, ByCreateAtSpecification):
+        if isinstance(spec, ByReportCreateAtSpecification):
             min_date, max_date = spec.to_expression()
             if min_date is not None:
                 query = query.filter(PlayerReportORM.create_at >= min_date)

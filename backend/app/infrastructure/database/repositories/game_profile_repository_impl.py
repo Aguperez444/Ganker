@@ -28,8 +28,8 @@ class GameProfileRepositoryImpl(IGameProfileRepository):
             GameProfileORM.deleted == False,
         ).first()
         if found and (
-            (found.user and getattr(found.user, "deleted", False))
-            or (found.videogame and getattr(found.videogame, "deleted", False))
+            (found.user and (getattr(found.user, "deleted", False) is True or getattr(found.user, "banned", False) is True))
+            or (found.videogame and getattr(found.videogame, "deleted", False) is True)
         ):
             return None
         domain_found = GameProfileMapper.orm_to_domain(found) if found else None
@@ -42,8 +42,8 @@ class GameProfileRepositoryImpl(IGameProfileRepository):
             GameProfileORM.deleted == False,
         ).first()
         if found and (
-            (found.user and getattr(found.user, "deleted", False))
-            or (found.videogame and getattr(found.videogame, "deleted", False))
+            (found.user and (getattr(found.user, "deleted", False) is True or getattr(found.user, "banned", False) is True))
+            or (found.videogame and getattr(found.videogame, "deleted", False) is True)
         ):
             return None
         domain_found = GameProfileMapper.orm_to_domain(found) if found else None

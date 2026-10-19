@@ -22,7 +22,16 @@ class QueryConversations:
                 unread_count = uow.message_repo.get_unread_count_by_conversation_id(conversation.conversation_id, user_id)
 
                 if conversation.conversation_type == ConversationTypeEnum.PRIVATE:
-                    other_user = conversation.get_other_user(user_id)
+                    try:
+                        other_user = conversation.get_other_user(user_id)
+                    except ValueError:
+                        continue
+                    if (
+                        other_user is None
+                        or getattr(other_user, "deleted", False) is True
+                        or getattr(other_user, "banned", False) is True
+                    ):
+                        continue
                     other_participant = ParticipantSummaryResponse(
                         user_id=other_user.user_id,
                         username=other_user.username,

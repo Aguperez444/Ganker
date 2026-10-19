@@ -1,16 +1,30 @@
 from typing import List
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
+from app.domain.exceptions.domain_exception import DomainException
 from app.infrastructure.api.auth.jwt_token_service import JwtTokenService
 from app.infrastructure.config.settings import settings
 from app.domain.models.user_role import UserRole
+import app.infrastructure.database.unit_of_work.uow_factory as uow_factory_module
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/v1/login")
 token_service = JwtTokenService(settings.jwt_secret_key)
 
 def get_current_user_data(token: str = Depends(oauth2_scheme)) -> dict:
     # Válida el token y devuelve el payload decodificado
-    return token_service.verify_access_token(token)
+    token_data = token_service.verify_access_token(token)
+    user_id = token_data.get("user_id") if isinstance(token_data, dict) else None
+    if isinstance(user_id, int):
+        try:
+            with uow_factory_module.uow_factory() as uow:
+                user = uow.user_repo.get_user_by_id(user_id)
+                if user is not None and getattr(user, "banned", False) is True:
+                    uow.moderation_repo.unban_player(user_id)
+        except DomainException:
+            raise
+        except Exception:
+            pass
+    return token_data
 
 def get_current_user_id(token_data: dict = Depends(get_current_user_data)) -> int:
     # Extrae el user_id del payload del token
