@@ -1,4 +1,4 @@
-FROM python:3.14-slim
+FROM python:3.12-slim
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
@@ -6,11 +6,14 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 
 WORKDIR /app
 
-# Crear usuario sin privilegios para ejecutar la aplicación en producción
-RUN groupadd --gid 10001 appgroup && \
+# Instalar gosu para ajustar permisos del volumen /app/media y bajar privilegios a appuser de forma segura
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends gosu && \
+    rm -rf /var/lib/apt/lists/* && \
+    groupadd --gid 10001 appgroup && \
     useradd --uid 10001 --gid appgroup --shell /sbin/nologin --create-home appuser
 
-# Instalar dependencias de Python
+# Instalar dependencias de Python (con wheels ARM64 precompiladas en Python 3.12)
 COPY requirements.txt .
 RUN pip install --no-cache-dir --upgrade pip && \
     pip install --no-cache-dir -r requirements.txt
@@ -24,7 +27,7 @@ RUN mkdir -p /app/media/games /app/media/users/icons /app/media/teams/icons && \
     chmod +x /entrypoint.prod.sh && \
     chown -R appuser:appgroup /app /entrypoint.prod.sh
 
-USER appuser
+VOLUME ["/app/media"]
 
 EXPOSE 8000
 

@@ -1,3 +1,11 @@
+name: ganker
+
+x-logging: &default-logging
+  driver: "json-file"
+  options:
+    max-size: "10m"
+    max-file: "3"
+
 services:
   db:
     image: postgres:16-alpine
@@ -18,11 +26,13 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
-    logging:
-      driver: "json-file"
-      options:
-        max-size: "10m"
-        max-file: "3"
+      start_period: 15s
+    deploy:
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 1536M
+    logging: *default-logging
 
   backend:
     build:
@@ -33,54 +43,27 @@ services:
     # IMPORTANTE: En producción NO se expone el puerto 8000 al host; solo Nginx accede por la red interna
     volumes:
       - uploads_prod_data:/app/media
+    env_file:
+      - path: .env.prod
+        required: false
     environment:
       - ENVIRONMENT=production
       - CORS_ORIGINS=${CORS_ORIGINS:-https://gankerweb.app,https://www.gankerweb.app}
       - SEED_DEMO_DATA=false
-      - INITIAL_OWNER_NAME=${INITIAL_OWNER_NAME:-Owner}
-      - INITIAL_OWNER_USERNAME=${INITIAL_OWNER_USERNAME}
-      - INITIAL_OWNER_EMAIL=${INITIAL_OWNER_EMAIL}
-      - INITIAL_OWNER_PASSWORD=${INITIAL_OWNER_PASSWORD}
       - UPLOAD_DIR=/app/media
       - MEDIA_URL=/media
       - DATABASE_URL=postgresql+psycopg2://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
-      - JWT_SECRET_KEY=${JWT_SECRET_KEY}
-      - LOGIN_RATE_LIMIT_ENABLED=true
-      - LOGIN_RATE_LIMIT_MAX_ATTEMPTS=${LOGIN_RATE_LIMIT_MAX_ATTEMPTS:-5}
-      - LOGIN_RATE_LIMIT_WINDOW_SECONDS=${LOGIN_RATE_LIMIT_WINDOW_SECONDS:-60}
-      - FRONTEND_URL=${FRONTEND_URL:-https://gankerweb.app}
-      - RESEND_API_KEY=${RESEND_API_KEY:-}
-      - EMAIL_FROM=${EMAIL_FROM:-}
-      - EMAIL_API_URL=${EMAIL_API_URL:-https://api.resend.com/emails}
-      - SMTP_HOST=${SMTP_HOST:-smtp.gmail.com}
-      - SMTP_PORT=${SMTP_PORT:-587}
-      - SMTP_USERNAME=${SMTP_USERNAME:-}
-      - SMTP_PASSWORD=${SMTP_PASSWORD:-}
-      - SMTP_EMAIL_FROM=${SMTP_EMAIL_FROM:-}
-      - RIOT_API_KEY=${RIOT_API_KEY:-}
-      - DISCORD_CLIENT_ID=${DISCORD_CLIENT_ID:-}
-      - DISCORD_CLIENT_SECRET=${DISCORD_CLIENT_SECRET:-}
-      - DISCORD_REDIRECT_URI=${DISCORD_REDIRECT_URI:-https://gankerweb.app/app/discord/callback}
-      - DISCORD_AUTH_REDIRECT_URI=${DISCORD_AUTH_REDIRECT_URI:-https://gankerweb.app/auth/callback/discord}
-      - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID:-}
-      - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET:-}
-      - GOOGLE_REDIRECT_URI=${GOOGLE_REDIRECT_URI:-https://gankerweb.app/auth/callback/google}
-      - TWITCH_CLIENT_ID=${TWITCH_CLIENT_ID:-}
-      - TWITCH_CLIENT_SECRET=${TWITCH_CLIENT_SECRET:-}
-      - TWITCH_REDIRECT_URI=${TWITCH_REDIRECT_URI:-https://gankerweb.app/auth/callback/twitch}
-      - STEAM_API_KEY=${STEAM_API_KEY:-}
-      - STEAM_REDIRECT_URI=${STEAM_REDIRECT_URI:-https://gankerweb.app/auth/callback/steam}
-      - STEAM_REALM=${STEAM_REALM:-https://gankerweb.app}
     depends_on:
       db:
         condition: service_healthy
     networks:
       - ganker_internal
-    logging:
-      driver: "json-file"
-      options:
-        max-size: "10m"
-        max-file: "3"
+    deploy:
+      resources:
+        limits:
+          cpus: "1.5"
+          memory: 1536M
+    logging: *default-logging
 
   nginx:
     build:
@@ -100,11 +83,12 @@ services:
       - backend
     networks:
       - ganker_internal
-    logging:
-      driver: "json-file"
-      options:
-        max-size: "10m"
-        max-file: "3"
+    deploy:
+      resources:
+        limits:
+          cpus: "0.50"
+          memory: 512M
+    logging: *default-logging
 
 networks:
   ganker_internal:
