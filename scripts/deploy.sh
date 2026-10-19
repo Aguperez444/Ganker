@@ -128,32 +128,53 @@ wait_for_ssh() {
 }
 
 sync_project_to_oci() {
-  ssh_remote "umask 077; mkdir -p '$REMOTE_DIR/nginx/certs' '$REMOTE_DIR/backups'; chmod 700 '$REMOTE_DIR'"
+  ssh_remote "umask 077; mkdir -p '$REMOTE_DIR/nginx/certs' '$REMOTE_DIR/backups' '$REMOTE_DIR/scripts'; chmod 700 '$REMOTE_DIR'"
 
-  # Sincronizar código fuente excluyendo dependencias locales, entornos virtuales, git y backups remotos
-  rsync -az --delete \
+  # 1. Sincronizar SOLO lo necesario para producción y proteger datos persistentes del servidor
+  rsync -az --delete --delete-excluded \
     -e "ssh ${SSH_OPTS[*]}" \
-    --exclude '.git/' \
-    --exclude '.github/' \
-    --exclude 'node_modules/' \
-    --exclude 'Frontend/node_modules/' \
-    --exclude 'Frontend/dist/' \
-    --exclude '__pycache__/' \
-    --exclude '.pytest_cache/' \
-    --exclude '.venv/' \
-    --exclude 'venv/' \
-    --exclude 'backend/media/' \
-    --exclude 'backups/' \
-    --exclude 'nginx/certs/*.pem' \
-    --exclude 'nginx/certs/*.key' \
-    --exclude '.env' \
-    --exclude '.env.prod' \
+    --filter='P /backups/***' \
+    --filter='P /nginx/certs/***' \
+    --filter='P /.env.prod' \
+    --filter='P /.env' \
+    --include='/docker-compose.prod.yml' \
+    --include='/scripts/' \
+    --include='/scripts/backup_prod.sh' \
+    --exclude='/scripts/***' \
+    --include='/nginx/' \
+    --include='/nginx/Dockerfile.prod' \
+    --include='/nginx/prod.conf' \
+    --exclude='/nginx/***' \
+    --include='/backend/***' \
+    --include='/Frontend/***' \
+    --exclude='*.md' \
+    --exclude='opencode.jsonc' \
+    --exclude='.mcp*' \
+    --exclude='.cursor*' \
+    --exclude='.claude*' \
+    --exclude='.agent*' \
+    --exclude='.env*' \
+    --exclude='secrets.env' \
+    --exclude='Dockerfile' \
+    --exclude='entrypoint.sh' \
+    --exclude='node_modules/' \
+    --exclude='dist/' \
+    --exclude='__pycache__/' \
+    --exclude='.pytest_cache/' \
+    --exclude='.venv/' \
+    --exclude='venv/' \
+    --exclude='tests/' \
+    --exclude='test/' \
+    --exclude='*.test.*' \
+    --exclude='*.spec.*' \
+    --exclude='/backend/media/' \
+    --exclude='*' \
     ./ "$SSH_TARGET:$REMOTE_DIR/"
 
-  # Copiar .env.prod por separado asegurando permisos 600 y enlace simbólico .env
+  # 2. Copiar .env.prod por separado asegurando permisos 600 y enlace simbólico .env
   scp "${SSH_OPTS[@]}" "$ENV_FILE" "$SSH_TARGET:$REMOTE_DIR/.env.prod"
-  ssh_remote "chmod 600 '$REMOTE_DIR/.env.prod' && ln -sf .env.prod '$REMOTE_DIR/.env'"
-  printf 'OK: Código y .env.prod sincronizados en %s:%s\n' "$SSH_TARGET" "$REMOTE_DIR"
+  ssh_remote "chmod 600 '$REMOTE_DIR/.env.prod' && chmod +x '$REMOTE_DIR/scripts/backup_prod.sh' && ln -sf .env.prod '$REMOTE_DIR/.env'"
+  printf 'OK: Solo archivos de producción sincronizados en %s:%s\n' "$SSH_TARGET" "$REMOTE_DIR"
 }
 
 deploy_remote_stack() {
