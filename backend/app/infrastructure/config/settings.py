@@ -10,6 +10,24 @@ BASE_DIR = CONFIG_DIR.parent.parent.parent
 DB_DIR = BASE_DIR / "app" / "infrastructure" / "database"
 
 class Settings(BaseSettings):
+    # Entorno de ejecución ("development" o "production")
+    environment: str = Field(default="development", validation_alias="ENVIRONMENT")
+
+    # Orígenes permitidos para CORS (separados por coma)
+    cors_origins: str = Field(
+        default="http://localhost:5173,http://localhost:5174",
+        validation_alias="CORS_ORIGINS",
+    )
+
+    # Control de carga de datos semilla de demostración (desactivar en producción: SEED_DEMO_DATA=false)
+    seed_demo_data: bool = Field(default=True, validation_alias="SEED_DEMO_DATA")
+
+    # Credenciales para crear únicamente el usuario owner inicial en producción (si no existe ya un owner)
+    initial_owner_name: str = Field(default="Owner", validation_alias="INITIAL_OWNER_NAME")
+    initial_owner_username: str = Field(default="", validation_alias="INITIAL_OWNER_USERNAME")
+    initial_owner_email: str = Field(default="", validation_alias="INITIAL_OWNER_EMAIL")
+    initial_owner_password: str = Field(default="", validation_alias="INITIAL_OWNER_PASSWORD")
+
     # JSON Web Token (JWT) secret key para firmar y verificar tokens de autenticación
     jwt_secret_key: str
 
