@@ -38,21 +38,27 @@ css_type=$(curl --silent --fail --output /dev/null --write-out '%{content_type}'
 echo "OK Bundle CSS ($css_asset): $css_type"
 
 # 4. Verificar archivos de SEO técnico y Open Graph (/robots.txt, /sitemap.xml, /og-banner.png)
-robots_meta=$(curl --silent --output /dev/null --write-out '%{http_code}|%{content_type}' "$BASE_URL/robots.txt")
+# Se agrega query string de cache-busting (?cb=...) para forzar cf-cache-status: MISS en Cloudflare
+# y validar siempre la respuesta real del contenedor en OCI (evitando falsos fallos si un PoP de
+# Cloudflare cacheó el fallback text/html previo al despliegue). En Nginx, location = /ruta y $uri
+# ignoran la query string, por lo que evalúan exactamente el archivo estático en disco.
+cb="cb=$(date +%s)"
+
+robots_meta=$(curl --silent --output /dev/null --write-out '%{http_code}|%{content_type}' "$BASE_URL/robots.txt?$cb")
 robots_status=${robots_meta%%|*}
 robots_type=${robots_meta#*|}
 [[ "$robots_status" == "200" ]] || { echo "FALLO SEO: /robots.txt devolvió HTTP $robots_status (esperado 200)" >&2; exit 1; }
 [[ "$robots_type" == *text/plain* ]] || { echo "FALLO SEO: /robots.txt Content-Type inesperado ($robots_type, esperado text/plain)" >&2; exit 1; }
 echo "OK SEO /robots.txt: HTTP $robots_status ($robots_type)"
 
-sitemap_meta=$(curl --silent --output /dev/null --write-out '%{http_code}|%{content_type}' "$BASE_URL/sitemap.xml")
+sitemap_meta=$(curl --silent --output /dev/null --write-out '%{http_code}|%{content_type}' "$BASE_URL/sitemap.xml?$cb")
 sitemap_status=${sitemap_meta%%|*}
 sitemap_type=${sitemap_meta#*|}
 [[ "$sitemap_status" == "200" ]] || { echo "FALLO SEO: /sitemap.xml devolvió HTTP $sitemap_status (esperado 200)" >&2; exit 1; }
 [[ "$sitemap_type" == *xml* ]] || { echo "FALLO SEO: /sitemap.xml Content-Type inesperado ($sitemap_type, esperado xml)" >&2; exit 1; }
 echo "OK SEO /sitemap.xml: HTTP $sitemap_status ($sitemap_type)"
 
-og_meta=$(curl --silent --output /dev/null --write-out '%{http_code}|%{content_type}' "$BASE_URL/og-banner.png")
+og_meta=$(curl --silent --output /dev/null --write-out '%{http_code}|%{content_type}' "$BASE_URL/og-banner.png?$cb")
 og_status=${og_meta%%|*}
 og_type=${og_meta#*|}
 [[ "$og_status" == "200" ]] || { echo "FALLO SEO: /og-banner.png devolvió HTTP $og_status (esperado 200)" >&2; exit 1; }
