@@ -52,6 +52,13 @@ export function eliminarMiCuenta() {
   return axiosClient.delete("/api/v1/users/me").then((res) => res.data);
 }
 
+// US 50 - Eliminar cuenta de usuario (admin). DELETE /api/v1/users/{id} ->
+// { message }. Requiere admin u owner; mismo borrado logico en cascada y
+// revocacion de tokens que la baja propia.
+export function eliminarUsuario(userId) {
+  return axiosClient.delete(`/api/v1/users/${userId}`).then((res) => res.data);
+}
+
 // Perfil de OTRO jugador (para entrar desde buscar jugadores, el chat o un
 // equipo): sus datos visibles y todos sus perfiles de juego. No trae el mail.
 //

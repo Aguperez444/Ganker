@@ -25,6 +25,7 @@ import EquipoPage from "../pages/EquipoPage.jsx";
 import CharactersPage from "../pages/admin/CharactersPage.jsx";
 import ModeracionPage from "../pages/admin/ModeracionPage.jsx";
 import RegionsPage from "../pages/admin/RegionsPage.jsx";
+import UsuariosPage from "../pages/admin/UsuariosPage.jsx";
 import { ROLES_ADMIN } from "../utils/rutas.js";
 
 /**
@@ -90,6 +91,8 @@ function AppRouter() {
             <Route path="ranks" element={<RanksPage />} />
             <Route path="roles" element={<RolesPage />} />
             <Route path="regions" element={<RegionsPage />} />
+            {/* US 50 - Eliminar cuenta de usuario. */}
+            <Route path="usuarios" element={<UsuariosPage />} />
             {/* Módulos administrativos placeholder */}
             <Route path="characters" element={<CharactersPage />} />
             <Route
