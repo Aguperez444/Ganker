@@ -1,3 +1,4 @@
+import { Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { useModificarJugador } from "../hooks/useModificarJugador";
 import CuentaFormComponent from "../components/jugadores/CuentaFormComponent";
@@ -67,6 +68,26 @@ function CuentaPage() {
         />
 
         <CuentaDiscordComponent />
+
+        {/* US 34 - Cambiar contraseña: mismo flujo que "¿Olvidaste tu
+            contraseña?", con el mail de la cuenta precargado. */}
+        <section className="flex flex-col gap-3 rounded-2xl border border-white/10 bg-ganker-surface p-6 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <h2 className="font-heading text-lg font-semibold text-ganker-text">
+              Contraseña
+            </h2>
+            <p className="mt-1 text-sm text-ganker-muted">
+              Te enviaremos un enlace a tu email para elegir una nueva.
+            </p>
+          </div>
+          <Link
+            to="/recuperar-contrasena"
+            state={{ email: user.mail }}
+            className="shrink-0 rounded-lg border border-ganker-purple-light/40 px-4 py-2.5 text-center text-sm font-semibold text-ganker-purple-light transition hover:bg-ganker-purple/20 hover:text-ganker-text"
+          >
+            Cambiar contraseña
+          </Link>
+        </section>
       </div>
     </section>
   );

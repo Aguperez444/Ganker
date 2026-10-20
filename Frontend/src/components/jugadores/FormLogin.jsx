@@ -1,3 +1,4 @@
+import { Link } from "react-router-dom";
 import CampoContrasenaComponent from "../common/CampoContrasenaComponent";
 import CampoTexto from "../common/CampoTexto";
 
@@ -36,6 +37,16 @@ function FormLogin({ valores, errores, cargando, errorServidor, onChange, onSubm
         onChange={(e) => onChange("password", e.target.value)}
         error={errores.password}
       />
+
+      {/* US 34 - Cambiar contraseña */}
+      <div className="-mt-3 text-right">
+        <Link
+          to="/recuperar-contrasena"
+          className="text-xs font-semibold text-ganker-purple-light font-body hover:underline"
+        >
+          ¿Olvidaste tu contraseña?
+        </Link>
+      </div>
 
       {errorServidor && (
         <p className="rounded-lg border border-ganker-error/40 bg-ganker-error/10 px-3 py-2 text-sm text-ganker-error font-body">
