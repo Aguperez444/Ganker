@@ -1,21 +1,23 @@
 // Datos de las tortas del panel "Ultimo reporte" (Admin > Reportes).
 
-// Paleta categorica para fondo oscuro, en orden fijo (no se cicla). Validada
-// contra ganker-surface (#100d2b): banda de luminosidad, croma, separacion
-// para daltonismo (peor par adyacente 8.4) y contraste >= 3:1.
-export const COLORES_CATEGORIAS = [
-  "#3987e5",
-  "#d95926",
-  "#199e70",
-  "#c98500",
-  "#d55181",
-];
+// Paleta categorica con los colores de Ganker, en orden fijo (no se cicla):
+// naranja (ganker-orange, apenas oscurecido para entrar en la banda de
+// luminosidad), violeta (ganker-purple-light), rosa (ganker-pink2) y un
+// celeste para cerrar, que es el unico tono que se separa bien de los tres.
+// Validada contra ganker-surface (#100d2b) en TODOS los pares (en la dona el
+// ultimo toca al primero y en la leyenda se comparan todos): banda de
+// luminosidad, croma, vision normal (peor 17.1) y contraste >= 3:1. El par
+// rosa/celeste queda en 8.0 para deuteranopia, legal porque cada porcion
+// tiene separacion y la leyenda lleva nombre y valor.
+// No se usan los dos violetas de la marca juntos: entre si dan 5.1 (casi
+// iguales incluso con vision normal).
+export const COLORES_CATEGORIAS = ["#e8620a", "#8b5cf6", "#ec4899", "#22a3c4"];
 
 // "Otros" es neutro: no compite con las categorias con nombre.
 export const COLOR_OTROS = "#8a84a3";
 export const NOMBRE_OTROS = "Otros";
 
-// Como mucho 5 porciones con nombre: el resto se agrupa en "Otros".
+// Como mucho 4 porciones con nombre (una por color): el resto, a "Otros".
 const MAXIMO_CATEGORIAS = COLORES_CATEGORIAS.length;
 
 // Proporcion de cada categoria sobre la suma de cantidades. En perfiles y

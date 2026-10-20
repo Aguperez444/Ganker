@@ -21,19 +21,20 @@ describe("utils/graficosReporte - armarComparacion", () => {
     expect(ultimo.map((s) => s.proporcion)).toEqual([0.6, 0.4]);
   });
 
-  it("agrupa todo lo que pasa de 5 categorías en Otros", () => {
+  it("agrupa en Otros todo lo que no entra en la paleta", () => {
     const items = ["A", "B", "C", "D", "E", "F", "G"].map((n, i) =>
       item(n, 10 - i)
     );
     const { ultimo, leyenda } = armarComparacion(items);
 
-    expect(ultimo).toHaveLength(6);
+    // Una porcion por color de la paleta + "Otros".
+    expect(ultimo).toHaveLength(COLORES_CATEGORIAS.length + 1);
     expect(ultimo.at(-1)).toMatchObject({
       nombre: "Otros",
-      valor: 5 + 4,
+      valor: 6 + 5 + 4,
       color: COLOR_OTROS,
     });
-    expect(leyenda.at(-1).nombre).toBe("Otros (2)");
+    expect(leyenda.at(-1).nombre).toBe("Otros (3)");
   });
 
   it("mantiene el color de cada categoría en la torta anterior", () => {
