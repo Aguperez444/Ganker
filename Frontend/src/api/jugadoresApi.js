@@ -45,6 +45,13 @@ export function actualizarJugador({ nombre, username, mail, icon }) {
     .then((res) => res.data);
 }
 
+// US 04 - Eliminar jugador. DELETE /api/v1/users/me -> { message }.
+// Borrado logico: el backend marca deleted = True en el usuario y en cascada
+// en sus perfiles de juego (con sus roles x rangos), y revoca sus tokens.
+export function eliminarMiCuenta() {
+  return axiosClient.delete("/api/v1/users/me").then((res) => res.data);
+}
+
 // Perfil de OTRO jugador (para entrar desde buscar jugadores, el chat o un
 // equipo): sus datos visibles y todos sus perfiles de juego. No trae el mail.
 //

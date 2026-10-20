@@ -3,6 +3,7 @@ import { useModificarJugador } from "../hooks/useModificarJugador";
 import CuentaFormComponent from "../components/jugadores/CuentaFormComponent";
 import AvatarUsuarioComponent from "../components/common/AvatarUsuarioComponent";
 import CuentaDiscordComponent from "../components/discord/CuentaDiscordComponent";
+import EliminarCuentaComponent from "../components/jugadores/EliminarCuentaComponent";
 
 // US 02 - Modificar mis datos.
 // Se llega desde el boton "Cuenta" del sidebar (ruta /app/cuenta) y se
@@ -67,6 +68,9 @@ function CuentaPage() {
         />
 
         <CuentaDiscordComponent />
+
+        {/* US 04 - Eliminar jugador. */}
+        <EliminarCuentaComponent />
       </div>
     </section>
   );
