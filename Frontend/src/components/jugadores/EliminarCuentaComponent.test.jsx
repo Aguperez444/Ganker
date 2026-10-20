@@ -3,13 +3,38 @@ import userEvent from "@testing-library/user-event";
 import { MemoryRouter, Routes, Route } from "react-router-dom";
 import { describe, it, expect, beforeEach, vi } from "vitest";
 
-import { AuthProvider } from "../../context/AuthContext";
+import { AuthProvider, useAuth } from "../../context/AuthContext";
 import EliminarCuentaComponent from "./EliminarCuentaComponent";
 import LoginPage from "../../pages/LoginPage";
 import ProtectedRoute from "../../routes/ProtectedRoute";
 import PublicOnlyRoute from "../../routes/PublicOnlyRoute";
 import { eliminarMiCuenta, obtenerJugadorActual } from "../../api/jugadoresApi";
-import { MENSAJE_CUENTA_ELIMINADA } from "../../hooks/useEliminarCuenta";
+import {
+  MENSAJE_CUENTA_ELIMINADA,
+  useEliminarCuenta,
+} from "../../hooks/useEliminarCuenta";
+
+// Mismo cableado que CuentaPage (hook en la pagina, props al componente),
+// sin el resto de las secciones de Mi cuenta.
+function SeccionEliminarCuenta() {
+  const { user } = useAuth();
+  const eliminarCuenta = useEliminarCuenta();
+
+  return (
+    <EliminarCuentaComponent
+      username={user.username}
+      abierto={eliminarCuenta.abierto}
+      confirmacion={eliminarCuenta.confirmacion}
+      puedeConfirmar={eliminarCuenta.puedeConfirmar}
+      cargando={eliminarCuenta.cargando}
+      error={eliminarCuenta.error}
+      onConfirmacionChange={eliminarCuenta.setConfirmacion}
+      onAbrir={eliminarCuenta.abrir}
+      onCancelar={eliminarCuenta.cancelar}
+      onConfirmar={eliminarCuenta.confirmar}
+    />
+  );
+}
 
 vi.mock("../../api/jugadoresApi", () => ({
   registrarJugador: vi.fn(),
@@ -44,7 +69,7 @@ function renderApp() {
             <Route path="/login" element={<LoginPage />} />
           </Route>
           <Route element={<ProtectedRoute />}>
-            <Route path="/app/cuenta" element={<EliminarCuentaComponent />} />
+            <Route path="/app/cuenta" element={<SeccionEliminarCuenta />} />
           </Route>
         </Routes>
       </AuthProvider>

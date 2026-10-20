@@ -1,5 +1,6 @@
 import { useAuth } from "../context/AuthContext";
 import { useModificarJugador } from "../hooks/useModificarJugador";
+import { useEliminarCuenta } from "../hooks/useEliminarCuenta";
 import CuentaFormComponent from "../components/jugadores/CuentaFormComponent";
 import AvatarUsuarioComponent from "../components/common/AvatarUsuarioComponent";
 import CuentaDiscordComponent from "../components/discord/CuentaDiscordComponent";
@@ -23,6 +24,7 @@ function CuentaPage() {
     handleQuitarAvatar,
     handleSubmit,
   } = useModificarJugador();
+  const eliminarCuenta = useEliminarCuenta();
 
   return (
     <section className="min-h-full bg-ganker-bg p-6">
@@ -70,7 +72,18 @@ function CuentaPage() {
         <CuentaDiscordComponent />
 
         {/* US 04 - Eliminar jugador. */}
-        <EliminarCuentaComponent />
+        <EliminarCuentaComponent
+          username={user.username}
+          abierto={eliminarCuenta.abierto}
+          confirmacion={eliminarCuenta.confirmacion}
+          puedeConfirmar={eliminarCuenta.puedeConfirmar}
+          cargando={eliminarCuenta.cargando}
+          error={eliminarCuenta.error}
+          onConfirmacionChange={eliminarCuenta.setConfirmacion}
+          onAbrir={eliminarCuenta.abrir}
+          onCancelar={eliminarCuenta.cancelar}
+          onConfirmar={eliminarCuenta.confirmar}
+        />
       </div>
     </section>
   );
