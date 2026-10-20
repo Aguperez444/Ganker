@@ -1,18 +1,17 @@
 // Datos de las tortas del panel "Ultimo reporte" (Admin > Reportes).
 
-// Paleta de la marca, en orden fijo (no se cicla): naranja, violeta, crema y
-// purpura para las categorias, de la mas visible a la menos, asi la porcion
+// Paleta de la marca, en orden fijo (no se cicla): naranja, violeta, purpura
+// y navy para las categorias, de la mas visible a la menos, asi la porcion
 // mas grande es la que mas resalta.
 // Validada contra ganker-surface (#100d2b): se distinguen bien entre si
 // incluso con daltonismo (todos los pares), pero el purpura (1.43:1) y el
-// navy de "Otros" (1.03:1) casi no contrastan con el fondo. Por eso cada
-// porcion lleva el contorno crema (COLOR_CONTORNO) y la leyenda va con
-// nombre y valor: sin eso esas porciones no se verian.
-export const COLORES_CATEGORIAS = ["#FF9900", "#6B4BCB", "#F4E9DD", "#352070"];
+// navy (1.03:1) casi no contrastan con el fondo. Por eso cada porcion lleva
+// el contorno crema (COLOR_CONTORNO) y la leyenda va con nombre y valor: sin
+// eso esas porciones no se verian.
+export const COLORES_CATEGORIAS = ["#FF9900", "#6B4BCB", "#352070", "#14122A"];
 
-// "Otros" en navy: el menos visible, para que no compita con las categorias
-// con nombre (el contorno crema lo delimita).
-export const COLOR_OTROS = "#14122A";
+// "Otros" en crema, el mismo tono del contorno.
+export const COLOR_OTROS = "#F4E9DD";
 export const NOMBRE_OTROS = "Otros";
 
 // Contorno de cada porcion (y de las muestras de la leyenda).
