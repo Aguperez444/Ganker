@@ -4,9 +4,8 @@ on:
   push:
     branches:
       - main
-  workflow_dispatch: # Permite lanzarlo también manualmente con un botón desde la pestaña Actions de GitHub
+  workflow_dispatch:
 
-# Evita que dos merges seguidos desplieguen al mismo tiempo pisándose entre sí
 concurrency:
   group: oci-production-deploy
   cancel-in-progress: false
@@ -20,17 +19,33 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Configurar clave SSH para OCI
+      - name: Configurar y verificar clave SSH para OCI
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.OCI_SSH_PRIVATE_KEY }}
+          OCI_HOST: ${{ secrets.OCI_HOST }}
         run: |
           mkdir -p ~/.ssh
           chmod 700 ~/.ssh
-          printf '%s\n' "${{ secrets.OCI_SSH_PRIVATE_KEY }}" > ~/.ssh/oci_cd_key
+          # Guardar la clave preservando saltos de línea exactos y asegurando newline final
+          printf '%s\n' "$SSH_PRIVATE_KEY" | tr -d '\r' > ~/.ssh/oci_cd_key
           chmod 600 ~/.ssh/oci_cd_key
 
+          # Validar que la llave privada tenga formato OpenSSH válido antes de conectar
+          ssh-keygen -y -f ~/.ssh/oci_cd_key >/dev/null || {
+            echo "ERROR: El secret OCI_SSH_PRIVATE_KEY no es una clave privada válida." >&2
+            exit 1
+          }
+
+          # Probar conexión SSH mostrando el error real si falla (sin 2>/dev/null)
+          ssh -i ~/.ssh/oci_cd_key \
+              -o BatchMode=yes \
+              -o ConnectTimeout=10 \
+              -o StrictHostKeyChecking=accept-new \
+              "opc@${OCI_HOST}" "echo 'OK: Autenticación SSH desde GitHub exitosa'"
 
       - name: Ejecutar deploy.sh hacia OCI
         env:
-          OCI_HOST: "${{ secrets.OCI_HOST }}"
+          OCI_HOST: ${{ secrets.OCI_HOST }}
           OCI_USER: "opc"
           OCI_SSH_KEY: "/home/runner/.ssh/oci_cd_key"
         run: |
