@@ -1,6 +1,6 @@
 import GraficoTortaComponent from "./GraficoTortaComponent";
 import TendenciaReporteComponent from "./TendenciaReporteComponent";
-import { armarComparacion } from "../../utils/graficosReporte";
+import { COLOR_CONTORNO, armarComparacion } from "../../utils/graficosReporte";
 import {
   describirPeriodo,
   formatearGeneradoEl,
@@ -114,8 +114,11 @@ const PanelUltimoReporteComponent = ({
                     <span className="flex items-center gap-2">
                       <span
                         aria-hidden="true"
-                        className="h-3 w-3 shrink-0 rounded-sm"
-                        style={{ backgroundColor: fila.color }}
+                        className="h-3 w-3 shrink-0 rounded-sm border"
+                        style={{
+                          backgroundColor: fila.color,
+                          borderColor: COLOR_CONTORNO,
+                        }}
                       />
                       <span className="truncate">{fila.nombre}</span>
                     </span>

@@ -1,21 +1,22 @@
 // Datos de las tortas del panel "Ultimo reporte" (Admin > Reportes).
 
-// Paleta categorica con los colores de Ganker, en orden fijo (no se cicla):
-// naranja (ganker-orange, apenas oscurecido para entrar en la banda de
-// luminosidad), violeta (ganker-purple-light), rosa (ganker-pink2) y un
-// celeste para cerrar, que es el unico tono que se separa bien de los tres.
-// Validada contra ganker-surface (#100d2b) en TODOS los pares (en la dona el
-// ultimo toca al primero y en la leyenda se comparan todos): banda de
-// luminosidad, croma, vision normal (peor 17.1) y contraste >= 3:1. El par
-// rosa/celeste queda en 8.0 para deuteranopia, legal porque cada porcion
-// tiene separacion y la leyenda lleva nombre y valor.
-// No se usan los dos violetas de la marca juntos: entre si dan 5.1 (casi
-// iguales incluso con vision normal).
-export const COLORES_CATEGORIAS = ["#e8620a", "#8b5cf6", "#ec4899", "#22a3c4"];
+// Paleta de la marca, en orden fijo (no se cicla): naranja, violeta, crema y
+// purpura para las categorias, de la mas visible a la menos, asi la porcion
+// mas grande es la que mas resalta.
+// Validada contra ganker-surface (#100d2b): se distinguen bien entre si
+// incluso con daltonismo (todos los pares), pero el purpura (1.43:1) y el
+// navy de "Otros" (1.03:1) casi no contrastan con el fondo. Por eso cada
+// porcion lleva el contorno crema (COLOR_CONTORNO) y la leyenda va con
+// nombre y valor: sin eso esas porciones no se verian.
+export const COLORES_CATEGORIAS = ["#FF9900", "#6B4BCB", "#F4E9DD", "#352070"];
 
-// "Otros" es neutro: no compite con las categorias con nombre.
-export const COLOR_OTROS = "#8a84a3";
+// "Otros" en navy: el menos visible, para que no compita con las categorias
+// con nombre (el contorno crema lo delimita).
+export const COLOR_OTROS = "#14122A";
 export const NOMBRE_OTROS = "Otros";
+
+// Contorno de cada porcion (y de las muestras de la leyenda).
+export const COLOR_CONTORNO = "#F4E9DD";
 
 // Como mucho 4 porciones con nombre (una por color): el resto, a "Otros".
 const MAXIMO_CATEGORIAS = COLORES_CATEGORIAS.length;

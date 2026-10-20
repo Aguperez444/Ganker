@@ -1,36 +1,65 @@
 import { useState } from "react";
+import { COLOR_CONTORNO } from "../../utils/graficosReporte";
 
-const TAMANIO = 160;
-const RADIO = 58;
-const GROSOR = 24;
-const CIRCUNFERENCIA = 2 * Math.PI * RADIO;
-// Separacion entre porciones, del color de la superficie.
-const SEPARACION = 2;
+const TAMANIO = 168;
+const CENTRO = TAMANIO / 2;
+const RADIO_EXTERIOR = 72;
+const RADIO_INTERIOR = 46;
+// La porcion activa (hover o foco) sobresale un poco.
+const RESALTE = 6;
+const GROSOR_CONTORNO = 1.5;
 
 function formatearPorcentaje(proporcion) {
   return `${Math.round(proporcion * 1000) / 10}%`;
 }
 
+function punto(radio, angulo) {
+  return [CENTRO + radio * Math.cos(angulo), CENTRO + radio * Math.sin(angulo)];
+}
+
+// Sector de anillo entre dos angulos (en radianes, 0 = arriba). Una porcion
+// del 100% se dibuja como dos mitades: un arco de 360° no se puede expresar
+// con un solo comando A de SVG.
+function sector(desde, hasta, exterior) {
+  if (hasta - desde >= 2 * Math.PI - 1e-6) {
+    const mitad = desde + Math.PI;
+    return `${sector(desde, mitad, exterior)} ${sector(mitad, hasta, exterior)}`;
+  }
+  const a0 = desde - Math.PI / 2;
+  const a1 = hasta - Math.PI / 2;
+  const grande = hasta - desde > Math.PI ? 1 : 0;
+  const [x0, y0] = punto(exterior, a0);
+  const [x1, y1] = punto(exterior, a1);
+  const [x2, y2] = punto(RADIO_INTERIOR, a1);
+  const [x3, y3] = punto(RADIO_INTERIOR, a0);
+  return [
+    `M ${x0} ${y0}`,
+    `A ${exterior} ${exterior} 0 ${grande} 1 ${x1} ${y1}`,
+    `L ${x2} ${y2}`,
+    `A ${RADIO_INTERIOR} ${RADIO_INTERIOR} 0 ${grande} 0 ${x3} ${y3}`,
+    "Z",
+  ].join(" ");
+}
+
 // Torta (dona) de un reporte. `segmentos`: [{ clave, nombre, valor,
-// proporcion, color }], ya agrupados (ver utils/graficosReporte.js). Al pasar
-// el mouse o enfocar una porcion con el teclado, el centro muestra su nombre,
-// cantidad y porcentaje; si no, el total.
+// proporcion, color }], ya agrupados (ver utils/graficosReporte.js). Cada
+// porcion lleva contorno crema, que tambien la separa de las vecinas. Al
+// pasar el mouse o enfocar una porcion con el teclado, el centro muestra su
+// nombre, cantidad y porcentaje; si no, el total.
 const GraficoTortaComponent = ({ titulo, subtitulo, segmentos, unidad }) => {
   const [activa, setActiva] = useState(null);
   const total = segmentos.reduce((acc, s) => acc + s.valor, 0);
   const seleccionada = segmentos.find((s) => s.clave === activa);
-  const separacion = segmentos.length > 1 ? SEPARACION : 0;
 
-  // Cada arco arranca donde terminan los anteriores (suma de sus largos).
-  const arcos = segmentos.map((segmento, indice) => {
-    const largo = segmento.proporcion * CIRCUNFERENCIA;
-    const inicio = segmentos
+  // Cada porcion arranca donde terminan las anteriores (suma de angulos).
+  const sectores = segmentos.map((segmento, indice) => {
+    const desde = segmentos
       .slice(0, indice)
-      .reduce((acc, s) => acc + s.proporcion * CIRCUNFERENCIA, 0);
+      .reduce((acc, s) => acc + s.proporcion * 2 * Math.PI, 0);
     return {
       ...segmento,
-      visible: Math.max(largo - separacion, 0.01),
-      desplazamiento: -inicio,
+      desde,
+      hasta: desde + segmento.proporcion * 2 * Math.PI,
     };
   });
 
@@ -55,45 +84,37 @@ const GraficoTortaComponent = ({ titulo, subtitulo, segmentos, unidad }) => {
           viewBox={`0 0 ${TAMANIO} ${TAMANIO}`}
           role="img"
           aria-label={`${titulo}. ${descripcion}`}
-          className="-rotate-90"
         >
-          <circle
-            cx={TAMANIO / 2}
-            cy={TAMANIO / 2}
-            r={RADIO}
-            fill="none"
-            stroke="rgba(255,255,255,0.06)"
-            strokeWidth={GROSOR}
-          />
-          {arcos.map((arco) => (
-            <circle
-              key={arco.clave}
-              cx={TAMANIO / 2}
-              cy={TAMANIO / 2}
-              r={RADIO}
-              fill="none"
-              stroke={arco.color}
-              strokeWidth={activa === arco.clave ? GROSOR + 6 : GROSOR}
-              strokeDasharray={`${arco.visible} ${CIRCUNFERENCIA - arco.visible}`}
-              strokeDashoffset={arco.desplazamiento}
-              opacity={activa && activa !== arco.clave ? 0.45 : 1}
+          {sectores.map((s) => (
+            <path
+              key={s.clave}
+              d={sector(
+                s.desde,
+                s.hasta,
+                activa === s.clave ? RADIO_EXTERIOR + RESALTE : RADIO_EXTERIOR
+              )}
+              fill={s.color}
+              stroke={COLOR_CONTORNO}
+              strokeWidth={GROSOR_CONTORNO}
+              strokeLinejoin="round"
+              opacity={activa && activa !== s.clave ? 0.55 : 1}
               tabIndex={0}
-              aria-label={`${arco.nombre}: ${arco.valor} ${unidad}, ${formatearPorcentaje(arco.proporcion)}`}
-              onMouseEnter={() => setActiva(arco.clave)}
+              aria-label={`${s.nombre}: ${s.valor} ${unidad}, ${formatearPorcentaje(s.proporcion)}`}
+              onMouseEnter={() => setActiva(s.clave)}
               onMouseLeave={() => setActiva(null)}
-              onFocus={() => setActiva(arco.clave)}
+              onFocus={() => setActiva(s.clave)}
               onBlur={() => setActiva(null)}
-              className="cursor-pointer transition-[stroke-width,opacity] duration-150 outline-none"
+              className="cursor-pointer transition-opacity duration-150 outline-none"
             >
               <title>
-                {`${arco.nombre}: ${arco.valor} ${unidad} (${formatearPorcentaje(arco.proporcion)})`}
+                {`${s.nombre}: ${s.valor} ${unidad} (${formatearPorcentaje(s.proporcion)})`}
               </title>
-            </circle>
+            </path>
           ))}
         </svg>
 
         <div
-          className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center px-8 text-center"
+          className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center px-10 text-center"
           aria-live="polite"
         >
           {seleccionada ? (
