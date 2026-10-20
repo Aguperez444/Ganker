@@ -4,8 +4,41 @@ import {
   describirPeriodo,
   formatearFechaReporte,
   formatearVariacion,
+  validarFranjasRangos,
   validarPeriodoReporte,
 } from "./reportes";
+
+describe("US 38 - validarFranjasRangos", () => {
+  const RANGOS = [
+    { rank_id: 10, name: "Hierro", value: 1 },
+    { rank_id: 11, name: "Plata", value: 2 },
+    { rank_id: 12, name: "Oro", value: 3 },
+    { rank_id: 13, name: "Platino", value: 4 },
+  ];
+  const franja = (min, max) => ({ min_rank_id: min, max_rank_id: max });
+
+  it("acepta franjas completas que no se solapan", () => {
+    expect(
+      validarFranjasRangos([franja("10", "11"), franja("12", "13")], RANGOS)
+    ).toBe("");
+  });
+
+  it("exige al menos una franja completa", () => {
+    expect(validarFranjasRangos([], RANGOS)).toMatch(/al menos una franja/);
+    expect(validarFranjasRangos([franja("10", "")], RANGOS)).toBe(
+      "Elegí el rango mínimo y máximo de la franja 1."
+    );
+  });
+
+  it("rechaza un mínimo mayor al máximo y franjas solapadas", () => {
+    expect(validarFranjasRangos([franja("12", "10")], RANGOS)).toMatch(
+      /mínimo no puede ser mayor/
+    );
+    expect(
+      validarFranjasRangos([franja("10", "12"), franja("11", "13")], RANGOS)
+    ).toBe("Las franjas de rangos no pueden solaparse.");
+  });
+});
 
 describe("utils/reportes", () => {
   it("formatea la fecha del período sin correrla por la zona horaria", () => {

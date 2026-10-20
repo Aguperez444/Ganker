@@ -1,9 +1,14 @@
 import BotonesExportarReporteComponent from "./BotonesExportarReporteComponent";
 import { describirPeriodo, formatearGeneradoEl } from "../../utils/reportes";
 
-// US 37 - Reportes generados antes (vienen del mas reciente al mas antiguo).
-// El backend no devuelve sus datos de nuevo, pero se pueden exportar.
+// Reportes generados antes (vienen del mas reciente al mas antiguo). El
+// backend no devuelve sus datos de nuevo, pero se pueden exportar.
+// `describir` (opcional): titulo de cada fila; por defecto, id y periodo.
+const describirPorDefecto = (reporte) =>
+  `Reporte #${reporte.report_id} · ${describirPeriodo(reporte)}`;
+
 const HistorialReportesComponent = ({
+  describir = describirPorDefecto,
   reportes,
   cargando,
   error,
@@ -34,7 +39,7 @@ const HistorialReportesComponent = ({
           >
             <div className="min-w-0">
               <p className="font-medium text-ganker-text">
-                Reporte #{reporte.report_id} · {describirPeriodo(reporte)}
+                {describir(reporte)}
               </p>
               <p className="text-xs text-ganker-muted">
                 Generado el {formatearGeneradoEl(reporte.generated_at)}

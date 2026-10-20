@@ -1,5 +1,6 @@
 import FiltroPeriodoReporteComponent from "../../components/reportes/FiltroPeriodoReporteComponent";
 import HistorialReportesComponent from "../../components/reportes/HistorialReportesComponent";
+import ReportesTabsComponent from "../../components/reportes/ReportesTabsComponent";
 import TablaReportePerfilesComponent from "../../components/reportes/TablaReportePerfilesComponent";
 import { useReportePerfilesPorJuego } from "../../hooks/useReportePerfilesPorJuego";
 
@@ -41,6 +42,8 @@ const ReportesPage = () => {
             los más populares en Ganker.
           </p>
         </header>
+
+        <ReportesTabsComponent />
 
         <FiltroPeriodoReporteComponent
           fechaInicio={fechaInicio}

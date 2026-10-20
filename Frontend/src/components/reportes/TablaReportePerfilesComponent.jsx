@@ -1,16 +1,12 @@
 import IconoChicoComponent from "../common/IconoChicoComponent";
+import BarraPorcentajeComponent from "./BarraPorcentajeComponent";
 import BotonesExportarReporteComponent from "./BotonesExportarReporteComponent";
+import TendenciaReporteComponent from "./TendenciaReporteComponent";
 import {
   describirPeriodo,
   formatearGeneradoEl,
   formatearVariacion,
 } from "../../utils/reportes";
-
-const TENDENCIAS = {
-  sube: { simbolo: "▲", texto: "Sube", clases: "text-ganker-success" },
-  baja: { simbolo: "▼", texto: "Baja", clases: "text-ganker-error" },
-  estable: { simbolo: "■", texto: "Estable", clases: "text-ganker-muted" },
-};
 
 // US 37 - Resultado del reporte: tabla ordenada por popularidad (ya viene
 // ordenada del backend) con una barra por porcentaje como representacion
@@ -73,7 +69,6 @@ const TablaReportePerfilesComponent = ({ reporte, exportando, onExportar }) => {
           </thead>
           <tbody className="divide-y divide-white/10">
             {reporte.items.map((item, indice) => {
-              const tendencia = TENDENCIAS[item.trend];
               return (
                 <tr key={item.videogame_id} className="text-ganker-text">
                   <td className="px-4 py-3 text-ganker-muted">{indice + 1}</td>
@@ -90,18 +85,7 @@ const TablaReportePerfilesComponent = ({ reporte, exportando, onExportar }) => {
                     {item.profile_count}
                   </td>
                   <td className="px-4 py-3">
-                    <div className="flex items-center gap-2">
-                      <div
-                        className="h-2 w-28 overflow-hidden rounded-full bg-white/10"
-                        aria-hidden="true"
-                      >
-                        <div
-                          className="h-full rounded-full bg-gradient-to-r from-ganker-orange to-ganker-purple"
-                          style={{ width: `${item.percentage}%` }}
-                        />
-                      </div>
-                      <span>{item.percentage}%</span>
-                    </div>
+                    <BarraPorcentajeComponent porcentaje={item.percentage} />
                   </td>
                   {conVariacion && (
                     <>
@@ -112,14 +96,7 @@ const TablaReportePerfilesComponent = ({ reporte, exportando, onExportar }) => {
                         )}
                       </td>
                       <td className="px-4 py-3">
-                        {tendencia ? (
-                          <span className={tendencia.clases}>
-                            <span aria-hidden="true">{tendencia.simbolo}</span>{" "}
-                            {tendencia.texto}
-                          </span>
-                        ) : (
-                          "—"
-                        )}
+                        <TendenciaReporteComponent trend={item.trend} />
                       </td>
                     </>
                   )}

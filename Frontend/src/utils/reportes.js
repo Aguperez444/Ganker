@@ -64,6 +64,41 @@ export function validarPeriodoReporte({ fechaInicio, fechaFin, inicioMinimo }) {
   return "";
 }
 
+// US 38 - Franjas de rangos del analisis de equipos: [{ min_rank_id,
+// max_rank_id }] con ids como texto (vienen de <select>). `rangos` es el
+// catalogo del juego ({ rank_id, name, value }); se compara por `value`, que
+// es el orden real del rango. Mismas reglas que el backend.
+export function validarFranjasRangos(franjas, rangos) {
+  if (franjas.length === 0) {
+    return "Agregá al menos una franja de rangos para el análisis de equipos.";
+  }
+
+  const valorDe = (id) =>
+    rangos.find((r) => String(r.rank_id) === String(id))?.value;
+  const intervalos = [];
+
+  for (const [indice, franja] of franjas.entries()) {
+    const minimo = valorDe(franja.min_rank_id);
+    const maximo = valorDe(franja.max_rank_id);
+    const numero = indice + 1;
+
+    if (minimo === undefined || maximo === undefined) {
+      return `Elegí el rango mínimo y máximo de la franja ${numero}.`;
+    }
+    if (minimo > maximo) {
+      return `En la franja ${numero} el rango mínimo no puede ser mayor al máximo.`;
+    }
+    if (
+      intervalos.some(([desde, hasta]) => minimo <= hasta && maximo >= desde)
+    ) {
+      return "Las franjas de rangos no pueden solaparse.";
+    }
+    intervalos.push([minimo, maximo]);
+  }
+
+  return "";
+}
+
 function restarUnDia(fecha) {
   const [anio, mes, dia] = fecha.split("-").map(Number);
   const d = new Date(Date.UTC(anio, mes - 1, dia - 1));

@@ -3,10 +3,12 @@ import { describirPeriodo, formatearFechaReporte } from "../../utils/reportes";
 const CLASES_INPUT =
   "w-full rounded-lg border border-white/10 bg-ganker-surface-light px-3 py-2.5 text-sm text-ganker-text [color-scheme:dark] focus:border-ganker-purple focus:ring-2 focus:ring-ganker-purple focus:outline-none disabled:opacity-60";
 
-// US 37 - Periodo del reporte. Sin fechas = historico total. Si ya hay un
-// reporte previo, la fecha inicial arranca como minimo el dia siguiente a su
-// fin (`inicioMinimo`, sugerido por el backend).
+// Periodo del reporte (US 37 y 38). Sin fechas = historico total. Si ya hay
+// un reporte previo, la fecha inicial arranca como minimo el dia siguiente a
+// su fin (`inicioMinimo`, sugerido por el backend). `children`: campos extra
+// del reporte (ej. videojuego y tipo de analisis), arriba de las fechas.
 const FiltroPeriodoReporteComponent = ({
+  children,
   fechaInicio,
   fechaFin,
   inicioMinimo,
@@ -34,6 +36,8 @@ const FiltroPeriodoReporteComponent = ({
       <p className="mt-1 text-sm text-ganker-muted">
         Dejá las fechas vacías para el histórico total, o elegí un período.
       </p>
+
+      {children && <div className="mt-4 space-y-4">{children}</div>}
 
       {ultimo?.has_report && (
         <p className="mt-3 text-xs text-ganker-muted">

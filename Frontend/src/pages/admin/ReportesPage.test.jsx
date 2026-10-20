@@ -1,5 +1,6 @@
 import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { MemoryRouter } from "react-router-dom";
 import { describe, it, expect, beforeEach, vi } from "vitest";
 
 import ReportesPage from "./ReportesPage";
@@ -18,6 +19,14 @@ vi.mock("../../api/reportesApi", () => ({
   exportarReportePerfiles: vi.fn(),
 }));
 vi.mock("../../utils/descargas", () => ({ descargarArchivo: vi.fn() }));
+
+function renderPagina() {
+  render(
+    <MemoryRouter>
+      <ReportesPage />
+    </MemoryRouter>
+  );
+}
 
 const SIN_PREVIO = { has_report: false, suggested_start_date: null };
 
@@ -80,7 +89,7 @@ describe("ReportesPage - US 37 Reporte de jugadores por videojuego", () => {
 
   it("genera el histórico total y lista los juegos por popularidad con su porcentaje", async () => {
     const usuario = userEvent.setup();
-    render(<ReportesPage />);
+    renderPagina();
 
     await generar(usuario);
 
@@ -130,7 +139,7 @@ describe("ReportesPage - US 37 Reporte de jugadores por videojuego", () => {
         },
       ],
     });
-    render(<ReportesPage />);
+    renderPagina();
 
     await generar(usuario);
 
@@ -146,7 +155,7 @@ describe("ReportesPage - US 37 Reporte de jugadores por videojuego", () => {
 
   it("manda el período elegido", async () => {
     const usuario = userEvent.setup();
-    render(<ReportesPage />);
+    renderPagina();
 
     await usuario.type(
       await screen.findByLabelText("Fecha inicial"),
@@ -169,7 +178,7 @@ describe("ReportesPage - US 37 Reporte de jugadores por videojuego", () => {
       end_date: "2026-10-15T23:59:59",
       suggested_start_date: "2026-10-16",
     });
-    render(<ReportesPage />);
+    renderPagina();
 
     const inicio = await screen.findByLabelText("Fecha inicial");
     expect(await screen.findByDisplayValue("2026-10-16")).toBe(inicio);
@@ -197,7 +206,7 @@ describe("ReportesPage - US 37 Reporte de jugadores por videojuego", () => {
         },
       },
     });
-    render(<ReportesPage />);
+    renderPagina();
 
     await generar(usuario);
 
@@ -219,7 +228,7 @@ describe("ReportesPage - US 37 Reporte de jugadores por videojuego", () => {
         },
       },
     });
-    render(<ReportesPage />);
+    renderPagina();
 
     await generar(usuario);
 
@@ -236,7 +245,7 @@ describe("ReportesPage - US 37 Reporte de jugadores por videojuego", () => {
       blob,
       nombreArchivo: "reporte_perfiles_5.csv",
     });
-    render(<ReportesPage />);
+    renderPagina();
 
     await generar(usuario);
     await usuario.click(
@@ -264,7 +273,7 @@ describe("ReportesPage - US 37 Reporte de jugadores por videojuego", () => {
       blob: new Blob(["pdf"]),
       nombreArchivo: "reporte_3.pdf",
     });
-    render(<ReportesPage />);
+    renderPagina();
 
     expect(
       await screen.findByText("Reporte #3 · Histórico total")
@@ -280,7 +289,7 @@ describe("ReportesPage - US 37 Reporte de jugadores por videojuego", () => {
     obtenerUltimoReportePerfiles.mockRejectedValue({
       response: { status: 403, data: {} },
     });
-    render(<ReportesPage />);
+    renderPagina();
 
     expect(
       await screen.findByText("No tenés permisos para acceder a los reportes.")
