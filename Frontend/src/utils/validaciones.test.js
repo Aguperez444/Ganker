@@ -1,6 +1,31 @@
 import { describe, it, expect } from "vitest";
 
-import { validarFormularioRegistroFederado } from "./validaciones";
+import {
+  validarFormularioRegistro,
+  validarFormularioRegistroFederado,
+} from "./validaciones";
+
+describe("validarFormularioRegistro - contraseña", () => {
+  const conPassword = (password) =>
+    validarFormularioRegistro({
+      nombre: "Ana",
+      username: "ana",
+      mail: "ana@ejemplo.com",
+      password,
+      confirmarPassword: password,
+    });
+
+  // Misma regla que el backend (PasswordSecurityService): al menos 8.
+  it("acepta exactamente 8 caracteres con mayúscula, minúscula y número", () => {
+    expect(conPassword("Abcdefg1")).toEqual({});
+  });
+
+  it("rechaza 7 caracteres", () => {
+    expect(conPassword("Abcdef1").password).toBe(
+      "Debe tener al menos 8 caracteres, una mayúscula, una minúscula y un número."
+    );
+  });
+});
 
 describe("validarFormularioRegistroFederado", () => {
   const VALIDO = { nombre: "Ana", username: "ana", mail: "" };

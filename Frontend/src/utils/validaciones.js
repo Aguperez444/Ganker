@@ -1,7 +1,8 @@
 const REGEX_EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-// "mayor a 8 caracteres" = 9 para arriba.
-const REGEX_PASSWORD = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{9,}$/;
+// Al menos 8 caracteres, una mayuscula, una minuscula y un numero: la misma
+// regla que valida el backend al registrar (PasswordSecurityService).
+const REGEX_PASSWORD = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/;
 
 export function esEmailValido(email) {
   return REGEX_EMAIL.test(email.trim());
@@ -33,7 +34,7 @@ export function validarFormularioRegistro({
     errores.password = "Elegí una contraseña.";
   } else if (!esPasswordValida(password)) {
     errores.password =
-      "Debe tener al menos 9 caracteres, una mayúscula, una minúscula y un número.";
+      "Debe tener al menos 8 caracteres, una mayúscula, una minúscula y un número.";
   }
 
   if (confirmarPassword !== password) {
