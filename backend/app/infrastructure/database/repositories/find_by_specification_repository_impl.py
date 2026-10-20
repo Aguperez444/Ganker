@@ -385,7 +385,7 @@ class FindBySpecificationsRepositoryImpl(IFindBySpecificationsRepository):
 
         if isinstance(spec, ByResolvedBySpecification):
             resolver_alias = aliased(UserORM)
-            return (query.join(resolver_alias, resolver_alias.user_id == PlayerReportORM.resolved_by)
+            return (query.join(resolver_alias, resolver_alias.user_id == PlayerReportORM.resolver_id)
                     .filter(resolver_alias.username.ilike(f"%{spec.to_expression()}%"), resolver_alias.deleted == False)
                     )
 
@@ -406,9 +406,9 @@ class FindBySpecificationsRepositoryImpl(IFindBySpecificationsRepository):
         if isinstance(spec, ByReportCreateAtSpecification):
             min_date, max_date = spec.to_expression()
             if min_date is not None:
-                query = query.filter(PlayerReportORM.create_at >= min_date)
+                query = query.filter(PlayerReportORM.created_at >= min_date)
             if max_date is not None:
-                query = query.filter(PlayerReportORM.create_at <= max_date)
+                query = query.filter(PlayerReportORM.created_at <= max_date)
             return query
 
         return query
@@ -417,13 +417,13 @@ class FindBySpecificationsRepositoryImpl(IFindBySpecificationsRepository):
         query = self.session.query(PlayerReportORM).options(
             joinedload(PlayerReportORM.reporter),
             joinedload(PlayerReportORM.reported),
-            joinedload(PlayerReportORM.resolver_player)
+            joinedload(PlayerReportORM.resolver_user)
         ).filter(PlayerReportORM.reported.has(UserORM.deleted == False))
 
         if spec and spec is not None:
             query = self._apply_spec_reports_players(query, spec)
 
-        db_models = query.order_by(PlayerReportORM.create_at.desc()).offset(skip).limit(limit).all()
+        db_models = query.order_by(PlayerReportORM.created_at.desc()).offset(skip).limit(limit).all()
 
 
         return db_models

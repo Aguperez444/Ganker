@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Optional
 from enum import Enum
 from sqlalchemy import ForeignKey, Integer, String, DateTime
 from sqlalchemy import Enum as SQLEnum
@@ -32,12 +32,12 @@ class PlayerReportORM(Base):
     reported_id: Mapped[int] = mapped_column(Integer, ForeignKey("user.user_id", ondelete="CASCADE"), nullable=False)
     status: Mapped[str] = mapped_column(SQLEnum(ReportStatus),default=ReportStatus.PENDING, nullable=False)
     reason: Mapped[str] = mapped_column(SQLEnum(ReportReason),nullable=False)
-    description: Mapped[str] = mapped_column(String(500), nullable=True)
-    create_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=datetime.now, nullable=False)
-    resolved_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=True)
-    resolved_by: Mapped[int] = mapped_column(Integer, ForeignKey("user.user_id", ondelete="SET NULL"), nullable=True)
+    description: Mapped[Optional[str]] = mapped_column(String(500), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=datetime.now, nullable=False)
+    resolved_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
+    resolver_id: Mapped[Optional[int]] = mapped_column(Integer, ForeignKey("user.user_id", ondelete="SET NULL"), nullable=True)
 
     reporter: Mapped["UserORM"] = relationship("UserORM", foreign_keys=[reporter_id], back_populates="reporter_player")
     reported: Mapped["UserORM"] = relationship("UserORM", foreign_keys=[reported_id], back_populates="reported_player")
-    resolver_player: Mapped["UserORM"] = relationship("UserORM", foreign_keys=[resolved_by], back_populates="resolver_player")
+    resolver_user: Mapped[Optional["UserORM"]] = relationship("UserORM", foreign_keys=[resolver_id], back_populates="resolver_player")
 

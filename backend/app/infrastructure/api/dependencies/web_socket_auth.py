@@ -28,7 +28,7 @@ def get_current_user_data_ws(token: str | None = Query(default=None)) -> dict:
             with uow_factory_module.uow_factory() as uow:
                 user = uow.user_repo.get_user_by_id(user_id)
                 if user is not None and getattr(user, "banned", False) is True:
-                    uow.moderation_repo.unban_player(user_id)
+                    uow.moderation_repo.unban_user_if_applicable(user_id)
         except DomainException as exc:
             raise WebSocketException(
                 code=status.WS_1008_POLICY_VIOLATION,

@@ -65,8 +65,8 @@ class SearchReportsPlayers:
                     status=report_player.status,
                     reason=report_player.reason,
                     description=report_player.description,
-                    created_at=report_player.create_at,
+                    created_at=report_player.created_at,
                     resolved_at=report_player.resolved_at,
-                    resolved_by=report_player.resolver_player.username if report_player.resolver_player is not None else None,
+                    resolved_by=report_player.resolver_user.username if report_player.resolver_user is not None else None,
                 ) for report_player in reports_players
             ]

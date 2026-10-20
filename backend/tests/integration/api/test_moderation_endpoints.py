@@ -174,7 +174,7 @@ class TestBanSystemAndSpecificationsIntegration:
 
         resolved_report = test_db_session.query(PlayerReportORM).filter(PlayerReportORM.id == report_id).first()
         assert resolved_report.status == ReportStatus.RESOLVED
-        assert resolved_report.resolved_by == seed_admin.user_id
+        assert resolved_report.resolver_id == seed_admin.user_id
         assert resolved_report.resolved_at is not None
 
     def test_admin_can_manually_unban_player(

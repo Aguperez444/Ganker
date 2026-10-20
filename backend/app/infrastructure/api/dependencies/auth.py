@@ -19,7 +19,7 @@ def get_current_user_data(token: str = Depends(oauth2_scheme)) -> dict:
             with uow_factory_module.uow_factory() as uow:
                 user = uow.user_repo.get_user_by_id(user_id)
                 if user is not None and getattr(user, "banned", False) is True:
-                    uow.moderation_repo.unban_player(user_id)
+                    uow.moderation_repo.unban_user_if_applicable(user_id)
         except DomainException:
             raise
         except Exception:

@@ -1,6 +1,6 @@
 from typing import TYPE_CHECKING
 from app.domain.exceptions.character.character_not_found_exception import CharacterNotFoundException
-from app.domain.exceptions.moderation.not_valid_reason_exception import NotValidReasonException
+from app.domain.exceptions.moderation.not_valid_report_reason_exception import NotValidReportReasonException
 from app.domain.exceptions.rank.rank_not_found_exception import RankNotFoundException
 from app.domain.exceptions.role.role_not_found_exception import RoleNotFoundException
 from app.domain.exceptions.user.user_not_found_exception import UserNotFoundException
@@ -170,8 +170,8 @@ class CatalogValidationService:
             raise DoesNotBelongToProfileException("region", f"{region_id}")
 
     @staticmethod
-    def validate_reason_is_valid_for_report(reason: str):
+    def validate_reason_is_valid_for_report(reason: str) -> ReportReason:
         try:
-            ReportReason(reason.lower().strip())
+            return ReportReason(reason.lower().strip())
         except ValueError:
-            raise NotValidReasonException()
+            raise NotValidReportReasonException()

@@ -1,7 +1,7 @@
 from datetime import datetime, timedelta
 
 from app.application.ports.i_unit_of_work import IUnitOfWork
-from app.domain.exceptions.moderation.not_can_auto_ban_exception import NotCanAutoBanException
+from app.domain.exceptions.moderation.cannot_ban_self_exception import CannotBanSelfException
 from app.domain.services.catalog_validation_service import CatalogValidationService
 from app.infrastructure.api.dto.request.ban_player_request import BanPlayerRequest
 from app.infrastructure.database.models.users_banned import UsersBanned
@@ -19,7 +19,7 @@ class BanPlayer:
             CatalogValidationService.get_and_validate_exist_user(ban_request.player_id, uow)
 
             if admin_id == ban_request.player_id:
-                raise NotCanAutoBanException()
+                raise CannotBanSelfException()
 
             new_register = UsersBanned(
                 banned_user=ban_request.player_id,
@@ -28,4 +28,4 @@ class BanPlayer:
                 expires_at=datetime.now() + timedelta(days=ban_request.duration_days)
             )
 
-            uow.moderation_repo.ban_player(ban_request.player_id, admin_id, new_register)
+            uow.moderation_repo.ban_user(ban_request.player_id, admin_id, new_register)

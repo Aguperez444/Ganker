@@ -40,7 +40,7 @@ class AuthenticateFederatedUser:
 
                 # Chequeo si el usuario está baneado y, si corresponde, lo desbaneo ----
 
-                uow.moderation_repo.unban_player(user.user_id)
+                uow.moderation_repo.unban_user_if_applicable(user.user_id)
 
                 # ----------------------------------------------------------------------
 

@@ -15,10 +15,10 @@ from app.application.use_cases.unban_player import UnbanPlayer
 from app.application.use_cases.user_login import UserLogin
 from app.domain.exceptions.moderation.ban_not_finished_exception import BanNotFinishedException
 from app.domain.exceptions.moderation.not_banned_player_exception import NotBannedPlayerException
-from app.domain.exceptions.moderation.not_can_auto_ban_exception import NotCanAutoBanException
-from app.domain.exceptions.moderation.not_can_auto_report_exception import NotCanAutoReportException
-from app.domain.exceptions.moderation.not_can_auto_unban_exception import NotCanAutoUnbanException
-from app.domain.exceptions.moderation.not_valid_reason_exception import NotValidReasonException
+from app.domain.exceptions.moderation.cannot_ban_self_exception import CannotBanSelfException
+from app.domain.exceptions.moderation.cannot_report_self_exception import CannotReportSelfException
+from app.domain.exceptions.moderation.cannot_unban_self_exception import CannotUnbanSelfException
+from app.domain.exceptions.moderation.not_valid_report_reason_exception import NotValidReportReasonException
 from app.domain.exceptions.user.user_not_found_exception import UserNotFoundException
 from app.domain.models.user import User
 from app.domain.models.user_role import UserRole
@@ -90,7 +90,7 @@ class TestReportPlayerUseCaseUnit:
         use_case = ReportPlayer(uow)
         response = use_case.execute(request, reporter_id=1)
 
-        assert response.id == 10
+        assert response.report_id == 10
         assert response.reporter_id == 1
         assert response.reported_id == 2
         assert response.reason == ReportReason.CHEATING.value
@@ -109,7 +109,7 @@ class TestReportPlayerUseCaseUnit:
         )
 
         use_case = ReportPlayer(uow)
-        with pytest.raises(NotCanAutoReportException) as exc_info:
+        with pytest.raises(CannotReportSelfException) as exc_info:
             use_case.execute(request, reporter_id=5)
 
         assert exc_info.value.status_code == 400
@@ -130,7 +130,7 @@ class TestReportPlayerUseCaseUnit:
 
     @pytest.mark.parametrize("invalid_reason", ["invalid_reason", "hacking", "griefing", ""])
     def test_report_player_invalid_reason_raises_not_valid_reason_exception(self, invalid_reason):
-        with pytest.raises(NotValidReasonException) as exc_info:
+        with pytest.raises(NotValidReportReasonException) as exc_info:
             CatalogValidationService.validate_reason_is_valid_for_report(invalid_reason)
 
         assert exc_info.value.status_code == 400
@@ -147,7 +147,7 @@ class TestReportPlayerUseCaseUnit:
         raw_request.description = "Descripción"
 
         use_case = ReportPlayer(uow)
-        with pytest.raises(NotValidReasonException) as exc_info:
+        with pytest.raises(NotValidReportReasonException) as exc_info:
             use_case.execute(raw_request, reporter_id=1)
 
         assert exc_info.value.status_code == 400
@@ -171,8 +171,8 @@ class TestBanAndUnbanUseCasesUnit:
         use_case = BanPlayer(uow)
         use_case.execute(request, admin_id=1)
 
-        uow.moderation_repo.ban_player.assert_called_once()
-        called_player_id, called_admin_id, called_register = uow.moderation_repo.ban_player.call_args[0]
+        uow.moderation_repo.ban_user.assert_called_once()
+        called_player_id, called_admin_id, called_register = uow.moderation_repo.ban_user.call_args[0]
         assert called_player_id == 2
         assert called_admin_id == 1
         assert called_register.banned_user == 2
@@ -188,11 +188,11 @@ class TestBanAndUnbanUseCasesUnit:
         request = BanPlayerRequest(player_id=1, reason="Auto baneo", duration_days=3)
         use_case = BanPlayer(uow)
 
-        with pytest.raises(NotCanAutoBanException) as exc_info:
+        with pytest.raises(CannotBanSelfException) as exc_info:
             use_case.execute(request, admin_id=1)
 
         assert exc_info.value.status_code == 400
-        uow.moderation_repo.ban_player.assert_not_called()
+        uow.moderation_repo.ban_user.assert_not_called()
 
     def test_unban_player_success(self):
         uow = _make_mock_uow()
@@ -203,7 +203,7 @@ class TestBanAndUnbanUseCasesUnit:
         use_case = UnbanPlayer(uow)
         use_case.execute(player_id=2, admin_id=1)
 
-        uow.moderation_repo.manual_unban_player.assert_called_once_with(2)
+        uow.moderation_repo.manual_unban_user.assert_called_once_with(2)
 
     def test_unban_player_self_unban_raises_403(self):
         uow = _make_mock_uow()
@@ -211,11 +211,11 @@ class TestBanAndUnbanUseCasesUnit:
         uow.user_repo.get_user_by_id.return_value = admin
 
         use_case = UnbanPlayer(uow)
-        with pytest.raises(NotCanAutoUnbanException) as exc_info:
+        with pytest.raises(CannotUnbanSelfException) as exc_info:
             use_case.execute(player_id=1, admin_id=1)
 
         assert exc_info.value.status_code == 403
-        uow.moderation_repo.manual_unban_player.assert_not_called()
+        uow.moderation_repo.manual_unban_user.assert_not_called()
 
 
 class TestSearchBannedAndReportedPlayersUnit:
@@ -289,7 +289,7 @@ class TestSearchBannedAndReportedPlayersUnit:
         assert len(results) == 1
         assert results[0].reported_name == "reported_guy"
         assert results[0].reporter_name == "reporter_guy"
-        assert results[0].resolved_by == "admin_mod"
+        assert results[0].resolver_id == "admin_mod"
 
 
 class TestSecurityAndExclusionUnit:
@@ -298,7 +298,7 @@ class TestSecurityAndExclusionUnit:
         uow = _make_mock_uow()
         banned_user = _make_domain_user(user_id=9, mail="banned@example.com", banned=True)
         uow.user_repo.get_user_by_mail.return_value = banned_user
-        uow.moderation_repo.unban_player.side_effect = BanNotFinishedException()
+        uow.moderation_repo.unban_user_if_applicable.side_effect = BanNotFinishedException()
 
         token_service = MagicMock()
         password_hasher = MagicMock()
@@ -316,7 +316,7 @@ class TestSecurityAndExclusionUnit:
         banned_user = _make_domain_user(user_id=9, mail="banned@example.com", banned=True)
         uow.refresh_token_repo.is_valid.return_value = True
         uow.user_repo.get_user_by_id.return_value = banned_user
-        uow.moderation_repo.unban_player.side_effect = BanNotFinishedException()
+        uow.moderation_repo.unban_user_if_applicable.side_effect = BanNotFinishedException()
 
         token_service = MagicMock()
         token_service.verify_refresh_token.return_value = {"user_id": 9, "jti": "jti-123"}
