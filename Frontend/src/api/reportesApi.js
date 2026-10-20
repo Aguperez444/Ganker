@@ -1,4 +1,5 @@
 import axiosClient from "./axiosClient";
+import { leerReporteDesdeCsv } from "../utils/csvReporte";
 
 // Reportes del panel admin. Todo requiere admin u owner (require_admin en el
 // backend).
@@ -73,6 +74,22 @@ export function exportarReportePerfiles(reportId, formato) {
   return exportarReporte(RUTA_PERFILES, reportId, formato, "reporte_perfiles");
 }
 
+// PROVISORIO: datos de un reporte ya generado ({ items, total }), leidos del
+// CSV de exportacion porque el backend todavia no tiene GET /{id}. Cuando lo
+// tenga, alcanza con cambiar esta funcion y la de uso: quien las llama no se
+// entera.
+async function obtenerDatosReporte(ruta, reportId) {
+  const response = await axiosClient.get(`${ruta}/${reportId}/export`, {
+    params: { report_output_format: "csv" },
+    responseType: "text",
+  });
+  return leerReporteDesdeCsv(response.data);
+}
+
+export function obtenerDatosReportePerfiles(reportId) {
+  return obtenerDatosReporte(RUTA_PERFILES, reportId);
+}
+
 // ---------------------------------------------------------
 // US 38 - Reporte de uso (rangos, personajes o equipos) por videojuego
 // ---------------------------------------------------------
@@ -126,4 +143,8 @@ export async function obtenerUltimoReporteUso({ videogame_id, analysis_type }) {
 
 export function exportarReporteUso(reportId, formato) {
   return exportarReporte(RUTA_USO, reportId, formato, "reporte_uso");
+}
+
+export function obtenerDatosReporteUso(reportId) {
+  return obtenerDatosReporte(RUTA_USO, reportId);
 }

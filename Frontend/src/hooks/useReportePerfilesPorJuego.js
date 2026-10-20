@@ -2,9 +2,11 @@ import { useCallback, useEffect, useState } from "react";
 import {
   exportarReportePerfiles,
   generarReportePerfiles,
+  obtenerDatosReportePerfiles,
   obtenerReportesPerfiles,
   obtenerUltimoReportePerfiles,
 } from "../api/reportesApi";
+import { useComparacionUltimosReportes } from "./useComparacionUltimosReportes";
 import { descargarArchivo } from "../utils/descargas";
 import { logError } from "../utils/logs";
 import { validarPeriodoReporte } from "../utils/reportes";
@@ -141,12 +143,23 @@ export function useReportePerfilesPorJuego() {
     }
   }
 
+  // Tortas del ultimo reporte y el anterior (panel fijo arriba de la page).
+  const comparacion = useComparacionUltimosReportes(
+    estado.historial,
+    obtenerDatosReportePerfiles
+  );
+
   return {
     fechaInicio,
     fechaFin,
     setFechaInicio,
     setFechaFin,
     inicioMinimo,
+
+    comparacion: {
+      ...comparacion,
+      cargando: estado.cargando || comparacion.cargando,
+    },
 
     cargandoAntecedentes: estado.cargando,
     ultimo: estado.ultimo,
