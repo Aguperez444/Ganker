@@ -1,0 +1,10 @@
+User-agent: *
+Allow: /
+Disallow: /api/
+Disallow: /auth/
+Disallow: /app/
+Disallow: /completar-registro
+Disallow: /settings
+Disallow: /profile/edit
+
+Sitemap: https://gankerweb.app/sitemap.xml
