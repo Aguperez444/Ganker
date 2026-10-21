@@ -38,6 +38,14 @@ const AdminHomePage = () => {
       badge: "Disponible",
     },
     {
+      titulo: "Reportes",
+      descripcion:
+        "Generá reportes de perfiles de jugador por videojuego y exportalos.",
+      path: "/app/admin/reportes",
+      botonTexto: "Ver reportes",
+      badge: "Disponible",
+    },
+    {
       titulo: "Moderación",
       descripcion: "Supervisá reportes, conductas y sanciones de usuarios.",
       path: "/app/admin/moderacion",
