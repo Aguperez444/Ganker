@@ -2,25 +2,25 @@ const GAMES = [
   {
     name: "League of Legends",
     image: "/images/games/lol.webp",
-    alt: "League of Legends art",
+    alt: "Jugadores y equipos competitivos de League of Legends en Ganker",
     objectPosition: "center 12%",
   },
   {
     name: "Valorant",
     image: "/images/games/valorant.webp",
-    alt: "Valorant art",
+    alt: "Jugadores y equipos competitivos de Valorant en Ganker",
     objectPosition: "center 5%",
   },
   {
     name: "Counter-Strike 2",
     image: "/images/games/cs2.webp",
-    alt: "Counter-Strike 2 art",
+    alt: "Jugadores y equipos competitivos de Counter-Strike 2 en Ganker",
     objectPosition: "center 20%",
   },
   {
     name: "Overwatch 2",
     image: "/images/games/ow.webp",
-    alt: "Overwatch 2 art",
+    alt: "Jugadores y equipos competitivos de Overwatch 2 en Ganker",
     objectPosition: "center 75%",
   },
 ];
@@ -29,9 +29,9 @@ function SupportedGamesSection() {
   return (
     <section className="relative w-full py-12 overflow-hidden">
       <div className="relative z-10 mx-auto max-w-xl px-4">
-        <h3 className="mb-6 text-left sm:text-left text-2xl sm:text-3xl font-bold text-white font-heading">
+        <h2 className="mb-6 text-left sm:text-left text-2xl sm:text-3xl font-bold text-white font-heading">
           Juegos destacados
-        </h3>
+        </h2>
 
         <div className="space-y-4">
           {GAMES.map((game) => (
@@ -56,9 +56,9 @@ function SupportedGamesSection() {
 
               {/* Nombre del juego en la esquina inferior izquierda */}
               <div className="absolute bottom-0 left-0 p-4">
-                <span className="text-base sm:text-lg font-bold text-white tracking-wide drop-shadow-md">
+                <h3 className="text-base sm:text-lg font-bold text-white tracking-wide drop-shadow-md">
                   {game.name}
-                </span>
+                </h3>
               </div>
             </div>
           ))}

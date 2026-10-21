@@ -1,8 +1,8 @@
-from datetime import date, datetime, time, timezone
+from datetime import datetime, timezone
 
 from app.domain.exceptions.rank.rank_not_found_exception import RankNotFoundException
+from app.domain.exceptions.report.invalid_report_bands_exception import InvalidReportBandsException
 from app.domain.exceptions.report.invalid_report_analysis_type_exception import InvalidReportAnalysisTypeException
-from app.domain.exceptions.report.invalid_report_date_range_exception import InvalidReportDateRangeException
 from app.domain.exceptions.report.no_usage_data_for_report_exception import NoUsageDataForReportException
 from app.domain.exceptions.report.rank_bands_required_exception import RankBandsRequiredException
 from app.domain.exceptions.team.invalid_rank_range_exception import InvalidRankRangeException
@@ -28,10 +28,9 @@ if TYPE_CHECKING:
 
 class GenerateGameUsageReport:
     """
-    Genera y persiste un reporte de uso de la plataforma para un videojuego específico, según el tipo
-    de análisis solicitado: distribución de jugadores por rango, personajes más utilizados o equipos
-    por franja de rangos. Si existe un reporte previo del mismo tipo para el mismo videojuego, calcula
-    la variación respecto a él.
+    Genera una instantánea de perfiles o equipos del período para un juego o para todos.
+    En el alcance general, los rangos y personajes identifican su juego; los equipos se agrupan
+    por videojuego. La comparación se limita al mismo alcance y tipo de análisis.
     """
 
     def __init__(self, unit_of_work: IUnitOfWork):
@@ -48,16 +47,13 @@ class GenerateGameUsageReport:
         if analysis_type is None:
             raise InvalidReportAnalysisTypeException(request.analysis_type)
 
-        start_datetime = self._to_start_datetime(request.start_date)
-        end_datetime = self._to_end_datetime(request.end_date)
+        start_datetime, end_datetime = ReportPeriodService.normalize(request.start_date, request.end_date)
 
-        if start_datetime is not None and end_datetime is not None and start_datetime > end_datetime:
-            raise InvalidReportDateRangeException()
-
-        # El videojuego es obligatorio: el reporte siempre se acota a un videojuego específico.
-        videogame = CatalogValidationService.get_and_validate_exist_videogame(request.videogame_id, uow)
-
-        previous_report = uow.game_usage_report_repo.get_latest_report(videogame.videogame_id, analysis_type.value)
+        videogame = (
+            CatalogValidationService.get_and_validate_exist_videogame(request.videogame_id, uow)
+            if request.videogame_id is not None else None
+        )
+        previous_report = uow.game_usage_report_repo.get_latest_report(request.videogame_id, analysis_type.value)
 
         # Criterio: la fecha inicial del nuevo reporte no puede ser menor a la fecha final del último reporte previo.
         if previous_report is not None:
@@ -67,6 +63,10 @@ class GenerateGameUsageReport:
             items, total = self._build_rank_items(uow, videogame, start_datetime, end_datetime)
         elif analysis_type is ReportAnalysisType.CHARACTERS:
             items, total = self._build_character_items(uow, videogame, start_datetime, end_datetime)
+        elif videogame is None:
+            if request.rank_bands:
+                raise InvalidReportBandsException("Las franjas se definen para un videojuego; el reporte general agrupa equipos por juego.")
+            items, total = self._build_general_team_items(uow, start_datetime, end_datetime)
         else:
             if not request.rank_bands:
                 raise RankBandsRequiredException()
@@ -75,15 +75,20 @@ class GenerateGameUsageReport:
         if not items:
             raise NoUsageDataForReportException(self._no_data_detail(videogame, analysis_type))
 
+        # Las franjas modificadas no representan poblaciones comparables.
+        if analysis_type is ReportAnalysisType.TEAMS and videogame is not None and previous_report:
+            if {item.rank_range for item in items if item.rank_range is not None} != {item.rank_range for item in previous_report.items if item.rank_range is not None}:
+                previous_report = None
         self._apply_variation(items, previous_report)
+        self._sort_and_calculate_percentage(items, total)
 
         return GameUsageReport(
             report_id=None,
             generated_by=admin_id,
             analysis_type=analysis_type.value,
-            videogame_id=videogame.videogame_id,
-            videogame_name=videogame.name,
-            icon_url=videogame.icon_url,
+            videogame_id=videogame.videogame_id if videogame else None,
+            videogame_name=videogame.name if videogame else "Todos los videojuegos",
+            icon_url=videogame.icon_url if videogame else None,
             generated_at=datetime.now(timezone.utc).replace(tzinfo=None),
             total=total,
             items=items,
@@ -92,25 +97,25 @@ class GenerateGameUsageReport:
             previous_report_id=previous_report.report_id if previous_report else None,
         )
 
-    def _build_rank_items(self, uow: 'IUnitOfWork', videogame: 'Videogame', start_date: datetime | None,
+    def _build_rank_items(self, uow: 'IUnitOfWork', videogame: 'Videogame | None', start_date: datetime | None,
                           end_date: datetime | None) -> tuple[list[GameUsageReportItem], int]:
         """
         Llama a build_items pasando los datos de uso de rangos obtenidos del repositorio.
         """
-        rows = uow.role_profile_repo.get_rank_usage(videogame.videogame_id, start_date, end_date)
+        rows = uow.role_profile_repo.get_rank_usage(videogame.videogame_id if videogame else None, start_date, end_date)
 
         return self._build_items(rows, lambda rank: rank.rank_id, uow, videogame, start_date, end_date)
 
-    def _build_character_items(self, uow: 'IUnitOfWork', videogame: 'Videogame', start_date: datetime | None,
+    def _build_character_items(self, uow: 'IUnitOfWork', videogame: 'Videogame | None', start_date: datetime | None,
                                end_date: datetime | None) -> tuple[list[GameUsageReportItem], int]:
         """
         Llama a build_items pasando los datos de uso de personajes obtenidos del repositorio.
         """
-        rows = uow.character_priority_repo.get_character_usage(videogame.videogame_id, start_date, end_date)
+        rows = uow.character_priority_repo.get_character_usage(videogame.videogame_id if videogame else None, start_date, end_date)
 
         return self._build_items(rows, lambda character: character.character_id, uow, videogame, start_date, end_date)
 
-    def _build_items(self, rows, category_id_getter, uow: IUnitOfWork, videogame: 'Videogame',
+    def _build_items(self, rows, category_id_getter, uow: IUnitOfWork, videogame: 'Videogame | None',
                      start_date: datetime | None, end_date: datetime | None) -> tuple[list[GameUsageReportItem], int]:
         """
         Construye los items del reporte a partir de las filas obtenidas de la base de datos.
@@ -121,7 +126,7 @@ class GenerateGameUsageReport:
             GameUsageReportItem(
                 item_id=None,
                 category_id=category_id_getter(entity),
-                name=entity.name,
+                name=entity.name if videogame else f"{entity.videogame.name} / {entity.name}",
                 icon_url=entity.icon_url,
                 count=count,
                 percentage=0.0,
@@ -133,19 +138,18 @@ class GenerateGameUsageReport:
         return self._sort_and_calculate_percentage(items, total), total
 
     def _build_team_items(
-        self, uow: 'IUnitOfWork', videogame: 'Videogame', start_date: datetime | None, end_date: datetime | None,
+        self, uow: 'IUnitOfWork', videogame: 'Videogame | None', start_date: datetime | None, end_date: datetime | None,
             rank_bands: 'list[RankBandRequest]') -> tuple[list[GameUsageReportItem], int]:
         """
         Construye los items del reporte de equipos por franja de rangos a partir de las filas obtenidas
         de la base de datos. Después calcula el total de equipos y devuelve los items ordenados y con
         porcentaje calculado.
         """
+        bands = self._normalize_bands(rank_bands, uow, videogame.videogame_id)
         rows = uow.team_repo.get_team_counts_by_min_rank(videogame.videogame_id, start_date, end_date)
         if not rows:
             return [], 0
         total = sum(count for _, count in rows)
-
-        bands = self._normalize_bands(rank_bands, uow)
 
         items = []
         for band_name, min_value, max_value in bands:
@@ -166,10 +170,25 @@ class GenerateGameUsageReport:
                 )
             )
 
+        uncovered = total - sum(item.count for item in items)
+        if uncovered:
+            items.append(GameUsageReportItem(None, None, "Fuera de las franjas", None, uncovered, 0.0))
+        return self._sort_and_calculate_percentage(items, total), total
+
+    def _build_general_team_items(self, uow, start_date, end_date):
+        rows = uow.team_repo.get_team_counts_by_min_rank(None, start_date, end_date)
+        games = {}
+        for rank, count in rows:
+            game = rank.videogame
+            previous = games.get(game.videogame_id, (game, 0))[1]
+            games[game.videogame_id] = (game, previous + count)
+        items = [GameUsageReportItem(None, game.videogame_id, game.name, game.icon_url, count, 0.0)
+                 for game, count in games.values()]
+        total = sum(item.count for item in items)
         return self._sort_and_calculate_percentage(items, total), total
 
     @staticmethod
-    def _normalize_bands(rank_bands: 'list[RankBandRequest]', uow: 'IUnitOfWork') -> list[tuple[str, int, int]]:
+    def _normalize_bands(rank_bands: 'list[RankBandRequest]', uow: 'IUnitOfWork', videogame_id: int) -> list[tuple[str, int, int]]:
         """
         Normaliza las franjas de rangos definidas por el administrador, obteniendo los nombres y valores
         de los rangos desde el repositorio y validando que existan y que los rangos mínimos sean menores
@@ -184,6 +203,10 @@ class GenerateGameUsageReport:
             if min_rank is None or max_rank is None:
                 raise RankNotFoundException(band.min_rank_id if not min_rank else band.max_rank_id)
 
+            if min_rank.videogame.videogame_id != videogame_id or max_rank.videogame.videogame_id != videogame_id:
+                raise InvalidReportBandsException("Todos los rangos de las franjas deben pertenecer al videojuego seleccionado.")
+            if any(min_rank.value <= upper and max_rank.value >= lower for _, lower, upper in bands):
+                raise InvalidReportBandsException("Las franjas de rangos no pueden solaparse.")
             if min_rank.value > max_rank.value:
                 raise InvalidRankRangeException(min_rank.value, max_rank.value)
 
@@ -203,64 +226,58 @@ class GenerateGameUsageReport:
         return items
 
     @staticmethod
+    def _variation_key(item: GameUsageReportItem):
+        return item.category_id if item.category_id is not None else item.rank_range or item.name
+
+    @staticmethod
     def _apply_variation(items: list[GameUsageReportItem], previous_report: GameUsageReport | None) -> None:
         """
         Calcula, para cada item, la variación absoluta y porcentual respecto al reporte previo del mismo
-        tipo y videojuego. En las franjas de rangos el emparejamiento se hace por nombre de franja; en
+        tipo y alcance. En las franjas el emparejamiento usa sus límites numéricos; en
         rangos y personajes por el id de la entidad.
         """
         if previous_report is None:
             return
 
-        previous_counts: dict = {}
-        for item in previous_report.items:
-            key = item.category_id if item.category_id is not None else item.name
-            previous_counts[key] = item.count
+        previous_counts = {
+            GenerateGameUsageReport._variation_key(item): item.count
+            for item in previous_report.items
+        }
 
+        current_keys = {GenerateGameUsageReport._variation_key(item) for item in items}
+        for old_item in previous_report.items:
+            key = GenerateGameUsageReport._variation_key(old_item)
+            if key not in current_keys:
+                items.append(GameUsageReportItem(None, old_item.category_id, old_item.name, old_item.icon_url,
+                                                 0, 0.0, rank_range=old_item.rank_range))
         for item in items:
-            key = item.category_id if item.category_id is not None else item.name
+            key = GenerateGameUsageReport._variation_key(item)
             previous_count = previous_counts.get(key, 0)
             item.variation, item.variation_percentage, item.trend = ReportVariationService.compute(
                 item.count, previous_count
             )
 
     @staticmethod
-    def _get_total_profiles_by_videogame(uow: 'IUnitOfWork', videogame: 'Videogame', start_date: datetime | None,
+    def _get_total_profiles_by_videogame(uow: 'IUnitOfWork', videogame: 'Videogame | None', start_date: datetime | None,
                                          end_date: datetime | None) -> int:
         """
         Obtiene el total de perfiles registrados en la plataforma para el videojuego y rango de fechas especificados.
         """
         counts_by_videogame = uow.game_profile_repo.get_profile_counts_by_videogame(start_date, end_date)
         for game, count in counts_by_videogame:
-            if game.videogame_id == videogame.videogame_id:
+            if videogame is not None and game.videogame_id == videogame.videogame_id:
                 return count
+        if videogame is None:
+            return sum(count for _, count in counts_by_videogame)
         return 0
 
     @staticmethod
-    def _no_data_detail(videogame: 'Videogame', analysis_type: ReportAnalysisType) -> str:
+    def _no_data_detail(videogame: 'Videogame | None', analysis_type: ReportAnalysisType) -> str:
         noun = analysis_type.noun
         return (
-            f'el videojuego "{videogame.name}" no cuenta con perfiles o datos de '
+            f'{videogame.name if videogame else "Los videojuegos"}: no hay perfiles o datos de '
             f"{noun} registrados en el período seleccionado"
         )
-
-    @staticmethod
-    def _to_start_datetime(start_date: date | None) -> datetime | None:
-        """
-        Convierte una fecha a un datetime con hora mínima (00:00:00) para usar como fecha de inicio.
-        """
-        if start_date:
-            return datetime.combine(start_date, time.min)
-        return None
-
-    @staticmethod
-    def _to_end_datetime(end_date: date | None) -> datetime | None:
-        """
-        Convierte una fecha a un datetime con hora máxima (23:59:59.999999) para usar como fecha de fin.
-        """
-        if end_date:
-            return datetime.combine(end_date, time.max)
-        return None
 
     @staticmethod
     def _to_response(report: GameUsageReport, has_previous_report: bool) -> GenerateGameUsageReportResponse:

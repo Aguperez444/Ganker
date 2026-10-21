@@ -8,7 +8,7 @@ from app.domain.models.game_usage_report_item import GameUsageReportItem
 
 class GameUsageReport:
     """
-    Reporte de uso de la plataforma para un videojuego específico: distribución por rangos,
+    Reporte de uso de la plataforma para un videojuego o todos (videogame_id=None): distribución por rangos,
     personajes más utilizados o equipos por franja de rangos. Guarda además el reporte previo del
     mismo tipo y videojuego con el que se calculó la variación, si existía.
     """
@@ -18,7 +18,7 @@ class GameUsageReport:
         report_id: Optional[int],
         generated_by: int,
         analysis_type: str,
-        videogame_id: int,
+        videogame_id: Optional[int],
         videogame_name: str,
         icon_url: Optional[str],
         generated_at: datetime,
@@ -62,7 +62,7 @@ class GameUsageReport:
         return self._analysis_type
 
     @property
-    def videogame_id(self) -> int:
+    def videogame_id(self) -> Optional[int]:
         return self._videogame_id
 
     @property

@@ -15,6 +15,7 @@ GEMINI.md
 .mcp.json
 .coverage
 opencode.jsonc
+RTK.md
 # ----------–----------------------------------------------------------------------------- PARA js ----------–-----------------------------------------------------------------------------
 
 # Dependencias
@@ -28,12 +29,22 @@ yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
 
-# Variables de entorno
+# Variables de entorno y secretos
 .env
 .env.*
 !.env.example
-# Claves personales del backend (ej. RIOT_API_KEY): ver app/infrastructure/config/settings.py
+!.env.prod.example
+# Claves del backend: ver app/infrastructure/config/settings.py
+secrets.env
 secrets.local.env
+backend/app/infrastructure/config/secrets.env
+backend/app/infrastructure/config/secrets.local.env
+
+# Certificados SSL y Backups de producción
+nginx/certs/*.pem
+nginx/certs/*.key
+nginx/certs/*.crt
+backups/
 
 # Builds
 dist/
@@ -49,8 +60,6 @@ coverage/
 # Archivos del sistema / editores
 .DS_Store
 Thumbs.db
-.vscode/
-.idea/
 
 # Archivos temporales
 *.tmp
@@ -74,9 +83,7 @@ __pycache__/
 
 # Distribution / packaging
 .Python
-build/
 develop-eggs/
-dist/
 downloads/
 eggs/
 .eggs/
@@ -106,7 +113,6 @@ pip-delete-this-directory.txt
 htmlcov/
 .tox/
 .nox/
-.coverage
 .coverage.*
 .cache
 nosetests.xml
@@ -122,7 +128,6 @@ cover/
 *.pot
 
 # Django stuff:
-*.log
 local_settings.py
 db.sqlite3
 db.sqlite3-journal
@@ -214,7 +219,6 @@ activemq-data/
 *.sage.py
 
 # Environments
-.env
 .envrc
 .venv
 env/

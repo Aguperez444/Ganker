@@ -6,9 +6,9 @@ function CtaBanner() {
       <div className="mx-auto max-w-xl sm:max-w-2xl rounded-2xl border border-purple-900/50 bg-gradient-to-r from-[#170e2c] via-[#20123d] to-[#2c1042] p-6 sm:p-8 shadow-2xl">
         <div className="flex flex-col sm:flex-row items-center justify-between gap-6 text-center sm:text-left">
           <div>
-            <h3 className="text-lg sm:text-xl md:text-2xl font-bold text-white font-heading">
+            <h2 className="text-lg sm:text-xl md:text-2xl font-bold text-white font-heading">
               Tu próximo equipo ya está buscando.
-            </h3>
+            </h2>
             <p className="mt-1 text-xs sm:text-sm text-slate-400">
               ¿Qué esperas para unirte?
             </p>

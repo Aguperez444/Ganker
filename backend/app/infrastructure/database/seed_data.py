@@ -386,14 +386,71 @@ def _seed_teams(session: Session) -> None:
             session.flush()
 
 
+def _seed_initial_owner(session: Session) -> None:
+    """
+    Crea el usuario owner inicial a partir de variables de entorno si y solo si:
+    1) Están definidas INITIAL_OWNER_USERNAME, INITIAL_OWNER_EMAIL e INITIAL_OWNER_PASSWORD.
+    2) No existe todavía ningún usuario activo con rol 'owner' ni con ese username/email.
+    Nunca sobrescribe la contraseña de un owner ya existente en reinicios posteriores.
+    """
+    from app.infrastructure.config.settings import settings
+    from app.infrastructure.api.auth.password_hash_service import PasswordHashService
+
+    username = settings.initial_owner_username.strip()
+    email = settings.initial_owner_email.strip()
+    password = settings.initial_owner_password
+    name = settings.initial_owner_name.strip() or username
+
+    if not (username and email and password):
+        return
+
+    existing_owner = session.scalar(
+        select(UserORM).where(UserORM.role == "owner", UserORM.deleted == False)  # noqa: E712
+    )
+    if existing_owner is not None:
+        print(f"[*] Seed: Ya existe un usuario owner ('{existing_owner.username}'), se omite bootstrap inicial.")
+        return
+
+    existing_user = session.scalar(
+        select(UserORM).where(
+            (UserORM.username == username) | (UserORM.mail == email)
+        )
+    )
+    if existing_user is not None:
+        print(f"[*] Seed: El usuario/email inicial ('{username}' / '{email}') ya existe, se omite bootstrap.")
+        return
+
+    password_hash = PasswordHashService().hash_password(password)
+    session.add(
+        UserORM(
+            name=name,
+            username=username,
+            mail=email,
+            password_hash=password_hash,
+            role="owner",
+            icon_url=None,
+            last_connection=None,
+        )
+    )
+    session.flush()
+    print(f"[*] Seed: Usuario owner inicial '{username}' creado exitosamente.")
+
+
 def seed_database(session: Session) -> None:
-    # El orden importa: los perfiles y equipos referencian a los catálogos y usuarios.
-    _seed_videogames(session)
-    _seed_roles(session)
-    _seed_ranks(session)
-    _seed_characters(session)
-    _seed_users(session)
-    _seed_game_profiles(session)
-    _seed_teams(session)
+    from app.infrastructure.config.settings import settings
+
+    if settings.seed_demo_data:
+        # Modo desarrollo/pruebas: sincroniza catálogos, usuarios, perfiles y equipos de prueba
+        _seed_videogames(session)
+        _seed_roles(session)
+        _seed_ranks(session)
+        _seed_characters(session)
+        _seed_users(session)
+        _seed_game_profiles(session)
+        _seed_teams(session)
+    else:
+        print("[*] Seed: SEED_DEMO_DATA=false -> Omitiendo catálogos y datos de prueba.")
+
+    _seed_initial_owner(session)
     session.commit()
     print("[*] Seed: datos sincronizados.")

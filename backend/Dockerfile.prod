@@ -1,0 +1,36 @@
+FROM python:3.14-slim
+
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    PYTHONPATH=/app
+
+WORKDIR /app
+
+# Instalar gosu para ajustar permisos del volumen /app/media y bajar privilegios a appuser de forma segura
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends gosu && \
+    rm -rf /var/lib/apt/lists/* && \
+    groupadd --gid 10001 appgroup && \
+    useradd --uid 10001 --gid appgroup --shell /sbin/nologin --create-home appuser
+
+# Instalar dependencias de Python (con wheels ARM64 precompiladas en Python 3.12)
+COPY requirements.txt .
+RUN pip install --no-cache-dir --upgrade pip && \
+    pip install --no-cache-dir -r requirements.txt
+
+# Copiar el código del backend (excluyendo secretos y media de prueba vía .dockerignore)
+COPY . .
+
+# Preparar directorio de almacenamiento de medios vacío y entrypoint de producción
+COPY entrypoint.prod.sh /entrypoint.prod.sh
+RUN mkdir -p /app/media/games /app/media/users/icons /app/media/teams/icons && \
+    chmod +x /entrypoint.prod.sh && \
+    chown -R appuser:appgroup /app /entrypoint.prod.sh
+
+VOLUME ["/app/media"]
+
+EXPOSE 8000
+
+ENTRYPOINT ["/entrypoint.prod.sh"]
+# Importante: --workers 1 es obligatorio mientras los WebSockets y el LoginRateLimiter mantengan su estado en RAM
+CMD ["uvicorn", "app.infrastructure.start.main:app", "--host", "0.0.0.0", "--port", "8000", "--workers", "1", "--proxy-headers", "--forwarded-allow-ips", "*"]

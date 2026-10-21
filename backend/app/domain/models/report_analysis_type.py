@@ -23,9 +23,9 @@ class ReportAnalysisType(str, Enum):
     @property
     def description(self) -> str:
         return {
-            ReportAnalysisType.RANKS: "Cantidad y porcentaje de jugadores distribuidos por cada rango del videojuego.",
-            ReportAnalysisType.CHARACTERS: "Frecuencia de elección de cada personaje, ordenada de mayor a menor.",
-            ReportAnalysisType.TEAMS: "Desglose de equipos por franjas de rangos definidas por el administrador, ordenadas de mayor a menor.",
+            ReportAnalysisType.RANKS: "Perfiles distintos por rango sobre los perfiles vigentes del alcance. En el general se identifica el juego de cada rango.",
+            ReportAnalysisType.CHARACTERS: "Perfiles distintos que eligieron cada personaje, identificando su juego en el alcance general.",
+            ReportAnalysisType.TEAMS: "Equipos por franjas del rango mínimo en un juego; en el general, cantidad de equipos por videojuego.",
         }[self]
 
     @property

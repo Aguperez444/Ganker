@@ -71,7 +71,7 @@ class ITeamRepository(ABC):
     @abstractmethod
     def get_team_counts_by_min_rank(
         self,
-        videogame_id: int,
+        videogame_id: Optional[int],
         start_date: Optional[datetime],
         end_date: Optional[datetime],
     ) -> list[tuple["Rank", int]]:
