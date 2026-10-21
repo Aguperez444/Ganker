@@ -71,9 +71,9 @@ function HowItWorksSection() {
   return (
     <section className="relative w-full py-16 overflow-hidden">
       <div className="relative z-10 mx-auto max-w-xl px-4">
-        <h3 className="mb-8 text-center text-2xl sm:text-3xl font-bold text-white font-heading">
+        <h2 className="mb-8 text-center text-2xl sm:text-3xl font-bold text-white font-heading">
           Cómo funciona
-        </h3>
+        </h2>
 
         <div className="space-y-4">
           {STEPS.map(({ step, title, description, icon }) => (
@@ -86,9 +86,9 @@ function HowItWorksSection() {
                   <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-gradient-to-br from-[#f27238] to-[#d9531e] text-sm font-bold text-white shadow-md">
                     {step}
                   </span>
-                  <h4 className="text-base sm:text-lg font-bold text-white">
+                  <h3 className="text-base sm:text-lg font-bold text-white">
                     {title}
-                  </h4>
+                  </h3>
                 </div>
                 <div className="text-slate-400 transition-colors group-hover:text-purple-300">
                   {icon}
