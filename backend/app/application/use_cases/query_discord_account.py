@@ -1,4 +1,5 @@
 from app.application.ports.i_unit_of_work import IUnitOfWork
+from app.domain.exceptions.user.user_not_found_exception import UserNotFoundException
 from app.domain.services.catalog_validation_service import CatalogValidationService
 from app.domain.services.create_discord_dto_service import CreateDiscordDTOService
 from app.domain.services.discord_visibility_service import DiscordVisibilityService
@@ -13,7 +14,9 @@ class QueryDiscordAccount:
 
     def execute(self, owner_id: int, viewer_id: int) -> GetDiscordAccountResponse:
         with self.uow as uow:
-            CatalogValidationService.get_and_validate_exist_user(owner_id, uow)
+            owner = CatalogValidationService.get_and_validate_exist_user(owner_id, uow)
+            if getattr(owner, "banned", False) is True:
+                raise UserNotFoundException(owner_id)
 
             link = uow.discord_account_link_repo.get_by_user_id(owner_id)
             if link is None:

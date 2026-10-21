@@ -18,8 +18,8 @@ class ForgotPassword:
         with self.uow as uow:
             #Busco el usuario por el mail
             user = uow.user_repo.get_user_by_mail(mail)
-            #Si no lo encuentro retorno none para no vulnerar el sistema
-            if not user:
+            #Si no lo encuentro o está baneado retorno none para no vulnerar el sistema
+            if not user or getattr(user, "banned", False) is True:
                 return None
 
             #Invalido los token sin usar

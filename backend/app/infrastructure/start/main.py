@@ -8,6 +8,7 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 
 from sqlalchemy.orm import Session
+
 from app.infrastructure.database.seed_data import seed_database
 
 from app.domain.exceptions.domain_exception import DomainException
@@ -29,6 +30,7 @@ from app.infrastructure.api.controllers.chat_controller import router as chat_ro
 from app.infrastructure.api.controllers.team_controller import router as team_router
 from app.infrastructure.api.controllers.region_controller import router as region_router
 from app.infrastructure.api.controllers.report_controller import router as report_router
+from app.infrastructure.api.controllers.moderation_controller import router as moderation_controller
 
 
 from app.infrastructure.api.controllers.chat_websocket import router as chat_websocket
@@ -127,6 +129,8 @@ app.include_router(team_router)
 app.include_router(team_websocket)
 app.include_router(region_router)
 app.include_router(report_router)
+
+app.include_router(moderation_controller)
 
 host = "127.0.0.1"
 port = 8000

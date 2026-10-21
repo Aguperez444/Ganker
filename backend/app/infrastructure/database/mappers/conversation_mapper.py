@@ -6,10 +6,21 @@ from app.domain.models.conversation_type_enum import ConversationTypeEnum
 
 class ConversationMapper:
     @staticmethod
+    def _is_valid_member(member) -> bool:
+        user = getattr(member, "user", None)
+        if user is None:
+            return False
+        return getattr(user, "deleted", False) is not True and getattr(user, "banned", False) is not True
+
+    @staticmethod
     def orm_to_domain(conversation_orm: ConversationORM) -> Conversation:
         return Conversation(
             conversation_id=conversation_orm.conversation_id,
-            members=[ConversationMemberMapper.orm_to_domain(member) for member in conversation_orm.members],
+            members=[
+                ConversationMemberMapper.orm_to_domain(member)
+                for member in conversation_orm.members
+                if ConversationMapper._is_valid_member(member)
+            ],
             messages=[MessageMapper.orm_to_domain(message) for message in conversation_orm.messages],
             conversation_type=ConversationTypeEnum(conversation_orm.type) if conversation_orm.type else ConversationTypeEnum.PRIVATE,
             name=conversation_orm.name
@@ -35,7 +46,11 @@ class ConversationMapper:
     def orm_to_domain_no_messages(conversation_orm: ConversationORM) -> Conversation:
         return Conversation(
             conversation_id=conversation_orm.conversation_id,
-            members=[ConversationMemberMapper.orm_to_domain(member) for member in conversation_orm.members],
+            members=[
+                ConversationMemberMapper.orm_to_domain(member)
+                for member in conversation_orm.members
+                if ConversationMapper._is_valid_member(member)
+            ],
             messages=[],
             conversation_type=ConversationTypeEnum(conversation_orm.type) if conversation_orm.type else ConversationTypeEnum.PRIVATE,
             name=conversation_orm.name
@@ -45,7 +60,11 @@ class ConversationMapper:
     def orm_to_domain_last_message_only(conversation_orm: ConversationORM) -> Conversation:
         return Conversation(
             conversation_id=conversation_orm.conversation_id,
-            members=[ConversationMemberMapper.orm_to_domain(member) for member in conversation_orm.members],
+            members=[
+                ConversationMemberMapper.orm_to_domain(member)
+                for member in conversation_orm.members
+                if ConversationMapper._is_valid_member(member)
+            ],
             messages=[MessageMapper.orm_to_domain(conversation_orm.messages[-1])] if conversation_orm.messages else [],
             conversation_type=ConversationTypeEnum(conversation_orm.type) if conversation_orm.type else ConversationTypeEnum.PRIVATE,
             name=conversation_orm.name
