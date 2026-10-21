@@ -16,6 +16,8 @@ const ModalConfirmacionComponent = ({
   confirmLabel = "Confirmar",
   confirmVariant = "danger",
   isLoading = false,
+  // Deshabilita solo "Confirmar" (ej. hasta que se escriba la confirmacion).
+  confirmDisabled = false,
   error = "",
   onConfirm,
   onCancel,
@@ -72,7 +74,7 @@ const ModalConfirmacionComponent = ({
           <button
             type="button"
             onClick={onConfirm}
-            disabled={isLoading}
+            disabled={isLoading || confirmDisabled}
             className={`cursor-pointer rounded-lg px-4 py-2.5 text-sm font-semibold text-white transition disabled:cursor-not-allowed disabled:opacity-50 ${
               CLASES_BOTON_CONFIRMAR[confirmVariant] ??
               CLASES_BOTON_CONFIRMAR.danger

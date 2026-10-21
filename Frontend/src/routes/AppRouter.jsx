@@ -27,6 +27,7 @@ import ModeracionPage from "../pages/admin/ModeracionPage.jsx";
 import RegionsPage from "../pages/admin/RegionsPage.jsx";
 import ReportesPage from "../pages/admin/ReportesPage.jsx";
 import ReporteUsoPage from "../pages/admin/ReporteUsoPage.jsx";
+import UsuariosPage from "../pages/admin/UsuariosPage.jsx";
 import { ROLES_ADMIN } from "../utils/rutas.js";
 
 /**
@@ -96,6 +97,8 @@ function AppRouter() {
             <Route path="reportes" element={<ReportesPage />} />
             {/* US 38 - Reporte de uso (rangos, personajes, equipos). */}
             <Route path="reportes/uso" element={<ReporteUsoPage />} />
+            {/* US 50 - Eliminar cuenta de usuario. */}
+            <Route path="usuarios" element={<UsuariosPage />} />
             {/* Módulos administrativos placeholder */}
             <Route path="characters" element={<CharactersPage />} />
             <Route

@@ -36,3 +36,14 @@ export const updateGameProfile = async (gameProfileId, profileData) => {
 
   return response.data;
 };
+
+// US 09 - Eliminar perfil por juego. DELETE /api/v1/game_profiles/{id} ->
+// { message }. Borrado logico: el backend marca deleted = True en el perfil y
+// en cascada en sus roles x rangos, y valida que el perfil sea del jugador.
+export const deleteGameProfile = async (gameProfileId) => {
+  const response = await axiosClient.delete(
+    `/api/v1/game_profiles/${gameProfileId}`
+  );
+
+  return response.data;
+};

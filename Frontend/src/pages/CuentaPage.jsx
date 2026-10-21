@@ -1,8 +1,10 @@
 import { useAuth } from "../context/AuthContext";
 import { useModificarJugador } from "../hooks/useModificarJugador";
+import { useEliminarCuenta } from "../hooks/useEliminarCuenta";
 import CuentaFormComponent from "../components/jugadores/CuentaFormComponent";
 import AvatarUsuarioComponent from "../components/common/AvatarUsuarioComponent";
 import CuentaDiscordComponent from "../components/discord/CuentaDiscordComponent";
+import EliminarCuentaComponent from "../components/jugadores/EliminarCuentaComponent";
 
 // US 02 - Modificar mis datos.
 // Se llega desde el boton "Cuenta" del sidebar (ruta /app/cuenta) y se
@@ -22,6 +24,7 @@ function CuentaPage() {
     handleQuitarAvatar,
     handleSubmit,
   } = useModificarJugador();
+  const eliminarCuenta = useEliminarCuenta();
 
   return (
     <section className="min-h-full bg-ganker-bg p-6">
@@ -67,6 +70,20 @@ function CuentaPage() {
         />
 
         <CuentaDiscordComponent />
+
+        {/* US 04 - Eliminar jugador. */}
+        <EliminarCuentaComponent
+          username={user.username}
+          abierto={eliminarCuenta.abierto}
+          confirmacion={eliminarCuenta.confirmacion}
+          puedeConfirmar={eliminarCuenta.puedeConfirmar}
+          cargando={eliminarCuenta.cargando}
+          error={eliminarCuenta.error}
+          onConfirmacionChange={eliminarCuenta.setConfirmacion}
+          onAbrir={eliminarCuenta.abrir}
+          onCancelar={eliminarCuenta.cancelar}
+          onConfirmar={eliminarCuenta.confirmar}
+        />
       </div>
     </section>
   );

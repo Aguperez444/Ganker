@@ -42,4 +42,27 @@ describe("GameProfilesListComponent", () => {
 
     expect(screen.queryByRole("button", { name: "Ver" })).toBeNull();
   });
+
+  it("'Eliminar' avisa qué perfil se quiere borrar", async () => {
+    const usuario = userEvent.setup();
+    const onDelete = vi.fn();
+    render(
+      <GameProfilesListComponent
+        profiles={[PERFIL_LOL]}
+        onEdit={vi.fn()}
+        onDelete={onDelete}
+      />
+    );
+
+    await usuario.click(screen.getByRole("button", { name: "Eliminar" }));
+    expect(onDelete).toHaveBeenCalledWith(PERFIL_LOL);
+  });
+
+  it("sin onDelete no muestra 'Eliminar'", () => {
+    render(
+      <GameProfilesListComponent profiles={[PERFIL_LOL]} onEdit={vi.fn()} />
+    );
+
+    expect(screen.queryByRole("button", { name: "Eliminar" })).toBeNull();
+  });
 });

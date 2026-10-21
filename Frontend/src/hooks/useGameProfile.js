@@ -1,6 +1,10 @@
 import { useEffect, useState } from "react";
 import { getGames } from "../api/gameApi";
-import { createGameProfile, updateGameProfile } from "../api/gameProfileApi";
+import {
+  createGameProfile,
+  deleteGameProfile,
+  updateGameProfile,
+} from "../api/gameProfileApi";
 import { useAuth } from "../context/AuthContext";
 import { getCharactersByGame } from "../api/characterApi";
 import { getRolesByGame } from "../api/roleApi";
@@ -68,6 +72,11 @@ const useGameProfile = () => {
   const [isSaving, setIsSaving] = useState(false);
   const [formError, setFormError] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
+
+  // US 09 - Eliminar perfil por juego. Error aparte de formError: se muestra
+  // en el modal de confirmacion, no en el formulario.
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState("");
 
   useEffect(() => {
     const loadGames = async () => {
@@ -521,6 +530,58 @@ const useGameProfile = () => {
     }
   };
 
+  // US 09 - Eliminar perfil por juego.
+  // Devuelve el mensaje de exito del backend, o null si fallo (el error queda
+  // en deleteError). Despues se vuelve a pedir /me para que el perfil
+  // eliminado deje de aparecer en la lista de ProfilePage.
+  const removeGameProfile = async (gameProfileId) => {
+    try {
+      setIsDeleting(true);
+      setDeleteError("");
+
+      const resultado = await deleteGameProfile(gameProfileId);
+
+      await refrescarPerfilesDelUsuario();
+
+      return (
+        resultado?.message ??
+        "El perfil de juego ha sido eliminado exitosamente."
+      );
+    } catch (error) {
+      logError("Error al eliminar perfil de juego:", error);
+
+      const status = error.response?.status;
+      const data = error.response?.data;
+
+      if (!error.response) {
+        setDeleteError(
+          "No pudimos conectar con el servidor. Intentá de nuevo."
+        );
+      } else if (status === 404) {
+        setDeleteError("El perfil de juego no existe o ya fue eliminado.");
+        // Puede haberse borrado desde otra pestaña: se refresca la lista.
+        await refrescarPerfilesDelUsuario();
+      } else if (status === 401) {
+        setDeleteError("Tu sesión no es válida o ha expirado.");
+      } else if (status === 403) {
+        setDeleteError("No tienes permisos para eliminar este perfil.");
+      } else if (typeof data?.error === "string") {
+        // Ej. el perfil pertenece a otro jugador (el backend responde 400).
+        setDeleteError(data.error);
+      } else {
+        setDeleteError("Ocurrió un error al eliminar el perfil de juego.");
+      }
+
+      return null;
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
+  const clearDeleteError = () => {
+    setDeleteError("");
+  };
+
   return {
     games,
     characters,
@@ -561,6 +622,11 @@ const useGameProfile = () => {
     resetGameProfileForm,
     startEditProfile,
     submitEditGameProfile,
+
+    isDeleting,
+    deleteError,
+    removeGameProfile,
+    clearDeleteError,
   };
 };
 
