@@ -37,6 +37,25 @@ describe("useAuthFederado", () => {
     expect(result.current.errorFederado).toBeNull();
   });
 
+  it("libera el botón si el usuario vuelve con Atrás desde el proveedor", async () => {
+    obtenerUrlAutorizacionFederada.mockResolvedValue({
+      authorization_url: "https://accounts.google.com/o/oauth2/v2/auth",
+      provider: "google",
+    });
+    const { result } = renderHook(() => useAuthFederado());
+
+    await act(() => result.current.conectar("google"));
+    expect(result.current.proveedorCargando).toBe("google");
+
+    act(() => {
+      const evento = new Event("pageshow");
+      evento.persisted = true;
+      window.dispatchEvent(evento);
+    });
+
+    expect(result.current.proveedorCargando).toBeNull();
+  });
+
   it("muestra el mensaje del backend si el proveedor no está disponible", async () => {
     obtenerUrlAutorizacionFederada.mockRejectedValue({
       response: {

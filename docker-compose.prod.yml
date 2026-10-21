@@ -45,7 +45,7 @@ services:
       - uploads_prod_data:/app/media
     env_file:
       - path: .env.prod
-        required: false
+        required: true
     environment:
       - ENVIRONMENT=production
       - CORS_ORIGINS=${CORS_ORIGINS:-https://gankerweb.app,https://www.gankerweb.app}

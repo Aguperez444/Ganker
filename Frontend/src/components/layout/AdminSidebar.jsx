@@ -27,6 +27,10 @@ export const adminNavigationItems = [
     path: "/app/admin/regions",
   },
   {
+    label: "Reportes",
+    path: "/app/admin/reportes",
+  },
+  {
     label: "Moderación",
     path: "/app/admin/moderacion",
   },

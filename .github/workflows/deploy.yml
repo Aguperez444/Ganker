@@ -1,0 +1,67 @@
+name: CD - Deploy to OCI Production
+
+on:
+  workflow_run:
+    workflows: ["CI - Tests & Build"]
+    types:
+      - completed
+    branches:
+      - main
+  workflow_dispatch: # Mantiene el botón para poder lanzarlo a mano
+
+concurrency:
+  group: oci-production-deploy
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: Build & Deploy on OCI (ARM64)
+    runs-on: ubuntu-latest
+    # Solo se ejecuta si el CI terminó en verde (success) O si se disparó a mano (workflow_dispatch)
+    if: >
+      github.event_name == 'workflow_dispatch' ||
+      github.event.workflow_run.conclusion == 'success'
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          # Asegura descargar exactamente el commit que acaba de aprobar el CI
+          ref: ${{ github.event.workflow_run.head_sha || github.sha }}
+
+      - name: Configurar y verificar clave SSH para OCI
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.OCI_SSH_PRIVATE_KEY }}
+          OCI_HOST: ${{ secrets.OCI_HOST }}
+        run: |
+          mkdir -p ~/.ssh
+          chmod 700 ~/.ssh
+          # Guardar la clave preservando saltos de línea exactos y asegurando newline final
+          printf '%s\n' "$SSH_PRIVATE_KEY" | tr -d '\r' > ~/.ssh/oci_cd_key
+          chmod 600 ~/.ssh/oci_cd_key
+
+          # Validar que la llave privada tenga formato OpenSSH válido antes de conectar
+          ssh-keygen -y -f ~/.ssh/oci_cd_key >/dev/null || {
+            echo "ERROR: El secret OCI_SSH_PRIVATE_KEY no es una clave privada válida." >&2
+            exit 1
+          }
+
+          # Probar conexión SSH mostrando el error real si falla (sin 2>/dev/null)
+          ssh -i ~/.ssh/oci_cd_key \
+              -o BatchMode=yes \
+              -o ConnectTimeout=10 \
+              -o StrictHostKeyChecking=accept-new \
+              "opc@${OCI_HOST}" "echo 'OK: Autenticación SSH desde GitHub exitosa'"
+
+      - name: Ejecutar deploy.sh hacia OCI
+        env:
+          OCI_HOST: ${{ secrets.OCI_HOST }}
+          OCI_USER: "opc"
+          OCI_SSH_KEY: "/home/runner/.ssh/oci_cd_key"
+        run: |
+          chmod +x scripts/deploy.sh scripts/probar-stack.sh
+          bash scripts/deploy.sh --ci
+
+      - name: Limpiar clave SSH temporal
+        if: always()
+        run: rm -f ~/.ssh/oci_cd_key
