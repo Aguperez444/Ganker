@@ -8,8 +8,10 @@ from app.application.use_cases.export_game_profile_report import ExportGameProfi
 from app.application.use_cases.export_game_usage_report import ExportGameUsageReport
 from app.application.use_cases.generate_game_profile_report import GenerateGameProfileReport
 from app.application.use_cases.generate_game_usage_report import GenerateGameUsageReport
+from app.application.use_cases.query_game_profile_report import QueryGameProfileReport
 from app.application.use_cases.query_game_profile_reports import QueryGameProfileReports
 from app.application.use_cases.query_game_usage_analysis_types import QueryGameUsageAnalysisTypes
+from app.application.use_cases.query_game_usage_report import QueryGameUsageReport
 from app.application.use_cases.query_game_usage_reports import QueryGameUsageReports
 from app.application.use_cases.query_last_game_profile_report import QueryLastGameProfileReport
 from app.application.use_cases.query_last_game_usage_report import QueryLastGameUsageReport
@@ -114,3 +116,19 @@ def export_game_profile_report(report_id: int, report_output_format: str = CSV_F
         media_type=exported.media_type,
         headers={"Content-Disposition": f"attachment; filename*=UTF-8''{quote(exported.filename)}"}
     )
+
+
+@router.get("/game-profiles/{report_id}", response_model=GenerateGameProfileReportResponse, status_code=200, dependencies=[Depends(require_admin)])
+def get_game_profile_report(report_id: int):
+    """Devuelve en JSON el reporte guardado, con el mismo contrato que su generación."""
+    uow = uow_factory()
+    use_case = QueryGameProfileReport(uow)
+    return use_case.execute(report_id)
+
+
+@router.get("/game-usage/{report_id}", response_model=GenerateGameUsageReportResponse, status_code=200, dependencies=[Depends(require_admin)])
+def get_game_usage_report(report_id: int):
+    """Devuelve en JSON el reporte guardado, con el mismo contrato que su generación."""
+    uow = uow_factory()
+    use_case = QueryGameUsageReport(uow)
+    return use_case.execute(report_id)

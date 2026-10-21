@@ -1,15 +1,14 @@
 from datetime import datetime, timezone
 
 from app.application.ports.i_unit_of_work import IUnitOfWork
+from app.application.services.report_response_service import game_profile_report_response
 from app.domain.exceptions.report.no_data_for_report_exception import NoDataForReportException
 from app.domain.models.game_profile_report import GameProfileReport
 from app.domain.models.game_profile_report_item import GameProfileReportItem
 from app.domain.services.report_period_service import ReportPeriodService
 from app.domain.services.report_variation_service import ReportVariationService
 from app.infrastructure.api.dto.request.generate_game_profile_report_request import GenerateGameProfileReportRequest
-from app.infrastructure.api.dto.response.get.game_profile_report_item_response import GameProfileReportItemResponse
-from app.infrastructure.api.dto.response.get.generate_game_profile_report_response import \
-    GenerateGameProfileReportResponse
+from app.infrastructure.api.dto.response.get.generate_game_profile_report_response import GenerateGameProfileReportResponse
 
 
 class GenerateGameProfileReport:
@@ -65,7 +64,7 @@ class GenerateGameProfileReport:
             )
 
             saved_report = uow.game_profile_report_repo.create_report(report)
-            return self._to_response(saved_report, previous_report is not None)
+            return game_profile_report_response(saved_report)
 
     def _build_previous_counts(self, previous_report: GameProfileReport | None) -> dict[int, int]:
         if previous_report is None:
@@ -99,29 +98,4 @@ class GenerateGameProfileReport:
             variation=variation,
             variation_percentage=variation_percentage,
             trend=trend,
-        )
-
-    def _to_response(self, report: GameProfileReport, has_previous_report: bool) -> GenerateGameProfileReportResponse:
-        return GenerateGameProfileReportResponse(
-            report_id=report.report_id,
-            generated_by=report.generated_by,
-            generated_at=report.generated_at,
-            start_date=report.start_date,
-            end_date=report.end_date,
-            total_profiles=report.total_profiles,
-            has_previous_report=has_previous_report,
-            previous_report_id=report.previous_report_id,
-            items=[
-                GameProfileReportItemResponse(
-                    videogame_id=item.videogame_id,
-                    videogame_name=item.videogame_name,
-                    icon_url=item.icon_url,
-                    profile_count=item.profile_count,
-                    percentage=item.percentage,
-                    variation=item.variation,
-                    variation_percentage=item.variation_percentage,
-                    trend=item.trend,
-                )
-                for item in report.items
-            ],
         )

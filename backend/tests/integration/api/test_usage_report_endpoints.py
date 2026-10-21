@@ -514,3 +514,51 @@ class TestGameUsageReportEndpointsIntegration:
     def test_general_report_requires_admin(self, client, player_auth_headers):
         response = client.post("/api/v1/reports/game-usage", json={"analysis_type": "ranks"}, headers=player_auth_headers)
         assert response.status_code == 403
+
+
+    @pytest.mark.parametrize("analysis_type", ["ranks", "characters", "teams"])
+    @pytest.mark.parametrize("general", [False, True])
+    @pytest.mark.parametrize("with_previous_report", [False, True])
+    def test_get_report_matches_saved_generation(self, client, admin_auth_headers, usage_data,
+                                                 analysis_type, general, with_previous_report):
+        videogame_id = None if general else usage_data["lol"].videogame_id
+        extra = {}
+        if analysis_type == "teams" and not general:
+            extra["rank_bands"] = [{"min_rank_id": usage_data["gold"].rank_id,
+                                    "max_rank_id": usage_data["diamond"].rank_id}]
+        first = self._generate(client, admin_auth_headers, videogame_id, analysis_type, **extra)
+        assert first.status_code == 201
+        expected = first.json()
+        if with_previous_report:
+            second = self._generate(client, admin_auth_headers, videogame_id, analysis_type, **extra)
+            assert second.status_code == 201
+            expected = second.json()
+
+        url = "/api/v1/reports/game-usage"
+        history = client.get(url, headers=admin_auth_headers).json()
+        response = client.get(f"{url}/{expected['report_id']}", headers=admin_auth_headers)
+
+        assert response.status_code == 200
+        assert response.headers["content-type"] == "application/json"
+        assert response.json() == expected
+        assert client.get(url, headers=admin_auth_headers).json() == history
+        assert client.get(f"{url}/{first.json()['report_id']}", headers=admin_auth_headers).json() == first.json()
+
+    def test_get_report_with_period_as_owner(self, client, admin_auth_headers, owner_auth_headers, usage_data):
+        generated = self._generate(client, admin_auth_headers, usage_data["lol"].videogame_id,
+                                   start_date="2026-06-01", end_date="2026-06-30")
+        assert generated.status_code == 201
+        response = client.get(f"/api/v1/reports/game-usage/{generated.json()['report_id']}",
+                              headers=owner_auth_headers)
+        assert response.status_code == 200
+        assert response.json() == generated.json()
+
+    @pytest.mark.parametrize("report_id, expected_status", [(99999, 404), ("invalid", 422)])
+    def test_get_report_invalid_id(self, client, admin_auth_headers, report_id, expected_status):
+        response = client.get(f"/api/v1/reports/game-usage/{report_id}", headers=admin_auth_headers)
+        assert response.status_code == expected_status
+
+    def test_get_report_requires_admin(self, client, player_auth_headers):
+        url = "/api/v1/reports/game-usage/1"
+        assert client.get(url).status_code == 401
+        assert client.get(url, headers=player_auth_headers).status_code == 403
