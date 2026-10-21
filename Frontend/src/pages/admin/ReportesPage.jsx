@@ -1,5 +1,6 @@
 import FiltroPeriodoReporteComponent from "../../components/reportes/FiltroPeriodoReporteComponent";
 import HistorialReportesComponent from "../../components/reportes/HistorialReportesComponent";
+import PanelUltimoReporteComponent from "../../components/reportes/PanelUltimoReporteComponent";
 import ReportesTabsComponent from "../../components/reportes/ReportesTabsComponent";
 import TablaReportePerfilesComponent from "../../components/reportes/TablaReportePerfilesComponent";
 import { useReportePerfilesPorJuego } from "../../hooks/useReportePerfilesPorJuego";
@@ -14,6 +15,7 @@ const ReportesPage = () => {
     setFechaInicio,
     setFechaFin,
     inicioMinimo,
+    comparacion,
     cargandoAntecedentes,
     ultimo,
     historial,
@@ -44,6 +46,12 @@ const ReportesPage = () => {
         </header>
 
         <ReportesTabsComponent />
+
+        <PanelUltimoReporteComponent
+          titulo="Último reporte de perfiles por videojuego"
+          unidad="perfiles"
+          {...comparacion}
+        />
 
         <FiltroPeriodoReporteComponent
           fechaInicio={fechaInicio}

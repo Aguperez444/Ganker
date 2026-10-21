@@ -17,6 +17,9 @@ vi.mock("../../api/reportesApi", () => ({
   obtenerReportesPerfiles: vi.fn(),
   obtenerUltimoReportePerfiles: vi.fn(),
   exportarReportePerfiles: vi.fn(),
+  obtenerDatosReportePerfiles: vi
+    .fn()
+    .mockResolvedValue({ items: [], total: 0 }),
 }));
 vi.mock("../../utils/descargas", () => ({ descargarArchivo: vi.fn() }));
 

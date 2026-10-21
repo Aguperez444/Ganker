@@ -19,6 +19,7 @@ vi.mock("../../api/gameApi", () => ({ getGames: vi.fn() }));
 vi.mock("../../api/rankApi", () => ({ getRanksByGame: vi.fn() }));
 vi.mock("../../api/reportesApi", () => ({
   exportarReporteUso: vi.fn(),
+  obtenerDatosReporteUso: vi.fn().mockResolvedValue({ items: [], total: 0 }),
   generarReporteUso: vi.fn(),
   obtenerReportesUso: vi.fn(),
   obtenerTiposAnalisis: vi.fn(),

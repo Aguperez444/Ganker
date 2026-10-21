@@ -46,6 +46,13 @@ const AdminHomePage = () => {
       badge: "Disponible",
     },
     {
+      titulo: "Usuarios",
+      descripcion: "Dá de baja cuentas de jugadores u otros administradores.",
+      path: "/app/admin/usuarios",
+      botonTexto: "Gestionar usuarios",
+      badge: "Disponible",
+    },
+    {
       titulo: "Moderación",
       descripcion: "Supervisá reportes, conductas y sanciones de usuarios.",
       path: "/app/admin/moderacion",

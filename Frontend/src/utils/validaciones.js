@@ -12,6 +12,47 @@ export function esPasswordValida(password) {
   return REGEX_PASSWORD.test(password);
 }
 
+// US 34 - Cambiar contraseña: "al menos 8 caracteres", la misma regla que
+// valida el backend al restablecer (PasswordSecurityService). Ojo: el
+// registro de arriba pide 9.
+const REGEX_PASSWORD_NUEVA = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/;
+
+export function esPasswordNuevaValida(password) {
+  return REGEX_PASSWORD_NUEVA.test(password);
+}
+
+export function validarFormularioRecuperarContrasena({ email }) {
+  const errores = {};
+
+  if (!email.trim()) {
+    errores.email = "Ingresá tu email.";
+  } else if (!esEmailValido(email)) {
+    errores.email = "El email no tiene un formato válido.";
+  }
+
+  return errores;
+}
+
+export function validarFormularioNuevaContrasena({
+  password,
+  confirmarPassword,
+}) {
+  const errores = {};
+
+  if (!password) {
+    errores.password = "Ingresá tu nueva contraseña.";
+  } else if (!esPasswordNuevaValida(password)) {
+    errores.password =
+      "Debe tener al menos 8 caracteres, una mayúscula, una minúscula y un número.";
+  }
+
+  if (confirmarPassword !== password) {
+    errores.confirmarPassword = "Las contraseñas no coinciden.";
+  }
+
+  return errores;
+}
+
 export function validarFormularioRegistro({
   nombre,
   username,

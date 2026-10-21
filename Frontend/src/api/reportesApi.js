@@ -73,6 +73,27 @@ export function exportarReportePerfiles(reportId, formato) {
   return exportarReporte(RUTA_PERFILES, reportId, formato, "reporte_perfiles");
 }
 
+// Datos de un reporte ya generado ({ items, total }) para las tortas.
+// GET /{id} devuelve el mismo contrato que el POST que lo genero. Los items
+// de perfiles traen videogame_name / profile_count: se pasan a name / count
+// para que perfiles y uso tengan la misma forma.
+async function obtenerDatosReporte(ruta, reportId) {
+  const response = await axiosClient.get(`${ruta}/${reportId}`);
+  const { items, total, total_profiles } = response.data;
+  return {
+    items: items.map(({ videogame_name, profile_count, ...item }) => ({
+      ...item,
+      name: item.name ?? videogame_name,
+      count: item.count ?? profile_count,
+    })),
+    total: total ?? total_profiles,
+  };
+}
+
+export function obtenerDatosReportePerfiles(reportId) {
+  return obtenerDatosReporte(RUTA_PERFILES, reportId);
+}
+
 // ---------------------------------------------------------
 // US 38 - Reporte de uso (rangos, personajes o equipos) por videojuego
 // ---------------------------------------------------------
@@ -126,4 +147,8 @@ export async function obtenerUltimoReporteUso({ videogame_id, analysis_type }) {
 
 export function exportarReporteUso(reportId, formato) {
   return exportarReporte(RUTA_USO, reportId, formato, "reporte_uso");
+}
+
+export function obtenerDatosReporteUso(reportId) {
+  return obtenerDatosReporte(RUTA_USO, reportId);
 }

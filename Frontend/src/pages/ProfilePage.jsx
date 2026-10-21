@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import GameProfileForm from "../components/game_profiles/GameProfileForm";
 import GameProfilesListComponent from "../components/game_profiles/GameProfilesListComponent";
+import ModalConfirmacionComponent from "../components/common/ModalConfirmacionComponent";
 import { useAuth } from "../context/AuthContext";
 import { useChat } from "../context/ChatContext";
 import useGameProfile from "../hooks/useGameProfile";
@@ -30,6 +31,8 @@ const ProfilePage = () => {
   // formulario a pantalla completa (reemplaza la lista, no conviven).
   const [mode, setMode] = useState(null);
   const [successMessage, setSuccessMessage] = useState("");
+  // US 09 - Perfil elegido para eliminar (abre el modal de confirmacion).
+  const [profileToDelete, setProfileToDelete] = useState(null);
 
   const {
     games,
@@ -70,7 +73,37 @@ const ProfilePage = () => {
     formError,
     submitGameProfile,
     submitEditGameProfile,
+    isDeleting,
+    deleteError,
+    removeGameProfile,
+    clearDeleteError,
   } = useGameProfile();
+
+  const handleOpenDelete = (profile) => {
+    clearDeleteError();
+    setSuccessMessage("");
+    setProfileToDelete(profile);
+  };
+
+  const handleCancelDelete = () => {
+    clearDeleteError();
+    setProfileToDelete(null);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!profileToDelete) {
+      return;
+    }
+
+    const message = await removeGameProfile(profileToDelete.game_profile_id);
+
+    if (!message) {
+      return;
+    }
+
+    setSuccessMessage(message);
+    setProfileToDelete(null);
+  };
 
   const handleOpenCreate = () => {
     resetGameProfileForm();
@@ -154,6 +187,7 @@ const ProfilePage = () => {
               selectedProfileId={editingProfileId}
               onEdit={handleOpenEdit}
               onView={currentUserId ? handleView : undefined}
+              onDelete={handleOpenDelete}
             />
           </div>
         )}
@@ -196,6 +230,32 @@ const ProfilePage = () => {
           />
         )}
       </div>
+
+      <ModalConfirmacionComponent
+        isOpen={Boolean(profileToDelete)}
+        title="Eliminar perfil de juego"
+        message={
+          <>
+            <p>
+              ¿Seguro que querés eliminar tu perfil de{" "}
+              <span className="font-semibold text-ganker-text">
+                {profileToDelete?.videogame.name}
+              </span>
+              ?
+            </p>
+            <p className="mt-2">
+              Se van a borrar sus roles y rangos, y dejarás de aparecer en las
+              búsquedas de jugadores de ese juego. Esta acción no se puede
+              deshacer.
+            </p>
+          </>
+        }
+        confirmLabel="Eliminar"
+        isLoading={isDeleting}
+        error={deleteError}
+        onConfirm={handleConfirmDelete}
+        onCancel={handleCancelDelete}
+      />
     </section>
   );
 };

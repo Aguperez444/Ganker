@@ -25,8 +25,11 @@ import EquipoPage from "../pages/EquipoPage.jsx";
 import CharactersPage from "../pages/admin/CharactersPage.jsx";
 import ModeracionPage from "../pages/admin/ModeracionPage.jsx";
 import RegionsPage from "../pages/admin/RegionsPage.jsx";
+import RecuperarContrasenaPage from "../pages/RecuperarContrasenaPage.jsx";
+import RestablecerContrasenaPage from "../pages/RestablecerContrasenaPage.jsx";
 import ReportesPage from "../pages/admin/ReportesPage.jsx";
 import ReporteUsoPage from "../pages/admin/ReporteUsoPage.jsx";
+import UsuariosPage from "../pages/admin/UsuariosPage.jsx";
 import { ROLES_ADMIN } from "../utils/rutas.js";
 
 /**
@@ -39,6 +42,12 @@ function AppRouter() {
       <Routes>
         {/* Landing: accesible siempre, con o sin sesion iniciada */}
         <Route path="/" element={<LandingPage />} />
+
+        {/* US 34 - Cambiar contraseña. Accesibles con o sin sesion: se entra
+            desde el login o desde Mi cuenta, y el link del mail
+            ({FRONTEND_URL}/reset-password?token=...) lo arma el backend. */}
+        <Route path="/recuperar-contrasena" element={<RecuperarContrasenaPage />} />
+        <Route path="/reset-password" element={<RestablecerContrasenaPage />} />
 
         {/* Solo accesibles SIN sesion: si ya esta logueado, se lo manda a /app */}
         <Route element={<PublicOnlyRoute />}>
@@ -96,6 +105,8 @@ function AppRouter() {
             <Route path="reportes" element={<ReportesPage />} />
             {/* US 38 - Reporte de uso (rangos, personajes, equipos). */}
             <Route path="reportes/uso" element={<ReporteUsoPage />} />
+            {/* US 50 - Eliminar cuenta de usuario. */}
+            <Route path="usuarios" element={<UsuariosPage />} />
             {/* Módulos administrativos placeholder */}
             <Route path="characters" element={<CharactersPage />} />
             <Route

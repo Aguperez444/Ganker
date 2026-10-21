@@ -92,3 +92,12 @@ export const updateGame = async (
 
   return response.data;
 };
+
+// US 23 - Eliminar juego. DELETE /api/v1/videogames/{id} -> { message }.
+// Borrado logico: el backend marca deleted = True en el juego y en cascada en
+// sus roles, rangos, personajes, perfiles de juego y roles x rangos.
+export const deleteGame = async (id) => {
+  const response = await axiosClient.delete(`/api/v1/videogames/${id}`);
+
+  return response.data;
+};

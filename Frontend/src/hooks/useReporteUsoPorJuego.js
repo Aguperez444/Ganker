@@ -4,10 +4,12 @@ import { getRanksByGame } from "../api/rankApi";
 import {
   exportarReporteUso,
   generarReporteUso,
+  obtenerDatosReporteUso,
   obtenerReportesUso,
   obtenerTiposAnalisis,
   obtenerUltimoReporteUso,
 } from "../api/reportesApi";
+import { useComparacionUltimosReportes } from "./useComparacionUltimosReportes";
 import { descargarArchivo } from "../utils/descargas";
 import { logError } from "../utils/logs";
 import { validarFranjasRangos, validarPeriodoReporte } from "../utils/reportes";
@@ -270,7 +272,19 @@ export function useReporteUsoPorJuego() {
     }
   }
 
+  // Tortas del ultimo reporte y el anterior del juego y tipo elegidos.
+  const historialVigente = cargandoAntecedentes ? [] : antecedentes.historial;
+  const comparacion = useComparacionUltimosReportes(
+    historialVigente,
+    obtenerDatosReporteUso
+  );
+
   return {
+    comparacion: {
+      ...comparacion,
+      cargando: cargandoAntecedentes || comparacion.cargando,
+    },
+
     cargandoCatalogo: catalogo.cargando,
     juegos: catalogo.juegos,
     tipos: catalogo.tipos,
@@ -297,7 +311,7 @@ export function useReporteUsoPorJuego() {
 
     cargandoAntecedentes,
     ultimo,
-    historial: cargandoAntecedentes ? [] : antecedentes.historial,
+    historial: historialVigente,
     errorAntecedentes: cargandoAntecedentes ? "" : antecedentes.error,
 
     reporte,
