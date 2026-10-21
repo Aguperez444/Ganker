@@ -1,6 +1,6 @@
 from pydantic import BaseModel, Field
 
-from app.infrastructure.database.models.player_report_orm import ReportReason
+from app.domain.models.report_reason import ReportReason
 
 
 class ReportPlayerRequest(BaseModel):

@@ -27,8 +27,11 @@ from app.domain.specifications.base import AndSpecification
 from app.infrastructure.api.dto.request.ban_player_request import BanPlayerRequest
 from app.infrastructure.api.dto.request.login_request import LoginRequest
 from app.infrastructure.api.dto.request.report_player_request import ReportPlayerRequest
-from app.infrastructure.database.models.player_report_orm import PlayerReportORM, ReportReason, ReportStatus
+from app.infrastructure.database.models.player_report_orm import PlayerReportORM
 
+
+from app.domain.models.report_reason import ReportReason
+from app.domain.models.report_status import ReportStatus
 
 def _make_mock_uow():
     uow = MagicMock()
@@ -175,8 +178,8 @@ class TestBanAndUnbanUseCasesUnit:
         called_player_id, called_admin_id, called_register = uow.moderation_repo.ban_user.call_args[0]
         assert called_player_id == 2
         assert called_admin_id == 1
-        assert called_register.banned_user == 2
-        assert called_register.banned_by == 1
+        assert called_register.banned_user_id == 2
+        assert called_register.banned_by_user_id == 1
         assert called_register.reason == "Comportamiento abusivo reiterado"
         assert called_register.expires_at > datetime.now() + timedelta(days=6)
 
@@ -248,8 +251,8 @@ class TestSearchBannedAndReportedPlayersUnit:
         )
 
         assert len(results) == 1
-        assert results[0].banned_by == "admin_mod"
-        assert results[0].banned_user == "cheater_user"
+        assert results[0].banned_by_user_id == "admin_mod"
+        assert results[0].banned_user_id == "cheater_user"
         assert results[0].reason == "cheating"
 
         spec_arg, skip_arg, limit_arg = uow.find_by_specification_repo.get_banned_players.call_args[0]

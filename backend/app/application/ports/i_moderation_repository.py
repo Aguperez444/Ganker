@@ -1,9 +1,10 @@
 from abc import ABC, abstractmethod
 
+
 from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from app.domain.models.player_report import PlayerReport
-    from app.infrastructure.database.models.users_banned import UsersBanned
+    from app.domain.models.user_ban_record import UserBanRecord
 
 
 class IModerationRepository(ABC):
@@ -13,7 +14,7 @@ class IModerationRepository(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    def ban_user(self, player_id: int, admin_id: int, register: 'UsersBanned') -> None:
+    def ban_user(self, ban_record: 'UserBanRecord') -> None:
         raise NotImplementedError
 
     @abstractmethod

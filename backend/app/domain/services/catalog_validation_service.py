@@ -14,7 +14,7 @@ from app.domain.exceptions.user.username_already_exists_exception import Usernam
 from app.domain.exceptions.videogame.videogame_already_exists_exception import VideogameAlreadyExistsException
 from app.domain.exceptions.region.region_not_found_exception import RegionNotFoundException
 from app.domain.exceptions.region.duplicated_region_name_exception import DuplicatedRegionNameException
-from app.infrastructure.database.models.player_report_orm import ReportReason
+from app.domain.models.report_reason import ReportReason
 
 if TYPE_CHECKING:
     from app.domain.models.region import Region

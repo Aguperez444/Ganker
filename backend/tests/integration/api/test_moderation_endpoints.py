@@ -1,15 +1,18 @@
 from datetime import datetime, timedelta
 import pytest
 
+from app.domain.models.report_reason import ReportReason
+from app.domain.models.report_status import ReportStatus
+
 from app.domain.models.user_role import UserRole
 from app.infrastructure.database.models.conversation_orm import ConversationORM
 from app.infrastructure.database.models.game_profile_orm import GameProfileORM
-from app.infrastructure.database.models.player_report_orm import PlayerReportORM, ReportReason, ReportStatus
+from app.infrastructure.database.models.player_report_orm import PlayerReportORM
 from app.infrastructure.database.models.region_orm import RegionORM
 from app.infrastructure.database.models.team_member_role_orm import TeamMemberRoleORM
 from app.infrastructure.database.models.team_orm import TeamORM
 from app.infrastructure.database.models.user_orm import UserORM
-from app.infrastructure.database.models.users_banned import UsersBanned
+from app.infrastructure.database.models.user_ban_record_orm import UserBanRecordORM
 
 
 def _create_user(
@@ -164,12 +167,12 @@ class TestBanSystemAndSpecificationsIntegration:
         assert updated_offender.banned is True
 
         ban_record = (
-            test_db_session.query(UsersBanned)
-            .filter(UsersBanned.banned_user == offender.user_id)
+            test_db_session.query(UserBanRecordORM)
+            .filter(UserBanRecordORM.banned_user_id == offender.user_id)
             .first()
         )
         assert ban_record is not None
-        assert ban_record.banned_by == seed_admin.user_id
+        assert ban_record.banned_by_user_id == seed_admin.user_id
         assert ban_record.reason == "Comportamiento tóxico comprobado"
 
         resolved_report = test_db_session.query(PlayerReportORM).filter(PlayerReportORM.id == report_id).first()
@@ -217,21 +220,21 @@ class TestBanSystemAndSpecificationsIntegration:
         )
 
         base_time = datetime(2026, 5, 10, 12, 0, 0)
-        rec1 = UsersBanned(
+        rec1 = UserBanRecordORM(
             banned_user=banned_one.user_id,
             banned_by=seed_admin.user_id,  # username: adminuser
             reason="Uso de cheats",
             create_at=base_time - timedelta(days=10),
             expires_at=base_time + timedelta(days=20),
         )
-        rec2 = UsersBanned(
+        rec2 = UserBanRecordORM(
             banned_user=banned_two.user_id,
             banned_by=admin_two.user_id,  # username: mod_carlos
             reason="Insultos graves",
             create_at=base_time - timedelta(days=2),
             expires_at=base_time + timedelta(days=5),
         )
-        rec3 = UsersBanned(
+        rec3 = UserBanRecordORM(
             banned_user=banned_three.user_id,
             banned_by=admin_two.user_id,  # username: mod_carlos
             reason="Uso de cheats",
@@ -419,7 +422,7 @@ class TestBannedUserSecurityAndExclusionsIntegration:
             mail="expiredban@example.com",
             banned=True,
         )
-        expired_record = UsersBanned(
+        expired_record = UserBanRecordORM(
             banned_user=expired_banned_user.user_id,
             banned_by=seed_admin.user_id,
             reason="Baneo temporal vencido",

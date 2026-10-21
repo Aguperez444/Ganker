@@ -1,26 +1,16 @@
 from datetime import datetime
 from typing import TYPE_CHECKING, Optional
-from enum import Enum
 from sqlalchemy import ForeignKey, Integer, String, DateTime
 from sqlalchemy import Enum as SQLEnum
 from sqlalchemy.orm import mapped_column, Mapped, relationship
+
+from app.domain.models.report_reason import ReportReason
+from app.domain.models.report_status import ReportStatus
 
 from app.infrastructure.database.base import Base
 
 if TYPE_CHECKING:
     from app.infrastructure.database.models.user_orm import UserORM
-
-class ReportStatus(str, Enum):
-    PENDING = "pending"
-    RESOLVED = "resolved"
-    REJECTED = "rejected"
-
-class ReportReason(str, Enum):
-    CHEATING = "cheating"
-    ABUSIVE_BEHAVIOR = "abusive_behavior"
-    SPAMMING = "spamming"
-    INAPPROPRIATE_CONTENT = "inappropriate_content"
-    OTHER = "other"
 
 
 class PlayerReportORM(Base):

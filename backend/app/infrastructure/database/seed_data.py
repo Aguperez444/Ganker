@@ -17,7 +17,7 @@ from app.infrastructure.database.models import (
     TeamORM,
     UserORM,
     VideogameORM,
-    UsersBanned,
+    UserBanRecordORM,
     PlayerReportORM
 )
 

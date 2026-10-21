@@ -3,7 +3,9 @@ from typing import List
 from sqlalchemy import func, select, or_
 from sqlalchemy.orm import Session, joinedload, aliased
 from app.application.ports.i_find_by_specifications_service import IFindBySpecificationsRepository
+from app.domain.models.player_report import PlayerReport
 from app.domain.models.team import Team
+from app.domain.models.user_ban_record import UserBanRecord
 from app.domain.specifications.banned_players.banned_by_specification import ByBannedBySpecification
 from app.domain.specifications.banned_players.banned_user_specfication import ByBannedUsersSpecification
 from app.domain.specifications.banned_players.create_at_specification import (
@@ -42,7 +44,9 @@ from app.infrastructure.api.dto.response.base_classes.videogame_object_response 
 from app.infrastructure.api.dto.response.get.get_game_profile_response import GetGameProfileResponse, \
     PlayerObjectResponse
 from app.infrastructure.database.mappers.game_profile_mapper import GameProfileMapper
+from app.infrastructure.database.mappers.player_report_mapper import PlayerReportMapper
 from app.infrastructure.database.mappers.team_mapper import TeamMapper
+from app.infrastructure.database.mappers.user_ban_record_mapper import UserBanRecordMapper
 from app.infrastructure.database.models import (
     GameProfileORM,
     CharacterPriorityORM,
@@ -57,7 +61,7 @@ from app.infrastructure.database.models import (
     RegionORM,
 )
 from app.infrastructure.database.models.player_report_orm import PlayerReportORM
-from app.infrastructure.database.models.users_banned import UsersBanned
+from app.infrastructure.database.models.user_ban_record_orm import UserBanRecordORM
 
 
 class FindBySpecificationsRepositoryImpl(IFindBySpecificationsRepository):
@@ -315,43 +319,43 @@ class FindBySpecificationsRepositoryImpl(IFindBySpecificationsRepository):
         if isinstance(spec, ByBannedBySpecification):
             admin_alias = aliased(UserORM)
 
-            return (query.join(admin_alias, admin_alias.user_id == UsersBanned.banned_by)
+            return (query.join(admin_alias, admin_alias.user_id == UserBanRecordORM.banned_by_user_id)
                     .filter(admin_alias.username.ilike(f"%{spec.to_expression()}%"), admin_alias.deleted == False))
 
         if isinstance(spec, ByBannedUsersSpecification):
             player_alias = aliased(UserORM)
-            return (query.join(player_alias, player_alias.user_id == UsersBanned.banned_user)
+            return (query.join(player_alias, player_alias.user_id == UserBanRecordORM.banned_user_id)
                     .filter(player_alias.username.ilike(f"%{spec.to_expression()}%"), player_alias.deleted == False))
 
         if isinstance(spec, ByBannedCreateAtSpecification):
             min_date, max_date = spec.to_expression()
             if min_date is not None:
-                query = query.filter(UsersBanned.create_at >= min_date)
+                query = query.filter(UserBanRecordORM.created_at >= min_date)
             if max_date is not None:
-                query = query.filter(UsersBanned.create_at <= max_date)
+                query = query.filter(UserBanRecordORM.created_at <= max_date)
             return query
 
         if isinstance(spec, ByExpiresAtSpecification):
             min_date, max_date = spec.to_expression()
             if min_date is not None:
-                query = query.filter(UsersBanned.expires_at >= min_date)
+                query = query.filter(UserBanRecordORM.expires_at >= min_date)
             if max_date is not None:
-                query = query.filter(UsersBanned.expires_at <= max_date)
+                query = query.filter(UserBanRecordORM.expires_at <= max_date)
             return query
 
         if isinstance(spec, ByReasonSpecification):
-            return query.filter(UsersBanned.reason == spec.to_expression())
+            return query.filter(UserBanRecordORM.reason == spec.to_expression())
 
         return query
 
-    def get_banned_players(self, spec: Specification | None, skip: int, limit: int = 5) -> List[UsersBanned]:
-        query = (self.session.query(UsersBanned)
+    def get_banned_players(self, spec: Specification | None, skip: int, limit: int = 5) -> List['UserBanRecord']:
+        query = (self.session.query(UserBanRecordORM)
         .options(
-            joinedload(UsersBanned.banned_player),
-            joinedload(UsersBanned.moderator_banned_player)
+            joinedload(UserBanRecordORM.banned_user),
+            joinedload(UserBanRecordORM.banned_by_user)
         )
         .filter(
-            UsersBanned.banned_player.has(UserORM.deleted == False)
+            UserBanRecordORM.banned_user.has(UserORM.deleted == False)
         ))
 
         # Le aplicamos los filtros
@@ -359,9 +363,9 @@ class FindBySpecificationsRepositoryImpl(IFindBySpecificationsRepository):
             query = self._apply_spec_banned_players(query, spec)
 
         # Paginamos
-        db_models = query.order_by(UsersBanned.create_at.desc()).offset(skip).limit(limit).all()
+        db_models = query.order_by(UserBanRecordORM.created_at.desc()).offset(skip).limit(limit).all()
 
-        return db_models
+        return [UserBanRecordMapper.orm_to_domain(record_orm) for record_orm in db_models]
 
     def _apply_spec_reports_players(self, query, spec: Specification):
         if not spec:
@@ -413,7 +417,7 @@ class FindBySpecificationsRepositoryImpl(IFindBySpecificationsRepository):
 
         return query
 
-    def get_reports_players(self, spec: Specification | None, skip: int, limit: int) -> list['PlayerReportORM']:
+    def get_reports_players(self, spec: Specification | None, skip: int, limit: int) -> list['PlayerReport']:
         query = self.session.query(PlayerReportORM).options(
             joinedload(PlayerReportORM.reporter),
             joinedload(PlayerReportORM.reported),
@@ -425,5 +429,4 @@ class FindBySpecificationsRepositoryImpl(IFindBySpecificationsRepository):
 
         db_models = query.order_by(PlayerReportORM.created_at.desc()).offset(skip).limit(limit).all()
 
-
-        return db_models
+        return [PlayerReportMapper.orm_to_domain(report_orm) for report_orm in db_models]

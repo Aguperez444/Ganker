@@ -59,9 +59,11 @@ class SearchReportsPlayers:
 
             return [
                 SearchReportedPlayersResponse(
-                    id=report_player.id,
-                    reported_name=report_player.reported.username,
-                    reporter_name=report_player.reporter.username,
+                    id=report_player.report_id,
+                    reported_user_id=report_player.reported.user_id,
+                    reported_user_name=report_player.reported.username,
+                    reporter_user_id=report_player.reporter.user_id,
+                    reporter_user_name=report_player.reporter.username,
                     status=report_player.status,
                     reason=report_player.reason,
                     description=report_player.description,

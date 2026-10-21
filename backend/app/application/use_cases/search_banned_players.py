@@ -1,8 +1,7 @@
 from datetime import datetime
-from typing import Optional, List
+from typing import Optional
 
 from app.application.ports.i_unit_of_work import IUnitOfWork
-from app.domain.models.user import User
 from app.domain.specifications.banned_players.banned_by_specification import ByBannedBySpecification
 from app.domain.specifications.banned_players.banned_user_specfication import ByBannedUsersSpecification
 from app.domain.specifications.banned_players.create_at_specification import ByCreateAtSpecification
@@ -48,15 +47,17 @@ class SearchBannedPlayers:
             for spec in specs[1:]:
                 combined_spec = combined_spec & spec
 
-            banned_players = uow.find_by_specification_repo.get_banned_players(combined_spec, skip, limit)
+            user_ban_records = uow.find_by_specification_repo.get_banned_players(combined_spec, skip, limit)
 
             return [
                 SearchBannedPlayersResponse(
-                    id=banned_player.id,
-                    banned_by=banned_player.moderator_banned_player.username,
-                    banned_user=banned_player.banned_player.username,
-                    date_create=banned_player.create_at,
-                    date_expire=banned_player.expires_at,
-                    reason=banned_player.reason
-                ) for banned_player in banned_players
+                    id=user_ban_record.banned_user.user_id,
+                    banned_by_user_id=user_ban_record.banned_by_user.user_id,
+                    banned_by_user_username=user_ban_record.banned_by_user.username,
+                    banned_user_id=user_ban_record.banned_user.user_id,
+                    banned_user_username=user_ban_record.banned_user.username,
+                    date_created=user_ban_record.created_at,
+                    date_expire=user_ban_record.expires_at,
+                    reason=user_ban_record.reason
+                ) for user_ban_record in user_ban_records
             ]

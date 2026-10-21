@@ -1,7 +1,9 @@
 from datetime import datetime
 
 from app.application.ports.i_moderation_repository import IModerationRepository
+
 from app.infrastructure.database.mappers.player_report_mapper import PlayerReportMapper
+from app.infrastructure.database.mappers.user_ban_record_mapper import UserBanRecordMapper
 
 from app.infrastructure.database.models import UserORM
 from app.infrastructure.database.models import PlayerReportORM
@@ -9,12 +11,13 @@ from app.infrastructure.database.models import PlayerReportORM
 from app.domain.exceptions.moderation.ban_not_finished_exception import BanNotFinishedException
 from app.domain.exceptions.moderation.not_banned_player_exception import NotBannedPlayerException
 
-from app.infrastructure.database.models.users_banned import UsersBanned
+from app.infrastructure.database.models.user_ban_record_orm import UserBanRecordORM
 
 from app.domain.models.player_report import ReportStatus
 from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from app.domain.models.player_report import PlayerReport
+    from app.domain.models.user_ban_record import UserBanRecord
 
 
 
@@ -29,24 +32,27 @@ class ModerationRepositoryImpl(IModerationRepository):
         self.session.refresh(report_orm)
         return PlayerReportMapper.orm_to_domain(report_orm)
 
-    def ban_user(self, player_id: int, admin_id: int, register: UsersBanned) -> None:
+    def ban_user(self, ban_record: UserBanRecord) -> None:
+        ban_record_orm = UserBanRecordMapper.domain_to_orm(ban_record)  # Convertir a ORM
+
         #Activo los flags de baneado en el usuario
-        user = self.session.query(UserORM).filter(UserORM.user_id == player_id).first()
+        banned_user_id = ban_record.banned_user.user_id
+        user = self.session.query(UserORM).filter(UserORM.user_id == banned_user_id).first()
 
         # esto se persiste al finalizar la transacción, no es necesario hacer flush acá
         user.banned = True
         #Lo agrego a la tabla de baneados
-        self.session.add(register)
+        self.session.add(ban_record_orm)
 
         #Busco todos los reportes del jugador y los marco como resueltos, indico quien los resolvió y la fecha de resolución
         reports = self.session.query(PlayerReportORM).filter(
-            PlayerReportORM.reported_id == player_id,
+            PlayerReportORM.reported_id == banned_user_id,
             PlayerReportORM.status == ReportStatus.PENDING
         ).all()
         for report in reports:
             report.status = ReportStatus.RESOLVED
             report.resolved_at = datetime.now()
-            report.resolver_id = admin_id
+            report.resolver_id = ban_record.banned_by_user.user_id
 
         self.session.flush()
 
@@ -55,9 +61,9 @@ class ModerationRepositoryImpl(IModerationRepository):
 
         #Busco el registro de baneado más reciente
         user_ban_log = (
-            self.session.query(UsersBanned)
-            .filter(UsersBanned.banned_user == user_id)
-            .order_by(UsersBanned.id.desc())
+            self.session.query(UserBanRecordORM)
+            .filter(UserBanRecordORM.banned_user_id == user_id)
+            .order_by(UserBanRecordORM.id.desc())
             .first()
         )
 
@@ -84,9 +90,9 @@ class ModerationRepositoryImpl(IModerationRepository):
         user = self.session.query(UserORM).filter(UserORM.user_id == user_id).first()
         #Busco el registro de baneado más reciente
         register = (
-            self.session.query(UsersBanned)
-            .filter(UsersBanned.banned_user == user_id)
-            .order_by(UsersBanned.id.desc())
+            self.session.query(UserBanRecordORM)
+            .filter(UserBanRecordORM.banned_user_id == user_id)
+            .order_by(UserBanRecordORM.id.desc())
             .first()
         )
 

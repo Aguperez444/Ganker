@@ -10,7 +10,7 @@ from typing import TYPE_CHECKING
 
 from app.infrastructure.database.models.password_reset_token_orm import PasswordResetTokenORM
 from app.infrastructure.database.models.player_report_orm import PlayerReportORM
-from app.infrastructure.database.models.users_banned import UsersBanned
+from app.infrastructure.database.models.user_ban_record_orm import UserBanRecordORM
 
 if TYPE_CHECKING:
     from app.infrastructure.database.models.game_profile_orm import GameProfileORM
@@ -100,14 +100,14 @@ class UserORM(Base):
         back_populates="resolver_player",
         cascade="all, delete-orphan"
     )
-    banned_player: Mapped[List["UsersBanned"]] = relationship(
-        "UsersBanned",
+    banned_player: Mapped[List["UserBanRecordORM"]] = relationship(
+        "UserBanRecordORM",
         foreign_keys="[UsersBanned.banned_user]",
         back_populates="banned_player",
         cascade="all, delete-orphan"
     )
-    moderator_banned_player: Mapped[List["UsersBanned"]] = relationship(
-        "UsersBanned",
+    moderator_banned_player: Mapped[List["UserBanRecordORM"]] = relationship(
+        "UserBanRecordORM",
         foreign_keys="[UsersBanned.banned_by]",
         back_populates="moderator_banned_player",
         cascade="all, delete-orphan"

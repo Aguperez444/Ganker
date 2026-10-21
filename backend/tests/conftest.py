@@ -18,7 +18,7 @@ import app.infrastructure.database.models.role_profile_orm
 import app.infrastructure.database.models.character_priority_orm
 import app.infrastructure.database.models.refresh_token_orm
 import app.infrastructure.database.models.player_report_orm
-import app.infrastructure.database.models.users_banned
+import app.infrastructure.database.models.user_ban_record_orm
 
 from app.infrastructure.database.models.videogame_orm import VideogameORM
 from app.infrastructure.database.models.character_orm import CharacterORM

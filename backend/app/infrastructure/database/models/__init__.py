@@ -21,7 +21,7 @@ from app.infrastructure.database.models.role_profile_orm import RoleProfileORM
 from app.infrastructure.database.models.team_orm import TeamORM
 from app.infrastructure.database.models.team_member_role_orm import TeamMemberRoleORM
 from app.infrastructure.database.models.user_orm import UserORM
-from app.infrastructure.database.models.users_banned import UsersBanned
+from app.infrastructure.database.models.user_ban_record_orm import UserBanRecordORM
 from app.infrastructure.database.models.videogame_orm import VideogameORM
 
 __all__ = [
@@ -47,6 +47,6 @@ __all__ = [
     "TeamMemberRoleORM",
     "UserORM",
     "VideogameORM",
-    "UsersBanned",
+    "UserBanRecordORM",
     "PlayerReportORM"
 ]
