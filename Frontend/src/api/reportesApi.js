@@ -1,5 +1,4 @@
 import axiosClient from "./axiosClient";
-import { leerReporteDesdeCsv } from "../utils/csvReporte";
 
 // Reportes del panel admin. Todo requiere admin u owner (require_admin en el
 // backend).
@@ -74,16 +73,21 @@ export function exportarReportePerfiles(reportId, formato) {
   return exportarReporte(RUTA_PERFILES, reportId, formato, "reporte_perfiles");
 }
 
-// PROVISORIO: datos de un reporte ya generado ({ items, total }), leidos del
-// CSV de exportacion porque el backend todavia no tiene GET /{id}. Cuando lo
-// tenga, alcanza con cambiar esta funcion y la de uso: quien las llama no se
-// entera.
+// Datos de un reporte ya generado ({ items, total }) para las tortas.
+// GET /{id} devuelve el mismo contrato que el POST que lo genero. Los items
+// de perfiles traen videogame_name / profile_count: se pasan a name / count
+// para que perfiles y uso tengan la misma forma.
 async function obtenerDatosReporte(ruta, reportId) {
-  const response = await axiosClient.get(`${ruta}/${reportId}/export`, {
-    params: { report_output_format: "csv" },
-    responseType: "text",
-  });
-  return leerReporteDesdeCsv(response.data);
+  const response = await axiosClient.get(`${ruta}/${reportId}`);
+  const { items, total, total_profiles } = response.data;
+  return {
+    items: items.map(({ videogame_name, profile_count, ...item }) => ({
+      ...item,
+      name: item.name ?? videogame_name,
+      count: item.count ?? profile_count,
+    })),
+    total: total ?? total_profiles,
+  };
 }
 
 export function obtenerDatosReportePerfiles(reportId) {
