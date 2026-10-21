@@ -14,12 +14,18 @@ class DiscordAccountLinkRepositoryImpl(IDiscordAccountLinkRepository):
 
     def get_by_user_id(self, user_id: int) -> Optional['DiscordAccountLink']:
         found = self.session.query(DiscordAccountLinkORM).filter(DiscordAccountLinkORM.user_id == user_id).first()
+        if found and found.user and (
+            getattr(found.user, "deleted", False) is True or getattr(found.user, "banned", False) is True
+        ):
+            return None
         return DiscordAccountLinkMapper.orm_to_domain(found) if found else None
 
     def get_by_discord_user_id(self, discord_user_id: str) -> Optional['DiscordAccountLink']:
         found = self.session.query(DiscordAccountLinkORM).filter(
             DiscordAccountLinkORM.discord_user_id == discord_user_id
         ).first()
+        if found and found.user and getattr(found.user, "deleted", False) is True:
+            return None
         return DiscordAccountLinkMapper.orm_to_domain(found) if found else None
 
     def save(self, link: 'DiscordAccountLink') -> 'DiscordAccountLink':
