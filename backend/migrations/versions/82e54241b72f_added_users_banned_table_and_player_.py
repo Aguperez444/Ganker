@@ -76,7 +76,7 @@ def upgrade() -> None:
         batch_op.create_index(batch_op.f('ix__role_profile__deleted'), ['deleted'], unique=False)
 
     with op.batch_alter_table('user', schema=None) as batch_op:
-        batch_op.add_column(sa.Column('banned', sa.Boolean(), server_default=sa.text('0'), nullable=False))
+        batch_op.add_column(sa.Column('banned', sa.Boolean(), server_default=sa.false(), nullable=False))
         batch_op.drop_index(batch_op.f('ix_user_deleted'))
         batch_op.drop_constraint(batch_op.f('uq__user__mail'), type_='unique')
         batch_op.drop_constraint(batch_op.f('uq__user__username'), type_='unique')
