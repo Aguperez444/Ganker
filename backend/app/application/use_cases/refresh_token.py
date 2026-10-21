@@ -27,6 +27,12 @@ class RefreshToken:
             if user is None:
                 raise UserNotFoundException(user_id)
 
+            # Chequeo si el usuario está baneado y, si corresponde, lo desbaneo ----
+
+            uow.moderation_repo.unban_user_if_applicable(user_id)
+
+            # ----------------------------------------------------------------------
+
             # 4. Revocar el token viejo (Rotación)
             uow.refresh_token_repo.revoke_by_jti(old_jti)
 

@@ -2,13 +2,12 @@ name: CD - Deploy to OCI Production
 
 on:
   workflow_run:
-    # IMPORTANTE: Poné acá el 'name:' exacto que figura en la línea 1 de tu ci.yml
     workflows: ["CI - Tests & Build"]
     types:
       - completed
     branches:
       - main
-  workflow_dispatch: # Mantiene el botón para poder lanzarlo a mano si querés
+  workflow_dispatch: # Mantiene el botón para poder lanzarlo a mano
 
 concurrency:
   group: oci-production-deploy
@@ -18,7 +17,7 @@ jobs:
   deploy:
     name: Build & Deploy on OCI (ARM64)
     runs-on: ubuntu-latest
-    # Solo se ejecuta si el CI terminó en verde (success) O si lo disparaste a mano (workflow_dispatch)
+    # Solo se ejecuta si el CI terminó en verde (success) O si se disparó a mano (workflow_dispatch)
     if: >
       github.event_name == 'workflow_dispatch' ||
       github.event.workflow_run.conclusion == 'success'

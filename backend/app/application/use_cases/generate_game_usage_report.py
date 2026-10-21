@@ -1,5 +1,6 @@
 from datetime import datetime, timezone
 
+from app.application.services.report_response_service import game_usage_report_response
 from app.domain.exceptions.rank.rank_not_found_exception import RankNotFoundException
 from app.domain.exceptions.report.invalid_report_bands_exception import InvalidReportBandsException
 from app.domain.exceptions.report.invalid_report_analysis_type_exception import InvalidReportAnalysisTypeException
@@ -13,7 +14,6 @@ from app.domain.services.catalog_validation_service import CatalogValidationServ
 from app.domain.services.report_period_service import ReportPeriodService
 from app.domain.services.report_variation_service import ReportVariationService
 from app.infrastructure.api.dto.request.generate_game_usage_report_request import GenerateGameUsageReportRequest
-from app.infrastructure.api.dto.response.get.game_usage_report_item_response import GameUsageReportItemResponse
 from app.infrastructure.api.dto.response.get.generate_game_usage_report_response import GenerateGameUsageReportResponse
 
 
@@ -40,7 +40,7 @@ class GenerateGameUsageReport:
         with self.uow as uow:
             report = self._build_report(uow, request, admin_id)
             saved_report = uow.game_usage_report_repo.create_report(report)
-        return self._to_response(saved_report, has_previous_report=report.previous_report_id is not None)
+        return game_usage_report_response(saved_report)
 
     def _build_report(self, uow: 'IUnitOfWork', request: GenerateGameUsageReportRequest, admin_id: int) -> GameUsageReport:
         analysis_type = ReportAnalysisType.try_from_value(request.analysis_type or ReportAnalysisType.RANKS.value)
@@ -277,35 +277,4 @@ class GenerateGameUsageReport:
         return (
             f'{videogame.name if videogame else "Los videojuegos"}: no hay perfiles o datos de '
             f"{noun} registrados en el período seleccionado"
-        )
-
-    @staticmethod
-    def _to_response(report: GameUsageReport, has_previous_report: bool) -> GenerateGameUsageReportResponse:
-        return GenerateGameUsageReportResponse(
-            report_id=report.report_id,
-            generated_by=report.generated_by,
-            analysis_type=report.analysis_type,
-            videogame_id=report.videogame_id,
-            videogame_name=report.videogame_name,
-            icon_url=report.icon_url,
-            start_date=report.start_date,
-            end_date=report.end_date,
-            generated_at=report.generated_at,
-            total=report.total,
-            has_previous_report=has_previous_report,
-            previous_report_id=report.previous_report_id,
-            items=[
-                GameUsageReportItemResponse(
-                    category_id=item.category_id,
-                    name=item.name,
-                    icon_url=item.icon_url,
-                    count=item.count,
-                    percentage=item.percentage,
-                    rank_range=item.rank_range,
-                    variation=item.variation,
-                    variation_percentage=item.variation_percentage,
-                    trend=item.trend,
-                )
-                for item in report.items
-            ],
         )

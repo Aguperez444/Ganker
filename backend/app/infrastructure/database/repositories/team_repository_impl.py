@@ -12,6 +12,7 @@ from app.infrastructure.database.models.team_orm import TeamORM
 from app.infrastructure.database.models.rank_orm import RankORM
 from app.infrastructure.database.models.conversation_member_orm import ConversationMemberORM
 from app.infrastructure.database.models.team_member_role_orm import TeamMemberRoleORM
+from app.infrastructure.database.models.user_orm import UserORM
 from app.infrastructure.database.mappers.conversation_mapper import ConversationMapper
 
 if TYPE_CHECKING:
@@ -26,7 +27,13 @@ class TeamRepositoryImpl(ITeamRepository):
     def get_by_id_for_update(self, team_id: int) -> Optional['Team']:
         team_orm = (
             self.session.query(TeamORM)
-            .filter(TeamORM.team_id == team_id)
+            .filter(
+                TeamORM.team_id == team_id,
+                ~TeamORM.members_roles.any(
+                    (TeamMemberRoleORM.team_role_id == 1)
+                    & TeamMemberRoleORM.user.has((UserORM.deleted == True) | (UserORM.banned == True))
+                ),
+            )
             .with_for_update()
             .first()
         )
@@ -112,25 +119,56 @@ class TeamRepositoryImpl(ITeamRepository):
 
 
     def get_by_id(self, team_id: int) -> Optional['Team']:
-        team_orm = self.session.query(TeamORM).filter(TeamORM.team_id == team_id).first()
+        team_orm = (
+            self.session.query(TeamORM)
+            .filter(
+                TeamORM.team_id == team_id,
+                ~TeamORM.members_roles.any(
+                    (TeamMemberRoleORM.team_role_id == 1)
+                    & TeamMemberRoleORM.user.has((UserORM.deleted == True) | (UserORM.banned == True))
+                ),
+            )
+            .first()
+        )
         return TeamMapper.orm_to_domain(team_orm) if team_orm else None
 
     def get_active_team_by_user_id(self, user_id: int) -> Optional['Team']:
         team_orm = (
             self.session.query(TeamORM)
             .join(TeamMemberRoleORM, TeamMemberRoleORM.team_id == TeamORM.team_id)
-            .filter(TeamMemberRoleORM.user_id == user_id, TeamORM.is_active.is_(True))
+            .join(UserORM, UserORM.user_id == TeamMemberRoleORM.user_id)
+            .filter(
+                TeamMemberRoleORM.user_id == user_id,
+                UserORM.deleted == False,
+                UserORM.banned == False,
+                TeamORM.is_active.is_(True),
+                ~TeamORM.members_roles.any(
+                    (TeamMemberRoleORM.team_role_id == 1)
+                    & TeamMemberRoleORM.user.has((UserORM.deleted == True) | (UserORM.banned == True))
+                ),
+            )
             .first()
         )
         return TeamMapper.orm_to_domain(team_orm) if team_orm else None
 
     def is_user_in_any_active_team(self, user_id: int) -> bool:
-        return self.session.query(TeamMemberRoleORM).join(
-            TeamORM, TeamORM.team_id == TeamMemberRoleORM.team_id
-        ).filter(
-            TeamMemberRoleORM.user_id == user_id,
-            TeamORM.is_active.is_(True)
-        ).count() > 0
+        return (
+            self.session.query(TeamMemberRoleORM)
+            .join(TeamORM, TeamORM.team_id == TeamMemberRoleORM.team_id)
+            .join(UserORM, UserORM.user_id == TeamMemberRoleORM.user_id)
+            .filter(
+                TeamMemberRoleORM.user_id == user_id,
+                UserORM.deleted == False,
+                UserORM.banned == False,
+                TeamORM.is_active.is_(True),
+                ~TeamORM.members_roles.any(
+                    (TeamMemberRoleORM.team_role_id == 1)
+                    & TeamMemberRoleORM.user.has((UserORM.deleted == True) | (UserORM.banned == True))
+                ),
+            )
+            .count()
+            > 0
+        )
 
     def create_team(self, team: 'Team') -> 'Team':
         team_orm = TeamMapper.domain_to_orm(team)

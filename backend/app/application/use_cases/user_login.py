@@ -36,6 +36,12 @@ class UserLogin:
             user_id = user.user_id
             role = user.role
 
+            # Chequeo si el usuario está baneado y, si corresponde, lo desbaneo ----
+
+            uow.moderation_repo.unban_user_if_applicable(user_id)
+
+            # ----------------------------------------------------------------------
+
             # Generar tokens recibiendo jti y fecha de expiración
             access_token, refresh_token, jti, expires_at = self.token_service.generate_tokens(
                 user_id=user_id,

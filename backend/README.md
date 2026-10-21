@@ -1,325 +1,262 @@
 # Ganker — Backend
 
-API REST del proyecto **Ganker**, construida con FastAPI + SQLAlchemy bajo arquitectura limpia (puertos y adaptadores / hexagonal).
-Este documento es la guía de arranque: seguí los pasos en orden y en menos de 5
-minutos deberías tener el backend corriendo.
+API REST y WebSockets de Ganker, construidos con FastAPI y SQLAlchemy y organizados en dominio, aplicación e infraestructura mediante puertos y adaptadores.
 
----
+[Vista general del repositorio](../README.md) · [Guía del frontend](../Frontend/README.md) · [Aplicación publicada](https://gankerweb.app/)
 
-## 1. Stack tecnológico
+## Tecnologías y requisitos
 
-| Capa / Rol                      | Tecnología                                   |
-| ------------------------------- | -------------------------------------------- |
-| Framework web                   | FastAPI >= 0.141.1                           |
-| Servidor ASGI                   | Uvicorn >= 0.52.4                            |
-| ORM                             | SQLAlchemy >= 2.0                            |
-| Base de datos (Local)           | SQLite (vía `sqlite:///.../db.db`)           |
-| Base de datos (Docker / Prod)   | PostgreSQL 16 (`psycopg2-binary`)            |
-| Migraciones                     | Alembic >= 1.19.2                            |
-| Validación y esquemas           | Pydantic v2 >= 2.13.5 + Pydantic Settings    |
-| Autenticación                   | PyJWT (tokens JWT access + refresh)          |
-| Hashing de contraseñas          | Argon2 (`argon2-cffi`)                       |
-| Testing                         | Pytest 9 + pytest-mock + pytest-cov          |
-| Cliente HTTP de prueba          | HTTPX (usado por TestClient de FastAPI)      |
-| Manejo de archivos              | Python `shutil` + almacenamiento en disco    |
+| Área                       | Tecnología                                                              |
+| -------------------------- | ----------------------------------------------------------------------- |
+| Entorno                    | Python 3.14, versión utilizada en CI y Docker; pip y un entorno virtual |
+| API y servidor             | FastAPI y Uvicorn                                                       |
+| Validación y configuración | Pydantic y Pydantic Settings                                            |
+| Persistencia               | SQLAlchemy, SQLite local y PostgreSQL 16 en Docker                      |
+| Migraciones                | Alembic                                                                 |
+| Autenticación              | JWT de acceso y refresh con PyJWT; contraseñas con Argon2               |
+| Integraciones              | Riot Games, Discord y proveedores de autenticación federada             |
+| Exportación de reportes    | CSV, Excel con openpyxl y PDF con ReportLab                             |
+| Pruebas                    | Pytest, pytest-mock, pytest-cov, Freezegun y HTTPX                      |
 
----
+Las versiones de las dependencias se declaran en [requirements.txt](requirements.txt). Para ejecutar el stack completo con Docker, consultá el [README principal](../README.md#desarrollo-conjunto).
 
-## 2. Requisitos previos
+## Desarrollo local
 
-| Herramienta | Versión                                                 |
-| ----------- |---------------------------------------------------------|
-| Python      | **3.14+** (probado y compatible con 3.14)               |
-| pip         | Incluido con la instalación de Python                   |
-| Git         | Cualquier versión reciente                              |
-| Docker      | Opcional (para levantar el stack completo con Postgres) |
-
-Verificá que tengas Python y pip instalados:
+Salvo que se indique lo contrario, los comandos de esta guía se ejecutan desde `backend/`. Si estás en la raíz del repositorio:
 
 ```bash
-python3 --version
+cd backend
 ```
+
+### Entorno virtual e instalación
+
+Linux / macOS:
 
 ```bash
-pip --version
+python3 -m venv .venv
+source .venv/bin/activate
 ```
 
----
+Windows (PowerShell):
 
-## 3. Puesta en marcha (paso a paso)
+```powershell
+python -m venv .venv
+.\.venv\Scripts\Activate.ps1
+```
 
-### 3.1 Clonar el repositorio y pararse en `backend/`
+Windows (CMD), para activar el entorno ya creado:
+
+```cmd
+.venv\Scripts\activate.bat
+```
+
+Con el entorno activo:
 
 ```bash
-git clone https://github.com/Aguperez444/Ganker.git
+python -m pip install -r requirements.txt
 ```
+
+### Configuración local
+
+Copiá [secrets.env.example](app/infrastructure/config/secrets.env.example) a `app/infrastructure/config/secrets.env`.
+
+Linux / macOS:
 
 ```bash
-cd Ganker/backend
+cp app/infrastructure/config/secrets.env.example app/infrastructure/config/secrets.env
 ```
 
-> Todos los comandos de este README se ejecutan **parados dentro de `backend/`**,
-> no en la raíz del repo (salvo que se indique lo contrario).
+PowerShell:
 
-### 3.2 Crear el entorno virtual
-
-Creá un entorno virtual `.venv` para aislar las dependencias:
-
-- **Linux / macOS:**
-  ```bash
-  python3 -m venv .venv
-  ```
-- **Windows:**
-  ```powershell
-  python -m venv .venv
-  ```
-
-### 3.3 Activar el entorno virtual
-
-- **Linux / macOS:**
-  ```bash
-  source .venv/bin/activate
-  ```
-- **Windows (PowerShell):**
-  ```powershell
-  .\.venv\Scripts\Activate.ps1
-  ```
-- **Windows (CMD):**
-  ```cmd
-  .\.venv\Scripts\activate.bat
-  ```
-
-### 3.4 Instalar las dependencias
-
-```bash
-pip install -r requirements.txt
+```powershell
+Copy-Item app/infrastructure/config/secrets.env.example app/infrastructure/config/secrets.env
 ```
 
-Esto instala las librerías necesarias con las versiones declaradas en `requirements.txt`.
-
-### 3.5 Configurar el archivo de secretos (`secrets.env`)
-
-El backend lee la clave secreta para firmar los tokens JWT y la URL opcional de base de datos desde `app/infrastructure/config/secrets.env`.
-
-Asegurate de que exista el archivo `app/infrastructure/config/secrets.env` con el siguiente contenido mínimo:
+Antes de iniciar el backend o usar Alembic, editá la copia y ajustá al menos estos valores:
 
 ```env
-# Clave para la firma de tokens JWT
-JWT_SECRET_KEY=GankerSecretKeyCambiarEnProduccion
-
-# Base de datos (opcional en local):
-# Si se deja comentado o vacío, el backend usa automáticamente SQLite local en app/infrastructure/database/db.db
-# Para usar PostgreSQL local fuera de Docker:
-# DATABASE_URL=postgresql+psycopg2://dev_user:dev_password@localhost:5433/app_db
+ENVIRONMENT=development
+JWT_SECRET_KEY=REEMPLAZAR_POR_UNA_CLAVE_GENERADA
+CORS_ORIGINS=http://localhost:5173,http://localhost:5174
+FRONTEND_URL=http://localhost:5173
+SEED_DEMO_DATA=true
+SMTP_PORT=587
 ```
 
-> **Importante:** La base de datos SQLite local se crea automáticamente al iniciar y se puebla con los datos iniciales (videojuegos, roles, rangos, personajes y usuario admin) mediante `seed_data.py`. No requiere ninguna configuración previa.
+Generá el valor de `JWT_SECRET_KEY` con:
 
-### 3.6 Levantar el servidor de desarrollo
-
-Podés levantarlo usando el script correspondiente a tu sistema operativo o directamente con Python:
-
-- **Linux / macOS (script):**
-  ```bash
-  ./start_app.sh
-  ```
-- **Windows (PowerShell):**
-  ```powershell
-  .\start_app.ps1
-  ```
-- **Windows (CMD):**
-  ```cmd
-  start_app.bat
-  ```
-- **O directamente con uvicorn / python:**
-  ```bash
-  python app/infrastructure/start/main.py
-  ```
-
-El backend quedará escuchando en **http://127.0.0.1:8000** con hot-reload activado. Para cortarlo: `Ctrl + C`.
-
-### 3.7 Verificación rápida
-
-1. **Documentación interactiva (Swagger UI):**
-   Abrí tu navegador en **http://127.0.0.1:8000/docs** para explorar y probar todos los endpoints de la API.
-2. **Documentación alternativa (ReDoc):**
-   Disponible en **http://127.0.0.1:8000/redoc**.
-3. **Ejecutar la suite de tests:**
-   ```bash
-   pytest
-   ```
-   Toda la suite debe terminar en verde.
-
----
-
-## 4. Scripts disponibles
-
-| Comando / Script | Qué hace |
-| ---------------- | -------- |
-| `./start_app.sh` | Levanta el backend en Linux/macOS configurando `PYTHONPATH` y hot-reload |
-| `.\start_app.ps1` | Levanta el backend en Windows vía PowerShell |
-| `start_app.bat` | Levanta el backend en Windows vía Símbolo del Sistema (CMD) |
-| `pytest` | Ejecuta todos los tests unitarios e integrados con reporte de cobertura |
-| `pytest tests/unit` | Corre exclusivamente los tests unitarios |
-| `pytest tests/integration` | Corre exclusivamente los tests de integración |
-| `pytest --no-cov` | Corre los tests rápidamente omitiendo el análisis de cobertura |
-| `alembic upgrade head` | Aplica las últimas migraciones de base de datos |
-
----
-
-## 5. Estructura de carpetas
-
-El backend implementa una **Arquitectura Limpia / Hexagonal (Puertos y Adaptadores)**:
-
+```bash
+python -c "import secrets; print(secrets.token_hex(32))"
 ```
+
+`SMTP_PORT` debe tener un valor numérico aunque no uses correo: la plantilla lo deja vacío y Pydantic lo valida como entero. Para usar SQLite, dejá `DATABASE_URL` sin definir; una cadena vacía no selecciona la base por defecto.
+
+[settings.py](app/infrastructure/config/settings.py) carga la configuración con esta prioridad, de mayor a menor:
+
+1. Variables del proceso, incluidas las inyectadas por Docker.
+2. `app/infrastructure/config/secrets.local.env`.
+3. `app/infrastructure/config/secrets.env`.
+4. Valores predeterminados de `Settings`.
+
+Las claves personales, como las de Riot y OAuth, pueden ir en `secrets.local.env`. Ambos archivos de secretos se excluyen de Git; los cambios de configuración compartidos deben reflejarse en la plantilla.
+
+| Variable o grupo                                           | Uso                                                                                 |
+| ---------------------------------------------------------- | ----------------------------------------------------------------------------------- |
+| `DATABASE_URL`                                             | Conexión de SQLAlchemy; por defecto usa `app/infrastructure/database/db.db`         |
+| `CORS_ORIGINS`                                             | Orígenes del frontend permitidos, separados por comas                               |
+| `FRONTEND_URL`                                             | URL del cliente utilizada al construir enlaces de recuperación de contraseña        |
+| `SEED_DEMO_DATA`                                           | Activa la sincronización de catálogos, usuarios, perfiles y equipos de demostración |
+| `INITIAL_OWNER_*`                                          | Alta del owner inicial si están completas las credenciales y todavía no existe      |
+| `RIOT_API_KEY`                                             | Acceso a las funciones de Riot que requieren una clave                              |
+| `DISCORD_*`, `GOOGLE_*`, `TWITCH_*`, `STEAM_*`             | Credenciales y redirecciones de las integraciones de autenticación                  |
+| `SMTP_*` o `RESEND_API_KEY`, `EMAIL_API_URL`, `EMAIL_FROM` | Envío de correo para recuperar contraseñas                                          |
+| `UPLOAD_DIR`, `MEDIA_URL`                                  | Directorio físico y ruta pública de archivos multimedia                             |
+
+Los proveedores de autenticación requieren registrar sus URL de retorno en la consola correspondiente. Las claves de estas integraciones se configuran en el backend.
+
+### Base de datos y migraciones
+
+Antes del primer arranque y después de incorporar nuevas migraciones:
+
+```bash
+python -m alembic upgrade head
+```
+
+El arranque de FastAPI ejecuta el seed sobre el esquema existente; **no crea las tablas automáticamente**. Con `SEED_DEMO_DATA=true`, sincroniza los datos de [database/seeds/](app/infrastructure/database/seeds/). Con `false`, omite los datos de demostración y solo intenta crear el owner inicial configurado. El bootstrap no reemplaza la contraseña de un owner existente.
+
+Para usar PostgreSQL desde el backend local, podés levantar solo la base del Compose de desarrollo. Este comando se ejecuta desde la raíz del repositorio:
+
+```bash
+docker compose up -d db
+```
+
+Configurá luego esta URL en los secretos del backend y aplicá las migraciones desde `backend/`:
+
+```env
+DATABASE_URL=postgresql+psycopg2://dev_user:dev_password@localhost:5433/app_db
+```
+
+Dentro del Compose completo, el backend recibe una URL con `db:5432` y el entrypoint aplica las migraciones antes de iniciar Uvicorn.
+
+Para generar una migración después de modificar los modelos ORM:
+
+```bash
+python -m alembic revision --autogenerate -m "descripcion_del_cambio"
+```
+
+Revisá la migración generada en `migrations/versions/` antes de aplicarla. Alembic usa la misma `DATABASE_URL` que la aplicación.
+
+### Arranque
+
+Con el entorno virtual activo y las migraciones aplicadas:
+
+```bash
+python -m uvicorn app.infrastructure.start.main:app --host 127.0.0.1 --port 8000 --reload
+```
+
+También existen los lanzadores `bash start_app.sh`, `.\start_app.ps1` y `start_app.bat`, que usan el entorno `backend/.venv`. Estos lanzadores no ejecutan migraciones.
+
+| Recurso local | URL                                |
+| ------------- | ---------------------------------- |
+| Swagger UI    | http://127.0.0.1:8000/docs         |
+| ReDoc         | http://127.0.0.1:8000/redoc        |
+| OpenAPI       | http://127.0.0.1:8000/openapi.json |
+
+En local, FastAPI sirve `/media` desde `backend/media/`. En Docker, Nginx sirve los medios desde el volumen compartido.
+
+## Estructura y organización
+
+```text
 backend/
 ├── app/
-│   ├── application/                   # Casos de uso y puertos (interfaces)
-│   │   ├── ports/                     # Interfaces abstractas (IUserRepository, IStorageService, etc.)
-│   │   └── use_cases/                 # Casos de uso (RegisterPlayer, RegisterUser, UserLogin, etc.)
-│   │
-│   ├── domain/                        # Núcleo del negocio puro (sin dependencias externas)
-│   │   ├── exceptions/                # Excepciones de dominio organizadas por área
-│   │   ├── models/                    # Modelos de entidad pura (User, Videogame, Character, etc.)
-│   │   └── services/                  # Servicios de dominio independientes (SlugService, etc.)
-│   │
-│   └── infrastructure/                # Adaptadores y tecnologías externas
-│       ├── api/                       # Capa de entrada HTTP / REST
-│       │   ├── auth/                  # Implementación de hashing (Argon2) y JWT
-│       │   ├── controllers/           # Routers de FastAPI para cada recurso
-│       │   ├── dependencies/          # Inyección de dependencias y validación de roles
-│       │   └── dto/                   # Data Transfer Objects (request y response Pydantic)
-│       ├── config/                    # Settings de la aplicación y lectura de secrets.env
-│       ├── database/                  # Persistencia relacional
-│       │   ├── mappers/               # Mapeo bidireccional entre ORM y modelos de dominio
-│       │   ├── models/                # Modelos de tablas SQLAlchemy ORM
-│       │   ├── repositories/          # Implementaciones de repositorios contra la base de datos
-│       │   ├── unit_of_work/          # Implementación del patrón Unit of Work con SQLAlchemy
-│       │   ├── engine_factory.py      # Creación y configuración del Engine de base de datos
-│       │   └── seed_data.py           # Datos semilla iniciales (LoL, roles, rangos, admin)
-│       ├── start/                     # Entrada de la aplicación FastAPI (main.py)
-│       └── storage/                   # Servicio de guardado de archivos multimedia en disco local
-│
-├── media/                             # Directorio donde se guardan las imágenes subidas en local
-├── migrations/                        # Versiones y configuración de migraciones Alembic
-├── tests/                             # Suite de pruebas automatizadas
-│   ├── conftest.py                    # Fixtures globales (base de datos en memoria, clientes, tokens)
-│   ├── integration/                   # Tests de integración (API endpoints y repositorios)
-│   └── unit/                          # Tests unitarios (application, domain, infrastructure)
-│
-├── Dockerfile                         # Imagen Docker del backend
-├── pytest.ini                         # Configuración de pytest y cobertura
-├── requirements.txt                   # Dependencias de Python del proyecto
-├── start_app.sh                       # Script de arranque para Linux/macOS
-├── start_app.bat                      # Script de arranque para Windows CMD
-└── start_app.ps1                      # Script de arranque para Windows PowerShell
+│   ├── application/
+│   │   ├── ports/                  # Interfaces de repositorios y servicios externos
+│   │   ├── services/               # Servicios de aplicación, como exportar reportes
+│   │   └── use_cases/              # Casos de uso
+│   ├── domain/
+│   │   ├── exceptions/             # Excepciones agrupadas por área del negocio
+│   │   ├── models/                 # Entidades y objetos del dominio
+│   │   ├── services/               # Validaciones y servicios del dominio
+│   │   └── specifications/         # Criterios componibles de búsqueda y filtrado
+│   └── infrastructure/
+│       ├── api/
+│       │   ├── auth/               # JWT, estados OAuth y hashing de contraseñas
+│       │   ├── chat/               # Conexiones de chat y notificaciones
+│       │   ├── controllers/        # Endpoints HTTP y WebSocket
+│       │   ├── dependencies/       # Inyección de dependencias y permisos
+│       │   ├── dto/
+│       │   │   ├── request/        # Esquemas de entrada
+│       │   │   └── response/       # Esquemas de salida
+│       │   └── teams/              # Conexiones para actualizaciones de equipos
+│       ├── catalog_providers/      # Catálogos externos de personajes
+│       ├── config/                 # Settings y plantillas de configuración
+│       ├── database/
+│       │   ├── mappers/            # Conversión entre dominio y ORM
+│       │   ├── models/             # Modelos SQLAlchemy
+│       │   ├── repositories/       # Implementaciones de repositorios
+│       │   ├── seeds/              # Datos iniciales en CSV
+│       │   └── unit_of_work/       # Unidad de trabajo y su factory
+│       ├── discord_api/            # Vinculación de cuentas Discord
+│       ├── federated_auth/         # Proveedores de autenticación federada
+│       ├── riot_api/               # Cuentas, rangos y estadísticas de Riot
+│       ├── start/main.py           # Configuración y arranque de FastAPI
+│       └── storage/                # Almacenamiento de archivos en disco
+├── media/                          # Recursos multimedia locales
+├── migrations/versions/            # Migraciones Alembic
+├── tests/
+│   ├── conftest.py                 # Fixtures de base, sesión, usuarios y cliente HTTP
+│   ├── integration/                # Pruebas de API y base de datos
+│   └── unit/                       # Pruebas de aplicación, dominio e infraestructura
+├── Dockerfile / Dockerfile.prod
+├── entrypoint.sh / entrypoint.prod.sh
+├── alembic.ini / pytest.ini
+├── requirements.txt
+├── start_app.sh / .ps1 / .bat
+└── README.md
 ```
 
-### Regla de dependencias (Clean Architecture)
+Los casos de uso coordinan operaciones del dominio y trabajan con los puertos de `application/ports/`. Los adaptadores de `infrastructure/` conectan esos puertos con SQLAlchemy, el almacenamiento y los servicios externos. Los DTOs de la API se ubican en `infrastructure/api/dto/`; los filtros componibles están en `domain/specifications/`.
 
-```
-infrastructure/  ──►  application/  ──►  domain/
-```
+## Convenciones de nombrado
 
-- **`domain/`** no importa absolutamente nada de `application` ni de `infrastructure`. Es Python puro.
-- **`application/`** solo conoce el dominio y define **puertos** (interfaces abstractas). No conoce FastAPI, SQLAlchemy ni librerías de infraestructura concretas.
-- **`infrastructure/`** implementa los puertos definidos en `application/` y conecta la lógica de negocio con la base de datos, el framework HTTP y el sistema de archivos.
+| Elemento                         | Convención                                     | Ejemplo existente                                |
+| -------------------------------- | ---------------------------------------------- | ------------------------------------------------ |
+| Módulos, funciones y variables   | `snake_case`                                   | `create_team.py`, `team_id`                      |
+| Clases                           | `PascalCase`                                   | `Videogame`, `Team`                              |
+| Puertos / interfaces             | Archivo `i_<nombre>.py`, clase con prefijo `I` | `i_user_repository.py`, `IUserRepository`        |
+| Implementaciones de repositorios | `<entidad>_repository_impl.py`                 | `character_repository_impl.py`                   |
+| Modelos ORM                      | `<entidad>_orm.py`                             | `user_orm.py`                                    |
+| Mappers                          | `<entidad>_mapper.py`                          | `game_usage_report_mapper.py`                    |
+| Controladores HTTP               | `<recurso>_controller.py`                      | `character_controller.py`                        |
+| DTOs de entrada y salida         | Sufijos `_request.py` y `_response.py`         | `create_team_request.py`, `get_user_response.py` |
+| Excepciones                      | Sufijo `_exception.py`, agrupadas por área     | `entity_not_persisted_exception.py`              |
+| Pruebas                          | Prefijo `test_`, dentro de `backend/tests/`    | `test_create_team.py`                            |
 
----
+El sufijo `_impl` se usa en implementaciones de repositorios y algunos adaptadores. Otros servicios se nombran por su tecnología o función, como `jwt_token_service.py` y `local_disk_storage_service.py`.
 
-## 6. Dependencias y por qué está cada una
+## Desarrollo y verificación
 
-### Producción
-
-| Paquete | Para qué |
-| ------- | -------- |
-| `fastapi` | Framework web rápido y asíncrono para construir la API |
-| `uvicorn[standard]` | Servidor ASGI de alto rendimiento para ejecutar FastAPI |
-| `SQLAlchemy` | ORM para modelar las tablas y realizar consultas |
-| `psycopg2-binary` | Driver PostgreSQL para conexión en contenedores o producción |
-| `aiosqlite` | Soporte asíncrono para SQLite |
-| `pydantic` | Validación de datos, serialización y tipado estricto |
-| `pydantic-settings` | Carga de variables de entorno y configuración tipada |
-| `pyjwt` | Generación y validación de tokens de sesión JWT |
-| `argon2-cffi` | Algoritmo de hashing seguro y resistente a ataques para contraseñas |
-| `python-multipart` | Procesamiento de formularios y subida de archivos multipart/form-data |
-| `aiofiles` | Lectura y escritura asíncrona de archivos |
-| `colorama` | Formato y colores en logs de consola |
-
-### Desarrollo y Testing
-
-| Paquete | Para qué |
-| ------- | -------- |
-| `pytest` | Framework de pruebas unitarias y de integración |
-| `pytest-cov` | Medición y reporte de cobertura de código |
-| `pytest-mock` | Soporte para mocks y espías en los tests |
-| `freezegun` | Congelar o simular fechas/horas en pruebas temporales |
-| `httpx` | Cliente HTTP utilizado por `TestClient` para testear endpoints sin levantar el servidor |
-| `alembic` | Control de versiones y migraciones del esquema de base de datos |
-
----
-
-## 7. Testing
-
-La suite de pruebas utiliza **Pytest** y cuenta con más de 250 tests automatizados con una cobertura superior al 90%.
-
-### Aislamiento de base de datos en tests
-Los tests de integración utilizan una base de datos **SQLite en memoria (`sqlite:///:memory:`)** completamente aislada y efímera gestionada por fixtures en `tests/conftest.py`. Cada test corre sobre una base de datos limpia sin alterar tus archivos locales.
-
-### Comandos de prueba
+Con el entorno virtual activo, desde `backend/`, ejecutá antes de abrir un PR:
 
 ```bash
-# Correr toda la suite con cobertura
 pytest
-
-# Correr sin reporte de cobertura (más rápido)
-pytest --no-cov
-
-# Correr solo una carpeta o archivo específico
-pytest tests/unit/application/test_register_user.py --no-cov
-
-# Correr tests con detalle de fallos corto
-pytest --no-cov --tb=short
 ```
 
----
+[pytest.ini](pytest.ini) configura la búsqueda en `tests/`, añade el proyecto al path de Python y genera un reporte de cobertura de `app/` en la terminal.
 
-## 8. Base de datos y Migraciones
+| Comando                                                      | Uso                                |
+| ------------------------------------------------------------ | ---------------------------------- |
+| `pytest tests/unit`                                          | Solo pruebas unitarias             |
+| `pytest tests/integration`                                   | Solo pruebas de integración        |
+| `pytest --no-cov`                                            | Suite completa sin medir cobertura |
+| `pytest tests/unit/application/test_create_team.py --no-cov` | Ejecutar un archivo concreto       |
 
-### SQLite (Modo local)
-Por defecto, al ejecutar el backend fuera de Docker, SQLAlchemy se conecta a una base de datos SQLite ubicada en `app/infrastructure/database/db.db`. Al iniciar la aplicación, las tablas se generan automáticamente si no existen y se pueblan con los datos semilla (`seed_database`).
+Las fixtures compartidas de [tests/conftest.py](tests/conftest.py) crean SQLite en memoria y un directorio temporal de medios. El cliente HTTP de pruebas reemplaza el arranque normal para no ejecutar el seed de la aplicación.
 
-### PostgreSQL (Modo Docker)
-Al levantar el proyecto completo con Docker Compose (`docker compose up`), el backend se conecta automáticamente al contenedor de PostgreSQL mediante la variable `DATABASE_URL` inyectada en el `docker-compose.yml`.
+En CI se usa Python 3.14 y se ejecuta `pytest`. El flujo de ramas y revisión está en el [README principal](../README.md#flujo-de-trabajo).
 
-### Migraciones con Alembic
-Para generar y aplicar migraciones manuales en entornos donde se requiera:
+## Backend en producción
 
-```bash
-# Generar nueva migración tras modificar un modelo ORM
-alembic revision --autogenerate -m "descripcion_del_cambio"
+El [stack de producción](../docker-compose.prod.yml) inyecta las variables desde `.env.prod`, usa PostgreSQL y desactiva los datos de demostración. La preparación del entorno y el despliegue se describen en el [README principal](../README.md#despliegue).
 
-# Aplicar migraciones pendientes
-alembic upgrade head
-```
-
----
-
-## 9. Convenciones de código
-
-- **Modelos de dominio:** Clases puras de Python en `app/domain/models/`.
-- **Puertos:** Interfaces abstractas en `app/application/ports/` con prefijo `i_` (ej. `i_user_repository.py`).
-- **Adaptadores:** Implementaciones concretas en `app/infrastructure/` que implementan las interfaces del puerto.
-- **Excepciones de dominio:** Heredan de `DomainException` e indican su mensaje y código de estado HTTP correspondiente (`status_code`).
-- **DTOs:** Modelos Pydantic en `app/infrastructure/api/dto/` para validar el payload de solicitudes (`request/`) y estructurar las respuestas (`response/`).
-- **Antes de abrir un PR:** Asegurate de correr `pytest` y verificar que la suite completa finalice en verde.
-
----
-
-## 10. Flujo de trabajo con Git
-
-1. `git pull origin main` antes de empezar cualquier tarea nueva.
-2. Crear tu rama con nombre descriptivo: `git switch -c feature/nombre-de-la-funcionalidad`.
-3. Hacer tus commits sobre esa rama.
-4. Cuando el feature esté listo y los tests pasen, abrir Pull Request contra `main` y asignar como revisor a **@Aguperez444** para cambios en el backend.
-5. Una vez aprobada y mergeada la PR, eliminar la rama de trabajo.
+[Dockerfile.prod](Dockerfile.prod) inicia Uvicorn con un solo worker: las conexiones WebSocket y el limitador de login mantienen estado en memoria. Su entrypoint aplica las migraciones antes de arrancar. Con `ENVIRONMENT=production`, FastAPI desactiva Swagger, ReDoc y el esquema OpenAPI público.

@@ -23,12 +23,12 @@ class GetOrCreateConversation:
         user_2_id = max(current_user_id, target_user_id)
 
         with self.uow as uow:
-            # 1. buscamos los usuarios y validamos que existan
+            # 1. buscamos los usuarios y validamos que existan y no estén baneados
             user_1 = uow.user_repo.get_user_by_id(user_1_id)
             user_2 = uow.user_repo.get_user_by_id(user_2_id)
-            if not user_1:
+            if not user_1 or getattr(user_1, "banned", False) is True:
                 raise UserNotFoundException(user_1_id)
-            if not user_2:
+            if not user_2 or getattr(user_2, "banned", False) is True:
                 raise UserNotFoundException(user_2_id)
 
             # 2. Buscamos si ya existe la conversación entre estos dos usuarios

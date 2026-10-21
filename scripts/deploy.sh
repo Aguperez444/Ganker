@@ -420,6 +420,22 @@ main() {
   phase 5 "Ejecutando smoke test contra $PUBLIC_URL"
   bash scripts/probar-stack.sh "$PUBLIC_URL"
 
+  # Notificar los cambios a IndexNow.
+  # No es necesario hacerlo con --restart porque no recompila el frontend.
+  if [[ "$mode" != "--restart" ]]; then
+    phase 6 "Notificando a IndexNow"
+
+    if curl -fsS --retry 2 --max-time 15 -G \
+      "https://api.indexnow.org/indexnow" \
+      --data-urlencode "url=https://gankerweb.app/" \
+      --data-urlencode "key=0b3bd0e9332aa05e19d7f5dd50ae589b"; then
+
+      printf '\nOK: IndexNow recibió la notificación.\n'
+    else
+      printf '\nAVISO: No se pudo notificar a IndexNow.\n' >&2
+    fi
+  fi
+
   printf '\n=================================================================\n'
   printf ' DESPLIEGUE DE GANKER COMPLETADO: %s\n' "$PUBLIC_URL"
   printf '=================================================================\n'
