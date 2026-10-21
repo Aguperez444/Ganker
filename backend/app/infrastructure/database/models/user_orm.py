@@ -96,20 +96,20 @@ class UserORM(Base):
     )
     resolver_player: Mapped[List["PlayerReportORM"]] = relationship(
         "PlayerReportORM",
-        foreign_keys="[PlayerReportORM.resolved_by]",
-        back_populates="resolver_player",
+        foreign_keys="[PlayerReportORM.resolver_id]",
+        back_populates="resolver_user",
         cascade="all, delete-orphan"
     )
     banned_player: Mapped[List["UserBanRecordORM"]] = relationship(
         "UserBanRecordORM",
-        foreign_keys="[UsersBanned.banned_user]",
-        back_populates="banned_player",
+        foreign_keys="[UserBanRecordORM.banned_user_id]",
+        back_populates="banned_user",
         cascade="all, delete-orphan"
     )
     moderator_banned_player: Mapped[List["UserBanRecordORM"]] = relationship(
         "UserBanRecordORM",
-        foreign_keys="[UsersBanned.banned_by]",
-        back_populates="moderator_banned_player",
+        foreign_keys="[UserBanRecordORM.banned_by_user_id]",
+        back_populates="banned_by_user",
         cascade="all, delete-orphan"
     )
 

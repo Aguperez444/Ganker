@@ -24,8 +24,6 @@ class UserBanRecordMapper:
                 reason=user_ban_record.reason,
                 created_at=user_ban_record.created_at,
                 expires_at=user_ban_record.expires_at,
-                banned_user=UserMapper.domain_to_orm(user_ban_record.banned_user),
-                banned_by_user=UserMapper.domain_to_orm(user_ban_record.banned_by_user),
             )
         return UserBanRecordORM(
             id=user_ban_record.user_ban_record_id,
@@ -34,6 +32,4 @@ class UserBanRecordMapper:
             reason=user_ban_record.reason,
             created_at=user_ban_record.created_at,
             expires_at=user_ban_record.expires_at,
-            banned_user=UserMapper.domain_to_orm(user_ban_record.banned_user),
-            banned_by_user=UserMapper.domain_to_orm(user_ban_record.banned_by_user),
         )

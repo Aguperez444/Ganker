@@ -65,7 +65,7 @@ class TestPlayerReportingIntegration:
 
         report_in_db = (
             test_db_session.query(PlayerReportORM)
-            .filter(PlayerReportORM.id == data["id"])
+            .filter(PlayerReportORM.id == data["report_id"])
             .first()
         )
         assert report_in_db is not None
@@ -148,7 +148,7 @@ class TestBanSystemAndSpecificationsIntegration:
             headers=player_auth_headers,
         )
         assert report_res.status_code == 201
-        report_id = report_res.json()["id"]
+        report_id = report_res.json()["report_id"]
 
         # El administrador banea al jugador
         ban_res = client.post(
@@ -221,24 +221,24 @@ class TestBanSystemAndSpecificationsIntegration:
 
         base_time = datetime(2026, 5, 10, 12, 0, 0)
         rec1 = UserBanRecordORM(
-            banned_user=banned_one.user_id,
-            banned_by=seed_admin.user_id,  # username: adminuser
+            banned_user_id=banned_one.user_id,
+            banned_by_user_id=seed_admin.user_id,  # username: adminuser
             reason="Uso de cheats",
-            create_at=base_time - timedelta(days=10),
+            created_at=base_time - timedelta(days=10),
             expires_at=base_time + timedelta(days=20),
         )
         rec2 = UserBanRecordORM(
-            banned_user=banned_two.user_id,
-            banned_by=admin_two.user_id,  # username: mod_carlos
+            banned_user_id=banned_two.user_id,
+            banned_by_user_id=admin_two.user_id,  # username: mod_carlos
             reason="Insultos graves",
-            create_at=base_time - timedelta(days=2),
+            created_at=base_time - timedelta(days=2),
             expires_at=base_time + timedelta(days=5),
         )
         rec3 = UserBanRecordORM(
-            banned_user=banned_three.user_id,
-            banned_by=admin_two.user_id,  # username: mod_carlos
+            banned_user_id=banned_three.user_id,
+            banned_by_user_id=admin_two.user_id,  # username: mod_carlos
             reason="Uso de cheats",
-            create_at=base_time,
+            created_at=base_time,
             expires_at=base_time + timedelta(days=30),
         )
         test_db_session.add_all([rec1, rec2, rec3])
@@ -253,7 +253,7 @@ class TestBanSystemAndSpecificationsIntegration:
         assert res_by_admin.status_code == 200
         items_admin = res_by_admin.json()["list_banned_players"]
         assert len(items_admin) == 2
-        assert {item["banned_user"] for item in items_admin} == {"flamer_pedro", "hacker_maria"}
+        assert {item["banned_user_username"] for item in items_admin} == {"flamer_pedro", "hacker_maria"}
 
         # 2. Filtro por nombre de usuario baneado (banned_user)
         res_by_user = client.post(
@@ -264,7 +264,7 @@ class TestBanSystemAndSpecificationsIntegration:
         assert res_by_user.status_code == 200
         items_user = res_by_user.json()["list_banned_players"]
         assert len(items_user) == 2
-        assert {item["banned_user"] for item in items_user} == {"hacker_luis", "hacker_maria"}
+        assert {item["banned_user_username"] for item in items_user} == {"hacker_luis", "hacker_maria"}
 
         # 3. Filtro por razón (reason)
         res_by_reason = client.post(
@@ -275,7 +275,7 @@ class TestBanSystemAndSpecificationsIntegration:
         assert res_by_reason.status_code == 200
         items_reason = res_by_reason.json()["list_banned_players"]
         assert len(items_reason) == 2
-        assert {item["banned_user"] for item in items_reason} == {"hacker_luis", "hacker_maria"}
+        assert {item["banned_user_username"] for item in items_reason} == {"hacker_luis", "hacker_maria"}
 
         # 4. Filtro por rango de fechas de creación (min_date_create / max_date_create)
         res_by_create = client.post(
@@ -289,7 +289,7 @@ class TestBanSystemAndSpecificationsIntegration:
         assert res_by_create.status_code == 200
         items_create = res_by_create.json()["list_banned_players"]
         assert len(items_create) == 2
-        assert {item["banned_user"] for item in items_create} == {"flamer_pedro", "hacker_maria"}
+        assert {item["banned_user_username"] for item in items_create} == {"flamer_pedro", "hacker_maria"}
 
         # 5. Filtro cruzado combinando admin + usuario baneado + razón + fechas de creación y expiración
         res_crossed = client.post(
@@ -308,9 +308,12 @@ class TestBanSystemAndSpecificationsIntegration:
         assert res_crossed.status_code == 200
         items_crossed = res_crossed.json()["list_banned_players"]
         assert len(items_crossed) == 1
-        assert items_crossed[0]["banned_user"] == "hacker_maria"
-        assert items_crossed[0]["banned_by"] == "mod_carlos"
+        assert items_crossed[0]["banned_user_username"] == "hacker_maria"
+        assert items_crossed[0]["banned_by_user_username"] == "mod_carlos"
         assert items_crossed[0]["reason"] == "Uso de cheats"
+        assert items_crossed[0]["id"] == rec3.id
+        assert items_crossed[0]["banned_user_id"] == banned_three.user_id
+        assert items_crossed[0]["banned_by_user_id"] == admin_two.user_id
 
     def test_search_reported_players_with_filters(
         self, client, test_db_session, seed_player, seed_admin, player_auth_headers, admin_auth_headers, password_hasher
@@ -362,7 +365,7 @@ class TestBanSystemAndSpecificationsIntegration:
         assert res_resolved.status_code == 200
         reports = res_resolved.json()["reports"]
         assert len(reports) == 1
-        assert reports[0]["reported_name"] == "reported_alpha"
+        assert reports[0]["reported_user_name"] == "reported_alpha"
         assert reports[0]["status"] == "resolved"
         assert reports[0]["resolved_by"] == seed_admin.username
 
@@ -423,10 +426,10 @@ class TestBannedUserSecurityAndExclusionsIntegration:
             banned=True,
         )
         expired_record = UserBanRecordORM(
-            banned_user=expired_banned_user.user_id,
-            banned_by=seed_admin.user_id,
+            banned_user_id=expired_banned_user.user_id,
+            banned_by_user_id=seed_admin.user_id,
             reason="Baneo temporal vencido",
-            create_at=datetime.now() - timedelta(days=5),
+            created_at=datetime.now() - timedelta(days=5),
             expires_at=datetime.now() - timedelta(days=1),
         )
         test_db_session.add(expired_record)

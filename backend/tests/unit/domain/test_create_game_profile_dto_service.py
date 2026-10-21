@@ -38,7 +38,7 @@ class TestCreateGameProfileDTOService:
 
         assert dto.game_profile_id == 5
         assert dto.player_id == 42
-        assert dto.videogame.report_id == 1
+        assert dto.videogame.id == 1
         assert dto.videogame.name == "LoL"
         assert dto.videogame.rank_per_role is True
 

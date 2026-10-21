@@ -1,6 +1,3 @@
-from typing import cast
-
-from app.domain.models.user import User
 from app.infrastructure.database.mappers.user_mapper import UserMapper
 from app.infrastructure.database.models.player_report_orm import PlayerReportORM
 from app.domain.models.player_report import PlayerReport
@@ -27,23 +24,23 @@ class PlayerReportMapper:
     def domain_to_orm(player_report: PlayerReport) -> PlayerReportORM:
         if not player_report.is_persisted():
             return PlayerReportORM(
-                reporter=UserMapper.domain_to_orm(player_report.reporter),
-                reported=UserMapper.domain_to_orm(player_report.reported),
-                reason=player_report.reason.value,
+                reporter_id=player_report.reporter.user_id,
+                reported_id=player_report.reported.user_id,
+                reason=player_report.reason,
                 description=player_report.description,
-                status=player_report.status.value,
+                status=player_report.status,
                 created_at=player_report.created_at,
                 resolved_at=player_report.resolved_at,
-                resolver_user=UserMapper.domain_to_orm(cast(User, player_report.resolver_user)) if player_report.resolver_user else None
+                resolver_id=player_report.resolver_user.user_id if player_report.resolver_user else None
             )
         return PlayerReportORM(
             id=player_report.report_id,
-            reporter=UserMapper.domain_to_orm(player_report.reporter),
-            reported=UserMapper.domain_to_orm(player_report.reported),
-            reason=player_report.reason.value,
+            reporter_id=player_report.reporter.user_id,
+            reported_id=player_report.reported.user_id,
+            reason=player_report.reason,
             description=player_report.description,
-            status=player_report.status.value,
+            status=player_report.status,
             created_at=player_report.created_at,
             resolved_at=player_report.resolved_at,
-            resolver_user=UserMapper.domain_to_orm(cast(User, player_report.resolver_user)) if player_report.resolver_user else None
+            resolver_id=player_report.resolver_user.user_id if player_report.resolver_user else None
         )

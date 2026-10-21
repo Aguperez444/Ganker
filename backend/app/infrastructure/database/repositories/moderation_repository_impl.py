@@ -13,7 +13,8 @@ from app.domain.exceptions.moderation.not_banned_player_exception import NotBann
 
 from app.infrastructure.database.models.user_ban_record_orm import UserBanRecordORM
 
-from app.domain.models.player_report import ReportStatus
+from app.domain.models.report_status import ReportStatus
+
 from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from app.domain.models.player_report import PlayerReport

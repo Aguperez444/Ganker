@@ -51,7 +51,7 @@ class SearchBannedPlayers:
 
             return [
                 SearchBannedPlayersResponse(
-                    id=user_ban_record.banned_user.user_id,
+                    id=user_ban_record.user_ban_record_id,
                     banned_by_user_id=user_ban_record.banned_by_user.user_id,
                     banned_by_user_username=user_ban_record.banned_by_user.username,
                     banned_user_id=user_ban_record.banned_user.user_id,

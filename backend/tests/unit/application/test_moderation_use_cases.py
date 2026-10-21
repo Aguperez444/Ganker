@@ -27,7 +27,8 @@ from app.domain.specifications.base import AndSpecification
 from app.infrastructure.api.dto.request.ban_player_request import BanPlayerRequest
 from app.infrastructure.api.dto.request.login_request import LoginRequest
 from app.infrastructure.api.dto.request.report_player_request import ReportPlayerRequest
-from app.infrastructure.database.models.player_report_orm import PlayerReportORM
+from app.domain.models.player_report import PlayerReport
+from app.domain.models.user_ban_record import UserBanRecord
 
 
 from app.domain.models.report_reason import ReportReason
@@ -73,14 +74,16 @@ class TestReportPlayerUseCaseUnit:
 
         uow.user_repo.get_user_by_id.side_effect = lambda uid: reporter if uid == 1 else reported
 
-        persisted_report = PlayerReportORM(
-            id=10,
-            reporter_id=1,
-            reported_id=2,
+        persisted_report = PlayerReport(
+            report_id=10,
+            reporter=reporter,
+            reported=reported,
             status=ReportStatus.PENDING,
             reason=ReportReason.CHEATING,
             description="Uso de aimbot en partida competitiva",
-            create_at=datetime.now(),
+            created_at=datetime.now(),
+            resolved_at=None,
+            resolver_user=None,
         )
         uow.moderation_repo.report_player.return_value = persisted_report
 
@@ -175,11 +178,10 @@ class TestBanAndUnbanUseCasesUnit:
         use_case.execute(request, admin_id=1)
 
         uow.moderation_repo.ban_user.assert_called_once()
-        called_player_id, called_admin_id, called_register = uow.moderation_repo.ban_user.call_args[0]
-        assert called_player_id == 2
-        assert called_admin_id == 1
-        assert called_register.banned_user_id == 2
-        assert called_register.banned_by_user_id == 1
+        (called_register,) = uow.moderation_repo.ban_user.call_args[0]
+        assert isinstance(called_register, UserBanRecord)
+        assert called_register.banned_user is target
+        assert called_register.banned_by_user is admin
         assert called_register.reason == "Comportamiento abusivo reiterado"
         assert called_register.expires_at > datetime.now() + timedelta(days=6)
 
@@ -228,13 +230,14 @@ class TestSearchBannedAndReportedPlayersUnit:
         now = datetime.now()
         exp = now + timedelta(days=5)
 
-        mock_record = MagicMock()
-        mock_record.id = 1
-        mock_record.moderator_banned_player.username = "admin_mod"
-        mock_record.banned_player.username = "cheater_user"
-        mock_record.create_at = now
-        mock_record.expires_at = exp
-        mock_record.reason = "cheating"
+        mock_record = UserBanRecord(
+            user_ban_record_id=10,
+            banned_by_user=_make_domain_user(user_id=1, username="admin_mod"),
+            banned_user=_make_domain_user(user_id=2, username="cheater_user"),
+            created_at=now,
+            expires_at=exp,
+            reason="cheating",
+        )
         uow.find_by_specification_repo.get_banned_players.return_value = [mock_record]
 
         use_case = SearchBannedPlayers(uow)
@@ -251,8 +254,11 @@ class TestSearchBannedAndReportedPlayersUnit:
         )
 
         assert len(results) == 1
-        assert results[0].banned_by_user_id == "admin_mod"
-        assert results[0].banned_user_id == "cheater_user"
+        assert results[0].id == 10
+        assert results[0].banned_by_user_id == 1
+        assert results[0].banned_user_id == 2
+        assert results[0].banned_by_user_username == "admin_mod"
+        assert results[0].banned_user_username == "cheater_user"
         assert results[0].reason == "cheating"
 
         spec_arg, skip_arg, limit_arg = uow.find_by_specification_repo.get_banned_players.call_args[0]
@@ -264,16 +270,17 @@ class TestSearchBannedAndReportedPlayersUnit:
         uow = _make_mock_uow()
         now = datetime.now()
 
-        mock_report = MagicMock()
-        mock_report.id = 7
-        mock_report.reported.username = "reported_guy"
-        mock_report.reporter.username = "reporter_guy"
-        mock_report.status = "resolved"
-        mock_report.reason = "spamming"
-        mock_report.description = "Spam en chat"
-        mock_report.create_at = now
-        mock_report.resolved_at = now
-        mock_report.resolver_player.username = "admin_mod"
+        mock_report = PlayerReport(
+            report_id=7,
+            reported=_make_domain_user(user_id=2, username="reported_guy"),
+            reporter=_make_domain_user(user_id=1, username="reporter_guy"),
+            status=ReportStatus.RESOLVED,
+            reason=ReportReason.SPAMMING,
+            description="Spam en chat",
+            created_at=now,
+            resolved_at=now,
+            resolver_user=_make_domain_user(user_id=3, username="admin_mod"),
+        )
         uow.find_by_specification_repo.get_reports_players.return_value = [mock_report]
 
         use_case = SearchReportsPlayers(uow)
@@ -290,9 +297,9 @@ class TestSearchBannedAndReportedPlayersUnit:
         )
 
         assert len(results) == 1
-        assert results[0].reported_name == "reported_guy"
-        assert results[0].reporter_name == "reporter_guy"
-        assert results[0].resolver_id == "admin_mod"
+        assert results[0].reported_user_name == "reported_guy"
+        assert results[0].reporter_user_name == "reporter_guy"
+        assert results[0].resolved_by == "admin_mod"
 
 
 class TestSecurityAndExclusionUnit:
