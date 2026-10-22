@@ -9,7 +9,7 @@ import {
   MOTIVOS_REPORTE,
   formatearEsperaReporte,
   nombreDeMotivoReporte,
-} from "../../utils/reportes";
+} from "../../utils/reportesJugadores";
 
 const CLASES_CONTROL =
   "w-full rounded-lg border bg-ganker-surface-light px-4 py-3 text-ganker-text outline-none transition-all duration-200 placeholder:text-ganker-muted focus:border-ganker-purple-light focus:ring-2 focus:ring-ganker-purple/30 disabled:cursor-not-allowed disabled:opacity-50";

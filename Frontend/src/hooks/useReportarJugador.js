@@ -6,7 +6,7 @@ import {
   obtenerMsEsperaReporte,
   registrarReporteEnviado,
   validarFormularioReporte,
-} from "../utils/reportes";
+} from "../utils/reportesJugadores";
 
 export const PASO_FORMULARIO = "formulario";
 export const PASO_CONFIRMACION = "confirmacion";

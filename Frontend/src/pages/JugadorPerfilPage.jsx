@@ -4,11 +4,8 @@ import AvatarUsuarioComponent from "../components/common/AvatarUsuarioComponent"
 import AvisoComponent from "../components/common/AvisoComponent";
 import DiscordJugadorComponent from "../components/discord/DiscordJugadorComponent";
 import IconoChicoComponent from "../components/common/IconoChicoComponent";
-<<<<<<< HEAD
 import BotonReportarJugadorComponent from "../components/moderacion/BotonReportarJugadorComponent";
-=======
 import ModalDarDeBajaUsuarioComponent from "../components/jugadores/ModalDarDeBajaUsuarioComponent";
->>>>>>> 38f8f29191b7d31cc688a8cde445054ba63df7c1
 import PerfilDeJuegoDetalleComponent from "../components/jugadores/PerfilDeJuegoDetalleComponent";
 import { CLASES_BOTON_ELIMINAR } from "../components/common/botonesAccion";
 import { useAuth } from "../context/AuthContext";

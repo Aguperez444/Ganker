@@ -8,7 +8,7 @@ import {
   ESPERA_ENTRE_REPORTES_MS,
   obtenerMsEsperaReporte,
   registrarReporteEnviado,
-} from "../../utils/reportes";
+} from "../../utils/reportesJugadores";
 
 vi.mock("../../api/moderacionApi", () => ({
   reportarJugador: vi.fn(),
