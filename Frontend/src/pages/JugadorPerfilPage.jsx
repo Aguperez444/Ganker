@@ -1,18 +1,21 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link, useParams, useSearchParams } from "react-router-dom";
 import AvatarUsuarioComponent from "../components/common/AvatarUsuarioComponent";
 import AvisoComponent from "../components/common/AvisoComponent";
 import DiscordJugadorComponent from "../components/discord/DiscordJugadorComponent";
 import IconoChicoComponent from "../components/common/IconoChicoComponent";
 import BotonReportarJugadorComponent from "../components/moderacion/BotonReportarJugadorComponent";
+import BotonBanearJugadorComponent from "../components/moderacion/BotonBanearJugadorComponent";
 import ModalDarDeBajaUsuarioComponent from "../components/jugadores/ModalDarDeBajaUsuarioComponent";
 import PerfilDeJuegoDetalleComponent from "../components/jugadores/PerfilDeJuegoDetalleComponent";
 import { CLASES_BOTON_ELIMINAR } from "../components/common/botonesAccion";
 import { useAuth } from "../context/AuthContext";
 import { useChat } from "../context/ChatContext";
 import { useDarDeBajaUsuario } from "../hooks/useDarDeBajaUsuario";
+import { useJugadoresBaneados } from "../hooks/useJugadoresBaneados";
 import usePerfilJugador from "../hooks/usePerfilJugador";
 import { esAdmin } from "../utils/rutas";
+import { obtenerIdUsuarioDesdeToken } from "../utils/jwt";
 import { formatearConexionReciente } from "../utils/tiempo";
 
 // Perfil de otro jugador con todos sus perfiles de juego (LoL, Valorant,
@@ -33,10 +36,15 @@ const JugadorPerfilPage = () => {
   // US 50 - Un admin puede dar de baja la cuenta desde el perfil. Se guarda
   // el id dado de baja (no un booleano) para que el aviso no quede pegado al
   // pasar a otro perfil sin desmontar la pagina.
-  const { user } = useAuth();
+  const { user, tokens } = useAuth();
+  const miId = obtenerIdUsuarioDesdeToken(tokens?.access_token);
   const baja = useDarDeBajaUsuario();
   const [idDadoDeBaja, setIdDadoDeBaja] = useState(null);
   const [mensajeBaja, setMensajeBaja] = useState("");
+
+  // US 36 - Un admin puede banear la cuenta desde el perfil. El listado de
+  // baneos indica si ya esta baneada, para no ofrecer el boton de nuevo.
+  const baneos = useJugadoresBaneados();
 
   const handleEnviarMensaje = async () => {
     setAbriendoChat(true);
@@ -53,6 +61,13 @@ const JugadorPerfilPage = () => {
     setIdDadoDeBaja(idObjetivo);
   };
 
+  // US 36 - Al ver el perfil de otro jugador como admin, se trae el listado
+  // de baneos una sola vez para saber si esa cuenta ya está baneada.
+  const verBaneos = esAdmin(user) && perfil?.user_id && perfil.user_id !== miId;
+  useEffect(() => {
+    if (verBaneos) baneos.cargar();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [verBaneos]);
   let contenido;
 
   if (idDadoDeBaja !== null && String(idDadoDeBaja) === String(jugadorId)) {
@@ -157,16 +172,27 @@ const JugadorPerfilPage = () => {
                 Administración
               </h2>
               <p className="mt-1 text-sm text-ganker-muted">
-                Dar de baja esta cuenta y todos sus perfiles de juego.
+                {/* US 36 - Banear la cuenta o darla de baja junto con sus
+                    perfiles de juego. */}
+                Aplicá una sanción a esta cuenta o dalá de baja definitivamente.
               </p>
             </div>
-            <button
-              type="button"
-              onClick={() => baja.abrir(perfil)}
-              className={`shrink-0 ${CLASES_BOTON_ELIMINAR}`}
-            >
-              Dar de baja cuenta
-            </button>
+            <div className="flex shrink-0 flex-wrap items-center gap-2">
+              {/* US 36 - Banear jugador desde el perfil. */}
+              <BotonBanearJugadorComponent
+                jugador={perfil}
+                miId={miId}
+                yaBaneado={baneos.estaBaneado(perfil.user_id)}
+                onBaneado={() => baneos.cargar({ forzar: true })}
+              />
+              <button
+                type="button"
+                onClick={() => baja.abrir(perfil)}
+                className={CLASES_BOTON_ELIMINAR}
+              >
+                Dar de baja cuenta
+              </button>
+            </div>
           </div>
         )}
 

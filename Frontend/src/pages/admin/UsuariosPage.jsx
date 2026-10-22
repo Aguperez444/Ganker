@@ -1,13 +1,22 @@
 import { useState } from "react";
 import AvatarUsuarioComponent from "../../components/common/AvatarUsuarioComponent";
 import ModalDarDeBajaUsuarioComponent from "../../components/jugadores/ModalDarDeBajaUsuarioComponent";
+import BotonBanearJugadorComponent from "../../components/moderacion/BotonBanearJugadorComponent";
 import { CLASES_BOTON_ELIMINAR } from "../../components/common/botonesAccion";
+import { useAuth } from "../../context/AuthContext";
 import { useBuscarUsuario } from "../../hooks/useBuscarUsuario";
 import { useDarDeBajaUsuario } from "../../hooks/useDarDeBajaUsuario";
+import { useJugadoresBaneados } from "../../hooks/useJugadoresBaneados";
+import { obtenerIdUsuarioDesdeToken } from "../../utils/jwt";
 
 // US 50 - Eliminar cuenta de usuario (admin): se busca al usuario por ID
 // (ver useBuscarUsuario), se ve quien es y recien ahi se lo puede dar de baja.
+// US 36 - Banear jugador (admin): desde la misma tarjeta del usuario buscado,
+// al lado de "Dar de baja", se aplica la sancion con su motivo y duracion.
 const UsuariosPage = () => {
+  const { tokens } = useAuth();
+  const miId = obtenerIdUsuarioDesdeToken(tokens?.access_token);
+
   const [successMessage, setSuccessMessage] = useState("");
 
   const {
@@ -20,11 +29,16 @@ const UsuariosPage = () => {
     limpiar,
   } = useBuscarUsuario();
   const baja = useDarDeBajaUsuario();
+  const baneos = useJugadoresBaneados();
 
   const handleBuscar = (e) => {
     e.preventDefault();
     setSuccessMessage("");
-    buscar();
+    buscar().then((ok) => {
+      // El listado de baneos decide si la tarjeta muestra "Banear" o
+      // "Ya baneado"; se carga recien cuando hay un usuario encontrado.
+      if (ok) baneos.cargar();
+    });
   };
 
   const handleConfirmarBaja = async () => {
@@ -121,13 +135,21 @@ const UsuariosPage = () => {
                   Es tu cuenta: para darla de baja usá Mi cuenta.
                 </p>
               ) : (
-                <button
-                  type="button"
-                  onClick={() => baja.abrir(encontrado)}
-                  className={`shrink-0 ${CLASES_BOTON_ELIMINAR}`}
-                >
-                  Dar de baja
-                </button>
+                <div className="flex shrink-0 flex-wrap gap-2">
+                  <BotonBanearJugadorComponent
+                    jugador={encontrado}
+                    miId={miId}
+                    yaBaneado={baneos.estaBaneado(encontrado.user_id)}
+                    onBaneado={() => baneos.cargar({ forzar: true })}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => baja.abrir(encontrado)}
+                    className={CLASES_BOTON_ELIMINAR}
+                  >
+                    Dar de baja
+                  </button>
+                </div>
               )}
             </div>
           )}

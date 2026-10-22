@@ -4,6 +4,17 @@ import { validarFormularioLogin } from "../utils/validaciones";
 
 const VALORES_INICIALES = { email: "", password: "" };
 
+// US 36 - BanNotFinishedException llega como HTTP 400 con un mensaje propio.
+// Se detecta por el texto para no confundirlo con otros 400 de validación.
+function esCuentaBaneada(result) {
+  const mensaje = result?.error?.error;
+  return (
+    result?.status === 400 &&
+    typeof mensaje === "string" &&
+    /bane/i.test(mensaje)
+  );
+}
+
 export function useIniciarSesion() {
   const { login } = useAuth();
   const [valores, setValores] = useState(VALORES_INICIALES);
@@ -34,6 +45,15 @@ export function useIniciarSesion() {
         setErrorServidor("No existe una cuenta registrada con ese email.");
       } else if (result.status === 401) {
         setErrorServidor("La contraseña es incorrecta.");
+      } else if (esCuentaBaneada(result)) {
+        // US 36 - El backend responde 400 con
+        // { error: "El baneo del jugador aún no ha finalizado" } cuando la
+        // cuenta sigue suspendida. Se muestra ese mensaje tal cual para que
+        // el jugador entienda por qué no puede entrar.
+        setErrorServidor(
+          result.error?.error ??
+            "Tu cuenta está suspendida y no puede iniciar sesión."
+        );
       } else {
         setErrorServidor("No pudimos iniciar sesión. Probá de nuevo.");
       }

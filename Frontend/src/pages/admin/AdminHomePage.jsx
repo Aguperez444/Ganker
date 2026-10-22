@@ -54,10 +54,10 @@ const AdminHomePage = () => {
     },
     {
       titulo: "Moderación",
-      descripcion: "Supervisá reportes, conductas y sanciones de usuarios.",
+      descripcion: "Baneá cuentas que incumplan las normas de la comunidad.",
       path: "/app/admin/moderacion",
       botonTexto: "Ir a moderación",
-      badge: "Próximo sprint",
+      badge: "Disponible",
     },
   ];
 

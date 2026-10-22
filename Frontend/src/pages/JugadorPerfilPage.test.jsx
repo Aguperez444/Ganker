@@ -11,6 +11,13 @@ vi.mock("../api/jugadoresApi", () => ({
   eliminarUsuario: vi.fn(),
 }));
 
+// US 36 - El perfil admin consulta el listado de baneos para saber si la
+// cuenta ya está sancionada. Se mockea para no pegarle a la red en los tests.
+vi.mock("../api/moderacionApi", () => ({
+  obtenerJugadoresBaneados: vi.fn().mockResolvedValue([]),
+  banearJugador: vi.fn(),
+}));
+
 // Access token falso con el id del usuario logueado en el claim "sub" (lo
 // lee utils/jwt.js para frenar la autoeliminacion de la US 50).
 function tokenDe(userId) {
@@ -313,5 +320,39 @@ describe("JugadorPerfilPage - US 50 Eliminar cuenta de usuario", () => {
     expect(
       screen.queryByRole("button", { name: "Dar de baja cuenta" })
     ).toBeNull();
+  });
+});
+
+describe("JugadorPerfilPage - US 36 Banear jugador", () => {
+  it("un jugador común no ve la opción de banear", async () => {
+    renderPagina();
+
+    await screen.findByRole("heading", { name: "Ana" });
+    expect(screen.queryByRole("button", { name: "Banear jugador" })).toBeNull();
+  });
+
+  it("el admin ve el botón de banear en el panel de administración", async () => {
+    auth.user = { role: "admin" };
+    renderPagina();
+
+    expect(
+      await screen.findByRole("button", { name: "Banear jugador" })
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Dar de baja cuenta" })
+    ).toBeInTheDocument();
+  });
+
+  it("muestra 'Ya baneado' si la cuenta ya está sancionada", async () => {
+    const { obtenerJugadoresBaneados } = await import("../api/moderacionApi");
+    obtenerJugadoresBaneados.mockResolvedValue([
+      { id: 1, banned_user_id: 7, banned_user_username: "ana" },
+    ]);
+    auth.user = { role: "admin" };
+    renderPagina();
+
+    expect(
+      await screen.findByRole("button", { name: "Ya baneado" })
+    ).toBeDisabled();
   });
 });
