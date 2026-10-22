@@ -19,6 +19,21 @@ export function esOwner(user) {
   return rolDe(user) === "owner";
 }
 
+// Nombre visible de cada valor de UserRole.
+export const NOMBRES_ROLES = {
+  player: "Jugador",
+  admin: "Administrador",
+  owner: "Owner",
+};
+
+// US 39 - Roles que puede asignar al registrar un usuario: los de su misma
+// jerarquia o inferior. Solo un owner puede registrar a otro owner.
+export function rolesQuePuedeRegistrar(user) {
+  if (esOwner(user)) return ["player", "admin", "owner"];
+  if (esAdmin(user)) return ["player", "admin"];
+  return [];
+}
+
 // A donde va un usuario recien logueado, o uno ya logueado que cae en /login.
 // La regla vive aca sola para no repetirla en cada pantalla que navega.
 export function rutaInicialPara(user) {

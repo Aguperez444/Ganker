@@ -1,99 +1,27 @@
-import { useEffect, useId, useState } from "react";
-import {
-  getDiscordAuthorizeUrl,
-  getMyDiscord,
-  unlinkDiscord,
-  updateDiscordVisibility,
-} from "../../api/discordApi";
-import {
-  VISIBILIDADES_DISCORD,
-  VISIBILIDAD_POR_DEFECTO,
-  guardarVisibilidadPendiente,
-  tomarMensajeDiscord,
-} from "../../utils/discord";
-import { logError } from "../../utils/logs";
+import { useId } from "react";
+import useCuentaDiscord from "../../hooks/useCuentaDiscord";
+import { VISIBILIDADES_DISCORD } from "../../utils/discord";
 import IconoChicoComponent from "../common/IconoChicoComponent";
 
 const CLASES_SELECT =
   "w-full rounded-lg border border-white/10 bg-ganker-surface-light px-3 py-2.5 text-sm text-ganker-text focus:border-ganker-purple focus:ring-2 focus:ring-ganker-purple focus:outline-none disabled:opacity-60";
 
-function mensajeDeError(error, porDefecto) {
-  return error.response?.data?.error ?? porDefecto;
-}
-
-// Funcion de modulo por el mismo motivo que cargarEquipo en useEquipo.js
-// (regla set-state-in-effect).
-async function cargarCuenta({ setCuenta, setError }) {
-  try {
-    setCuenta(await getMyDiscord());
-  } catch (error) {
-    logError("Error al cargar la cuenta de Discord:", error);
-    setCuenta({ linked: false });
-    setError("No se pudo cargar tu cuenta de Discord.");
-  }
-}
-
 // Seccion "Discord" de Mi cuenta: conectar (OAuth2 en discord.com), elegir
 // quien la ve y desconectar. El resultado de la conexion lo deja
 // DiscordCallbackPage en sessionStorage antes de volver aca.
 const CuentaDiscordComponent = () => {
-  const [cuenta, setCuenta] = useState(null);
-  const [visibilidad, setVisibilidad] = useState(VISIBILIDAD_POR_DEFECTO);
-  const [enCurso, setEnCurso] = useState(false);
-  const [error, setError] = useState("");
-  const [mensaje, setMensaje] = useState(() => tomarMensajeDiscord());
+  const {
+    cuenta,
+    visibilidad,
+    setVisibilidad,
+    enCurso,
+    error,
+    mensaje,
+    conectar,
+    cambiarVisibilidad,
+    desconectar,
+  } = useCuentaDiscord();
   const idVisibilidad = useId();
-
-  useEffect(() => {
-    cargarCuenta({ setCuenta, setError });
-  }, []);
-
-  const conectar = async () => {
-    try {
-      setEnCurso(true);
-      setError("");
-      const url = await getDiscordAuthorizeUrl();
-      guardarVisibilidadPendiente(visibilidad);
-      window.location.assign(url);
-    } catch (error) {
-      setError(
-        mensajeDeError(error, "No se pudo iniciar la conexión con Discord.")
-      );
-      setEnCurso(false);
-    }
-  };
-
-  const cambiarVisibilidad = async (nueva) => {
-    try {
-      setEnCurso(true);
-      setError("");
-      setMensaje(null);
-      setCuenta(await updateDiscordVisibility(nueva));
-      setMensaje({
-        tipo: "exito",
-        texto: "Se actualizó quién puede ver tu Discord.",
-      });
-    } catch (error) {
-      setError(mensajeDeError(error, "No se pudo cambiar la visibilidad."));
-    } finally {
-      setEnCurso(false);
-    }
-  };
-
-  const desconectar = async () => {
-    try {
-      setEnCurso(true);
-      setError("");
-      setMensaje(null);
-      const respuesta = await unlinkDiscord();
-      setCuenta({ linked: false });
-      setMensaje({ tipo: "exito", texto: respuesta.message });
-    } catch (error) {
-      setError(mensajeDeError(error, "No se pudo desconectar Discord."));
-    } finally {
-      setEnCurso(false);
-    }
-  };
 
   return (
     <section className="rounded-2xl border border-white/10 bg-ganker-surface p-6">

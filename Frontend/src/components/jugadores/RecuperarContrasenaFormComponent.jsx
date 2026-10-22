@@ -25,6 +25,7 @@ function RecuperarContrasenaFormComponent({
   cargando,
   errorServidor,
   enviado,
+  segundosParaReenviar = 0,
   onChange,
   onSubmit,
 }) {
@@ -68,12 +69,16 @@ function RecuperarContrasenaFormComponent({
 
       <button
         type="submit"
-        disabled={cargando}
+        disabled={cargando || segundosParaReenviar > 0}
         className="w-full rounded-lg bg-gradient-to-r from-ganker-orange to-ganker-purple py-3
           text-sm font-bold uppercase tracking-wide text-ganker-text font-heading transition
           hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-60"
       >
-        {cargando ? "Enviando..." : "Enviar enlace"}
+        {cargando
+          ? "Enviando..."
+          : segundosParaReenviar > 0
+            ? `Reenviar en ${segundosParaReenviar} s`
+            : "Enviar enlace"}
       </button>
 
       <p className="text-center text-sm font-body">
