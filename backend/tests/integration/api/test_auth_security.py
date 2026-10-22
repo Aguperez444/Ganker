@@ -4,7 +4,7 @@ from unittest.mock import AsyncMock
 
 import pytest
 
-from app.domain.services.resend_email_service import ResendEmailService
+from app.infrastructure.email.resend_email_service import ResendEmailService
 from app.infrastructure.database.models.password_reset_token_orm import PasswordResetTokenORM
 
 

@@ -61,7 +61,7 @@ def update_character(character_id: int,
                            icon: UploadFile | None = File(None, description="Archivo de imagen del ícono"),
                            ):
     icon_file = None
-    file_name = None
+    icon_filename = None
 
     if icon:
         if not icon.filename:
@@ -70,13 +70,19 @@ def update_character(character_id: int,
                 detail="El archivo debe tener un nombre válido."
             )
         icon_file = icon.file
-        file_name = icon.filename
+        icon_filename = icon.filename
 
     uow = uow_factory()
     storage_service = get_storage_service()
     update_character_use_case = UpdateCharacter(storage_service, uow)
 
-    updated_character = update_character_use_case.execute(character_id, name, videogame_id, icon)
+    updated_character = update_character_use_case.execute(
+        character_id=character_id,
+        name=name,
+        videogame_id=videogame_id,
+        icon_file=icon_file,
+        icon_filename=icon_filename,
+    )
 
     return updated_character
 

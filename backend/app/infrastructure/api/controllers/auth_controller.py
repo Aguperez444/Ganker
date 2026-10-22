@@ -9,7 +9,7 @@ from app.application.use_cases.reset_password import ResetPassword
 from app.application.use_cases.user_login import UserLogin
 from app.application.use_cases.refresh_token import RefreshToken
 from app.application.use_cases.user_logout import UserLogout
-from app.domain.services.resend_email_service import ResendEmailService
+from app.infrastructure.email.resend_email_service import ResendEmailService
 
 from app.infrastructure.api.auth.jwt_federated_state_service import JwtFederatedStateService
 from app.infrastructure.api.auth.jwt_token_service import JwtTokenService

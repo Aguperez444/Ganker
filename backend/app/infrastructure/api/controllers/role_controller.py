@@ -74,7 +74,8 @@ def update_game_role(
     result = use_case.execute(
         role_id=role_id,
         name=name,
-        icon=icon
+        icon_file=icon.file if icon is not None else None,
+        icon_filename=icon.filename if icon is not None else None,
     )
     return result
 
