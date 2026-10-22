@@ -1,3 +1,4 @@
+from io import BytesIO
 from unittest.mock import MagicMock
 import pytest
 
@@ -36,11 +37,10 @@ class TestUpdateRoleUseCase:
         uow.role_repo.get_roles_by_game_id.return_value = [existing]
         uow.role_repo.update_role.side_effect = lambda r: r
 
-        mock_icon = MagicMock()
-        mock_icon.filename = "mid_new.png"
-        mock_icon.file = MagicMock()
+        icon_file = BytesIO(b"image bytes")
+        icon_filename = "mid_new.png"
 
-        result = use_case.execute(role_id=1, name="Middle Lane", icon=mock_icon)
+        result = use_case.execute(role_id=1, name="Middle Lane", icon_file=icon_file, icon_filename=icon_filename)
 
         assert result.role_id == 1
         assert result.name == "Middle Lane"
@@ -48,6 +48,8 @@ class TestUpdateRoleUseCase:
 
         storage_service.delete_file.assert_called_once_with("/media/games/league_of_legends/roles/mid_old.png")
         storage_service.save_image_file.assert_called_once()
+        assert storage_service.save_image_file.call_args.kwargs["file_content"] is icon_file
+        assert storage_service.save_image_file.call_args.kwargs["filename"] == icon_filename
         uow.role_repo.update_role.assert_called_once()
 
     def test_update_role_keep_same_name_change_only_icon(self, mock_deps):
@@ -60,11 +62,10 @@ class TestUpdateRoleUseCase:
         uow.role_repo.get_roles_by_game_id.return_value = [existing]
         uow.role_repo.update_role.side_effect = lambda r: r
 
-        mock_icon = MagicMock()
-        mock_icon.filename = "mid_new.png"
-        mock_icon.file = MagicMock()
+        icon_file = BytesIO(b"image bytes")
+        icon_filename = "mid_new.png"
 
-        result = use_case.execute(role_id=1, name="Mid", icon=mock_icon)
+        result = use_case.execute(role_id=1, name="Mid", icon_file=icon_file, icon_filename=icon_filename)
 
         assert result.role_id == 1
         assert result.name == "Mid"
@@ -72,6 +73,8 @@ class TestUpdateRoleUseCase:
 
         storage_service.delete_file.assert_called_once_with("/media/games/league_of_legends/roles/mid_old.png")
         storage_service.save_image_file.assert_called_once()
+        assert storage_service.save_image_file.call_args.kwargs["file_content"] is icon_file
+        assert storage_service.save_image_file.call_args.kwargs["filename"] == icon_filename
         uow.role_repo.update_role.assert_called_once()
 
     def test_update_role_change_name_without_icon(self, mock_deps):
@@ -83,7 +86,7 @@ class TestUpdateRoleUseCase:
         uow.role_repo.get_roles_by_game_id.return_value = [existing]
         uow.role_repo.update_role.side_effect = lambda r: r
 
-        result = use_case.execute(role_id=1, name="Midlane", icon=None)
+        result = use_case.execute(role_id=1, name="Midlane", icon_file=None, icon_filename=None)
 
         assert result.role_id == 1
         assert result.name == "Midlane"
@@ -98,7 +101,7 @@ class TestUpdateRoleUseCase:
         use_case, _, _ = mock_deps
 
         with pytest.raises(InvalidRoleNameException) as exc_info:
-            use_case.execute(role_id=1, name="   ", icon=None)
+            use_case.execute(role_id=1, name="   ", icon_file=None, icon_filename=None)
 
         assert exc_info.value.status_code == 400
 
@@ -107,7 +110,7 @@ class TestUpdateRoleUseCase:
         uow.role_repo.get_role_by_id.return_value = None
 
         with pytest.raises(RoleNotFoundException) as exc_info:
-            use_case.execute(role_id=999, name="Jungler", icon=None)
+            use_case.execute(role_id=999, name="Jungler", icon_file=None, icon_filename=None)
 
         assert exc_info.value.status_code == 404
 
@@ -123,7 +126,7 @@ class TestUpdateRoleUseCase:
         uow.role_repo.get_role_by_name_and_videogame.return_value = role2
 
         with pytest.raises(DuplicateRoleNameException) as exc_info:
-            use_case.execute(role_id=1, name="Top", icon=None)
+            use_case.execute(role_id=1, name="Top", icon_file=None, icon_filename=None)
 
         assert exc_info.value.status_code == 409
 
@@ -139,7 +142,7 @@ class TestUpdateRoleUseCase:
         uow.role_repo.get_roles_by_game_id.return_value = [role_game1]
         uow.role_repo.update_role.side_effect = lambda r: r
 
-        result = use_case.execute(role_id=1, name="Duelist", icon=None)
+        result = use_case.execute(role_id=1, name="Duelist", icon_file=None, icon_filename=None)
 
         assert result.role_id == 1
         assert result.name == "Duelist"
@@ -154,11 +157,10 @@ class TestUpdateRoleUseCase:
         uow.role_repo.get_roles_by_game_id.return_value = [role]
         uow.role_repo.update_role.side_effect = RuntimeError("DB update failure")
 
-        mock_icon = MagicMock()
-        mock_icon.filename = "mid_new.png"
-        mock_icon.file = MagicMock()
+        icon_file = BytesIO(b"image bytes")
+        icon_filename = "mid_new.png"
 
         with pytest.raises(RuntimeError):
-            use_case.execute(role_id=1, name="Mid New", icon=mock_icon)
+            use_case.execute(role_id=1, name="Mid New", icon_file=icon_file, icon_filename=icon_filename)
 
         storage_service.delete_file.assert_any_call("/media/games/league_of_legends/roles/mid_new.png")

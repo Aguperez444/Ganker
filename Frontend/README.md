@@ -1,275 +1,175 @@
 # Ganker — Frontend
 
-Cliente web del proyecto **Ganker**, construido con React + Vite.
-Este documento es la guía de arranque: seguí los pasos en orden y en menos de 5
-minutos deberías tener el proyecto corriendo.
+Cliente web de Ganker, construido con React y Vite para buscar jugadores, gestionar perfiles y equipos, conversar y acceder a las funciones de administración.
 
----
+[Vista general del repositorio](../README.md) · [Guía del backend](../backend/README.md) · [Aplicación publicada](https://gankerweb.app/)
 
-## 1. Stack tecnológico
+## Tecnologías y requisitos
 
-| Capa                    | Tecnología                          |
-| ----------------------- | ----------------------------------- |
-| Librería UI             | React 19                            |
-| Build tool / dev server | Vite 8                              |
-| Cliente HTTP            | Axios                               |
-| Estado global           | Context API (sesión, chat)          |
-| Lógica reutilizable     | Custom hooks (`src/hooks/`)         |
-| Ruteo                   | React Router 7 (`react-router-dom`) |
-| Estilos                 | Tailwind CSS 4                      |
-| Testing                 | Vitest 4 + React Testing Library    |
-| Linter / Formatter      | ESLint 10 (flat config) + Prettier  |
-| Gestor de paquetes      | npm                                 |
+| Área               | Tecnología                                        |
+| ------------------ | ------------------------------------------------- |
+| Interfaz           | React y React DOM                                 |
+| Desarrollo y build | Vite con el plugin de React                       |
+| Navegación         | React Router                                      |
+| Comunicación       | Axios y WebSockets                                |
+| Formularios        | React Hook Form                                   |
+| Estado compartido  | Context API para sesión, chat y videojuego activo |
+| Estilos            | Tailwind CSS integrado con Vite                   |
+| Pruebas            | Vitest, jsdom y React Testing Library             |
+| Calidad de código  | ESLint y Prettier                                 |
 
----
+Las versiones y los scripts se declaran en [package.json](package.json). CI y la imagen de producción usan Node.js 22; el rango declarado en `engines.node` es `^20.19.0 || >=22.12.0`. Necesitás Node compatible y npm.
 
-## 2. Requisitos previos
+## Desarrollo local
 
-| Herramienta | Versión                                                                |
-| ----------- | ---------------------------------------------------------------------- |
-| Node.js     | **24.x LTS** (mínimo 20.19), declarada en `engines` del `package.json` |
-| npm         | Viene con Node.js (11.x)                                               |
-| Git         | Cualquier versión reciente                                             |
-
-Verificá que tengas todo:
+Los comandos de esta guía se ejecutan desde `Frontend/`, salvo que se indique lo contrario. Si estás en la raíz del repositorio:
 
 ```bash
-node -v
-```
-
-```bash
-npm -v
-```
-
-> **Finales de línea:** el proyecto incluye un `.gitattributes` que los normaliza
-> a LF. Es necesario porque Git for Windows deja `core.autocrlf=true` (checkout en
-> CRLF) mientras que Prettier siempre escribe LF: sin esa normalización, cada
-> `npm run format` marcaría archivos enteros como modificados. No toques
-> `core.autocrlf` a mano.
-
----
-
-## 3. Puesta en marcha (paso a paso)
-
-### 3.1 Clonar el repositorio
-
-```bash
-git clone https://github.com/Aguperez444/Ganker.git
-```
-
-```bash
-cd Ganker/Frontend
-```
-
-> Todos los comandos de este README se ejecutan **parados dentro de `Frontend/`**,
-> no en la raíz del repo.
-
-### 3.2 Instalar las dependencias
-
-```bash
+cd Frontend
 npm install
 ```
 
-Esto lee `package.json` + `package-lock.json` e instala **exactamente** las mismas
-versiones que usa el resto del equipo. `node_modules/` nunca se sube al repo;
-el `package-lock.json` **sí** va versionado, y no se regenera a mano.
+[package-lock.json](package-lock.json) está versionado para registrar las versiones resueltas. Al cambiar dependencias, incluí sus cambios junto con los de `package.json`.
 
-### 3.3 Crear tu archivo `.env`
+### Configuración local
 
-El proyecto lee la URL del backend desde una variable de entorno. Copiá la
-plantilla versionada y ajustala si hace falta:
+Copiá [.env.example](.env.example) a `.env`.
+
+Linux / macOS:
 
 ```bash
+cp .env.example .env
+```
+
+PowerShell:
+
+```powershell
 Copy-Item .env.example .env
 ```
 
-Contenido por defecto:
+La plantilla define la URL base del backend:
 
-```
+```env
 VITE_API_URL=http://127.0.0.1:8000
 ```
 
-Es la URL base contra la que Axios arma todos los pedidos. **Reglas importantes:**
+Usá la URL del backend que tengas levantado. Reiniciá Vite si modificás `.env`. Si accedés al frontend mediante un origen distinto de `http://localhost:5173`, agregalo también a `CORS_ORIGINS` en la [configuración del backend](../backend/README.md#configuración-local).
 
-- Vite solo expone al navegador las variables que empiezan con `VITE_`.
-- `.env` **no se sube** al repo (está en `.gitignore`); `.env.example` **sí**.
-- Si agregás una variable nueva, sumala también a `.env.example` para el resto
-  del equipo.
+- Vite expone al navegador las variables con prefijo `VITE_`; las claves de Riot, OAuth y correo se configuran en el backend.
+- `.env` queda fuera de Git. Si incorporás una variable compartida, agregala a `.env.example`.
+- Las URL de WebSocket se derivan de `VITE_API_URL`, cambiando `http/https` por `ws/wss`. Con la variable vacía, usan el origen de la página. Esta lógica está en [src/utils/websocket.js](src/utils/websocket.js).
+- El servidor de Vite redirige `/media` hacia el backend configurado, con `http://localhost:8000` como destino por defecto.
 
-### 3.4 Levantar el servidor de desarrollo
+### Arranque
+
+Con el backend disponible en la URL configurada:
 
 ```bash
 npm run dev
 ```
 
-Vite queda escuchando en **http://localhost:5173** con hot-reload (los cambios
-que guardás se reflejan en el navegador al instante). Para cortarlo: `Ctrl + C`.
+Vite escucha en **http://localhost:5173** con recarga automática. La pantalla inicial es la landing de Ganker. Para detener el servidor, usá `Ctrl+C`.
 
-Si todo salió bien vas a ver la pantalla inicial con el texto
-_"Entorno de frontend levantado correctamente"_ y el valor de `VITE_API_URL`
-que configuraste.
+El [arranque conjunto con Docker](../README.md#desarrollo-conjunto) configura la URL de API y el acceso a través de Nginx desde Compose.
 
-### 3.5 Verificación rápida
+## Estructura y organización
+
+```text
+Frontend/
+├── Public/                         # publicDir configurado en Vite; respetar la P mayúscula
+│   ├── images/                     # Logos e imágenes
+│   └── sounds/                     # Sonidos de notificaciones
+├── src/
+│   ├── api/                        # Cliente Axios, módulos HTTP y WebSockets
+│   ├── components/
+│   │   ├── common/ / layout/ / landing/
+│   │   ├── jugadores/ / equipos/ / game_profiles/
+│   │   ├── games/ / characters/ / ranks/ / region/ / roles/
+│   │   └── chat/ / discord/ / riot/ / reportes/
+│   ├── context/                    # Sesión, chat y videojuego activo
+│   ├── hooks/                      # Estado y lógica reutilizable de la aplicación
+│   ├── pages/                      # Pantallas de la aplicación
+│   │   └── admin/                  # Catálogos, moderación y reportes
+│   ├── routes/                     # Rutas públicas, privadas y de administración
+│   ├── utils/                      # Validaciones, formatos, medios y utilidades
+│   ├── App.jsx                     # Componente raíz
+│   ├── main.jsx                    # Montaje de React
+│   ├── index.css                   # Estilos globales y tema de Tailwind
+│   └── setupTests.js                # Preparación del entorno de pruebas
+├── .env.example
+├── Dockerfile                      # Servidor de desarrollo en contenedor
+├── package.json / package-lock.json
+├── vite.config.js                  # Vite, Tailwind, proxy de medios y Vitest
+├── eslint.config.js
+└── README.md
+```
+
+`api/` concentra la comunicación con el backend. Los hooks de `hooks/` y los contextos de `context/` coordinan los datos y el estado; las páginas de `pages/` componen las pantallas con los componentes de `components/`. Para nuevas funciones, mantené las llamadas a la API en hooks o contextos y pasá los datos y acciones a los componentes por props.
+
+[src/routes/AppRouter.jsx](src/routes/AppRouter.jsx) reúne las rutas; `ProtectedRoute` y `PublicOnlyRoute` controlan el acceso según la sesión y el rol. El backend aplica los permisos de los endpoints.
+
+La carpeta de estáticos se llama **`Public/`** y se sirve desde la raíz: por ejemplo, `Public/images/logo_svg.svg` se accede como `/images/logo_svg.svg`. Tailwind se integra con el plugin de Vite y el tema se define en `src/index.css`.
+
+## Convenciones de nombrado
+
+| Elemento                          | Convención                                              | Ejemplo existente                           |
+| --------------------------------- | ------------------------------------------------------- | ------------------------------------------- |
+| Componentes React                 | `PascalCase.jsx`, frecuentemente con sufijo `Component` | `JugadorCardComponent.jsx`, `TopNavbar.jsx` |
+| Páginas                           | `PascalCase` con sufijo `Page.jsx`                      | `CrearEquipoPage.jsx`                       |
+| Contextos                         | `PascalCase` con sufijo `Context.jsx`                   | `AuthContext.jsx`                           |
+| Hooks                             | `camelCase` con prefijo `use` y extensión `.js`         | `useCrearEquipo.js`                         |
+| Módulos de API                    | `camelCase`, habitualmente con sufijo `Api.js`          | `teamApi.js`, `chatSocketApi.js`            |
+| Utilidades, funciones y variables | `camelCase`                                             | `recorteAvatar.js`, `formatearFechaReporte` |
+| Constantes compartidas            | `UPPER_SNAKE_CASE`                                      | `CLAVES_SESION`                             |
+| Pruebas                           | Junto al archivo, con sufijo `.test.js` o `.test.jsx`   | `useMiEquipo.test.js`, `App.test.jsx`       |
+
+Mantené la coherencia con el módulo que estés modificando: no todos los componentes existentes llevan el sufijo `Component`. Los archivos con JSX usan `.jsx`; los hooks y utilidades sin JSX usan `.js`.
+
+El proyecto combina nombres en español e inglés y conserva carpetas como `game_profiles/`. Respetá también las mayúsculas de `Frontend/` y `Public/` para que las rutas funcionen en Linux y Docker.
+
+## Desarrollo y verificación
+
+Desde `Frontend/`, ejecutá antes de abrir un PR:
 
 ```bash
 npm run lint
-```
-
-```bash
 npm test
-```
-
-Ambos deberían terminar en verde. Si es así, tu entorno quedó listo.
-
----
-
-## 4. Scripts disponibles
-
-| Comando                | Qué hace                                                         |
-| ---------------------- | ---------------------------------------------------------------- |
-| `npm run dev`          | Servidor de desarrollo con hot-reload en `localhost:5173`        |
-| `npm run build`        | Genera el build de producción optimizado en `dist/`              |
-| `npm run preview`      | Sirve localmente el contenido de `dist/` para revisar el build   |
-| `npm run lint`         | Corre ESLint sobre todo el proyecto                              |
-| `npm run lint:fix`     | Igual que el anterior, pero arregla lo que puede automáticamente |
-| `npm run format`       | Aplica el formato de Prettier                                    |
-| `npm run format:check` | Verifica el formato sin modificar archivos (útil en CI)          |
-| `npm test`             | Corre toda la suite de tests una vez                             |
-| `npm run test:watch`   | Tests en modo watch, mientras desarrollás                        |
-
----
-
-## 5. Estructura de carpetas
-
-```
-Frontend/
-├── Public/                 # Archivos estáticos (se sirven tal cual desde la raíz "/")
-│   └── images/             # Imágenes del proyecto
-├── src/                    # Código fuente
-│   ├── api/                # Axios y conexión con el backend
-│   ├── hooks/              # Lógica de aplicación (estado + orquestación de datos)
-│   ├── context/            # Estado global (sesión, chat)
-│   ├── components/         # Componentes genéricos reutilizables
-│   │   ├── common/         # botones, inputs, modales, spinners, etc.
-│   │   ├── jugadores/      # JugadorCard, JugadorForm, JugadorList
-│   │   ├── equipos/        # equivalentes para equipos
-│   │   └── chat/           # ChatWindow, MessageBubble, MessageInput
-│   ├── pages/              # Vistas completas (arman hooks + components)
-│   ├── routes/             # Definición y protección de rutas
-│   ├── utils/              # Funciones puras (validaciones, formateo, constantes)
-│   ├── App.jsx
-│   ├── main.jsx            # Punto de entrada: monta <App /> en el DOM
-│   ├── index.css           # Directivas de Tailwind
-│   └── setupTests.js       # Setup global de los tests
-├── .env.example            # Plantilla de variables de entorno (SÍ se versiona)
-├── eslint.config.js        # Configuración de ESLint (flat config)
-└── vite.config.js          # Configuración de Vite + Tailwind + Vitest
-```
-
-> No hay `tailwind.config.js` ni `postcss.config.js`: Tailwind 4 se configura
-> desde el CSS (`src/index.css`) y se engancha a Vite con el plugin
-> `@tailwindcss/vite`. Si necesitás extender el tema (colores, fuentes), se hace
-> con la directiva `@theme` dentro de `src/index.css`.
-
-
-### Regla de convivencia entre carpetas
-
-Un componente de `components/` **no llama directamente a `api/`**. Esa llamada
-vive en un hook de `hooks/` (o en `context/` si el dato es global), y el
-componente solo recibe datos y funciones **por props**.
-
-```
-api/  →  hooks/  →  pages/  →  components/
-         (o context/ si el estado es global)
-```
-
----
-
-## 6. Dependencias y por qué está cada una
-
-### Producción
-
-| Paquete               | Para qué                       |
-| --------------------- | ------------------------------ |
-| `react` / `react-dom` | Librería UI                    |
-| `react-router-dom`    | Ruteo entre pantallas          |
-| `axios`               | Cliente HTTP contra el backend |
-
-### Desarrollo
-
-| Paquete                              | Para qué                                                                |
-| ------------------------------------ | ----------------------------------------------------------------------- |
-| `vite`, `@vitejs/plugin-react`       | Build tool y dev server con soporte JSX/HMR                             |
-| `tailwindcss`, `@tailwindcss/vite`   | Estilos utility-first, integrados a Vite                                |
-| `vitest`, `jsdom`                    | Test runner + DOM simulado para los tests                               |
-| `@testing-library/react`             | Renderizar y consultar componentes en los tests                         |
-| `@testing-library/jest-dom`          | Matchers extra (`toBeInTheDocument`, etc.)                              |
-| `@testing-library/user-event`        | Simular clicks, tipeo y demás interacciones                             |
-| `eslint`, `@eslint/js`, `globals`    | Linter (los dos últimos son requeridos por la flat config de ESLint 10) |
-| `eslint-plugin-react-hooks`          | Verifica las reglas de los hooks                                        |
-| `eslint-plugin-react-refresh`        | Avisa si un archivo rompe el hot-reload                                 |
-| `prettier`, `eslint-config-prettier` | Formateo automático, sin pelearse con ESLint                            |
-
-> **Regla del equipo:** ninguna dependencia nueva se agrega sin avisar en el
-> grupo y dejarlo asentado en el documento de metodología.
-
----
-
-## 7. Testing
-
-- **Vitest** es el test runner: usa la misma config que Vite (`vite.config.js`)
-  y tiene una API casi idéntica a la de Jest.
-- **React Testing Library** testea el componente _como lo usaría una persona_:
-  qué se ve en pantalla y qué pasa al hacer click, no los detalles internos.
-
-**Ubicación de los tests:** cada archivo lleva su test al lado, con el mismo
-nombre y sufijo `.test.jsx`.
-
-```
-src/components/jugadores/
-├── JugadorCard.jsx
-└── JugadorCard.test.jsx
-```
-
-**Qué testear:** componentes de `components/`, hooks de `hooks/` (con
-`renderHook`) y funciones puras de `utils/`. Las llamadas reales de `api/` se
-mockean con `vi.mock`.
-
----
-
-## 8. Build de producción
-
-```bash
 npm run build
 ```
 
-Genera `dist/` con los archivos estáticos optimizados. Para previsualizarlo:
+Para verificar el formato:
 
 ```bash
+npm run format:check
+```
+
+| Comando                | Uso                                                                                         |
+| ---------------------- | ------------------------------------------------------------------------------------------- |
+| `npm run dev`          | Servidor de desarrollo con recarga automática                                               |
+| `npm run lint`         | Verificar el código con ESLint                                                              |
+| `npm run lint:fix`     | Aplicar las correcciones automáticas de ESLint                                              |
+| `npm run format`       | Aplicar Prettier al código y archivos de configuración/documentación incluidos en el script |
+| `npm run format:check` | Verificar el formato sin modificar archivos                                                 |
+| `npm test`             | Ejecutar la suite de Vitest una vez                                                         |
+| `npm run test:watch`   | Ejecutar pruebas en modo interactivo                                                        |
+| `npm run build`        | Generar el frontend compilado en `dist/`                                                    |
+| `npm run preview`      | Servir localmente el build existente para revisarlo                                         |
+
+Vitest usa jsdom y [src/setupTests.js](src/setupTests.js). Las pruebas viven junto al archivo que verifican, como `CrearEquipoPage.test.jsx`, `useCrearEquipo.test.js` y `validaciones.test.js`. Los componentes se prueban con React Testing Library; los hooks pueden verificarse con `renderHook` y las llamadas de red se simulan en las pruebas.
+
+La [configuración actual de CI](../.github/workflows/ci.yml) instala dependencias, ejecuta `npm test` y genera el build. El lint y el formato se verifican con los comandos anteriores. El flujo de ramas y revisión está en el [README principal](../README.md#flujo-de-trabajo).
+
+## Build y producción
+
+Para generar y revisar el build localmente:
+
+```bash
+npm run build
 npm run preview
 ```
 
-> Dónde se aloja `dist/` en producción todavía **no está definido** (candidatos:
-> Vercel o Netlify con deploy automático en cada push a `main`).
+Vite incorpora las variables `VITE_*` durante el build. Cambiar la URL de API del frontend publicado requiere recompilarlo.
 
----
+En producción, [nginx/Dockerfile.prod](../nginx/Dockerfile.prod) compila `dist/` y lo copia a la imagen de Nginx. El frontend usa `VITE_API_URL` vacía para comunicarse con la API y los WebSockets del mismo origen mediante HTTPS y WSS. La aplicación ya está desplegada en **[gankerweb.app](https://gankerweb.app/)**.
 
-## 9. Convenciones de código
-
-- **Componentes:** PascalCase con extensión `.jsx` → `JugadorCardComponent.jsx`.
-- **Hooks, funciones y variables:** camelCase → `useJugadores.js`, `formatearFecha`.
-- **Un componente por archivo**, en la subcarpeta de `components/` que le
-  corresponda por dominio.
-- Antes de abrir un PR, corré `npm run lint` y `npm run format`. No se mergea
-  con el lint o los tests en rojo.
-
----
-
-## 10. Flujo de trabajo con Git
-
-1. `git pull origin main` antes de empezar algo nuevo.
-2. Crear tu rama: `git switch -c feature/nombre-corto`.
-3. Commits sobre esa rama hasta terminar la feature.
-4. Abrir el Pull Request contra `main` describiendo qué resuelve y cómo probarlo.
-   Los PR de **frontend** los revisa **@franleal**.
-5. Con el PR aprobado y mergeado, borrar la rama.
+La configuración compartida y el despliegue a OCI se describen en el [README principal](../README.md#despliegue).

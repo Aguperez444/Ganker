@@ -22,7 +22,8 @@ class UserMapper:
             ],
             icon_url=user_orm.icon_url,
             last_connection=user_orm.last_connection,
-            deleted=bool(getattr(user_orm, "deleted", False)),
+            deleted=user_orm.deleted,
+            banned=user_orm.banned
         )
 
     @staticmethod
@@ -37,6 +38,7 @@ class UserMapper:
                 icon_url=user_domain.icon_url,
                 last_connection=user_domain.last_connection,
                 deleted=user_domain.deleted,
+                banned=user_domain.banned,
             )
         return UserORM(
             user_id=user_domain.user_id,
@@ -48,4 +50,5 @@ class UserMapper:
             icon_url=user_domain.icon_url,
             last_connection=user_domain.last_connection,
             deleted=user_domain.deleted,
+            banned=user_domain.banned
         )

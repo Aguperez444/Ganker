@@ -2,23 +2,30 @@ import { renderHook, act, waitFor } from "@testing-library/react";
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import useGameProfile from "./useGameProfile";
 import { getGames } from "../api/gameApi";
-import { createGameProfile, updateGameProfile } from "../api/gameProfileApi";
+import {
+  createGameProfile,
+  deleteGameProfile,
+  updateGameProfile,
+} from "../api/gameProfileApi";
 import { getCharactersByGame } from "../api/characterApi";
 import { getRanksByGame } from "../api/rankApi";
 import { getRolesByGame } from "../api/roleApi";
 import { getRegionsByGame } from "../api/regionApi";
 
+const { refrescarUsuario } = vi.hoisted(() => ({ refrescarUsuario: vi.fn() }));
+
 vi.mock("../api/gameApi", () => ({ getGames: vi.fn() }));
 vi.mock("../api/gameProfileApi", () => ({
   createGameProfile: vi.fn(),
   updateGameProfile: vi.fn(),
+  deleteGameProfile: vi.fn(),
 }));
 vi.mock("../api/characterApi", () => ({ getCharactersByGame: vi.fn() }));
 vi.mock("../api/rankApi", () => ({ getRanksByGame: vi.fn() }));
 vi.mock("../api/roleApi", () => ({ getRolesByGame: vi.fn() }));
 vi.mock("../api/regionApi", () => ({ getRegionsByGame: vi.fn() }));
 vi.mock("../context/AuthContext", () => ({
-  useAuth: () => ({ refrescarUsuario: vi.fn() }),
+  useAuth: () => ({ refrescarUsuario }),
 }));
 
 // Perfil con un personaje y un rol con rango: lo minimo para que pase la
@@ -142,6 +149,67 @@ describe("useGameProfile", () => {
       expect(createGameProfile).toHaveBeenCalledWith(
         expect.objectContaining({ character_ids: [] })
       );
+    });
+  });
+
+  describe("US 09 - Eliminar perfil por juego", () => {
+    it("elimina, refresca los perfiles y devuelve el mensaje del backend", async () => {
+      deleteGameProfile.mockResolvedValue({
+        message: "El perfil de juego ha sido eliminado exitosamente.",
+      });
+      const { result } = renderHook(() => useGameProfile());
+
+      let mensaje;
+      await act(async () => {
+        mensaje = await result.current.removeGameProfile(7);
+      });
+
+      expect(deleteGameProfile).toHaveBeenCalledWith(7);
+      expect(refrescarUsuario).toHaveBeenCalled();
+      expect(mensaje).toBe(
+        "El perfil de juego ha sido eliminado exitosamente."
+      );
+      expect(result.current.deleteError).toBe("");
+    });
+
+    it("si el perfil es de otro jugador muestra el error del backend", async () => {
+      deleteGameProfile.mockRejectedValue({
+        response: {
+          status: 400,
+          data: {
+            error:
+              "El perfil de juego con nombre o id 7 no pertenece al perfil.",
+          },
+        },
+      });
+      const { result } = renderHook(() => useGameProfile());
+
+      let mensaje;
+      await act(async () => {
+        mensaje = await result.current.removeGameProfile(7);
+      });
+
+      expect(mensaje).toBeNull();
+      expect(result.current.deleteError).toBe(
+        "El perfil de juego con nombre o id 7 no pertenece al perfil."
+      );
+      expect(refrescarUsuario).not.toHaveBeenCalled();
+    });
+
+    it("si ya fue eliminado avisa y refresca la lista", async () => {
+      deleteGameProfile.mockRejectedValue({
+        response: { status: 404, data: { error: "No encontrado" } },
+      });
+      const { result } = renderHook(() => useGameProfile());
+
+      await act(async () => {
+        await result.current.removeGameProfile(7);
+      });
+
+      expect(result.current.deleteError).toBe(
+        "El perfil de juego no existe o ya fue eliminado."
+      );
+      expect(refrescarUsuario).toHaveBeenCalled();
     });
   });
 });

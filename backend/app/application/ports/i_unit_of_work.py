@@ -3,9 +3,7 @@ from abc import ABC, abstractmethod
 from typing import TYPE_CHECKING
 
 
-
 if TYPE_CHECKING:
-    from app.application.ports.i_email_service import IEmailService # todo chequear, esto debería ir en la UOW?
     from app.application.ports.i_user_repository import IUserRepository
     from app.application.ports.i_rank_repository import IRankRepository
     from app.application.ports.i_team_repository import ITeamRepository
@@ -14,6 +12,7 @@ if TYPE_CHECKING:
     from app.application.ports.i_message_repository import IMessageRepository
     from app.application.ports.i_character_repository import ICharacterRepository
     from app.application.ports.i_videogame_repository import IVideogameRepository
+    from app.application.ports.i_moderation_repository import IModerationRepository
     from app.application.ports.i_game_profile_repository import IGameProfileRepository
     from app.application.ports.i_role_profile_repository import IRoleProfileRepository
     from app.application.ports.i_conversation_repository import IConversationRepository
@@ -26,6 +25,7 @@ if TYPE_CHECKING:
     from app.application.ports.i_discord_account_link_repository import IDiscordAccountLinkRepository
     from app.application.ports.i_password_reset_token_repository import IPasswordResetTokenRepository
     from app.application.ports.i_find_by_specifications_service import IFindBySpecificationsRepository
+    
 
 
 #abstract class
@@ -34,11 +34,11 @@ class IUnitOfWork(ABC):
     rank_repo: 'IRankRepository'
     role_repo: 'IRoleRepository'
     team_repo: 'ITeamRepository'
-    email_service: 'IEmailService'
     region_repo: 'IRegionRepository'
     message_repo: 'IMessageRepository'
     videogame_repo: 'IVideogameRepository'
     character_repo: 'ICharacterRepository'
+    moderation_repo: 'IModerationRepository'
     game_profile_repo: 'IGameProfileRepository'
     role_profile_repo: 'IRoleProfileRepository'
     conversation_repo: 'IConversationRepository'
@@ -51,6 +51,7 @@ class IUnitOfWork(ABC):
     game_profile_report_repo: 'IGameProfileReportRepository'
     discord_account_link_repo: 'IDiscordAccountLinkRepository'
     find_by_specification_repo: 'IFindBySpecificationsRepository'
+    
 
 
     @abstractmethod

@@ -1,10 +1,29 @@
 import { useCallback, useEffect, useState } from "react";
 import {
   createGame as createGameRequest,
+  deleteGame as deleteGameRequest,
   getGames,
   updateGame as updateGameRequest,
 } from "../api/gameApi";
 import { logError } from "../utils/logs";
+
+// Errores de eliminar (US 23): sin permisos de owner, inexistente o ya
+// eliminado, o caida del servidor.
+function mapearErrorEliminacion(error) {
+  const data = error.response?.data;
+  const status = error.response?.status;
+
+  if (!error.response) {
+    return "No pudimos conectar con el servidor. Intentá de nuevo.";
+  }
+  if (status === 403) {
+    return "No tenés permisos de owner para eliminar videojuegos.";
+  }
+  if (status === 404) return "El videojuego no existe o ya fue eliminado.";
+  if (typeof data?.error === "string") return data.error;
+  if (typeof data?.detail === "string") return data.detail;
+  return "Ocurrió un error al eliminar el videojuego.";
+}
 
 // Modulo aparte (no un useCallback del componente) a proposito: llamar desde
 // el cuerpo de un efecto a una funcion memoizada del propio componente que
@@ -178,6 +197,35 @@ const useGames = () => {
     }
   };
 
+  // Devuelve el mensaje de exito del backend, o null si fallo (el error queda
+  // en actionError para mostrarlo en el modal de confirmacion).
+  const removeGame = async (id) => {
+    try {
+      setIsSaving(true);
+      setActionError("");
+
+      const resultado = await deleteGameRequest(id);
+
+      setGames((currentGames) => currentGames.filter((game) => game.id !== id));
+
+      return (
+        resultado?.message ?? "El videojuego ha sido eliminado exitosamente."
+      );
+    } catch (error) {
+      logError("Error al eliminar el videojuego:", error);
+      setActionError(mapearErrorEliminacion(error));
+
+      // Inexistente o ya eliminado: se refresca la lista.
+      if (error.response?.status === 404) {
+        await loadGames();
+      }
+
+      return null;
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
   const clearActionError = () => {
     setActionError("");
   };
@@ -191,6 +239,7 @@ const useGames = () => {
     loadGames,
     registerGame,
     editGame,
+    removeGame,
     clearActionError,
   };
 };

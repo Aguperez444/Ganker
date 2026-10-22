@@ -14,7 +14,7 @@ class QueryUsers:
             #obtener el player de la base de datos usando el repositorio de players
             user = uow.user_repo.get_user_by_id(user_id)
 
-            if user is None:
+            if user is None or getattr(user, "banned", False) is True:
                 raise UserNotFoundException(user_id)
 
             return GetUserResponse(
@@ -32,7 +32,7 @@ class QueryUsers:
         with self.uow as uow:
             user = uow.user_repo.get_user_by_id(user_id)
 
-            if user is None:
+            if user is None or getattr(user, "banned", False) is True:
                 raise UserNotFoundException(user_id)
 
             return GetPublicUserResponse(

@@ -6,11 +6,13 @@ import { urlDeMedia } from "../../utils/media";
 // GamesListComponent/RanksListComponent: fila con icono + nombre + accion.
 // `onView` (opcional): boton "Ver" que abre el perfil completo de ese juego
 // (con la cuenta de Riot y sus estadisticas, si es LoL o Valorant).
+// `onDelete` (opcional): boton "Eliminar" de la US 09.
 const GameProfilesListComponent = ({
   profiles,
   selectedProfileId,
   onEdit,
   onView,
+  onDelete,
 }) => {
   if (!profiles || profiles.length === 0) {
     return (
@@ -89,6 +91,15 @@ const GameProfilesListComponent = ({
                 >
                   Modificar
                 </button>
+                {onDelete && (
+                  <button
+                    type="button"
+                    onClick={() => onDelete(profile)}
+                    className="cursor-pointer rounded-lg px-3 py-2 text-sm font-semibold text-ganker-error transition hover:bg-ganker-error/10"
+                  >
+                    Eliminar
+                  </button>
+                )}
               </div>
             </li>
           );

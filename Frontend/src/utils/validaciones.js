@@ -1,7 +1,8 @@
 const REGEX_EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-// "mayor a 8 caracteres" = 9 para arriba.
-const REGEX_PASSWORD = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{9,}$/;
+// Al menos 8 caracteres, una mayuscula, una minuscula y un numero: la misma
+// regla que valida el backend al registrar (PasswordSecurityService).
+const REGEX_PASSWORD = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/;
 
 export function esEmailValido(email) {
   return REGEX_EMAIL.test(email.trim());
@@ -9,6 +10,47 @@ export function esEmailValido(email) {
 
 export function esPasswordValida(password) {
   return REGEX_PASSWORD.test(password);
+}
+
+// US 34 - Cambiar contraseña: "al menos 8 caracteres", la misma regla que
+// valida el backend al restablecer (PasswordSecurityService). Ojo: el
+// registro de arriba pide 9.
+const REGEX_PASSWORD_NUEVA = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/;
+
+export function esPasswordNuevaValida(password) {
+  return REGEX_PASSWORD_NUEVA.test(password);
+}
+
+export function validarFormularioRecuperarContrasena({ email }) {
+  const errores = {};
+
+  if (!email.trim()) {
+    errores.email = "Ingresá tu email.";
+  } else if (!esEmailValido(email)) {
+    errores.email = "El email no tiene un formato válido.";
+  }
+
+  return errores;
+}
+
+export function validarFormularioNuevaContrasena({
+  password,
+  confirmarPassword,
+}) {
+  const errores = {};
+
+  if (!password) {
+    errores.password = "Ingresá tu nueva contraseña.";
+  } else if (!esPasswordNuevaValida(password)) {
+    errores.password =
+      "Debe tener al menos 8 caracteres, una mayúscula, una minúscula y un número.";
+  }
+
+  if (confirmarPassword !== password) {
+    errores.confirmarPassword = "Las contraseñas no coinciden.";
+  }
+
+  return errores;
 }
 
 export function validarFormularioRegistro({
@@ -33,7 +75,7 @@ export function validarFormularioRegistro({
     errores.password = "Elegí una contraseña.";
   } else if (!esPasswordValida(password)) {
     errores.password =
-      "Debe tener al menos 9 caracteres, una mayúscula, una minúscula y un número.";
+      "Debe tener al menos 8 caracteres, una mayúscula, una minúscula y un número.";
   }
 
   if (confirmarPassword !== password) {

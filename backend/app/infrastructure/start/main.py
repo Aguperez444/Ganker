@@ -1,3 +1,4 @@
+import logging
 import os
 from contextlib import asynccontextmanager
 
@@ -7,7 +8,10 @@ from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 
+from sqlalchemy import text
+from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
+
 from app.infrastructure.database.seed_data import seed_database
 
 from app.domain.exceptions.domain_exception import DomainException
@@ -29,6 +33,7 @@ from app.infrastructure.api.controllers.chat_controller import router as chat_ro
 from app.infrastructure.api.controllers.team_controller import router as team_router
 from app.infrastructure.api.controllers.region_controller import router as region_router
 from app.infrastructure.api.controllers.report_controller import router as report_router
+from app.infrastructure.api.controllers.moderation_controller import router as moderation_controller
 
 
 from app.infrastructure.api.controllers.chat_websocket import router as chat_websocket
@@ -61,6 +66,21 @@ app = FastAPI(
     redoc_url=None if IS_PRODUCTION else "/redoc",
     openapi_url=None if IS_PRODUCTION else "/openapi.json",
 )
+
+logger = logging.getLogger(__name__)
+
+
+@app.get("/api/v1/health", include_in_schema=False)
+def health():
+    headers = {"Cache-Control": "no-store"}
+    try:
+        with engine.connect() as connection:
+            connection.execute(text("SELECT 1"))
+    except SQLAlchemyError:
+        logger.exception("Falló la comprobación de disponibilidad de la base de datos")
+        return JSONResponse(status_code=503, content={"status": "unavailable"}, headers=headers)
+    return JSONResponse(content={"status": "ok"}, headers=headers)
+
 
 # CORS
 allowed_origins = [
@@ -105,11 +125,16 @@ async def domain_exception_handler(
     request: Request,
     exc: DomainException
 ):
+    headers = {}
+    if hasattr(exc, "retry_after"):
+        headers["Retry-After"] = str(exc.retry_after)
+
     return JSONResponse(
         status_code=exc.status_code,
         content={
             "error": exc.message
-        }
+        },
+        headers=headers
     )
 
 # ROUTERS
@@ -127,6 +152,8 @@ app.include_router(team_router)
 app.include_router(team_websocket)
 app.include_router(region_router)
 app.include_router(report_router)
+
+app.include_router(moderation_controller)
 
 host = "127.0.0.1"
 port = 8000

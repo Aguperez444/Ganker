@@ -2,7 +2,7 @@ from typing import TYPE_CHECKING
 
 from app.application.ports.i_password_hasher import IPasswordHasher
 from app.application.ports.i_unit_of_work import IUnitOfWork
-from app.domain.exceptions.auth.unauthorized_exception import UnauthorizedException
+from app.domain.exceptions.auth.unauthorized_to_register_exception import UnauthorizedToRegisterException
 from app.domain.exceptions.mail.email_already_exists_exception import EmailAlreadyExistsException
 from app.domain.exceptions.user.user_not_found_exception import UserNotFoundException
 from app.domain.exceptions.user.username_already_exists_exception import UsernameAlreadyExistsException
@@ -77,10 +77,10 @@ class RegisterUser:
     def validate_is_authorized_to_register(authenticated_user: User, new_user_role: str):
         if authenticated_user.role == UserRole.PLAYER:
             # un player no puede crear ningún usuario, solo un admin o un owner pueden crear usuarios
-            raise UnauthorizedException(authenticated_user.user_id, authenticated_user.role.value,
-                                        new_user_role)
+            raise UnauthorizedToRegisterException(authenticated_user.user_id, authenticated_user.role.value,
+                                                  new_user_role)
         elif authenticated_user.role == UserRole.ADMIN and new_user_role == UserRole.OWNER:
             # un admin no puede crear un owner, solo un owner puede crear otro owner
-            raise UnauthorizedException(authenticated_user.user_id, authenticated_user.role.value,
-                                        new_user_role)
+            raise UnauthorizedToRegisterException(authenticated_user.user_id, authenticated_user.role.value,
+                                                  new_user_role)
         # un owner puede crear lo que quiera, asi que no hay necesidad de validar nada más en ese caso

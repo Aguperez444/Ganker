@@ -1,161 +1,106 @@
-// US 35 - Reportar a otro jugador.
-//
-// El backend define estas categorias en ReportReason (player_report_orm.py).
-// El label es solo para mostrar: el value es lo que viaja en `reason`.
-export const MOTIVOS_REPORTE = [
-  {
-    value: "abusive_behavior",
-    label: "Toxicidad o comportamiento abusivo",
-  },
-  {
-    value: "inappropriate_content",
-    label: "Lenguaje o contenido inapropiado",
-  },
-  {
-    value: "cheating",
-    label: "Trampas o uso de cheats",
-  },
-  {
-    value: "spamming",
-    label: "Spam",
-  },
-  {
-    value: "other",
-    label: "Inactividad, abandono, perfil falso u otro",
-  },
+// Utilidades de los reportes del panel admin (US 37).
+
+export const FORMATOS_EXPORTACION = [
+  { valor: "csv", etiqueta: "CSV" },
+  { valor: "excel", etiqueta: "Excel" },
+  { valor: "pdf", etiqueta: "PDF" },
 ];
 
-export const LARGO_MAXIMO_DESCRIPCION_REPORTE = 500;
-
-// Lapso minimo entre dos reportes del mismo jugador hacia el mismo reportado.
-// Se controla en el frontend (localStorage) porque el backend actual no
-// expone un limite de frecuencia para este endpoint.
-export const ESPERA_ENTRE_REPORTES_MS = 10 * 60 * 1000;
-
-const CLAVE_REPORTES_ENVIADOS = "ganker_reportes_enviados";
-
-function claveDeReporte(reporterId, reportedId) {
-  return `${reporterId ?? "anon"}:${reportedId}`;
+// Las fechas del periodo llegan como datetime sin zona ("2026-10-01T00:00:00").
+// Representan un dia, asi que se toma solo la parte de la fecha: pasarlas por
+// new Date() las correria un dia en husos negativos como el de Argentina.
+export function formatearFechaReporte(fechaIso) {
+  if (!fechaIso) return null;
+  const [anio, mes, dia] = fechaIso.slice(0, 10).split("-");
+  return `${dia}/${mes}/${anio}`;
 }
 
-function leerReportesEnviados() {
-  try {
-    const guardado = localStorage.getItem(CLAVE_REPORTES_ENVIADOS);
-    if (!guardado) return {};
-
-    const datos = JSON.parse(guardado);
-    return datos && typeof datos === "object" ? datos : {};
-  } catch {
-    // Si localStorage no esta disponible o el JSON esta roto, no se limita
-    // el envio: es una proteccion extra, no un requisito para reportar.
-    return {};
-  }
+export function describirPeriodo({ start_date, end_date }) {
+  if (!start_date && !end_date) return "Histórico total";
+  const desde = formatearFechaReporte(start_date) ?? "el inicio";
+  const hasta = formatearFechaReporte(end_date) ?? "la fecha de generación";
+  return `Del ${desde} al ${hasta}`;
 }
 
-export function nombreDeMotivoReporte(motivo) {
-  return (
-    MOTIVOS_REPORTE.find((opcion) => opcion.value === motivo)?.label ?? motivo
-  );
+// `generated_at` es un datetime UTC sin zona: se le agrega la Z para que el
+// navegador lo muestre en la hora local.
+export function formatearGeneradoEl(fechaIso) {
+  if (!fechaIso) return "";
+  const conZona = /[zZ]|[+-]\d\d:\d\d$/.test(fechaIso)
+    ? fechaIso
+    : `${fechaIso}Z`;
+  return new Date(conZona).toLocaleString("es-AR", {
+    dateStyle: "short",
+    timeStyle: "short",
+  });
 }
 
-export function validarFormularioReporte({ motivo, descripcion }) {
-  const errores = {};
-
-  if (!motivo) {
-    errores.motivo = "Seleccioná un motivo para el reporte.";
-  } else if (!MOTIVOS_REPORTE.some((opcion) => opcion.value === motivo)) {
-    errores.motivo = "Seleccioná un motivo válido para el reporte.";
+// Variacion respecto al reporte previo, ej. "+3 (+25%)", "-2 (-10%)", "0".
+// Sin porcentaje cuando antes habia 0 perfiles (el backend manda null).
+export function formatearVariacion(variation, variationPercentage) {
+  if (variation === null || variation === undefined) return "—";
+  const signo = variation > 0 ? "+" : "";
+  const absoluta = `${signo}${variation}`;
+  if (variationPercentage === null || variationPercentage === undefined) {
+    return absoluta;
   }
-
-  if ((descripcion ?? "").trim().length > LARGO_MAXIMO_DESCRIPCION_REPORTE) {
-    errores.descripcion = `La descripción no puede superar los ${LARGO_MAXIMO_DESCRIPCION_REPORTE} caracteres.`;
-  }
-
-  return errores;
+  return `${absoluta} (${signo}${variationPercentage}%)`;
 }
 
-// Devuelve cuantos milisegundos faltan para poder volver a reportar al mismo
-// jugador. 0 significa que se puede enviar.
-export function obtenerMsEsperaReporte(
-  reporterId,
-  reportedId,
-  ahora = Date.now()
-) {
-  if (reportedId == null) return 0;
-
-  const enviadoEn = Number(
-    leerReportesEnviados()[claveDeReporte(reporterId, reportedId)]
-  );
-
-  if (!Number.isFinite(enviadoEn) || enviadoEn <= 0) return 0;
-
-  const restante = ESPERA_ENTRE_REPORTES_MS - (ahora - enviadoEn);
-  return restante > 0 ? restante : 0;
+// Fechas como "YYYY-MM-DD" (lo que usan <input type="date"> y el backend).
+// Se comparan como texto: en ese formato el orden alfabetico es el cronologico.
+// Devuelve el mensaje de error o "" si el periodo es valido.
+export function validarPeriodoReporte({ fechaInicio, fechaFin, inicioMinimo }) {
+  if (fechaInicio && fechaFin && fechaInicio > fechaFin) {
+    return "La fecha inicial no puede ser posterior a la fecha final.";
+  }
+  if (inicioMinimo && fechaInicio && fechaInicio < inicioMinimo) {
+    return `Ya existe un reporte hasta el ${formatearFechaReporte(
+      restarUnDia(inicioMinimo)
+    )}: la fecha inicial tiene que ser a partir del ${formatearFechaReporte(
+      inicioMinimo
+    )}.`;
+  }
+  return "";
 }
 
-export function registrarReporteEnviado(
-  reporterId,
-  reportedId,
-  ahora = Date.now()
-) {
-  if (reportedId == null) return;
-
-  try {
-    const reportes = leerReportesEnviados();
-    const clave = claveDeReporte(reporterId, reportedId);
-    reportes[clave] = ahora;
-
-    // Limpieza de entradas vencidas para que el objeto no crezca sin limite.
-    Object.keys(reportes).forEach((otraClave) => {
-      const enviadoEn = Number(reportes[otraClave]);
-      if (
-        !Number.isFinite(enviadoEn) ||
-        ahora - enviadoEn >= ESPERA_ENTRE_REPORTES_MS
-      ) {
-        delete reportes[otraClave];
-      }
-    });
-
-    localStorage.setItem(CLAVE_REPORTES_ENVIADOS, JSON.stringify(reportes));
-  } catch {
-    // Mismo criterio que al leer: no bloquear el flujo por localStorage.
+// US 38 - Franjas de rangos del analisis de equipos: [{ min_rank_id,
+// max_rank_id }] con ids como texto (vienen de <select>). `rangos` es el
+// catalogo del juego ({ rank_id, name, value }); se compara por `value`, que
+// es el orden real del rango. Mismas reglas que el backend.
+export function validarFranjasRangos(franjas, rangos) {
+  if (franjas.length === 0) {
+    return "Agregá al menos una franja de rangos para el análisis de equipos.";
   }
+
+  const valorDe = (id) =>
+    rangos.find((r) => String(r.rank_id) === String(id))?.value;
+  const intervalos = [];
+
+  for (const [indice, franja] of franjas.entries()) {
+    const minimo = valorDe(franja.min_rank_id);
+    const maximo = valorDe(franja.max_rank_id);
+    const numero = indice + 1;
+
+    if (minimo === undefined || maximo === undefined) {
+      return `Elegí el rango mínimo y máximo de la franja ${numero}.`;
+    }
+    if (minimo > maximo) {
+      return `En la franja ${numero} el rango mínimo no puede ser mayor al máximo.`;
+    }
+    if (
+      intervalos.some(([desde, hasta]) => minimo <= hasta && maximo >= desde)
+    ) {
+      return "Las franjas de rangos no pueden solaparse.";
+    }
+    intervalos.push([minimo, maximo]);
+  }
+
+  return "";
 }
 
-export function formatearEsperaReporte(ms) {
-  const minutos = Math.max(1, Math.ceil(ms / 60000));
-  return minutos === 1 ? "1 minuto" : `${minutos} minutos`;
-}
-
-// Los errores de dominio del backend llegan en `error`; los de validacion de
-// FastAPI, en `detail`. Se prioriza el mensaje legible del backend.
-export function mensajeDeErrorReporte(error) {
-  const data = error?.response?.data;
-  const status = error?.response?.status;
-
-  if (!error?.response) {
-    return "No pudimos conectar con el servidor. Intentá de nuevo.";
-  }
-  if (status === 403) {
-    return "No tenés permisos para reportar jugadores.";
-  }
-  if (status === 429) {
-    return (
-      data?.error ??
-      "Hiciste varios reportes seguidos. Esperá un momento antes de volver a intentarlo."
-    );
-  }
-  if (status === 404) {
-    return (
-      data?.error ??
-      "No se pudo enviar el reporte: el jugador ya no existe o la función no está disponible."
-    );
-  }
-  if (status === 422) {
-    return "Revisá los datos del reporte: el motivo es obligatorio y la descripción no puede superar los 500 caracteres.";
-  }
-  if (typeof data?.error === "string") return data.error;
-  if (typeof data?.detail === "string") return data.detail;
-
-  return "No se pudo enviar el reporte. Intentá de nuevo.";
+function restarUnDia(fecha) {
+  const [anio, mes, dia] = fecha.split("-").map(Number);
+  const d = new Date(Date.UTC(anio, mes - 1, dia - 1));
+  return d.toISOString().slice(0, 10);
 }

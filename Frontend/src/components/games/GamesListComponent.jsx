@@ -1,12 +1,18 @@
 import { resolveIconUrl } from "../../utils/media";
-import { CLASES_BOTON_MODIFICAR } from "../common/botonesAccion";
+import {
+  CLASES_BOTON_ELIMINAR,
+  CLASES_BOTON_MODIFICAR,
+} from "../common/botonesAccion";
 
+// `onDelete` es opcional: solo se pasa para el owner (US 23), asi que sin el
+// no se muestra el boton Eliminar.
 const GameListComponent = ({
   games,
   isLoading,
   error,
   selectedGameId,
   onEdit,
+  onDelete,
 }) => {
   if (isLoading) {
     return (
@@ -80,13 +86,24 @@ const GameListComponent = ({
               </p>
             </div>
 
-            <button
-              type="button"
-              onClick={() => onEdit(game)}
-              className={`shrink-0 ${CLASES_BOTON_MODIFICAR}`}
-            >
-              Modificar
-            </button>
+            <div className="flex shrink-0 items-center gap-2">
+              <button
+                type="button"
+                onClick={() => onEdit(game)}
+                className={CLASES_BOTON_MODIFICAR}
+              >
+                Modificar
+              </button>
+              {onDelete && (
+                <button
+                  type="button"
+                  onClick={() => onDelete(game)}
+                  className={CLASES_BOTON_ELIMINAR}
+                >
+                  Eliminar
+                </button>
+              )}
+            </div>
           </li>
         ))}
       </ul>

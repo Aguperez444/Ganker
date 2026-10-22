@@ -7,7 +7,7 @@ from app.application.use_cases.update_videogame import UpdateVideogame
 from app.infrastructure.api.dto.response.get.get_videogames_response import GetVideogamesResponse
 from app.infrastructure.api.dto.response.base_classes.videogame_object_response import VideogameObjectResponse
 from app.infrastructure.database.unit_of_work.uow_factory import uow_factory
-from app.infrastructure.api.dependencies.auth import require_admin, require_player
+from app.infrastructure.api.dependencies.auth import require_admin, require_player, require_owner
 from app.infrastructure.storage.local_disk_storage_service import LocalDiskStorageService
 from app.application.use_cases.delete_videogame import DeleteVideogameUseCase
 from app.infrastructure.api.dto.response.delete.delete_videogame_response import DeleteVideogameResponse
@@ -65,7 +65,14 @@ def update_videogame(
     storage_service = get_storage_service()
     update_videogame_use_case = UpdateVideogame(storage_service, uow)
 
-    updated_videogame = update_videogame_use_case.execute(videogame_id, name, icon, rank_per_role, has_characters)
+    updated_videogame = update_videogame_use_case.execute(
+        videogame_id=videogame_id,
+        name=name,
+        icon_file=icon.file if icon is not None else None,
+        icon_filename=icon.filename if icon is not None else None,
+        rank_per_role=rank_per_role,
+        has_characters=has_characters,
+    )
 
     return updated_videogame
 
@@ -76,7 +83,7 @@ def get_all_videogames():
     query_games_use_case = QueryVideogames(uow)
     return query_games_use_case.get_all_videogames()
 
-@router.delete("/{videogame_id}", response_model=DeleteVideogameResponse, status_code=200, dependencies=[Depends(require_admin)])
+@router.delete("/{videogame_id}", response_model=DeleteVideogameResponse, status_code=200, dependencies=[Depends(require_owner)])
 def delete_videogame(videogame_id: int) -> DeleteVideogameResponse:
     uow = uow_factory()
     return DeleteVideogameUseCase(uow).execute(videogame_id)

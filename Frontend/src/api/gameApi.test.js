@@ -1,10 +1,10 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
 
 import axiosClient from "./axiosClient";
-import { createGame, updateGame } from "./gameApi";
+import { createGame, deleteGame, updateGame } from "./gameApi";
 
 vi.mock("./axiosClient", () => ({
-  default: { post: vi.fn(), put: vi.fn() },
+  default: { post: vi.fn(), put: vi.fn(), delete: vi.fn() },
 }));
 
 function formDataEnviado(metodo) {
@@ -45,6 +45,25 @@ describe("gameApi - has_characters", () => {
     );
     expect(formDataEnviado(axiosClient.put).get("has_characters")).toBe(
       "false"
+    );
+  });
+});
+
+describe("gameApi - deleteGame", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it("hace DELETE al videojuego y devuelve el mensaje del backend", async () => {
+    axiosClient.delete.mockResolvedValue({
+      data: { message: "El videojuego ha sido eliminado exitosamente." },
+    });
+
+    const resultado = await deleteGame(7);
+
+    expect(axiosClient.delete).toHaveBeenCalledWith("/api/v1/videogames/7");
+    expect(resultado.message).toBe(
+      "El videojuego ha sido eliminado exitosamente."
     );
   });
 });

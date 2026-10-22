@@ -20,7 +20,9 @@ services:
     volumes:
       - postgres_prod_data:/var/lib/postgresql/data
     networks:
-      - ganker_internal
+      ganker_internal:
+        aliases:
+          - db
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
       interval: 10s
@@ -45,7 +47,7 @@ services:
       - uploads_prod_data:/app/media
     env_file:
       - path: .env.prod
-        required: false
+        required: true
     environment:
       - ENVIRONMENT=production
       - CORS_ORIGINS=${CORS_ORIGINS:-https://gankerweb.app,https://www.gankerweb.app}
@@ -53,6 +55,17 @@ services:
       - UPLOAD_DIR=/app/media
       - MEDIA_URL=/media
       - DATABASE_URL=postgresql+psycopg2://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
+      - FORWARDED_ALLOW_IPS=${GANKER_NGINX_IP:-172.30.0.10}
+    healthcheck:
+      test:
+        - CMD
+        - python
+        - -c
+        - "import json, sys, urllib.request; response = urllib.request.urlopen('http://127.0.0.1:8000/api/v1/health', timeout=3); sys.exit(0 if response.status == 200 and json.load(response) == {'status': 'ok'} else 1)"
+      interval: 5s
+      timeout: 5s
+      retries: 12
+      start_period: 30s
     depends_on:
       db:
         condition: service_healthy
@@ -80,9 +93,11 @@ services:
       - ./nginx/certs:/etc/nginx/certs:ro
       - uploads_prod_data:/var/www/media:ro
     depends_on:
-      - backend
+      backend:
+        condition: service_healthy
     networks:
-      - ganker_internal
+      ganker_internal:
+        ipv4_address: ${GANKER_NGINX_IP:-172.30.0.10}
     deploy:
       resources:
         limits:
@@ -93,6 +108,9 @@ services:
 networks:
   ganker_internal:
     driver: bridge
+    ipam:
+      config:
+        - subnet: ${GANKER_INTERNAL_SUBNET:-172.30.0.0/24}
 
 volumes:
   uploads_prod_data:

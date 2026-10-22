@@ -37,6 +37,13 @@ class AuthenticateFederatedUser:
         with self.uow as uow:
             user = self._find_and_link_existing_user(uow, account)
             if user is not None:
+
+                # Chequeo si el usuario está baneado y, si corresponde, lo desbaneo ----
+
+                uow.moderation_repo.unban_user_if_applicable(user.user_id)
+
+                # ----------------------------------------------------------------------
+
                 self._sync_discord_profile_link_if_applicable(uow, user.user_id, account)
                 access_token, refresh_token, jti, expires_at = self.token_service.generate_tokens(
                     user_id=user.user_id,

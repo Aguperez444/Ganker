@@ -1,5 +1,6 @@
 from typing import TYPE_CHECKING
 from app.domain.exceptions.character.character_not_found_exception import CharacterNotFoundException
+from app.domain.exceptions.moderation.not_valid_report_reason_exception import NotValidReportReasonException
 from app.domain.exceptions.rank.rank_not_found_exception import RankNotFoundException
 from app.domain.exceptions.role.role_not_found_exception import RoleNotFoundException
 from app.domain.exceptions.user.user_not_found_exception import UserNotFoundException
@@ -13,7 +14,7 @@ from app.domain.exceptions.user.username_already_exists_exception import Usernam
 from app.domain.exceptions.videogame.videogame_already_exists_exception import VideogameAlreadyExistsException
 from app.domain.exceptions.region.region_not_found_exception import RegionNotFoundException
 from app.domain.exceptions.region.duplicated_region_name_exception import DuplicatedRegionNameException
-
+from app.domain.models.report_reason import ReportReason
 
 if TYPE_CHECKING:
     from app.domain.models.region import Region
@@ -24,6 +25,7 @@ if TYPE_CHECKING:
     from app.domain.models.role import Role
     from app.domain.models.videogame import Videogame
     from app.domain.models.game_profile import GameProfile
+
 
 
 class CatalogValidationService:
@@ -166,3 +168,10 @@ class CatalogValidationService:
             raise RegionNotFoundException(region_id)
         if region.videogame.videogame_id != videogame_id:
             raise DoesNotBelongToProfileException("region", f"{region_id}")
+
+    @staticmethod
+    def validate_reason_is_valid_for_report(reason: str) -> ReportReason:
+        try:
+            return ReportReason(reason.lower().strip())
+        except ValueError:
+            raise NotValidReportReasonException()

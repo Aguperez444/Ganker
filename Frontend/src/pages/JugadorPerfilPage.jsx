@@ -4,10 +4,18 @@ import AvatarUsuarioComponent from "../components/common/AvatarUsuarioComponent"
 import AvisoComponent from "../components/common/AvisoComponent";
 import DiscordJugadorComponent from "../components/discord/DiscordJugadorComponent";
 import IconoChicoComponent from "../components/common/IconoChicoComponent";
+<<<<<<< HEAD
 import BotonReportarJugadorComponent from "../components/moderacion/BotonReportarJugadorComponent";
+=======
+import ModalDarDeBajaUsuarioComponent from "../components/jugadores/ModalDarDeBajaUsuarioComponent";
+>>>>>>> 38f8f29191b7d31cc688a8cde445054ba63df7c1
 import PerfilDeJuegoDetalleComponent from "../components/jugadores/PerfilDeJuegoDetalleComponent";
+import { CLASES_BOTON_ELIMINAR } from "../components/common/botonesAccion";
+import { useAuth } from "../context/AuthContext";
 import { useChat } from "../context/ChatContext";
+import { useDarDeBajaUsuario } from "../hooks/useDarDeBajaUsuario";
 import usePerfilJugador from "../hooks/usePerfilJugador";
+import { esAdmin } from "../utils/rutas";
 import { formatearConexionReciente } from "../utils/tiempo";
 
 // Perfil de otro jugador con todos sus perfiles de juego (LoL, Valorant,
@@ -25,15 +33,48 @@ const JugadorPerfilPage = () => {
   const [juegoElegidoId, setJuegoElegidoId] = useState(null);
   const [abriendoChat, setAbriendoChat] = useState(false);
 
+  // US 50 - Un admin puede dar de baja la cuenta desde el perfil. Se guarda
+  // el id dado de baja (no un booleano) para que el aviso no quede pegado al
+  // pasar a otro perfil sin desmontar la pagina.
+  const { user } = useAuth();
+  const baja = useDarDeBajaUsuario();
+  const [idDadoDeBaja, setIdDadoDeBaja] = useState(null);
+  const [mensajeBaja, setMensajeBaja] = useState("");
+
   const handleEnviarMensaje = async () => {
     setAbriendoChat(true);
     await iniciarChat(perfil.user_id);
     setAbriendoChat(false);
   };
 
+  const handleConfirmarBaja = async () => {
+    const idObjetivo = baja.usuario?.user_id;
+    const mensaje = await baja.confirmar();
+    if (!mensaje) return;
+
+    setMensajeBaja(mensaje);
+    setIdDadoDeBaja(idObjetivo);
+  };
+
   let contenido;
 
-  if (cargando) {
+  if (idDadoDeBaja !== null && String(idDadoDeBaja) === String(jugadorId)) {
+    contenido = (
+      <AvisoComponent
+        titulo="Cuenta dada de baja"
+        accion={
+          <Link
+            to="/app/jugadores"
+            className="text-sm font-semibold text-ganker-orange-light hover:underline"
+          >
+            Ir a Buscar jugadores
+          </Link>
+        }
+      >
+        {mensajeBaja}
+      </AvisoComponent>
+    );
+  } else if (cargando) {
     contenido = <p className="text-sm text-ganker-muted">Cargando perfil...</p>;
   } else if (error) {
     contenido = (
@@ -111,6 +152,27 @@ const JugadorPerfilPage = () => {
         {/* Discord: solo aparece si el jugador lo comparte con quien mira */}
         {!esUnoMismo && <DiscordJugadorComponent userId={perfil.user_id} />}
 
+        {/* US 50 - Solo admin/owner, y nunca sobre la propia cuenta. */}
+        {esAdmin(user) && !esUnoMismo && !baja.esUnoMismo(perfil) && (
+          <div className="flex flex-col gap-3 rounded-2xl border border-ganker-error/30 bg-ganker-surface p-5 sm:flex-row sm:items-center sm:justify-between sm:p-6">
+            <div>
+              <h2 className="font-heading text-lg font-semibold text-ganker-text">
+                Administración
+              </h2>
+              <p className="mt-1 text-sm text-ganker-muted">
+                Dar de baja esta cuenta y todos sus perfiles de juego.
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => baja.abrir(perfil)}
+              className={`shrink-0 ${CLASES_BOTON_ELIMINAR}`}
+            >
+              Dar de baja cuenta
+            </button>
+          </div>
+        )}
+
         <div className="rounded-2xl border border-white/10 bg-ganker-surface p-5 sm:p-6">
           <h2 className="font-heading text-xl font-semibold text-ganker-text">
             Perfiles de juego
@@ -172,9 +234,16 @@ const JugadorPerfilPage = () => {
 
   return (
     <section className="min-h-full bg-ganker-bg px-4 py-6 sm:px-6 lg:px-8">
-      <div className="mx-auto w-full max-w-5xl">
-        {contenido}
-      </div>
+      <div className="mx-auto w-full max-w-5xl">{contenido}</div>
+
+      <ModalDarDeBajaUsuarioComponent
+        usuario={baja.usuario}
+        cargando={baja.cargando}
+        error={baja.error}
+        bloqueado={baja.esUnoMismo(baja.usuario)}
+        onConfirm={handleConfirmarBaja}
+        onCancel={baja.cancelar}
+      />
     </section>
   );
 };

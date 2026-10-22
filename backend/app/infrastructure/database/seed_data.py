@@ -17,6 +17,8 @@ from app.infrastructure.database.models import (
     TeamORM,
     UserORM,
     VideogameORM,
+    UserBanRecordORM,
+    PlayerReportORM
 )
 
 SEEDS_DIR = Path(__file__).resolve().parent / "seeds"

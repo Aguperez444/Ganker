@@ -14,6 +14,11 @@ export function esAdmin(user) {
   return ROLES_ADMIN.includes(rolDe(user));
 }
 
+// Acciones reservadas al owner (ej. eliminar un videojuego, US 23).
+export function esOwner(user) {
+  return rolDe(user) === "owner";
+}
+
 // A donde va un usuario recien logueado, o uno ya logueado que cae en /login.
 // La regla vive aca sola para no repetirla en cada pantalla que navega.
 export function rutaInicialPara(user) {
