@@ -5,6 +5,7 @@ import {
   DURACIONES_BANEO,
   esVencimientoPermanente,
   formatearDuracionBaneo,
+  mensajeDeCuentaBaneada,
   validarFormularioBaneo,
 } from "./baneos";
 
@@ -40,5 +41,41 @@ describe("baneos - US 36 baneo permanente", () => {
     expect(esVencimientoPermanente(lejano.toISOString())).toBe(true);
     expect(esVencimientoPermanente(cercano.toISOString())).toBe(false);
     expect(esVencimientoPermanente(null)).toBe(false);
+  });
+});
+
+describe("mensajeDeCuentaBaneada - US 36 login", () => {
+  it("muestra el motivo y el vencimiento en hora local", () => {
+    const mensaje = mensajeDeCuentaBaneada(
+      "El baneo del jugador aún no ha finalizado. Motivo: Insultos. Vencimiento: 2026-10-29T18:00:00+00:00"
+    );
+
+    expect(mensaje).toMatch(/^Tu cuenta está suspendida\. Motivo: Insultos\./);
+    expect(mensaje).toMatch(/La suspensión vence el /);
+    expect(mensaje).not.toMatch(/2026-10-29T/);
+  });
+
+  it("un baneo sin vencimiento o muy lejano se muestra como permanente", () => {
+    expect(
+      mensajeDeCuentaBaneada(
+        "El baneo del jugador aún no ha finalizado. Motivo: Cheats. Sin fecha de vencimiento"
+      )
+    ).toBe(
+      "Tu cuenta está suspendida. Motivo: Cheats. La suspensión es permanente."
+    );
+
+    const lejano = new Date();
+    lejano.setFullYear(lejano.getFullYear() + 100);
+    expect(
+      mensajeDeCuentaBaneada(
+        `El baneo del jugador aún no ha finalizado. Motivo: Cheats. Vencimiento: ${lejano.toISOString()}`
+      )
+    ).toMatch(/La suspensión es permanente\.$/);
+  });
+
+  it("si el backend no manda el motivo, muestra su mensaje tal cual", () => {
+    expect(
+      mensajeDeCuentaBaneada("El baneo del jugador aún no ha finalizado")
+    ).toBe("El baneo del jugador aún no ha finalizado");
   });
 });

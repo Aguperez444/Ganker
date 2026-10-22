@@ -13,8 +13,8 @@ export function esPasswordValida(password) {
 }
 
 // US 34 - Cambiar contraseña: "al menos 8 caracteres", la misma regla que
-// valida el backend al restablecer (PasswordSecurityService). Ojo: el
-// registro de arriba pide 9.
+// valida el backend al restablecer (PasswordSecurityService) y que el registro
+// de arriba.
 const REGEX_PASSWORD_NUEVA = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/;
 
 export function esPasswordNuevaValida(password) {
@@ -129,6 +129,20 @@ export function validarFormularioRegistroFederado({ nombre, username, mail }) {
   }
   if (mail && mail.trim() && !esEmailValido(mail)) {
     errores.mail = "El email no tiene un formato válido.";
+  }
+
+  return errores;
+}
+
+// US 39 - Registrar usuario (admin): los mismos datos que el registro propio
+// mas el rol, que tiene que ser uno de los que el admin puede asignar.
+export function validarFormularioRegistroUsuario(valores, rolesPermitidos) {
+  const errores = validarFormularioRegistro(valores);
+
+  if (!valores.rol) {
+    errores.rol = "Elegí un rol.";
+  } else if (!rolesPermitidos.includes(valores.rol)) {
+    errores.rol = "No podés registrar un usuario con un rol superior al tuyo.";
   }
 
   return errores;

@@ -9,9 +9,13 @@ import MessageBubbleComponent from "./MessageBubbleComponent";
 import MessageInputComponent from "./MessageInputComponent";
 import { logError } from "../../utils/logs";
 
+// Estado del socket PROPIO, no la presencia del otro participante: el backend
+// no informa si la otra persona esta conectada. Por eso con el socket abierto
+// no se muestra nada (antes decia "En línea" siempre, aunque el otro no
+// estuviera) y solo se avisa cuando hay un problema con la conexion propia.
 const TEXTO_ESTADO = {
   CONECTANDO: "Conectando...",
-  ABIERTO: "En línea",
+  ABIERTO: null,
   CERRADO: "Desconectado",
   ERROR: "Error de conexión",
 };
@@ -352,10 +356,14 @@ const ChatWindowInterna = ({
             </span>
 
             <span className="text-[11px] text-ganker-muted">
-              {esDeEquipo && conversacion.member_count
-                ? `${conversacion.member_count} integrantes · `
-                : ""}
-              {TEXTO_ESTADO[estado] ?? estado}
+              {[
+                esDeEquipo && conversacion.member_count
+                  ? `${conversacion.member_count} integrantes`
+                  : null,
+                estado in TEXTO_ESTADO ? TEXTO_ESTADO[estado] : estado,
+              ]
+                .filter(Boolean)
+                .join(" · ")}
             </span>
           </span>
         </button>

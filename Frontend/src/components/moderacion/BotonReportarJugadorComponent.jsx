@@ -37,7 +37,7 @@ function IconoReporte() {
 // criterio "la opción no se encuentra disponible".
 //
 // El modal se monta recien al hacer click, asi cada apertura parte de un
-// estado limpio y vuelve a leer el cooldown de localStorage.
+// estado limpio.
 const BotonReportarJugadorComponent = ({
   jugador,
   currentUserId,

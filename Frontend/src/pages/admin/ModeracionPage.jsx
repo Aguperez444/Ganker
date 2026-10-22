@@ -12,16 +12,17 @@ import {
   formatearVencimiento,
 } from "../../utils/baneos";
 
-// US 36 - Banear jugador (admin): se busca al jugador por ID (el mismo
-// endpoint del perfil público, ver useBuscarUsuario), se ve quién es y recién
-// ahí se puede aplicar la sanción.
+// US 36 - Banear jugador (admin): se busca al jugador por su nombre de usuario
+// (ver useBuscarUsuario), se ve quién es y recién ahí se puede aplicar la
+// sanción.
 //
 // La protección por rol vive en la ruta (ProtectedRoute con ROLES_ADMIN) y en
 // el backend (require_admin). Acá además se oculta la acción sobre la propia
 // cuenta del administrador.
 //
 // US 53 - Levantar suspensión: el listado de baneados viene resuelto del
-// backend; acá solo se muestra y se ofrece "Desbanear".
+// backend (solo baneos vigentes); acá se muestra, se filtra por username en
+// el backend y se ofrece "Desbanear".
 const ModeracionPage = () => {
   const { tokens } = useAuth();
   const miId = obtenerIdUsuarioDesdeToken(tokens?.access_token);
@@ -29,13 +30,14 @@ const ModeracionPage = () => {
   const [successMessage, setSuccessMessage] = useState("");
   const [jugadorABanear, setJugadorABanear] = useState(null);
   const [mensajeBaneo, setMensajeBaneo] = useState("");
+  const [filtroBaneados, setFiltroBaneados] = useState("");
 
   const {
-    idBuscado,
+    usernameBuscado,
     encontrado,
     buscando,
     error: errorBusqueda,
-    setIdBuscado,
+    setUsernameBuscado,
     buscar,
     limpiar,
   } = useBuscarUsuario();
@@ -46,6 +48,14 @@ const ModeracionPage = () => {
     e.preventDefault();
     setSuccessMessage("");
     buscar();
+  };
+
+  const recargarBaneados = () =>
+    baneos.recargar({ username: filtroBaneados.trim().replace(/^@/, "") });
+
+  const handleFiltrarBaneados = (e) => {
+    e.preventDefault();
+    recargarBaneados();
   };
 
   const handleAbrirBaneo = (jugador) => {
@@ -62,7 +72,7 @@ const ModeracionPage = () => {
 
     setSuccessMessage(mensajeBaneo);
     limpiar();
-    baneos.recargar();
+    recargarBaneados();
   };
 
   // US 53 - Desbanear a mano desde el listado de baneados.
@@ -71,7 +81,7 @@ const ModeracionPage = () => {
     if (!mensaje) return;
 
     setSuccessMessage(mensaje);
-    baneos.recargar();
+    recargarBaneados();
   };
 
   const esUnoMismo = (usuario) => miId !== null && usuario?.user_id === miId;
@@ -102,9 +112,8 @@ const ModeracionPage = () => {
             Banear jugador
           </h2>
           <p className="mt-1 text-sm text-ganker-muted">
-            Buscá al jugador por su ID (el número que aparece en la URL de su
-            perfil, /app/jugadores/&lt;id&gt;) y aplicá la sanción con su motivo
-            y duración.
+            Buscá al jugador por su nombre de usuario y aplicá la sanción con su
+            motivo y duración.
           </p>
 
           <form
@@ -113,19 +122,19 @@ const ModeracionPage = () => {
           >
             <div className="flex-1">
               <label
-                htmlFor="moderacion-id"
+                htmlFor="moderacion-username"
                 className="mb-1 block text-xs font-semibold text-ganker-text"
               >
-                ID del jugador
+                Nombre de usuario
               </label>
               <input
-                id="moderacion-id"
-                type="number"
-                min="1"
-                inputMode="numeric"
-                value={idBuscado}
-                onChange={(e) => setIdBuscado(e.target.value)}
-                placeholder="Ej. 12"
+                id="moderacion-username"
+                type="text"
+                autoComplete="off"
+                spellCheck={false}
+                value={usernameBuscado}
+                onChange={(e) => setUsernameBuscado(e.target.value)}
+                placeholder="Ej. pedro"
                 className="w-full rounded-lg border border-white/10 bg-ganker-surface-light px-3 py-2.5 text-sm text-ganker-text focus:border-ganker-purple focus:ring-2 focus:ring-ganker-purple focus:outline-none"
               />
             </div>
@@ -185,15 +194,38 @@ const ModeracionPage = () => {
                 Se desbanean solos al vencer. También podés desbanear a mano.
               </p>
             </div>
-            <button
-              type="button"
-              onClick={baneos.recargar}
-              disabled={baneos.cargando}
-              className="cursor-pointer rounded-lg border border-white/10 px-3 py-1.5 text-sm font-semibold text-ganker-text transition hover:bg-white/5 disabled:cursor-not-allowed disabled:opacity-50"
-            >
-              {baneos.cargando ? "Cargando..." : "Actualizar"}
-            </button>
           </div>
+
+          <form
+            onSubmit={handleFiltrarBaneados}
+            className="mt-5 flex flex-col gap-3 sm:flex-row sm:items-end"
+          >
+            <div className="flex-1">
+              <label
+                htmlFor="moderacion-filtro-baneados"
+                className="mb-1 block text-xs font-semibold text-ganker-text"
+              >
+                Filtrar por nombre de usuario
+              </label>
+              <input
+                id="moderacion-filtro-baneados"
+                type="text"
+                autoComplete="off"
+                spellCheck={false}
+                value={filtroBaneados}
+                onChange={(e) => setFiltroBaneados(e.target.value)}
+                placeholder="Vacío para ver todos"
+                className="w-full rounded-lg border border-white/10 bg-ganker-surface-light px-3 py-2.5 text-sm text-ganker-text focus:border-ganker-purple focus:ring-2 focus:ring-ganker-purple focus:outline-none"
+              />
+            </div>
+            <button
+              type="submit"
+              disabled={baneos.cargando}
+              className="cursor-pointer self-start rounded-lg border border-white/10 px-4 py-2.5 text-sm font-semibold text-ganker-text transition hover:bg-white/5 disabled:cursor-not-allowed disabled:opacity-50 sm:self-auto"
+            >
+              {baneos.cargando ? "Cargando..." : "Filtrar"}
+            </button>
+          </form>
 
           {baneos.error && (
             <div className="mt-4 rounded-lg border border-ganker-error/20 bg-ganker-error/10 px-4 py-3">
@@ -211,12 +243,12 @@ const ModeracionPage = () => {
             <ul className="mt-5 divide-y divide-white/10 overflow-hidden rounded-xl border border-white/10">
               {baneos.baneados.map((baneo) => (
                 <li
-                  key={baneo.id}
+                  key={baneo.user_id}
                   className="flex flex-col gap-1 bg-ganker-surface-light px-4 py-3 sm:flex-row sm:items-center sm:justify-between"
                 >
                   <div className="min-w-0">
                     <p className="truncate font-medium text-ganker-text">
-                      @{baneo.banned_user_username} · ID {baneo.banned_user_id}
+                      @{baneo.username} · ID {baneo.user_id}
                     </p>
                     <p className="mt-0.5 truncate text-xs text-ganker-muted">
                       {baneo.reason}
@@ -224,13 +256,14 @@ const ModeracionPage = () => {
                   </div>
                   <div className="flex shrink-0 flex-wrap items-center gap-3">
                     <p className="text-xs text-ganker-muted">
-                      {esVencimientoPermanente(baneo.date_expire)
+                      {!baneo.expires_at ||
+                      esVencimientoPermanente(baneo.expires_at)
                         ? "Permanente"
-                        : `Vence ${formatearVencimiento(baneo.date_expire)}`}
+                        : `Vence ${formatearVencimiento(baneo.expires_at)}`}
                     </p>
                     {/* US 53 - Levanta el baneo antes de su vencimiento. No se
                     ofrece sobre la propia cuenta: el backend lo rechaza. */}
-                    {baneo.banned_user_id !== miId && (
+                    {baneo.user_id !== miId && (
                       <button
                         type="button"
                         onClick={() => desbaneo.abrir(baneo)}
@@ -263,9 +296,9 @@ const ModeracionPage = () => {
           <>
             Se va a levantar el baneo de{" "}
             <strong className="text-ganker-text">
-              @{desbaneo.baneo?.banned_user_username}
+              @{desbaneo.baneo?.username}
             </strong>{" "}
-            (ID {desbaneo.baneo?.banned_user_id}). La cuenta va a poder volver a
+            (ID {desbaneo.baneo?.user_id}). La cuenta va a poder volver a
             iniciar sesión de inmediato.
           </>
         }

@@ -15,10 +15,10 @@ vi.mock("../api/moderacionApi", () => ({
 
 function banFuturo(id, userId) {
   return {
-    id,
-    banned_user_id: userId,
-    banned_user_username: `jugador${userId}`,
-    date_expire: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+    user_id: userId,
+    username: `jugador${userId}`,
+    reason: `motivo ${id}`,
+    expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
   };
 }
 
@@ -39,9 +39,7 @@ describe("useJugadoresBaneados - US 53", () => {
       expect(result.current.cargando).toBe(false);
     });
     expect(obtenerJugadoresBaneados).toHaveBeenCalledTimes(1);
-    expect(result.current.baneados.map((b) => b.banned_user_id)).toEqual([
-      10, 20,
-    ]);
+    expect(result.current.baneados.map((b) => b.user_id)).toEqual([10, 20]);
   });
 
   it("recargar vuelve a pedir el listado al backend", async () => {

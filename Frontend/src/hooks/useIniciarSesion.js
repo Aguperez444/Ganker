@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useAuth } from "../context/AuthContext";
+import { mensajeDeCuentaBaneada } from "../utils/baneos";
 import { validarFormularioLogin } from "../utils/validaciones";
 
 const VALORES_INICIALES = { email: "", password: "" };
@@ -39,21 +40,21 @@ export function useIniciarSesion() {
     setCargando(false);
 
     if (!result.success) {
-      // El backend distingue los dos casos con status codes distintos:
-      // 404 = EmailNotFoundException, 401 = WrongPasswordException.
-      if (result.status === 404) {
-        setErrorServidor("No existe una cuenta registrada con ese email.");
-      } else if (result.status === 401) {
-        setErrorServidor("La contraseña es incorrecta.");
-      } else if (esCuentaBaneada(result)) {
-        // US 36 - El backend responde 400 con
-        // { error: "El baneo del jugador aún no ha finalizado" } cuando la
-        // cuenta sigue suspendida. Se muestra ese mensaje tal cual para que
-        // el jugador entienda por qué no puede entrar.
+      // El backend distingue mail inexistente (404) de contraseña incorrecta
+      // (401), pero mostrarlo por separado le confirma a cualquiera que mail
+      // tiene cuenta. Se responde lo mismo en los dos casos.
+      if (result.status === 404 || result.status === 401) {
+        setErrorServidor("El email o la contraseña son incorrectos.");
+      } else if (result.status === 429) {
+        // Limite de intentos del backend: su mensaje dice que hay que esperar.
         setErrorServidor(
-          result.error?.error ??
-            "Tu cuenta está suspendida y no puede iniciar sesión."
+          result.error?.detail ??
+            "Demasiados intentos. Esperá un minuto y probá de nuevo."
         );
+      } else if (esCuentaBaneada(result)) {
+        // US 36 - Cuenta suspendida: se muestra la restriccion con el motivo
+        // y el vencimiento que manda el backend.
+        setErrorServidor(mensajeDeCuentaBaneada(result.error.error));
       } else {
         setErrorServidor("No pudimos iniciar sesión. Probá de nuevo.");
       }

@@ -5,8 +5,8 @@ import { mensajeDeErrorDesbaneo } from "../utils/baneos";
 
 // US 53 - Levantar la suspensión de un jugador (admin).
 //
-// `baneo` es la fila del listado de baneos que se está por levantar
-// ({ banned_user_id, banned_user_username, ... }); mientras no es null, el
+// `baneo` es la fila del listado de baneados que se está por levantar
+// ({ user_id, username, ... }); mientras no es null, el
 // modal de confirmación está abierto.
 //
 // Devuelve el mensaje de éxito para que la pantalla lo muestre y refresque el
@@ -30,8 +30,8 @@ export function useDesbanearJugador() {
   async function confirmar() {
     if (!baneo) return null;
 
-    const jugadorId = baneo.banned_user_id;
-    const username = baneo.banned_user_username;
+    const jugadorId = baneo.user_id;
+    const username = baneo.username;
 
     try {
       setCargando(true);

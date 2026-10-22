@@ -32,18 +32,22 @@ export function banearJugador({ jugadorId, motivo, duracionDias }) {
     .then((res) => res.data);
 }
 
-// US 53 - Listado de baneos (requiere admin). Filtros opcionales por
-// username, motivo y rango de fechas; el backend arma las especificaciones.
-// Devuelve { list_banned_players: [...] }.
-// TODO: pasar al endpoint de jugadores baneados actualmente cuando el backend
-// lo publique; el actual tambien devuelve los baneos vencidos o levantados.
-export function obtenerJugadoresBaneados(filtros = {}) {
-  const { skip = 0, limit = 10, ...resto } = filtros;
+// US 53 - Jugadores con un baneo vigente (requiere admin).
+//   GET /api/v1/moderation/banned-players/active?username=&skip=&limit=
+//
+// El backend ya filtra los vencidos y los levantados. `limit` va de 1 a 100.
+// Devuelve [{ user_id, username, reason, expires_at }], con expires_at null
+// si el baneo no vence.
+export function obtenerJugadoresBaneados({
+  username,
+  skip = 0,
+  limit = 100,
+} = {}) {
   return axiosClient
-    .get("/api/v1/moderation/banned-players", {
-      params: { ...resto, skip, limit },
+    .get("/api/v1/moderation/banned-players/active", {
+      params: { username: username || undefined, skip, limit },
     })
-    .then((res) => res.data.list_banned_players ?? []);
+    .then((res) => res.data.players ?? []);
 }
 
 // US 53 - Levantar la suspensión de un jugador (admin).

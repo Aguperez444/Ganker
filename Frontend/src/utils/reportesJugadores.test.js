@@ -1,13 +1,9 @@
-import { beforeEach, describe, expect, it } from "vitest";
+import { describe, expect, it } from "vitest";
 
 import {
-  ESPERA_ENTRE_REPORTES_MS,
   LARGO_MAXIMO_DESCRIPCION_REPORTE,
-  formatearEsperaReporte,
   mensajeDeErrorReporte,
   nombreDeMotivoReporte,
-  obtenerMsEsperaReporte,
-  registrarReporteEnviado,
   validarFormularioReporte,
 } from "./reportesJugadores";
 
@@ -54,51 +50,6 @@ describe("nombreDeMotivoReporte", () => {
   });
 });
 
-describe("cooldown de reportes", () => {
-  beforeEach(() => {
-    localStorage.clear();
-  });
-
-  it("no bloquea si nunca se reportó al jugador", () => {
-    expect(obtenerMsEsperaReporte(1, 7)).toBe(0);
-  });
-
-  it("bloquea durante diez minutos después de enviar el reporte", () => {
-    const ahora = 1_000_000;
-    registrarReporteEnviado(1, 7, ahora);
-
-    expect(obtenerMsEsperaReporte(1, 7, ahora)).toBe(ESPERA_ENTRE_REPORTES_MS);
-    expect(obtenerMsEsperaReporte(1, 7, ahora + 60_000)).toBe(
-      ESPERA_ENTRE_REPORTES_MS - 60_000
-    );
-    expect(obtenerMsEsperaReporte(1, 7, ahora + ESPERA_ENTRE_REPORTES_MS)).toBe(
-      0
-    );
-  });
-
-  it("solo afecta al par reportero/reportado", () => {
-    registrarReporteEnviado(1, 7);
-
-    expect(obtenerMsEsperaReporte(1, 7)).toBeGreaterThan(0);
-    expect(obtenerMsEsperaReporte(1, 8)).toBe(0);
-    expect(obtenerMsEsperaReporte(2, 7)).toBe(0);
-  });
-
-  it("ignora un localStorage con datos inválidos", () => {
-    localStorage.setItem("ganker_reportes_enviados", "no-es-json");
-
-    expect(obtenerMsEsperaReporte(1, 7)).toBe(0);
-  });
-});
-
-describe("formatearEsperaReporte", () => {
-  it("redondea hacia arriba y usa singular para un minuto", () => {
-    expect(formatearEsperaReporte(1_000)).toBe("1 minuto");
-    expect(formatearEsperaReporte(60_000 + 1)).toBe("2 minutos");
-    expect(formatearEsperaReporte(10 * 60_000)).toBe("10 minutos");
-  });
-});
-
 describe("mensajeDeErrorReporte", () => {
   it("avisa cuando no hay conexión con el servidor", () => {
     expect(mensajeDeErrorReporte({ message: "Network Error" })).toMatch(
@@ -113,6 +64,21 @@ describe("mensajeDeErrorReporte", () => {
     expect(mensajeDeErrorReporte({ response: { status: 422 } })).toMatch(
       /motivo es obligatorio/i
     );
+  });
+
+  it("muestra la fecha del 429 en hora local, no en ISO", () => {
+    const mensaje = mensajeDeErrorReporte({
+      response: {
+        status: 429,
+        data: {
+          error:
+            "Ya reportaste a este jugador recientemente. Podrás volver a reportarlo a partir de 2026-10-23T18:00:00+00:00.",
+        },
+      },
+    });
+
+    expect(mensaje).toMatch(/^Ya reportaste a este jugador recientemente/);
+    expect(mensaje).not.toMatch(/2026-10-23T/);
   });
 
   it("prioriza el mensaje de dominio del backend", () => {

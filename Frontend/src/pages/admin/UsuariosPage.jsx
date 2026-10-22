@@ -1,33 +1,46 @@
 import { useState } from "react";
 import AvatarUsuarioComponent from "../../components/common/AvatarUsuarioComponent";
 import ModalDarDeBajaUsuarioComponent from "../../components/jugadores/ModalDarDeBajaUsuarioComponent";
+import RegistrarUsuarioFormComponent from "../../components/jugadores/RegistrarUsuarioFormComponent";
 import BotonBanearJugadorComponent from "../../components/moderacion/BotonBanearJugadorComponent";
 import { CLASES_BOTON_ELIMINAR } from "../../components/common/botonesAccion";
-import { useAuth } from "../../context/AuthContext";
 import { useBuscarUsuario } from "../../hooks/useBuscarUsuario";
 import { useDarDeBajaUsuario } from "../../hooks/useDarDeBajaUsuario";
-import { obtenerIdUsuarioDesdeToken } from "../../utils/jwt";
+import { useRegistrarUsuario } from "../../hooks/useRegistrarUsuario";
+import { NOMBRES_ROLES } from "../../utils/rutas";
 
-// US 50 - Eliminar cuenta de usuario (admin): se busca al usuario por ID
-// (ver useBuscarUsuario), se ve quien es y recien ahi se lo puede dar de baja.
+// US 50 - Eliminar cuenta de usuario (admin): se busca al usuario por su
+// nombre de usuario (ver useBuscarUsuario), se ve quien es y recien ahi se lo
+// puede dar de baja.
 // US 36 - Banear jugador (admin): desde la misma tarjeta del usuario buscado,
 // al lado de "Dar de baja", se aplica la sancion con su motivo y duracion.
+// US 39 - Registrar usuario (admin): alta de cuentas con el rol elegido.
 const UsuariosPage = () => {
-  const { tokens } = useAuth();
-  const miId = obtenerIdUsuarioDesdeToken(tokens?.access_token);
-
   const [successMessage, setSuccessMessage] = useState("");
 
   const {
-    idBuscado,
+    usernameBuscado,
     encontrado,
     buscando,
     error: errorBusqueda,
-    setIdBuscado,
+    setUsernameBuscado,
     buscar,
     limpiar,
   } = useBuscarUsuario();
   const baja = useDarDeBajaUsuario();
+  const registro = useRegistrarUsuario();
+
+  const handleRegistrar = async (e) => {
+    e.preventDefault();
+    setSuccessMessage("");
+    const registrado = await registro.registrar();
+    if (!registrado) return;
+
+    const rol = NOMBRES_ROLES[registrado.role] ?? registrado.role;
+    setSuccessMessage(
+      `La cuenta de @${registrado.username} (${rol}) fue creada correctamente.`
+    );
+  };
 
   const handleBuscar = (e) => {
     e.preventDefault();
@@ -63,8 +76,8 @@ const UsuariosPage = () => {
             Usuarios
           </h1>
           <p className="mt-2 max-w-2xl text-sm text-ganker-muted">
-            Dá de baja cuentas de jugadores u otros administradores que
-            incumplan las normas.
+            Registrá nuevas cuentas o dá de baja las de jugadores u otros
+            administradores que incumplan las normas.
           </p>
         </header>
 
@@ -75,30 +88,52 @@ const UsuariosPage = () => {
         )}
 
         <section className="mt-8 rounded-2xl border border-white/10 bg-ganker-surface p-6 shadow-xl">
+          <h2 className="mb-1 font-heading text-xl font-semibold text-ganker-text">
+            Registrar usuario
+          </h2>
+          <p className="mb-5 text-sm text-ganker-muted">
+            Podés crear cuentas de tu mismo rol o inferior.
+          </p>
+          <RegistrarUsuarioFormComponent
+            valores={registro.valores}
+            errores={registro.errores}
+            cargando={registro.cargando}
+            errorServidor={registro.errorServidor}
+            rolesPermitidos={registro.rolesPermitidos}
+            onChange={registro.handleChange}
+            onBlur={registro.handleBlur}
+            onSubmit={handleRegistrar}
+          />
+        </section>
+
+        <section className="mt-8 rounded-2xl border border-white/10 bg-ganker-surface p-6 shadow-xl">
+          <h2 className="mb-5 font-heading text-xl font-semibold text-ganker-text">
+            Dar de baja o banear usuario
+          </h2>
           <form
             onSubmit={handleBuscar}
             className="flex flex-col gap-3 sm:flex-row sm:items-end"
           >
             <div className="flex-1">
               <label
-                htmlFor="usuarios-id"
+                htmlFor="usuarios-username"
                 className="mb-1 block text-xs font-semibold text-ganker-text"
               >
-                ID del usuario
+                Nombre de usuario
               </label>
               <input
-                id="usuarios-id"
-                type="number"
-                min="1"
-                inputMode="numeric"
-                value={idBuscado}
-                onChange={(e) => setIdBuscado(e.target.value)}
-                placeholder="Ej. 12"
+                id="usuarios-username"
+                type="text"
+                autoComplete="off"
+                spellCheck={false}
+                value={usernameBuscado}
+                onChange={(e) => setUsernameBuscado(e.target.value)}
+                placeholder="Ej. pedro"
                 className="w-full rounded-lg border border-white/10 bg-ganker-surface-light px-3 py-2.5 text-sm text-ganker-text focus:border-ganker-purple focus:ring-2 focus:ring-ganker-purple focus:outline-none"
               />
               <p className="mt-1 text-xs text-ganker-muted">
-                Es el número que aparece en la URL de su perfil
-                (/app/jugadores/&lt;id&gt;).
+                Es el @usuario que aparece en su perfil; no hace falta escribir
+                la @.
               </p>
             </div>
             <button
@@ -139,7 +174,6 @@ const UsuariosPage = () => {
                 <div className="flex shrink-0 flex-wrap gap-2">
                   <BotonBanearJugadorComponent
                     jugador={encontrado}
-                    miId={miId}
                     onBaneado={handleBaneado}
                   />
                   <button

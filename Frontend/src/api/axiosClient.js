@@ -84,6 +84,20 @@ axiosClient.interceptors.request.use((config) => {
   return config;
 });
 
+// Endpoints que responden 401 tambien por motivos que no son el token. El
+// token vencido o invalido llega siempre como InvalidTokenException
+// ("Token inválido...") o, si falta el header, como { detail } de FastAPI:
+// cualquier otro 401 de estas rutas es un rechazo de negocio.
+const RUTAS_CON_401_DE_NEGOCIO = ["/api/v1/users/register_user"];
+
+function esRechazoDeNegocio(config, response) {
+  if (!RUTAS_CON_401_DE_NEGOCIO.some((ruta) => config.url?.includes(ruta))) {
+    return false;
+  }
+  const mensaje = response?.data?.error;
+  return typeof mensaje === "string" && !mensaje.startsWith("Token inválido");
+}
+
 // Si varios pedidos fallan con 401 al mismo tiempo, no queremos disparar varios
 // refresh en paralelo: el primero crea la promesa y el resto espera la misma.
 let promesaDeRefresh = null;
@@ -138,6 +152,13 @@ axiosClient.interceptors.response.use(
     // incorrecta. Si lo tratamos como sesion vencida, romperiamos el mensaje
     // de error que muestra useIniciarSesion.
     if (original.url?.includes("/auth/v1/login")) {
+      return Promise.reject(error);
+    }
+
+    // Tampoco es sesion vencida el 401 de negocio de algunos endpoints (ej.
+    // un admin que intenta registrar a un owner, US 39). Refrescar y reintentar
+    // repetiria el pedido y, al volver a fallar, cerraria la sesion.
+    if (esRechazoDeNegocio(original, error.response)) {
       return Promise.reject(error);
     }
 

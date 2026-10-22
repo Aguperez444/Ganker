@@ -106,6 +106,30 @@ export function formatearVencimiento(fechaIso) {
   });
 }
 
+// US 36 - Mensaje del login para una cuenta suspendida. El backend manda
+// "El baneo del jugador aún no ha finalizado. Motivo: <motivo>. Vencimiento:
+// <fecha ISO>" (o ". Sin fecha de vencimiento"): se arma un texto legible con
+// la fecha en hora local. Si el formato no coincide, se muestra tal cual.
+export function mensajeDeCuentaBaneada(mensajeBackend) {
+  const coincidencia =
+    /Motivo: (.+?)(?:\. Vencimiento: (\S+)|\. Sin fecha de vencimiento)?$/.exec(
+      mensajeBackend ?? ""
+    );
+  if (!coincidencia) {
+    return (
+      mensajeBackend || "Tu cuenta está suspendida y no puede iniciar sesión."
+    );
+  }
+
+  const [, motivo, vencimiento] = coincidencia;
+  const duracion =
+    !vencimiento || esVencimientoPermanente(vencimiento)
+      ? "La suspensión es permanente."
+      : `La suspensión vence el ${formatearVencimiento(vencimiento)}.`;
+
+  return `Tu cuenta está suspendida. Motivo: ${motivo}. ${duracion}`;
+}
+
 // Los errores de dominio del backend llegan en `error`; los de validacion de
 // FastAPI (422), en `detail`.
 export function mensajeDeErrorBaneo(error) {

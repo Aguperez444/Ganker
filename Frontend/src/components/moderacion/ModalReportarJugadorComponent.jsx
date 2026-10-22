@@ -7,7 +7,6 @@ import useReportarJugador, {
 import {
   LARGO_MAXIMO_DESCRIPCION_REPORTE,
   MOTIVOS_REPORTE,
-  formatearEsperaReporte,
   nombreDeMotivoReporte,
 } from "../../utils/reportesJugadores";
 
@@ -52,9 +51,7 @@ const ModalReportarJugadorComponent = ({ jugador, currentUserId, onClose }) => {
     enviando,
     paso,
     reporte,
-    esperaMs,
     esPropio,
-    bloqueadoPorEspera,
     seleccionarMotivo,
     cambiarDescripcion,
     continuar,
@@ -129,33 +126,6 @@ const ModalReportarJugadorComponent = ({ jugador, currentUserId, onClose }) => {
         </h3>
         <p className="text-sm text-ganker-muted">
           Elegí el perfil de otro jugador para enviar un reporte.
-        </p>
-        <div className="flex justify-end">
-          <button
-            type="button"
-            onClick={onClose}
-            className={CLASES_BOTON_SECUNDARIO}
-          >
-            Cerrar
-          </button>
-        </div>
-      </>
-    );
-  } else if (bloqueadoPorEspera) {
-    contenido = (
-      <>
-        <h3
-          id="titulo-modal-reportar"
-          className="font-heading text-lg font-bold text-ganker-text"
-        >
-          Ya reportaste a este jugador
-        </h3>
-        <p className="text-sm text-ganker-muted">
-          Para evitar reportes reiterados, podés volver a reportar a{" "}
-          <span className="font-semibold text-ganker-text">
-            {nombreJugador}
-          </span>{" "}
-          en {formatearEsperaReporte(esperaMs)}.
         </p>
         <div className="flex justify-end">
           <button

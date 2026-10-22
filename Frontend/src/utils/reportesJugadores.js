@@ -27,31 +27,6 @@ export const MOTIVOS_REPORTE = [
 
 export const LARGO_MAXIMO_DESCRIPCION_REPORTE = 500;
 
-// Lapso minimo entre dos reportes del mismo jugador hacia el mismo reportado.
-// Se controla en el frontend (localStorage) porque el backend actual no
-// expone un limite de frecuencia para este endpoint.
-export const ESPERA_ENTRE_REPORTES_MS = 10 * 60 * 1000;
-
-const CLAVE_REPORTES_ENVIADOS = "ganker_reportes_enviados";
-
-function claveDeReporte(reporterId, reportedId) {
-  return `${reporterId ?? "anon"}:${reportedId}`;
-}
-
-function leerReportesEnviados() {
-  try {
-    const guardado = localStorage.getItem(CLAVE_REPORTES_ENVIADOS);
-    if (!guardado) return {};
-
-    const datos = JSON.parse(guardado);
-    return datos && typeof datos === "object" ? datos : {};
-  } catch {
-    // Si localStorage no esta disponible o el JSON esta roto, no se limita
-    // el envio: es una proteccion extra, no un requisito para reportar.
-    return {};
-  }
-}
-
 export function nombreDeMotivoReporte(motivo) {
   return (
     MOTIVOS_REPORTE.find((opcion) => opcion.value === motivo)?.label ?? motivo
@@ -74,57 +49,21 @@ export function validarFormularioReporte({ motivo, descripcion }) {
   return errores;
 }
 
-// Devuelve cuantos milisegundos faltan para poder volver a reportar al mismo
-// jugador. 0 significa que se puede enviar.
-export function obtenerMsEsperaReporte(
-  reporterId,
-  reportedId,
-  ahora = Date.now()
-) {
-  if (reportedId == null) return 0;
+// El backend manda la fecha en ISO dentro del mensaje (ej. el 429 del limite
+// de reportes): se reemplaza por la fecha en hora local.
+const FECHA_ISO =
+  /\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(?::\d{2}(?:\.\d+)?)?(?:Z|[+-]\d{2}:\d{2})?/;
 
-  const enviadoEn = Number(
-    leerReportesEnviados()[claveDeReporte(reporterId, reportedId)]
-  );
+function conFechaLocal(mensaje) {
+  return mensaje.replace(FECHA_ISO, (iso) => {
+    const fecha = new Date(/Z|[+-]\d{2}:\d{2}$/.test(iso) ? iso : `${iso}Z`);
+    if (Number.isNaN(fecha.getTime())) return iso;
 
-  if (!Number.isFinite(enviadoEn) || enviadoEn <= 0) return 0;
-
-  const restante = ESPERA_ENTRE_REPORTES_MS - (ahora - enviadoEn);
-  return restante > 0 ? restante : 0;
-}
-
-export function registrarReporteEnviado(
-  reporterId,
-  reportedId,
-  ahora = Date.now()
-) {
-  if (reportedId == null) return;
-
-  try {
-    const reportes = leerReportesEnviados();
-    const clave = claveDeReporte(reporterId, reportedId);
-    reportes[clave] = ahora;
-
-    // Limpieza de entradas vencidas para que el objeto no crezca sin limite.
-    Object.keys(reportes).forEach((otraClave) => {
-      const enviadoEn = Number(reportes[otraClave]);
-      if (
-        !Number.isFinite(enviadoEn) ||
-        ahora - enviadoEn >= ESPERA_ENTRE_REPORTES_MS
-      ) {
-        delete reportes[otraClave];
-      }
+    return fecha.toLocaleString("es-AR", {
+      dateStyle: "short",
+      timeStyle: "short",
     });
-
-    localStorage.setItem(CLAVE_REPORTES_ENVIADOS, JSON.stringify(reportes));
-  } catch {
-    // Mismo criterio que al leer: no bloquear el flujo por localStorage.
-  }
-}
-
-export function formatearEsperaReporte(ms) {
-  const minutos = Math.max(1, Math.ceil(ms / 60000));
-  return minutos === 1 ? "1 minuto" : `${minutos} minutos`;
+  });
 }
 
 // Los errores de dominio del backend llegan en `error`; los de validacion de
@@ -139,11 +78,11 @@ export function mensajeDeErrorReporte(error) {
   if (status === 403) {
     return "No tenés permisos para reportar jugadores.";
   }
+  // US 35 - Limite de reportes al mismo jugador: lo controla el backend.
   if (status === 429) {
-    return (
-      data?.error ??
-      "Hiciste varios reportes seguidos. Esperá un momento antes de volver a intentarlo."
-    );
+    return typeof data?.error === "string"
+      ? conFechaLocal(data.error)
+      : "Ya reportaste a este jugador recientemente. Esperá antes de volver a intentarlo.";
   }
   if (status === 404) {
     return (

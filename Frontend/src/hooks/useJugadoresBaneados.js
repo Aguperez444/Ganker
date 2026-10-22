@@ -4,11 +4,11 @@ import { logError } from "../utils/logs";
 
 // Funcion de modulo por el mismo motivo que cargarEquipo en useEquipo.js
 // (regla set-state-in-effect).
-async function cargarBaneados({ setEstado }) {
+async function cargarBaneados({ setEstado, filtros }) {
   setEstado((actual) => ({ ...actual, cargando: true, error: "" }));
 
   try {
-    const baneados = await obtenerJugadoresBaneados();
+    const baneados = await obtenerJugadoresBaneados(filtros);
     setEstado({ baneados, cargando: false, error: "" });
   } catch (error) {
     logError("Error al cargar los baneos:", error);
@@ -28,6 +28,7 @@ async function cargarBaneados({ setEstado }) {
 //
 // El estado de baneo lo resuelve el backend: aca solo se muestra lo que
 // devuelve el endpoint, sin filtrar ni cruzar registros en el front.
+// `recargar({ username })` filtra por nombre de usuario en el backend.
 export function useJugadoresBaneados() {
   const [estado, setEstado] = useState({
     baneados: [],
@@ -39,8 +40,11 @@ export function useJugadoresBaneados() {
     cargarBaneados({ setEstado });
   }, []);
 
-  // Despues de banear o desbanear, para reflejar el cambio.
-  const recargar = useCallback(() => cargarBaneados({ setEstado }), []);
+  // Despues de banear o desbanear, o al filtrar por username.
+  const recargar = useCallback(
+    (filtros) => cargarBaneados({ setEstado, filtros }),
+    []
+  );
 
   return { ...estado, recargar };
 }

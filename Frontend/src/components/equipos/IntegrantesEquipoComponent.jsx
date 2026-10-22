@@ -85,6 +85,11 @@ const IntegrantesEquipoComponent = ({
         const puedeVerPerfil = Boolean(
           onVerPerfil && !integrante.is_vacant && integrante.user_id
         );
+        const tieneAccionesLider = Boolean(
+          (onTransferirLiderazgo || onExpulsar) &&
+          !integrante.is_vacant &&
+          !integrante.is_leader
+        );
         const textoNombre = puedeVerPerfil ? (
           <button
             type="button"
@@ -101,12 +106,12 @@ const IntegrantesEquipoComponent = ({
         return (
           <li
             key={integrante.team_member_role_id ?? `lugar-${indice}`}
-            className={`flex items-center justify-between bg-ganker-surface-light ${
-              compacto ? "gap-2 px-3 py-1.5" : "gap-4 px-4 py-3"
+            className={`flex flex-wrap items-center justify-between bg-ganker-surface-light ${
+              compacto ? "gap-2 px-3 py-1.5" : "gap-x-4 gap-y-2 px-4 py-3"
             }`}
           >
             <div
-              className={`flex min-w-0 items-center ${compacto ? "gap-2" : "gap-3"}`}
+              className={`flex min-w-0 flex-1 items-center ${compacto ? "gap-2" : "gap-3"}`}
             >
               {iconUrl ? (
                 <img
@@ -156,7 +161,13 @@ const IntegrantesEquipoComponent = ({
               )}
             </div>
 
-            <div className="flex shrink-0 flex-wrap items-center justify-end gap-2">
+            {/* En mobile, si hay acciones de lider, el bloque baja a su propio
+                renglon para no tapar el nombre ni el rol/rango del integrante. */}
+            <div
+              className={`flex shrink-0 flex-wrap items-center justify-end gap-2 ${
+                tieneAccionesLider ? "w-full sm:w-auto" : ""
+              }`}
+            >
               {integrante.is_leader && (
                 <span
                   className={`${CLASES_ETIQUETA} ${tamanioEtiqueta} border-ganker-orange/30 bg-ganker-orange/10 text-ganker-orange-light`}
@@ -185,30 +196,28 @@ const IntegrantesEquipoComponent = ({
                   />
                 )}
 
-              {(onTransferirLiderazgo || onExpulsar) &&
-                !integrante.is_vacant &&
-                !integrante.is_leader && (
-                  <div className="flex shrink-0 items-center gap-2">
-                    {onTransferirLiderazgo && (
-                      <button
-                        type="button"
-                        onClick={() => onTransferirLiderazgo(integrante)}
-                        className="cursor-pointer rounded-lg border border-ganker-purple-light/40 px-3 py-1.5 text-sm font-semibold text-ganker-purple-light transition hover:bg-ganker-purple/20 hover:text-ganker-text"
-                      >
-                        Hacer líder
-                      </button>
-                    )}
-                    {onExpulsar && (
-                      <button
-                        type="button"
-                        onClick={() => onExpulsar(integrante)}
-                        className="cursor-pointer rounded-lg border border-ganker-error/40 px-3 py-1.5 text-sm font-semibold text-ganker-error transition hover:bg-ganker-error/10"
-                      >
-                        Expulsar
-                      </button>
-                    )}
-                  </div>
-                )}
+              {tieneAccionesLider && (
+                <div className="flex shrink-0 items-center gap-2">
+                  {onTransferirLiderazgo && (
+                    <button
+                      type="button"
+                      onClick={() => onTransferirLiderazgo(integrante)}
+                      className="cursor-pointer rounded-lg border border-ganker-purple-light/40 px-3 py-1.5 text-sm font-semibold text-ganker-purple-light transition hover:bg-ganker-purple/20 hover:text-ganker-text"
+                    >
+                      Hacer líder
+                    </button>
+                  )}
+                  {onExpulsar && (
+                    <button
+                      type="button"
+                      onClick={() => onExpulsar(integrante)}
+                      className="cursor-pointer rounded-lg border border-ganker-error/40 px-3 py-1.5 text-sm font-semibold text-ganker-error transition hover:bg-ganker-error/10"
+                    >
+                      Expulsar
+                    </button>
+                  )}
+                </div>
+              )}
             </div>
           </li>
         );

@@ -4,11 +4,6 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import BotonReportarJugadorComponent from "./BotonReportarJugadorComponent";
 import { reportarJugador } from "../../api/moderacionApi";
-import {
-  ESPERA_ENTRE_REPORTES_MS,
-  obtenerMsEsperaReporte,
-  registrarReporteEnviado,
-} from "../../utils/reportesJugadores";
 
 vi.mock("../../api/moderacionApi", () => ({
   reportarJugador: vi.fn(),
@@ -34,7 +29,6 @@ async function abrirModal(usuario) {
 describe("BotonReportarJugadorComponent - US 35", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    localStorage.clear();
     reportarJugador.mockResolvedValue({ id: 55 });
   });
 
@@ -136,28 +130,17 @@ describe("BotonReportarJugadorComponent - US 35", () => {
       motivo: "cheating",
       descripcion: "",
     });
-    // El cooldown queda registrado para el par reportero/reportado.
-    expect(obtenerMsEsperaReporte(1, 7)).toBeGreaterThan(0);
   });
 
-  it("bloquea un segundo reporte al mismo jugador", async () => {
-    registrarReporteEnviado(1, 7);
-    const usuario = userEvent.setup();
-    renderBoton();
-
-    await abrirModal(usuario);
-
-    expect(
-      screen.getByRole("heading", { name: "Ya reportaste a este jugador" })
-    ).toBeInTheDocument();
-    expect(
-      screen.queryByRole("combobox", { name: /motivo del reporte/i })
-    ).toBeNull();
-  });
-
-  it("muestra el error del backend y no cierra el modal", async () => {
+  it("si el backend rechaza un reporte repetido (429), muestra el aviso", async () => {
     reportarJugador.mockRejectedValue({
-      response: { status: 429, data: { error: "Esperá un momento." } },
+      response: {
+        status: 429,
+        data: {
+          error:
+            "Ya reportaste a este jugador recientemente. Podrás volver a reportarlo a partir de 2026-10-23T18:00:00+00:00.",
+        },
+      },
     });
     const usuario = userEvent.setup();
     renderBoton();
@@ -174,24 +157,10 @@ describe("BotonReportarJugadorComponent - US 35", () => {
       screen.getByRole("button", { name: /confirmar y enviar/i })
     );
 
-    expect(await screen.findByText("Esperá un momento.")).toBeInTheDocument();
-    expect(screen.getByRole("dialog")).toBeInTheDocument();
-    expect(obtenerMsEsperaReporte(1, 7)).toBe(0);
-  });
-
-  it("vuelve a habilitar el reporte cuando el cooldown expiró", async () => {
-    const enviadoHaceMucho = Date.now() - ESPERA_ENTRE_REPORTES_MS - 1_000;
-    localStorage.setItem(
-      "ganker_reportes_enviados",
-      JSON.stringify({ "1:7": enviadoHaceMucho })
-    );
-    const usuario = userEvent.setup();
-    renderBoton();
-
-    await abrirModal(usuario);
-
     expect(
-      screen.getByRole("heading", { name: "Reportar a ana" })
+      await screen.findByText(/Ya reportaste a este jugador recientemente/)
     ).toBeInTheDocument();
+    expect(screen.queryByText(/2026-10-23T/)).toBeNull();
+    expect(screen.getByRole("dialog")).toBeInTheDocument();
   });
 });
