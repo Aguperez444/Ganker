@@ -60,6 +60,9 @@ class DeleteUserUseCase:
             if getattr(uow, "discord_account_link_repo", None) is not None:
                 uow.discord_account_link_repo.delete_by_user_id(target_user_id)
 
+            if getattr(uow, "federated_identity_repo", None) is not None:
+                uow.federated_identity_repo.delete_by_user_id(target_user_id)
+
             # Marcar deleted = True en el usuario
             uow.user_repo.soft_delete_user(target_user_id)
 
