@@ -174,6 +174,20 @@ También existen los lanzadores `bash start_app.sh`, `.\start_app.ps1` y `start_
 
 En local, FastAPI sirve `/media` desde `backend/media/`. En Docker, Nginx sirve los medios desde el volumen compartido.
 
+La autenticación conserva `/auth/v1` por diseño. Moderación usa `/api/v1/moderation`, bajo el mismo prefijo que el resto de la API:
+
+| Operación | Método y ruta |
+| --------- | ------------- |
+| Login, refresh y logout | `POST /auth/v1/login`, `/auth/v1/refresh`, `/auth/v1/logout` |
+| Recuperar y restablecer contraseña | `POST /auth/v1/forgot-password`, `/auth/v1/reset-password` |
+| Autenticación federada | `/auth/v1/oauth/...` |
+| Reportar un jugador | `POST /api/v1/moderation/` |
+| Listar reportes | `GET /api/v1/moderation/reported_players` |
+| Listar baneos | `GET /api/v1/moderation/banned-players` |
+| Banear y desbanear | `POST /api/v1/moderation/ban`, `/api/v1/moderation/{player_id}/unban` |
+
+Los listados reciben los filtros, fechas ISO 8601 y paginación (`skip`, `limit`) como parámetros de query, sin cuerpo JSON. Por ejemplo: `/api/v1/moderation/banned-players?banned_user=usuario&skip=0&limit=10`. Conservan el permiso de admin u owner. Las rutas antiguas de moderación (`/moderation/...`) ya no se registran; las URL de retorno del frontend `/auth/callback/{provider}` se mantienen.
+
 ## Estructura y organización
 
 ```text

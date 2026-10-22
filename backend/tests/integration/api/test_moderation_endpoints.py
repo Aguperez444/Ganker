@@ -32,7 +32,7 @@ def test_ban_respects_role_hierarchy(
     seed_player.role = target_role
     test_db_session.commit()
     access_token, *_ = jwt_service.generate_tokens(seed_admin.user_id, UserRole(actor_role))
-    response = client.post("/moderation/ban", json={
+    response = client.post("/api/v1/moderation/ban", json={
         "player_id": seed_player.user_id, "reason": "Abuso", "duration_days": 1,
     }, headers={"Authorization": f"Bearer {access_token}"})
     assert response.status_code == expected
@@ -46,7 +46,7 @@ def test_ban_checks_current_database_role_despite_stale_admin_token(
 ):
     seed_admin.role = "player"
     test_db_session.commit()
-    response = client.post("/moderation/ban", json={
+    response = client.post("/api/v1/moderation/ban", json={
         "player_id": seed_player.user_id, "reason": "Abuso", "duration_days": 1,
     }, headers=admin_auth_headers)
     assert response.status_code == 403
@@ -61,14 +61,14 @@ def test_ban_checks_current_database_role_despite_stale_admin_token(
 def test_ban_rejects_invalid_input(client, admin_auth_headers, seed_player, test_db_session, changes):
     payload = {"player_id": seed_player.user_id, "reason": "Abuso", "duration_days": 7}
     payload.update(changes)
-    response = client.post("/moderation/ban", json=payload, headers=admin_auth_headers)
+    response = client.post("/api/v1/moderation/ban", json=payload, headers=admin_auth_headers)
     assert response.status_code == 422
     assert test_db_session.query(UserBanRecordORM).count() == 0
 
 
 @pytest.mark.parametrize("duration", [1, 3651, 365000])
 def test_ban_accepts_positive_durations_including_a_thousand_years(client, admin_auth_headers, seed_player, test_db_session, duration):
-    response = client.post("/moderation/ban", json={
+    response = client.post("/api/v1/moderation/ban", json={
         "player_id": seed_player.user_id, "reason": "x" * 500, "duration_days": duration,
     }, headers=admin_auth_headers)
     assert response.status_code == 200
@@ -80,7 +80,7 @@ def test_ban_accepts_positive_durations_including_a_thousand_years(client, admin
 def test_ban_caps_unrepresentable_expiration_without_overflow(
     client, admin_auth_headers, seed_player, test_db_session, duration,
 ):
-    response = client.post("/moderation/ban", json={
+    response = client.post("/api/v1/moderation/ban", json={
         "player_id": seed_player.user_id, "reason": "Baneo permanente", "duration_days": duration,
     }, headers=admin_auth_headers)
     assert response.status_code == 200
@@ -89,7 +89,7 @@ def test_ban_caps_unrepresentable_expiration_without_overflow(
     test_db_session.expire_all()
     assert seed_player.banned is True
     # El registro se puede consultar y el usuario continúa bloqueado.
-    assert client.post("/moderation/banned-players", json={}, headers=admin_auth_headers).status_code == 200
+    assert client.get("/api/v1/moderation/banned-players", params={}, headers=admin_auth_headers).status_code == 200
     login = client.post("/auth/v1/login", data={"username": seed_player.mail, "password": "Password123"})
     assert login.status_code == 400
 
@@ -132,7 +132,7 @@ class TestPlayerReportingIntegration:
             "reason": "cheating",
             "description": "Uso de scripts evidentes durante la partida",
         }
-        response = client.post("/moderation/", json=payload, headers=player_auth_headers)
+        response = client.post("/api/v1/moderation/", json=payload, headers=player_auth_headers)
 
         assert response.status_code == 201
         data = response.json()
@@ -158,7 +158,7 @@ class TestPlayerReportingIntegration:
             "reason": "spamming",
             "description": "Intentando reportarme a mí mismo",
         }
-        response = client.post("/moderation/", json=payload, headers=player_auth_headers)
+        response = client.post("/api/v1/moderation/", json=payload, headers=player_auth_headers)
 
         assert response.status_code == 400
         assert "No se puede reportar a uno mismo" in response.json().get("error", "")
@@ -187,7 +187,7 @@ class TestPlayerReportingIntegration:
             "reason": reason_value,
             "description": f"Reporte por {reason_value}",
         }
-        response = client.post("/moderation/", json=payload, headers=player_auth_headers)
+        response = client.post("/api/v1/moderation/", json=payload, headers=player_auth_headers)
         assert response.status_code == 201
         assert response.json()["reason"] == reason_value
 
@@ -202,7 +202,7 @@ class TestPlayerReportingIntegration:
             "reason": "motivo_inexistente_no_valido",
             "description": "Razón fuera del Enum",
         }
-        response = client.post("/moderation/", json=payload, headers=player_auth_headers)
+        response = client.post("/api/v1/moderation/", json=payload, headers=player_auth_headers)
         assert response.status_code in (400, 422)
 
 
@@ -218,7 +218,7 @@ class TestBanSystemAndSpecificationsIntegration:
 
         # Primero creamos un reporte pendiente contra el jugador
         report_res = client.post(
-            "/moderation/",
+            "/api/v1/moderation/",
             json={
                 "reported_id": offender.user_id,
                 "reason": "abusive_behavior",
@@ -231,7 +231,7 @@ class TestBanSystemAndSpecificationsIntegration:
 
         # El administrador banea al jugador
         ban_res = client.post(
-            "/moderation/ban",
+            "/api/v1/moderation/ban",
             json={
                 "player_id": offender.user_id,
                 "reason": "Comportamiento tóxico comprobado",
@@ -266,12 +266,12 @@ class TestBanSystemAndSpecificationsIntegration:
             test_db_session, password_hasher, username="to_unban", mail="tounban@example.com"
         )
         client.post(
-            "/moderation/ban",
+            "/api/v1/moderation/ban",
             json={"player_id": offender.user_id, "reason": "Spam", "duration_days": 5},
             headers=admin_auth_headers,
         )
 
-        unban_res = client.post(f"/moderation/{offender.user_id}/unban", headers=admin_auth_headers)
+        unban_res = client.post(f"/api/v1/moderation/{offender.user_id}/unban", headers=admin_auth_headers)
         assert unban_res.status_code == 200
 
         test_db_session.expire_all()
@@ -279,7 +279,7 @@ class TestBanSystemAndSpecificationsIntegration:
         assert refreshed.banned is False
 
         # Intentar desbanear nuevamente a un usuario que ya no está baneado lanza 400
-        second_unban = client.post(f"/moderation/{offender.user_id}/unban", headers=admin_auth_headers)
+        second_unban = client.post(f"/api/v1/moderation/{offender.user_id}/unban", headers=admin_auth_headers)
         assert second_unban.status_code == 400
 
     def test_search_banned_players_with_cross_filters(
@@ -324,9 +324,9 @@ class TestBanSystemAndSpecificationsIntegration:
         test_db_session.commit()
 
         # 1. Filtro por nombre de admin (banned_by)
-        res_by_admin = client.post(
-            "/moderation/banned-players",
-            json={"banned_by": "mod_carlos"},
+        res_by_admin = client.get(
+            "/api/v1/moderation/banned-players",
+            params={"banned_by": "mod_carlos"},
             headers=admin_auth_headers,
         )
         assert res_by_admin.status_code == 200
@@ -335,9 +335,9 @@ class TestBanSystemAndSpecificationsIntegration:
         assert {item["banned_user_username"] for item in items_admin} == {"flamer_pedro", "hacker_maria"}
 
         # 2. Filtro por nombre de usuario baneado (banned_user)
-        res_by_user = client.post(
-            "/moderation/banned-players",
-            json={"banned_user": "hacker_"},
+        res_by_user = client.get(
+            "/api/v1/moderation/banned-players",
+            params={"banned_user": "hacker_"},
             headers=admin_auth_headers,
         )
         assert res_by_user.status_code == 200
@@ -346,9 +346,9 @@ class TestBanSystemAndSpecificationsIntegration:
         assert {item["banned_user_username"] for item in items_user} == {"hacker_luis", "hacker_maria"}
 
         # 3. Filtro por razón (reason)
-        res_by_reason = client.post(
-            "/moderation/banned-players",
-            json={"reason": "Uso de cheats"},
+        res_by_reason = client.get(
+            "/api/v1/moderation/banned-players",
+            params={"reason": "Uso de cheats"},
             headers=admin_auth_headers,
         )
         assert res_by_reason.status_code == 200
@@ -357,9 +357,9 @@ class TestBanSystemAndSpecificationsIntegration:
         assert {item["banned_user_username"] for item in items_reason} == {"hacker_luis", "hacker_maria"}
 
         # 4. Filtro por rango de fechas de creación (min_date_create / max_date_create)
-        res_by_create = client.post(
-            "/moderation/banned-players",
-            json={
+        res_by_create = client.get(
+            "/api/v1/moderation/banned-players",
+            params={
                 "min_date_create": (base_time - timedelta(days=5)).isoformat(),
                 "max_date_create": (base_time + timedelta(days=1)).isoformat(),
             },
@@ -371,9 +371,9 @@ class TestBanSystemAndSpecificationsIntegration:
         assert {item["banned_user_username"] for item in items_create} == {"flamer_pedro", "hacker_maria"}
 
         # 5. Filtro cruzado combinando admin + usuario baneado + razón + fechas de creación y expiración
-        res_crossed = client.post(
-            "/moderation/banned-players",
-            json={
+        res_crossed = client.get(
+            "/api/v1/moderation/banned-players",
+            params={
                 "banned_by": "mod_carlos",
                 "banned_user": "hacker",
                 "reason": "Uso de cheats",
@@ -394,6 +394,21 @@ class TestBanSystemAndSpecificationsIntegration:
         assert items_crossed[0]["banned_user_id"] == banned_three.user_id
         assert items_crossed[0]["banned_by_user_id"] == admin_two.user_id
 
+        page = client.get(
+            "/api/v1/moderation/banned-players",
+            params={"reason": "Uso de cheats", "skip": 1, "limit": 1},
+            headers=admin_auth_headers,
+        )
+        assert page.status_code == 200
+        assert len(page.json()["list_banned_players"]) == 1
+        past_last_page = client.get(
+            "/api/v1/moderation/banned-players",
+            params={"reason": "Uso de cheats", "skip": 2, "limit": 1},
+            headers=admin_auth_headers,
+        )
+        assert past_last_page.status_code == 200
+        assert past_last_page.json()["list_banned_players"] == []
+
     def test_search_reported_players_with_filters(
         self, client, test_db_session, seed_player, seed_admin, player_auth_headers, admin_auth_headers, password_hasher
     ):
@@ -405,7 +420,7 @@ class TestBanSystemAndSpecificationsIntegration:
         )
 
         client.post(
-            "/moderation/",
+            "/api/v1/moderation/",
             json={
                 "reported_id": target1.user_id,
                 "reason": "cheating",
@@ -414,7 +429,7 @@ class TestBanSystemAndSpecificationsIntegration:
             headers=player_auth_headers,
         )
         client.post(
-            "/moderation/",
+            "/api/v1/moderation/",
             json={
                 "reported_id": target2.user_id,
                 "reason": "spamming",
@@ -425,14 +440,14 @@ class TestBanSystemAndSpecificationsIntegration:
 
         # Baneamos a target1 para que su reporte pase a RESOLVED
         client.post(
-            "/moderation/ban",
+            "/api/v1/moderation/ban",
             json={"player_id": target1.user_id, "reason": "Confirmado", "duration_days": 5},
             headers=admin_auth_headers,
         )
 
-        res_resolved = client.post(
-            "/moderation/reported_players",
-            json={
+        res_resolved = client.get(
+            "/api/v1/moderation/reported_players",
+            params={
                 "reported_by": seed_player.username,
                 "reported_user": "reported_alpha",
                 "status": "resolved",
@@ -452,22 +467,22 @@ class TestBanSystemAndSpecificationsIntegration:
         self, client, seed_admin, player_auth_headers
     ):
         assert client.post(
-            "/moderation/ban",
+            "/api/v1/moderation/ban",
             json={"player_id": seed_admin.user_id, "reason": "Intento", "duration_days": 1},
             headers=player_auth_headers,
         ).status_code == 403
         assert client.post(
-            f"/moderation/{seed_admin.user_id}/unban",
+            f"/api/v1/moderation/{seed_admin.user_id}/unban",
             headers=player_auth_headers,
         ).status_code == 403
-        assert client.post(
-            "/moderation/banned-players",
-            json={},
+        assert client.get(
+            "/api/v1/moderation/banned-players",
+            params={},
             headers=player_auth_headers,
         ).status_code == 403
-        assert client.post(
-            "/moderation/reported_players",
-            json={},
+        assert client.get(
+            "/api/v1/moderation/reported_players",
+            params={},
             headers=player_auth_headers,
         ).status_code == 403
 
@@ -482,7 +497,7 @@ class TestBannedUserSecurityAndExclusionsIntegration:
             test_db_session, password_hasher, username="bannedlogin", mail="bannedlogin@example.com"
         )
         client.post(
-            "/moderation/ban",
+            "/api/v1/moderation/ban",
             json={"player_id": banned_user.user_id, "reason": "Cheating", "duration_days": 10},
             headers=admin_auth_headers,
         )
@@ -546,7 +561,7 @@ class TestBannedUserSecurityAndExclusionsIntegration:
 
         # El administrador lo banea
         ban_res = client.post(
-            "/moderation/ban",
+            "/api/v1/moderation/ban",
             json={"player_id": user.user_id, "reason": "Toxicidad", "duration_days": 7},
             headers=admin_auth_headers,
         )
@@ -624,7 +639,7 @@ class TestBannedUserSecurityAndExclusionsIntegration:
 
         # Baneamos al usuario
         ban_res = client.post(
-            "/moderation/ban",
+            "/api/v1/moderation/ban",
             json={"player_id": banned_user.user_id, "reason": "Baneo general", "duration_days": 30},
             headers=admin_auth_headers,
         )
