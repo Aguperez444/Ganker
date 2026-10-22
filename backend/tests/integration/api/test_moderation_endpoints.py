@@ -15,6 +15,85 @@ from app.infrastructure.database.models.user_orm import UserORM
 from app.infrastructure.database.models.user_ban_record_orm import UserBanRecordORM
 
 
+@pytest.mark.parametrize("actor_role,target_role,expected", [
+    ("player", "player", 403),
+    ("admin", "player", 200),
+    ("admin", "admin", 403),
+    ("admin", "owner", 403),
+    ("owner", "player", 200),
+    ("owner", "admin", 200),
+    ("owner", "owner", 403),
+])
+def test_ban_respects_role_hierarchy(
+    client, seed_admin, seed_player, test_db_session, jwt_service,
+    actor_role, target_role, expected,
+):
+    seed_admin.role = actor_role
+    seed_player.role = target_role
+    test_db_session.commit()
+    access_token, *_ = jwt_service.generate_tokens(seed_admin.user_id, UserRole(actor_role))
+    response = client.post("/moderation/ban", json={
+        "player_id": seed_player.user_id, "reason": "Abuso", "duration_days": 1,
+    }, headers={"Authorization": f"Bearer {access_token}"})
+    assert response.status_code == expected
+    test_db_session.expire_all()
+    assert seed_player.banned is (expected == 200)
+    assert test_db_session.query(UserBanRecordORM).count() == (1 if expected == 200 else 0)
+
+
+def test_ban_checks_current_database_role_despite_stale_admin_token(
+    client, admin_auth_headers, seed_admin, seed_player, test_db_session,
+):
+    seed_admin.role = "player"
+    test_db_session.commit()
+    response = client.post("/moderation/ban", json={
+        "player_id": seed_player.user_id, "reason": "Abuso", "duration_days": 1,
+    }, headers=admin_auth_headers)
+    assert response.status_code == 403
+    assert test_db_session.query(UserBanRecordORM).count() == 0
+
+
+@pytest.mark.parametrize("changes", [
+    {"duration_days": -1}, {"duration_days": 0}, {"duration_days": 1.5},
+    {"reason": "x" * 501}, {"reason": ""}, {"reason": "   "},
+    {"player_id": 0},
+])
+def test_ban_rejects_invalid_input(client, admin_auth_headers, seed_player, test_db_session, changes):
+    payload = {"player_id": seed_player.user_id, "reason": "Abuso", "duration_days": 7}
+    payload.update(changes)
+    response = client.post("/moderation/ban", json=payload, headers=admin_auth_headers)
+    assert response.status_code == 422
+    assert test_db_session.query(UserBanRecordORM).count() == 0
+
+
+@pytest.mark.parametrize("duration", [1, 3651, 365000])
+def test_ban_accepts_positive_durations_including_a_thousand_years(client, admin_auth_headers, seed_player, test_db_session, duration):
+    response = client.post("/moderation/ban", json={
+        "player_id": seed_player.user_id, "reason": "x" * 500, "duration_days": duration,
+    }, headers=admin_auth_headers)
+    assert response.status_code == 200
+    record = test_db_session.query(UserBanRecordORM).one()
+    assert record.expires_at - record.created_at == timedelta(days=duration)
+
+
+@pytest.mark.parametrize("duration", [365 * 10000, 10**30])
+def test_ban_caps_unrepresentable_expiration_without_overflow(
+    client, admin_auth_headers, seed_player, test_db_session, duration,
+):
+    response = client.post("/moderation/ban", json={
+        "player_id": seed_player.user_id, "reason": "Baneo permanente", "duration_days": duration,
+    }, headers=admin_auth_headers)
+    assert response.status_code == 200
+    record = test_db_session.query(UserBanRecordORM).one()
+    assert record.expires_at == datetime.max
+    test_db_session.expire_all()
+    assert seed_player.banned is True
+    # El registro se puede consultar y el usuario continúa bloqueado.
+    assert client.post("/moderation/banned-players", json={}, headers=admin_auth_headers).status_code == 200
+    login = client.post("/auth/v1/login", data={"username": seed_player.mail, "password": "Password123"})
+    assert login.status_code == 400
+
+
 def _create_user(
     session,
     password_hasher,

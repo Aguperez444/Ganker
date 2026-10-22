@@ -3,11 +3,10 @@ from datetime import datetime
 from app.application.ports.i_password_hasher import IPasswordHasher
 from app.application.ports.i_token_service import ITokenService
 from app.application.ports.i_unit_of_work import IUnitOfWork
-from app.domain.exceptions.mail.mail_not_found_exception import EmailNotFoundException
+from app.domain.exceptions.auth.invalid_credentials_exception import InvalidCredentialsException
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, cast
 
-from app.domain.exceptions.auth.wrong_password_exception import WrongPasswordException
 from app.infrastructure.api.dto.response.auth_tokens_response import AuthTokensResponse
 
 if TYPE_CHECKING:
@@ -26,12 +25,11 @@ class UserLogin:
         # revisar si el mail pertenece a un usuario registrado
         with self.uow as uow:
             user = uow.user_repo.get_user_by_mail(user_data.mail)
-            if user is None:
-                raise EmailNotFoundException(user_data.mail)
-
-            # caso que se haya encontrado el usuario, comprobar la contraseña contra la del usuario encontrado
-            if not user.password_hash or not self.pass_hasher.verify_password(user_data.password, user.password_hash):
-                raise WrongPasswordException(user_data.mail)
+            if not user or not user.password_hash:
+                raise InvalidCredentialsException()
+            valid_password = self.pass_hasher.verify_password(user_data.password, cast(str, user.password_hash))
+            if not valid_password:
+                raise InvalidCredentialsException()
 
             user_id = user.user_id
             role = user.role

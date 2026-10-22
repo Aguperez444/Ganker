@@ -114,6 +114,16 @@ Las claves personales, como las de Riot y OAuth, pueden ir en `secrets.local.env
 
 Los proveedores de autenticación requieren registrar sus URL de retorno en la consola correspondiente. Las claves de estas integraciones se configuran en el backend.
 
+El login admite 5 intentos por minuto y la recuperación de contraseña 3 solicitudes cada 15 minutos, por IP y por correo. Se configuran de forma independiente con `LOGIN_RATE_LIMIT_*` y `FORGOT_PASSWORD_RATE_LIMIT_*` en las plantillas de entorno. Ambos límites usan memoria del proceso: ejecutar un solo worker; para múltiples procesos o réplicas hace falta un almacén compartido.
+
+Los límites usan `request.client.host`. Uvicorn debe resolver los encabezados reenviados únicamente desde proxies autorizados mediante `FORWARDED_ALLOW_IPS` ([configuración oficial](https://uvicorn.dev/settings/#http)); no usar `*`. El Compose de producción fija la IP de Nginx con `GANKER_NGINX_IP` y la autoriza en el backend. Nginx valida Cloudflare con `set_real_ip_from` y reemplaza `X-Forwarded-For` por la IP verificada. Si ejecutás otro proxy en desarrollo, configurá explícitamente su IP en el entorno de Uvicorn; sin esa configuración, las solicitudes comparten la IP del proxy.
+
+Los baneos requieren una jerarquía superior a la del destinatario: un admin puede banear jugadores y un owner puede banear jugadores o admins. La duración debe ser positiva y no tiene máximo de negocio; se pueden enviar 365.000 días para un baneo de aproximadamente 1000 años. Si la duración supera la capacidad de las fechas de Python, se guarda el final del año 9999. El motivo requiere entre 1 y 500 caracteres, con al menos uno distinto de espacio.
+
+`GET /api/v1/health` comprueba que FastAPI puede consultar la base de datos. Devuelve HTTP 200 con `{"status":"ok"}` o HTTP 503 con un estado genérico si falla la conexión o la consulta. No requiere autenticación y responde con `Cache-Control: no-store`. El smoke test de producción consulta esta ruta y exige HTTP 200, contenido JSON y el estado esperado antes de dar el despliegue por válido.
+
+Al restablecer la contraseña se revocan todos los refresh tokens y enlaces de recuperación del usuario en la misma transacción. Los access tokens ya emitidos siguen válidos hasta su vencimiento.
+
 ### Base de datos y migraciones
 
 Antes del primer arranque y después de incorporar nuevas migraciones:

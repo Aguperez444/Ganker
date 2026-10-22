@@ -14,7 +14,7 @@ from app.domain.services.resend_email_service import ResendEmailService
 from app.infrastructure.api.auth.jwt_federated_state_service import JwtFederatedStateService
 from app.infrastructure.api.auth.jwt_token_service import JwtTokenService
 from app.infrastructure.api.auth.password_hash_service import PasswordHashService
-from app.infrastructure.api.dependencies.login_rate_limiter import login_rate_limiter
+from app.infrastructure.api.dependencies.auth_rate_limiter import login_rate_limiter, forgot_password_rate_limiter
 from app.infrastructure.api.dto.request.federated_auth_request import (
     CompleteFederatedRegistrationRequest,
     FederatedCallbackRequest,
@@ -83,7 +83,8 @@ def logout(refresh_data: RefreshTokenRequest):
 
 
 @router.post("/forgot-password", response_model=ResetPasswordMessageResponse, status_code=status.HTTP_200_OK, summary="Solicitar enlace para restaurar la contraseña")
-async def forgot_password(request: ForgotPasswordRequest, background_tasks: BackgroundTasks):
+async def forgot_password(request: ForgotPasswordRequest, background_tasks: BackgroundTasks, http_request: Request):
+    forgot_password_rate_limiter.check(http_request, identifier=request.email)
 
     uow = uow_factory()
     email_service = ResendEmailService()

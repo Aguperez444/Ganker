@@ -29,8 +29,8 @@ class TestAuthEndpointsIntegration:
 
         response = client.post("/auth/v1/login", data=form_data)
 
-        assert response.status_code == 404
-        assert "No se encontró ninguna cuenta registrada" in response.json().get("error", "")
+        assert response.status_code == 401
+        assert response.json()["error"] == "El correo o la contraseña son incorrectos."
 
     def test_login_wrong_password(self, client, seed_player):
         form_data = {
@@ -41,7 +41,7 @@ class TestAuthEndpointsIntegration:
         response = client.post("/auth/v1/login", data=form_data)
 
         assert response.status_code == 401
-        assert "La contraseña es incorrecta" in response.json().get("error", "")
+        assert response.json()["error"] == "El correo o la contraseña son incorrectos."
 
     def test_login_without_email(self, client):
         # Probar iniciar sesión sin ingresar email (falla)
@@ -196,7 +196,7 @@ class TestAuthEndpointsIntegration:
         # 6th attempt should be blocked with 429
         blocked_res = client.post("/auth/v1/login", data=form_data)
         assert blocked_res.status_code == 429
-        assert "Demasiados intentos" in blocked_res.json().get("detail", "")
+        assert "Demasiados intentos" in blocked_res.json().get("error", "")
         assert "retry-after" in blocked_res.headers
 
     def test_login_rate_limit_exceeded_by_account_from_different_ips(self, client, seed_player):
@@ -206,11 +206,13 @@ class TestAuthEndpointsIntegration:
         }
         # 5 attempts targeting the same account from 5 different IPs
         for i in range(5):
-            headers = {"X-Forwarded-For": f"192.168.1.{10 + i}"}
+            client._transport.client = (f"192.168.1.{10 + i}", 50000)
+            headers = {"X-Forwarded-For": "203.0.113.1"}
             res = client.post("/auth/v1/login", data=form_data, headers=headers)
             assert res.status_code == 401
 
         # 6th attempt from a brand new IP for the same account should also be blocked with 429
+        client._transport.client = ("10.0.0.99", 50000)
         blocked_res = client.post(
             "/auth/v1/login",
             data=form_data,

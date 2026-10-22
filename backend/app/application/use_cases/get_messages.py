@@ -6,6 +6,7 @@ from app.domain.exceptions.chat.user_does_not_belong_to_conversation_exception i
 from app.infrastructure.api.dto.response.base_classes.message_object_response import MessageObjectResponse
 from app.infrastructure.api.dto.response.get.get_messages_response import GetMessagesResponse
 
+MAX_PAGE_SIZE = 100
 
 class GetMessages:
     def __init__(self, uow: IUnitOfWork):
@@ -29,7 +30,7 @@ class GetMessages:
                 raise UserDoesNotBelongToConversationException(conversation_id, user_id)
 
             # asegurarse de estar levantando un minimo de mensajes
-            limit = size if size > 0 else 30
+            limit = min(size, MAX_PAGE_SIZE) if size > 0 else 30
             skip = (page-1)  * limit if page >= 1 else 0
 
 
