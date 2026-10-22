@@ -9,13 +9,20 @@ import {
   validarFormularioBaneo,
 } from "../utils/baneos";
 
+export const PASO_FORMULARIO = "formulario";
+export const PASO_CONFIRMACION = "confirmacion";
+export const PASO_EXITO = "exito";
+
 // US 36 - Banear jugador (admin).
 //
 // Mismo flujo de tres pasos que el reporte (US 35): formulario, confirmacion
 // explicita y mensaje de exito. El jugador objetivo se selecciona antes
 // (`jugador`) desde Admin > Moderacion o Admin > Usuarios; este hook solo se
 // ocupa del formulario y del envio.
-export default function useBanearJugador({ jugador, onClose }) {
+//
+// `onBaneado(mensaje)` (opcional) se llama cuando el backend confirma el
+// baneo, para que quien abrio el modal sepa que la cuenta cambio de estado.
+export default function useBanearJugador({ jugador, onClose, onBaneado }) {
   const { tokens } = useAuth();
   const miId = obtenerIdUsuarioDesdeToken(tokens?.access_token);
 
@@ -24,7 +31,7 @@ export default function useBanearJugador({ jugador, onClose }) {
   const [errores, setErrores] = useState({});
   const [errorEnvio, setErrorEnvio] = useState("");
   const [baneando, setBaneando] = useState(false);
-  const [paso, setPaso] = useState("formulario");
+  const [paso, setPaso] = useState(PASO_FORMULARIO);
   const [resultado, setResultado] = useState(null);
 
   const esPropio = Boolean(
@@ -57,13 +64,13 @@ export default function useBanearJugador({ jugador, onClose }) {
 
     if (Object.keys(erroresValidacion).length > 0) return false;
 
-    setPaso("confirmacion");
+    setPaso(PASO_CONFIRMACION);
     return true;
   }
 
   function volverAlFormulario() {
     setErrorEnvio("");
-    setPaso("formulario");
+    setPaso(PASO_FORMULARIO);
   }
 
   async function confirmarBaneo() {
@@ -71,7 +78,7 @@ export default function useBanearJugador({ jugador, onClose }) {
 
     if (esPropio) {
       setErrorEnvio("No podés banear tu propia cuenta.");
-      setPaso("formulario");
+      setPaso(PASO_FORMULARIO);
       return null;
     }
 
@@ -86,7 +93,8 @@ export default function useBanearJugador({ jugador, onClose }) {
 
       const mensaje = `@${jugador.username} fue baneado correctamente.`;
       setResultado({ mensaje });
-      setPaso("exito");
+      setPaso(PASO_EXITO);
+      onBaneado?.(mensaje);
 
       return mensaje;
     } catch (error) {

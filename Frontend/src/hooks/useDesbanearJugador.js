@@ -3,7 +3,7 @@ import { desbanearJugador } from "../api/moderacionApi";
 import { logError } from "../utils/logs";
 import { mensajeDeErrorDesbaneo } from "../utils/baneos";
 
-// US 36 - Desbanear jugador a mano (admin).
+// US 53 - Levantar la suspensión de un jugador (admin).
 //
 // `baneo` es la fila del listado de baneos que se está por levantar
 // ({ banned_user_id, banned_user_username, ... }); mientras no es null, el

@@ -5,16 +5,16 @@ import { MemoryRouter, Route, Routes } from "react-router-dom";
 
 import JugadorPerfilPage from "./JugadorPerfilPage";
 import { eliminarUsuario, obtenerPerfilJugador } from "../api/jugadoresApi";
+import { banearJugador } from "../api/moderacionApi";
 
 vi.mock("../api/jugadoresApi", () => ({
   obtenerPerfilJugador: vi.fn(),
   eliminarUsuario: vi.fn(),
 }));
 
-// US 36 - El perfil admin consulta el listado de baneos para saber si la
-// cuenta ya está sancionada. Se mockea para no pegarle a la red en los tests.
+// US 36 - El admin puede banear desde el perfil. Se mockea para no pegarle
+// a la red en los tests.
 vi.mock("../api/moderacionApi", () => ({
-  obtenerJugadoresBaneados: vi.fn().mockResolvedValue([]),
   banearJugador: vi.fn(),
 }));
 
@@ -204,9 +204,7 @@ describe("JugadorPerfilPage - perfil de otro jugador", () => {
     expect(
       screen.queryByRole("button", { name: /enviar mensaje/i })
     ).toBeNull();
-    expect(
-      screen.queryByRole("button", { name: /reportar/i })
-    ).toBeNull();
+    expect(screen.queryByRole("button", { name: /reportar/i })).toBeNull();
   });
 
   it("avisa si el jugador no tiene perfiles de juego", async () => {
@@ -343,16 +341,30 @@ describe("JugadorPerfilPage - US 36 Banear jugador", () => {
     ).toBeInTheDocument();
   });
 
-  it("muestra 'Ya baneado' si la cuenta ya está sancionada", async () => {
-    const { obtenerJugadoresBaneados } = await import("../api/moderacionApi");
-    obtenerJugadoresBaneados.mockResolvedValue([
-      { id: 1, banned_user_id: 7, banned_user_username: "ana" },
-    ]);
+  it("al banear desde el perfil, la página muestra el aviso", async () => {
+    banearJugador.mockResolvedValue({});
     auth.user = { role: "admin" };
+    const user = userEvent.setup();
     renderPagina();
 
+    await user.click(
+      await screen.findByRole("button", { name: "Banear jugador" })
+    );
+    await user.type(
+      screen.getByLabelText(/Motivo o justificación/),
+      "Insultos reiterados"
+    );
+    await user.click(screen.getByRole("button", { name: "Revisar sanción" }));
+    await user.click(screen.getByRole("button", { name: "Confirmar baneo" }));
+    await user.click(await screen.findByRole("button", { name: "Cerrar" }));
+
+    expect(banearJugador).toHaveBeenCalledWith({
+      jugadorId: 7,
+      motivo: "Insultos reiterados",
+      duracionDias: 1,
+    });
     expect(
-      await screen.findByRole("button", { name: "Ya baneado" })
-    ).toBeDisabled();
+      await screen.findByRole("heading", { name: "Jugador baneado" })
+    ).toBeInTheDocument();
   });
 });

@@ -22,61 +22,59 @@ function banFuturo(id, userId) {
   };
 }
 
-function banVencido(id, userId) {
-  return {
-    id,
-    banned_user_id: userId,
-    banned_user_username: `jugador${userId}`,
-    date_expire: new Date(Date.now() - 60 * 1000).toISOString(),
-  };
-}
-
-describe("useJugadoresBaneados - US 36", () => {
+describe("useJugadoresBaneados - US 53", () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
 
-  it("solo deja los baneos que siguen vigentes", async () => {
+  it("carga al montar y muestra lo que devuelve el backend sin filtrar", async () => {
     obtenerJugadoresBaneados.mockResolvedValue([
       banFuturo(1, 10),
-      banVencido(2, 20),
+      banFuturo(2, 20),
     ]);
 
     const { result } = renderHook(() => useJugadoresBaneados());
-    await act(async () => {
-      await result.current.cargar();
-    });
 
+    await waitFor(() => {
+      expect(result.current.cargando).toBe(false);
+    });
+    expect(obtenerJugadoresBaneados).toHaveBeenCalledTimes(1);
+    expect(result.current.baneados.map((b) => b.banned_user_id)).toEqual([
+      10, 20,
+    ]);
+  });
+
+  it("recargar vuelve a pedir el listado al backend", async () => {
+    obtenerJugadoresBaneados.mockResolvedValueOnce([banFuturo(1, 10)]);
+    obtenerJugadoresBaneados.mockResolvedValueOnce([]);
+
+    const { result } = renderHook(() => useJugadoresBaneados());
     await waitFor(() => {
       expect(result.current.baneados).toHaveLength(1);
     });
-    expect(result.current.baneados[0].banned_user_id).toBe(10);
-    expect(result.current.estaBaneado(10)).toBe(true);
-    expect(result.current.estaBaneado(20)).toBe(false);
+
+    await act(async () => {
+      await result.current.recargar();
+    });
+
+    expect(obtenerJugadoresBaneados).toHaveBeenCalledTimes(2);
+    expect(result.current.baneados).toHaveLength(0);
   });
 
-  it("al refrescar tras desbanear, la cuenta deja de aparecer", async () => {
-    obtenerJugadoresBaneados.mockResolvedValueOnce([banFuturo(1, 10)]);
-    obtenerJugadoresBaneados.mockResolvedValueOnce([banVencido(1, 10)]);
+  it("muestra un error si el admin no tiene permisos", async () => {
+    obtenerJugadoresBaneados.mockRejectedValue({ response: { status: 403 } });
 
     const { result } = renderHook(() => useJugadoresBaneados());
-    await act(async () => {
-      await result.current.cargar();
-    });
-    expect(result.current.baneados).toHaveLength(1);
-
-    await act(async () => {
-      await result.current.cargar({ forzar: true });
-    });
 
     await waitFor(() => {
-      expect(result.current.baneados).toHaveLength(0);
+      expect(result.current.error).toBe(
+        "No tenés permisos para ver los baneos."
+      );
     });
-    expect(result.current.estaBaneado(10)).toBe(false);
   });
 });
 
-describe("useDesbanearJugador - US 36", () => {
+describe("useDesbanearJugador - US 53", () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });

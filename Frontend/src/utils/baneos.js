@@ -2,7 +2,8 @@
 //
 // El backend define los baneos con una duracion en dias (duration_days >= 1).
 // No hay un "permanente" como tal: el valor que se manda en dias es lo que
-// dura la sancion, y al vencer el backend desbanea solo al jugador.
+// dura la sancion, y al vencer el backend desbanea solo al jugador. El baneo
+// "Permanente" de la UI manda DIAS_BANEO_PERMANENTE (unos 100 años).
 export const LARGO_MAXIMO_MOTIVO_BANEO = 500;
 
 export const DIAS_MINIMOS_BANEO = 1;
@@ -11,6 +12,12 @@ export const DIAS_MINIMOS_BANEO = 1;
 // limite es incomodo y propenso a errores de tipeo (ej. 3650 en vez de 365).
 export const DIAS_MAXIMOS_BANEO = 36500;
 
+// US 36 - Baneo permanente: el backend no lo soporta, se manda el tope de dias.
+export const DIAS_BANEO_PERMANENTE = DIAS_MAXIMOS_BANEO;
+
+// Un vencimiento a mas de este plazo se muestra como permanente en el listado.
+const ANIOS_PARA_CONSIDERAR_PERMANENTE = 50;
+
 // Presets que cubren los casos habituales de sancion.
 export const DURACIONES_BANEO = [
   { value: 1, label: "1 día" },
@@ -18,11 +25,21 @@ export const DURACIONES_BANEO = [
   { value: 7, label: "7 días" },
   { value: 30, label: "30 días" },
   { value: 365, label: "1 año" },
+  { value: DIAS_BANEO_PERMANENTE, label: "Permanente" },
 ];
+
+export function esBaneoPermanente(dias) {
+  return Number(dias) >= DIAS_BANEO_PERMANENTE;
+}
 
 // Valida el formulario de baneo. `miId` (opcional) permite frenar el baneo de
 // la propia cuenta antes de llegar al backend (que tambien lo rechaza).
-export function validarFormularioBaneo({ jugador, motivo, duracionDias, miId }) {
+export function validarFormularioBaneo({
+  jugador,
+  motivo,
+  duracionDias,
+  miId,
+}) {
   const errores = {};
 
   if (!jugador?.user_id) {
@@ -51,21 +68,37 @@ export function validarFormularioBaneo({ jugador, motivo, duracionDias, miId }) 
 export function formatearDuracionBaneo(dias) {
   const cantidad = Number(dias);
   if (!Number.isFinite(cantidad)) return "";
+  if (esBaneoPermanente(cantidad)) return "Permanente";
   return cantidad === 1 ? "1 día" : `${cantidad} días`;
 }
 
-// Fecha de vencimiento como texto, para el listado de baneos. El backend puede
-// mandarla con zona (o sin ella): se normaliza agregando la Z para mostrarla
-// en la hora local.
-export function formatearVencimiento(fechaIso) {
-  if (!fechaIso) return "sin vencimiento";
+// El backend puede mandar las fechas con zona (o sin ella): se normaliza
+// agregando la Z para mostrarlas en la hora local.
+function fechaDesdeBackend(fechaIso) {
+  if (!fechaIso) return null;
 
   const conZona = /[zZ]|[+-]\d\d:\d\d$/.test(fechaIso)
     ? fechaIso
     : `${fechaIso}Z`;
   const fecha = new Date(conZona);
 
-  if (Number.isNaN(fecha.getTime())) return "sin vencimiento";
+  return Number.isNaN(fecha.getTime()) ? null : fecha;
+}
+
+export function esVencimientoPermanente(fechaIso) {
+  const fecha = fechaDesdeBackend(fechaIso);
+  if (!fecha) return false;
+
+  return (
+    fecha.getFullYear() - new Date().getFullYear() >=
+    ANIOS_PARA_CONSIDERAR_PERMANENTE
+  );
+}
+
+// Fecha de vencimiento como texto, para el listado de baneos.
+export function formatearVencimiento(fechaIso) {
+  const fecha = fechaDesdeBackend(fechaIso);
+  if (!fecha) return "sin vencimiento";
 
   return fecha.toLocaleString("es-AR", {
     dateStyle: "short",
@@ -83,9 +116,7 @@ export function mensajeDeErrorBaneo(error) {
     return "No pudimos conectar con el servidor. Intentá de nuevo.";
   }
   if (status === 403) {
-    return (
-      data?.error ?? "No tenés permisos para banear a este jugador."
-    );
+    return data?.error ?? "No tenés permisos para banear a este jugador.";
   }
   if (status === 422) {
     return "Revisá los datos: el motivo es obligatorio y la duración debe ser de al menos un día.";

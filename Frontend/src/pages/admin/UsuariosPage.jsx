@@ -6,7 +6,6 @@ import { CLASES_BOTON_ELIMINAR } from "../../components/common/botonesAccion";
 import { useAuth } from "../../context/AuthContext";
 import { useBuscarUsuario } from "../../hooks/useBuscarUsuario";
 import { useDarDeBajaUsuario } from "../../hooks/useDarDeBajaUsuario";
-import { useJugadoresBaneados } from "../../hooks/useJugadoresBaneados";
 import { obtenerIdUsuarioDesdeToken } from "../../utils/jwt";
 
 // US 50 - Eliminar cuenta de usuario (admin): se busca al usuario por ID
@@ -29,16 +28,18 @@ const UsuariosPage = () => {
     limpiar,
   } = useBuscarUsuario();
   const baja = useDarDeBajaUsuario();
-  const baneos = useJugadoresBaneados();
 
   const handleBuscar = (e) => {
     e.preventDefault();
     setSuccessMessage("");
-    buscar().then((ok) => {
-      // El listado de baneos decide si la tarjeta muestra "Banear" o
-      // "Ya baneado"; se carga recien cuando hay un usuario encontrado.
-      if (ok) baneos.cargar();
-    });
+    buscar();
+  };
+
+  // US 36 - Un jugador baneado deja de aparecer en las búsquedas: se avisa y
+  // se limpia la tarjeta, igual que al darlo de baja.
+  const handleBaneado = (mensaje) => {
+    setSuccessMessage(mensaje);
+    limpiar();
   };
 
   const handleConfirmarBaja = async () => {
@@ -139,8 +140,7 @@ const UsuariosPage = () => {
                   <BotonBanearJugadorComponent
                     jugador={encontrado}
                     miId={miId}
-                    yaBaneado={baneos.estaBaneado(encontrado.user_id)}
-                    onBaneado={() => baneos.cargar({ forzar: true })}
+                    onBaneado={handleBaneado}
                   />
                   <button
                     type="button"

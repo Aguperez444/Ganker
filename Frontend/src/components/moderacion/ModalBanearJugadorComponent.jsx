@@ -1,10 +1,14 @@
 import { useEffect } from "react";
 import Campo from "../common/CampoFormularioComponent";
-import useBanearJugador from "../../hooks/useBanearJugador";
+import useBanearJugador, {
+  PASO_CONFIRMACION,
+  PASO_EXITO,
+} from "../../hooks/useBanearJugador";
 import {
   DIAS_MAXIMOS_BANEO,
   DIAS_MINIMOS_BANEO,
   DURACIONES_BANEO,
+  esBaneoPermanente,
   LARGO_MAXIMO_MOTIVO_BANEO,
   formatearDuracionBaneo,
   formatearVencimiento,
@@ -50,7 +54,7 @@ function ResumenDato({ etiqueta, children }) {
 //   1. formulario: motivo (obligatorio) y duración en días.
 //   2. confirmación explícita: resumen de lo que se va a aplicar.
 //   3. éxito: mensaje de confirmación para el administrador.
-const ModalBanearJugadorComponent = ({ jugador, onClose }) => {
+const ModalBanearJugadorComponent = ({ jugador, onClose, onBaneado }) => {
   const {
     motivo,
     duracionDias,
@@ -66,7 +70,7 @@ const ModalBanearJugadorComponent = ({ jugador, onClose }) => {
     volverAlFormulario,
     confirmarBaneo,
     cerrar,
-  } = useBanearJugador({ jugador, onClose });
+  } = useBanearJugador({ jugador, onClose, onBaneado });
 
   const nombreJugador = jugador?.username || jugador?.name || "este jugador";
 
@@ -86,7 +90,7 @@ const ModalBanearJugadorComponent = ({ jugador, onClose }) => {
 
   let contenido;
 
-  if (paso === "exito") {
+  if (paso === PASO_EXITO) {
     contenido = (
       <>
         <div className="text-center">
@@ -110,7 +114,11 @@ const ModalBanearJugadorComponent = ({ jugador, onClose }) => {
         </div>
 
         <div className="flex justify-end">
-          <button type="button" onClick={cerrar} className={CLASES_BOTON_PRINCIPAL}>
+          <button
+            type="button"
+            onClick={cerrar}
+            className={CLASES_BOTON_PRINCIPAL}
+          >
             Cerrar
           </button>
         </div>
@@ -129,13 +137,17 @@ const ModalBanearJugadorComponent = ({ jugador, onClose }) => {
           Elegí la cuenta de otro jugador para aplicar la sanción.
         </p>
         <div className="flex justify-end">
-          <button type="button" onClick={onClose} className={CLASES_BOTON_SECUNDARIO}>
+          <button
+            type="button"
+            onClick={onClose}
+            className={CLASES_BOTON_SECUNDARIO}
+          >
             Cerrar
           </button>
         </div>
       </>
     );
-  } else if (paso === "confirmacion") {
+  } else if (paso === PASO_CONFIRMACION) {
     contenido = (
       <>
         <div>
@@ -160,7 +172,9 @@ const ModalBanearJugadorComponent = ({ jugador, onClose }) => {
             {formatearDuracionBaneo(duracionDias)}
           </ResumenDato>
           <ResumenDato etiqueta="Vence aproximadamente">
-            {formatearVencimiento(fechaVencimientoEstimada(duracionDias))}
+            {esBaneoPermanente(duracionDias)
+              ? "Sin vencimiento"
+              : formatearVencimiento(fechaVencimientoEstimada(duracionDias))}
           </ResumenDato>
         </dl>
 

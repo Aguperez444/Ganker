@@ -7,7 +7,10 @@ import { useBuscarUsuario } from "../../hooks/useBuscarUsuario";
 import { useDesbanearJugador } from "../../hooks/useDesbanearJugador";
 import { useJugadoresBaneados } from "../../hooks/useJugadoresBaneados";
 import { obtenerIdUsuarioDesdeToken } from "../../utils/jwt";
-import { formatearVencimiento } from "../../utils/baneos";
+import {
+  esVencimientoPermanente,
+  formatearVencimiento,
+} from "../../utils/baneos";
 
 // US 36 - Banear jugador (admin): se busca al jugador por ID (el mismo
 // endpoint del perfil público, ver useBuscarUsuario), se ve quién es y recién
@@ -16,12 +19,16 @@ import { formatearVencimiento } from "../../utils/baneos";
 // La protección por rol vive en la ruta (ProtectedRoute con ROLES_ADMIN) y en
 // el backend (require_admin). Acá además se oculta la acción sobre la propia
 // cuenta del administrador.
+//
+// US 53 - Levantar suspensión: el listado de baneados viene resuelto del
+// backend; acá solo se muestra y se ofrece "Desbanear".
 const ModeracionPage = () => {
   const { tokens } = useAuth();
   const miId = obtenerIdUsuarioDesdeToken(tokens?.access_token);
 
   const [successMessage, setSuccessMessage] = useState("");
   const [jugadorABanear, setJugadorABanear] = useState(null);
+  const [mensajeBaneo, setMensajeBaneo] = useState("");
 
   const {
     idBuscado,
@@ -30,6 +37,7 @@ const ModeracionPage = () => {
     error: errorBusqueda,
     setIdBuscado,
     buscar,
+    limpiar,
   } = useBuscarUsuario();
   const baneos = useJugadoresBaneados();
   const desbaneo = useDesbanearJugador();
@@ -37,37 +45,36 @@ const ModeracionPage = () => {
   const handleBuscar = (e) => {
     e.preventDefault();
     setSuccessMessage("");
-    buscar().then((ok) => {
-      if (ok) baneos.cargar();
-    });
+    buscar();
   };
 
   const handleAbrirBaneo = (jugador) => {
     setSuccessMessage("");
+    setMensajeBaneo("");
     setJugadorABanear(jugador);
   };
 
+  // Si el baneo se aplicó, el jugador deja de aparecer en las búsquedas: se
+  // limpia la tarjeta y se refresca el listado de baneados.
   const handleCerrarBaneo = () => {
     setJugadorABanear(null);
-    // El baneo cambia el estado de la cuenta: se refresca el listado para
-    // que la fila del jugador quede como "Ya baneado".
-    baneos.cargar({ forzar: true });
+    if (!mensajeBaneo) return;
+
+    setSuccessMessage(mensajeBaneo);
+    limpiar();
+    baneos.recargar();
   };
 
-  // US 36 - Desbanear a mano desde el listado de baneos vigentes.
+  // US 53 - Desbanear a mano desde el listado de baneados.
   const handleConfirmarDesbaneo = async () => {
     const mensaje = await desbaneo.confirmar();
     if (!mensaje) return;
 
     setSuccessMessage(mensaje);
-    baneos.cargar({ forzar: true });
+    baneos.recargar();
   };
 
-  const esUnoMismo = (usuario) =>
-    miId !== null && usuario?.user_id === miId;
-  const yaBaneado = Boolean(
-    encontrado && baneos.estaBaneado(encontrado.user_id)
-  );
+  const esUnoMismo = (usuario) => miId !== null && usuario?.user_id === miId;
 
   return (
     <section className="min-h-full bg-ganker-bg p-6">
@@ -159,10 +166,9 @@ const ModeracionPage = () => {
                 <button
                   type="button"
                   onClick={() => handleAbrirBaneo(encontrado)}
-                  disabled={yaBaneado}
                   className="shrink-0 cursor-pointer rounded-lg border border-ganker-error/40 px-3 py-1.5 text-sm font-semibold text-ganker-error transition hover:bg-ganker-error/10 disabled:cursor-not-allowed disabled:opacity-50"
                 >
-                  {yaBaneado ? "Ya baneado" : "Banear jugador"}
+                  Banear jugador
                 </button>
               )}
             </div>
@@ -173,7 +179,7 @@ const ModeracionPage = () => {
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
               <h2 className="font-heading text-lg font-semibold text-ganker-text">
-                Baneos vigentes
+                Jugadores baneados
               </h2>
               <p className="mt-1 text-sm text-ganker-muted">
                 Se desbanean solos al vencer. También podés desbanear a mano.
@@ -181,70 +187,75 @@ const ModeracionPage = () => {
             </div>
             <button
               type="button"
-              onClick={() => baneos.cargar({ forzar: true })}
+              onClick={baneos.recargar}
               disabled={baneos.cargando}
               className="cursor-pointer rounded-lg border border-white/10 px-3 py-1.5 text-sm font-semibold text-ganker-text transition hover:bg-white/5 disabled:cursor-not-allowed disabled:opacity-50"
             >
-              {baneos.cargando ? "Cargando..." : "Ver baneos"}
+              {baneos.cargando ? "Cargando..." : "Actualizar"}
             </button>
           </div>
 
-      {baneos.error && (
-        <div className="mt-4 rounded-lg border border-ganker-error/20 bg-ganker-error/10 px-4 py-3">
-          <p className="text-sm text-ganker-error">{baneos.error}</p>
-        </div>
-      )}
+          {baneos.error && (
+            <div className="mt-4 rounded-lg border border-ganker-error/20 bg-ganker-error/10 px-4 py-3">
+              <p className="text-sm text-ganker-error">{baneos.error}</p>
+            </div>
+          )}
 
-      {baneos.baneados.length === 0 ? (
-        <p className="mt-5 text-sm text-ganker-muted">
-          Todavía no hay baneos registrados.
-        </p>
-      ) : (
-        <ul className="mt-5 divide-y divide-white/10 overflow-hidden rounded-xl border border-white/10">
-          {baneos.baneados.map((baneo) => (
-            <li
-              key={baneo.id}
-              className="flex flex-col gap-1 bg-ganker-surface-light px-4 py-3 sm:flex-row sm:items-center sm:justify-between"
-            >
-              <div className="min-w-0">
-                <p className="truncate font-medium text-ganker-text">
-                  @{baneo.banned_user_username} · ID {baneo.banned_user_id}
-                </p>
-                <p className="mt-0.5 truncate text-xs text-ganker-muted">
-                  {baneo.reason}
-                </p>
-              </div>
-              <div className="flex shrink-0 flex-wrap items-center gap-3">
-                <p className="text-xs text-ganker-muted">
-                  Vence {formatearVencimiento(baneo.date_expire)}
-                </p>
-                {/* US 36 - Levanta el baneo antes de su vencimiento. No se
+          {baneos.baneados.length === 0 ? (
+            <p className="mt-5 text-sm text-ganker-muted">
+              {baneos.cargando
+                ? "Cargando baneos..."
+                : "No hay jugadores baneados."}
+            </p>
+          ) : (
+            <ul className="mt-5 divide-y divide-white/10 overflow-hidden rounded-xl border border-white/10">
+              {baneos.baneados.map((baneo) => (
+                <li
+                  key={baneo.id}
+                  className="flex flex-col gap-1 bg-ganker-surface-light px-4 py-3 sm:flex-row sm:items-center sm:justify-between"
+                >
+                  <div className="min-w-0">
+                    <p className="truncate font-medium text-ganker-text">
+                      @{baneo.banned_user_username} · ID {baneo.banned_user_id}
+                    </p>
+                    <p className="mt-0.5 truncate text-xs text-ganker-muted">
+                      {baneo.reason}
+                    </p>
+                  </div>
+                  <div className="flex shrink-0 flex-wrap items-center gap-3">
+                    <p className="text-xs text-ganker-muted">
+                      {esVencimientoPermanente(baneo.date_expire)
+                        ? "Permanente"
+                        : `Vence ${formatearVencimiento(baneo.date_expire)}`}
+                    </p>
+                    {/* US 53 - Levanta el baneo antes de su vencimiento. No se
                     ofrece sobre la propia cuenta: el backend lo rechaza. */}
-                {baneo.banned_user_id !== miId && (
-                  <button
-                    type="button"
-                    onClick={() => desbaneo.abrir(baneo)}
-                    className="cursor-pointer rounded-lg border border-ganker-purple/60 px-3 py-1.5 text-sm font-semibold text-ganker-purple-light transition hover:bg-ganker-purple/20"
-                  >
-                    Desbanear
-                  </button>
-                )}
-              </div>
-            </li>
-          ))}
-        </ul>
-      )}
-    </section>
+                    {baneo.banned_user_id !== miId && (
+                      <button
+                        type="button"
+                        onClick={() => desbaneo.abrir(baneo)}
+                        className="cursor-pointer rounded-lg border border-ganker-purple/60 px-3 py-1.5 text-sm font-semibold text-ganker-purple-light transition hover:bg-ganker-purple/20"
+                      >
+                        Desbanear
+                      </button>
+                    )}
+                  </div>
+                </li>
+              ))}
+            </ul>
+          )}
+        </section>
       </div>
 
       {jugadorABanear && (
         <ModalBanearJugadorComponent
           jugador={jugadorABanear}
           onClose={handleCerrarBaneo}
+          onBaneado={setMensajeBaneo}
         />
       )}
 
-      {/* US 36 - Confirmación explícita antes de levantar un baneo. */}
+      {/* US 53 - Confirmación explícita antes de levantar un baneo. */}
       <ModalConfirmacionComponent
         isOpen={Boolean(desbaneo.baneo)}
         title="Desbanear jugador"
@@ -254,8 +265,8 @@ const ModeracionPage = () => {
             <strong className="text-ganker-text">
               @{desbaneo.baneo?.banned_user_username}
             </strong>{" "}
-            (ID {desbaneo.baneo?.banned_user_id}). La cuenta va a poder volver
-            a iniciar sesión de inmediato.
+            (ID {desbaneo.baneo?.banned_user_id}). La cuenta va a poder volver a
+            iniciar sesión de inmediato.
           </>
         }
         confirmLabel="Confirmar desbaneo"

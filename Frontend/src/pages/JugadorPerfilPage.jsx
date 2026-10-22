@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Link, useParams, useSearchParams } from "react-router-dom";
 import AvatarUsuarioComponent from "../components/common/AvatarUsuarioComponent";
 import AvisoComponent from "../components/common/AvisoComponent";
@@ -12,10 +12,8 @@ import { CLASES_BOTON_ELIMINAR } from "../components/common/botonesAccion";
 import { useAuth } from "../context/AuthContext";
 import { useChat } from "../context/ChatContext";
 import { useDarDeBajaUsuario } from "../hooks/useDarDeBajaUsuario";
-import { useJugadoresBaneados } from "../hooks/useJugadoresBaneados";
 import usePerfilJugador from "../hooks/usePerfilJugador";
 import { esAdmin } from "../utils/rutas";
-import { obtenerIdUsuarioDesdeToken } from "../utils/jwt";
 import { formatearConexionReciente } from "../utils/tiempo";
 
 // Perfil de otro jugador con todos sus perfiles de juego (LoL, Valorant,
@@ -33,18 +31,12 @@ const JugadorPerfilPage = () => {
   const [juegoElegidoId, setJuegoElegidoId] = useState(null);
   const [abriendoChat, setAbriendoChat] = useState(false);
 
-  // US 50 - Un admin puede dar de baja la cuenta desde el perfil. Se guarda
-  // el id dado de baja (no un booleano) para que el aviso no quede pegado al
-  // pasar a otro perfil sin desmontar la pagina.
-  const { user, tokens } = useAuth();
-  const miId = obtenerIdUsuarioDesdeToken(tokens?.access_token);
+  // US 50 / US 36 - Un admin puede dar de baja o banear la cuenta desde el
+  // perfil. Se guarda el id afectado (no un booleano) para que el aviso no
+  // quede pegado al pasar a otro perfil sin desmontar la pagina.
+  const { user } = useAuth();
   const baja = useDarDeBajaUsuario();
-  const [idDadoDeBaja, setIdDadoDeBaja] = useState(null);
-  const [mensajeBaja, setMensajeBaja] = useState("");
-
-  // US 36 - Un admin puede banear la cuenta desde el perfil. El listado de
-  // baneos indica si ya esta baneada, para no ofrecer el boton de nuevo.
-  const baneos = useJugadoresBaneados();
+  const [avisoAdmin, setAvisoAdmin] = useState(null);
 
   const handleEnviarMensaje = async () => {
     setAbriendoChat(true);
@@ -57,23 +49,29 @@ const JugadorPerfilPage = () => {
     const mensaje = await baja.confirmar();
     if (!mensaje) return;
 
-    setMensajeBaja(mensaje);
-    setIdDadoDeBaja(idObjetivo);
+    setAvisoAdmin({
+      userId: idObjetivo,
+      titulo: "Cuenta dada de baja",
+      mensaje,
+    });
   };
 
-  // US 36 - Al ver el perfil de otro jugador como admin, se trae el listado
-  // de baneos una sola vez para saber si esa cuenta ya está baneada.
-  const verBaneos = esAdmin(user) && perfil?.user_id && perfil.user_id !== miId;
-  useEffect(() => {
-    if (verBaneos) baneos.cargar();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [verBaneos]);
+  // US 36 - Una cuenta baneada deja de tener perfil visible: se reemplaza la
+  // pagina por el aviso, igual que al darla de baja.
+  const handleBaneado = (mensaje) => {
+    setAvisoAdmin({
+      userId: perfil.user_id,
+      titulo: "Jugador baneado",
+      mensaje,
+    });
+  };
+
   let contenido;
 
-  if (idDadoDeBaja !== null && String(idDadoDeBaja) === String(jugadorId)) {
+  if (avisoAdmin && String(avisoAdmin.userId) === String(jugadorId)) {
     contenido = (
       <AvisoComponent
-        titulo="Cuenta dada de baja"
+        titulo={avisoAdmin.titulo}
         accion={
           <Link
             to="/app/jugadores"
@@ -83,7 +81,7 @@ const JugadorPerfilPage = () => {
           </Link>
         }
       >
-        {mensajeBaja}
+        {avisoAdmin.mensaje}
       </AvisoComponent>
     );
   } else if (cargando) {
@@ -171,19 +169,18 @@ const JugadorPerfilPage = () => {
               <h2 className="font-heading text-lg font-semibold text-ganker-text">
                 Administración
               </h2>
+              {/* US 36 - Banear la cuenta o darla de baja junto con sus
+                  perfiles de juego. */}
               <p className="mt-1 text-sm text-ganker-muted">
-                {/* US 36 - Banear la cuenta o darla de baja junto con sus
-                    perfiles de juego. */}
-                Aplicá una sanción a esta cuenta o dalá de baja definitivamente.
+                Aplicá una sanción a esta cuenta o dala de baja definitivamente.
               </p>
             </div>
             <div className="flex shrink-0 flex-wrap items-center gap-2">
               {/* US 36 - Banear jugador desde el perfil. */}
               <BotonBanearJugadorComponent
                 jugador={perfil}
-                miId={miId}
-                yaBaneado={baneos.estaBaneado(perfil.user_id)}
-                onBaneado={() => baneos.cargar({ forzar: true })}
+                miId={currentUserId}
+                onBaneado={handleBaneado}
               />
               <button
                 type="button"
