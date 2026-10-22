@@ -3,12 +3,17 @@ import userEvent from "@testing-library/user-event";
 import { describe, it, expect, beforeEach, vi } from "vitest";
 
 import UsuariosPage from "./UsuariosPage";
-import { eliminarUsuario, obtenerPerfilJugador } from "../../api/jugadoresApi";
+import {
+  eliminarUsuario,
+  obtenerPerfilJugador,
+  registrarUsuario,
+} from "../../api/jugadoresApi";
 import { MENSAJE_AUTOELIMINACION } from "../../hooks/useDarDeBajaUsuario";
 
 vi.mock("../../api/jugadoresApi", () => ({
   obtenerPerfilJugador: vi.fn(),
   eliminarUsuario: vi.fn(),
+  registrarUsuario: vi.fn(),
 }));
 
 function tokenDe(userId) {
@@ -159,5 +164,177 @@ describe("UsuariosPage - US 50 Eliminar cuenta de usuario", () => {
 
     expect(eliminarUsuario).not.toHaveBeenCalled();
     expect(screen.getByText(/@pedro · ID 12/)).toBeInTheDocument();
+  });
+});
+
+const DATOS_VALIDOS = {
+  nombre: "Ana Pérez",
+  username: "ana",
+  mail: "ana@ejemplo.com",
+  password: "Segura123",
+};
+
+async function completarRegistro(usuario, datos = DATOS_VALIDOS, rol) {
+  const campos = [
+    ["Nombre completo del usuario", datos.nombre],
+    ["Username único", datos.username],
+    ["usuario@ejemplo.com", datos.mail],
+    ["Contraseña inicial", datos.password],
+    ["Repetí la contraseña", datos.password],
+  ];
+  for (const [placeholder, valor] of campos) {
+    if (valor) await usuario.type(screen.getByPlaceholderText(placeholder), valor);
+  }
+  if (rol) await usuario.selectOptions(screen.getByLabelText("ROL"), rol);
+  await usuario.click(screen.getByRole("button", { name: "Registrar usuario" }));
+}
+
+describe("UsuariosPage - US 39 Registrar usuario", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    auth.user = { role: "admin" };
+    auth.tokens = { access_token: tokenDe(1) };
+  });
+
+  it("registra al usuario con datos válidos y muestra la confirmación", async () => {
+    const usuario = userEvent.setup();
+    registrarUsuario.mockResolvedValue({
+      user_id: 30,
+      username: "ana",
+      name: "Ana Pérez",
+      mail: "ana@ejemplo.com",
+      role: "admin",
+    });
+    render(<UsuariosPage />);
+
+    await completarRegistro(usuario, DATOS_VALIDOS, "admin");
+
+    expect(registrarUsuario).toHaveBeenCalledWith(
+      expect.objectContaining({
+        nombre: "Ana Pérez",
+        username: "ana",
+        mail: "ana@ejemplo.com",
+        password: "Segura123",
+        rol: "admin",
+      })
+    );
+    expect(
+      await screen.findByText(
+        /La cuenta de @ana \(Administrador\) fue creada correctamente/
+      )
+    ).toBeInTheDocument();
+    expect(screen.getByPlaceholderText("Username único")).toHaveValue("");
+  });
+
+  it("no registra sin mail", async () => {
+    const usuario = userEvent.setup();
+    render(<UsuariosPage />);
+
+    await completarRegistro(usuario, { ...DATOS_VALIDOS, mail: "" });
+
+    expect(screen.getByText("Ingresá tu email.")).toBeInTheDocument();
+    expect(registrarUsuario).not.toHaveBeenCalled();
+  });
+
+  it("no registra con un mail de formato inválido", async () => {
+    const usuario = userEvent.setup();
+    render(<UsuariosPage />);
+
+    await completarRegistro(usuario, { ...DATOS_VALIDOS, mail: "ana@" });
+
+    expect(
+      screen.getByText("El email no tiene un formato válido.")
+    ).toBeInTheDocument();
+    expect(registrarUsuario).not.toHaveBeenCalled();
+  });
+
+  it("muestra el error si el mail ya está ocupado", async () => {
+    const usuario = userEvent.setup();
+    registrarUsuario.mockRejectedValue({
+      response: {
+        status: 409,
+        data: {
+          error: "Ya existe una cuenta registrada con el email ana@ejemplo.com.",
+        },
+      },
+    });
+    render(<UsuariosPage />);
+
+    await completarRegistro(usuario);
+
+    expect(
+      await screen.findByText(/Ya existe una cuenta registrada con el email/)
+    ).toBeInTheDocument();
+  });
+
+  it("muestra el error si el username ya está ocupado", async () => {
+    const usuario = userEvent.setup();
+    registrarUsuario.mockRejectedValue({
+      response: {
+        status: 409,
+        data: { error: 'El username: "ana" ya está ocupado.' },
+      },
+    });
+    render(<UsuariosPage />);
+
+    await completarRegistro(usuario);
+
+    expect(
+      await screen.findByText('El username: "ana" ya está ocupado.')
+    ).toBeInTheDocument();
+  });
+
+  it("no registra con una contraseña de formato inválido", async () => {
+    const usuario = userEvent.setup();
+    render(<UsuariosPage />);
+
+    await completarRegistro(usuario, { ...DATOS_VALIDOS, password: "corta" });
+
+    expect(
+      screen.getByText(
+        "Debe tener al menos 8 caracteres, una mayúscula, una minúscula y un número."
+      )
+    ).toBeInTheDocument();
+    expect(registrarUsuario).not.toHaveBeenCalled();
+  });
+
+  it("un admin no puede elegir el rol owner", () => {
+    render(<UsuariosPage />);
+
+    const opciones = within(screen.getByLabelText("ROL"))
+      .getAllByRole("option")
+      .map((o) => o.value);
+    expect(opciones).toEqual(["player", "admin"]);
+  });
+
+  it("un owner puede registrar a otro owner", () => {
+    auth.user = { role: "owner" };
+    render(<UsuariosPage />);
+
+    expect(
+      within(screen.getByLabelText("ROL")).getByRole("option", {
+        name: "Owner",
+      })
+    ).toBeInTheDocument();
+  });
+
+  it("muestra el rechazo del backend al registrar un rol superior", async () => {
+    const usuario = userEvent.setup();
+    registrarUsuario.mockRejectedValue({
+      response: {
+        status: 401,
+        data: {
+          error:
+            "El usuario con ID 1 y rol admin no está autorizado para registrar un usuario con rol owner.",
+        },
+      },
+    });
+    render(<UsuariosPage />);
+
+    await completarRegistro(usuario);
+
+    expect(
+      await screen.findByText(/no está autorizado para registrar/)
+    ).toBeInTheDocument();
   });
 });

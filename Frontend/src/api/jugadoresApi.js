@@ -68,3 +68,20 @@ export function obtenerPerfilJugador(userId) {
     .get(`/api/v1/users/${userId}/profile`)
     .then((res) => res.data);
 }
+
+// US 39 - Registrar usuario (admin). POST /api/v1/users/register_user.
+// Requiere admin u owner; un admin no puede registrar a un owner (eso lo
+// valida el backend y responde 401).
+//
+// Devuelve { user_id, username, name, mail, role }.
+export function registrarUsuario({ nombre, username, mail, password, rol }) {
+  return axiosClient
+    .post("/api/v1/users/register_user", {
+      name: nombre,
+      username,
+      mail,
+      password,
+      role: rol,
+    })
+    .then((res) => res.data);
+}

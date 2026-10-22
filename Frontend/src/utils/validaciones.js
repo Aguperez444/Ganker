@@ -133,3 +133,17 @@ export function validarFormularioRegistroFederado({ nombre, username, mail }) {
 
   return errores;
 }
+
+// US 39 - Registrar usuario (admin): los mismos datos que el registro propio
+// mas el rol, que tiene que ser uno de los que el admin puede asignar.
+export function validarFormularioRegistroUsuario(valores, rolesPermitidos) {
+  const errores = validarFormularioRegistro(valores);
+
+  if (!valores.rol) {
+    errores.rol = "Elegí un rol.";
+  } else if (!rolesPermitidos.includes(valores.rol)) {
+    errores.rol = "No podés registrar un usuario con un rol superior al tuyo.";
+  }
+
+  return errores;
+}
