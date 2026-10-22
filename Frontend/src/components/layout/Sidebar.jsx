@@ -1,26 +1,5 @@
 import { Link, NavLink } from "react-router-dom";
-
-export const navigationItems = [
-  {
-    label: "Inicio",
-    path: "/app",
-    end: true,
-  },
-  {
-    label: "Buscar",
-    path: "/app/jugadores",
-  },
-  {
-    label: "Equipos",
-    path: "/app/equipos",
-  },
-  {
-    label: "Mi perfil",
-    path: "/app/perfil",
-  },
-  // "Cuenta" (/app/cuenta) vive en el menu desplegable del avatar, en el
-  // TopNavbar, junto a "Cerrar sesion". No se duplica aca.
-];
+import { navigationItems } from "./navegacion.js";
 
 const Sidebar = () => {
   return (

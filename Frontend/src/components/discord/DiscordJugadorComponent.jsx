@@ -1,31 +1,13 @@
-import { useEffect, useState } from "react";
-import { getPlayerDiscord } from "../../api/discordApi";
-import { logError } from "../../utils/logs";
+import { useState } from "react";
+import useDiscordJugador from "../../hooks/useDiscordJugador";
 import IconoChicoComponent from "../common/IconoChicoComponent";
-
-// Funcion de modulo por el mismo motivo que cargarEquipo en useEquipo.js
-// (regla set-state-in-effect).
-async function cargarDiscord({ userId, setEstado }) {
-  try {
-    setEstado({ userId, cuenta: await getPlayerDiscord(userId) });
-  } catch (error) {
-    // Es un dato extra del perfil: si falla, simplemente no se muestra
-    logError("Error al cargar el Discord del jugador:", error);
-    setEstado({ userId, cuenta: null });
-  }
-}
 
 // Discord de otro jugador en su perfil publico. El backend solo lo devuelve
 // si el jugador lo comparte con quien mira (todos o su equipo).
 const DiscordJugadorComponent = ({ userId }) => {
-  const [estado, setEstado] = useState({ userId: null, cuenta: null });
+  const cuenta = useDiscordJugador(userId);
   const [copiado, setCopiado] = useState(false);
 
-  useEffect(() => {
-    cargarDiscord({ userId, setEstado });
-  }, [userId]);
-
-  const cuenta = estado.userId === userId ? estado.cuenta : null;
   if (!cuenta?.linked) {
     return null;
   }

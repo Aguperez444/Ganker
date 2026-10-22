@@ -1,5 +1,5 @@
 import { Link, NavLink } from "react-router-dom";
-import { navigationItems } from "./Sidebar.jsx";
+import { navigationItems } from "./navegacion.js";
 
 const MobileMenu = ({ isOpen, onClose }) => {
   // "Cerrar sesión" vive solo en el menu del avatar (TopNavbar), que se ve

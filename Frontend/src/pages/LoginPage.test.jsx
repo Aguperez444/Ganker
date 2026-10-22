@@ -127,3 +127,35 @@ describe("acceso al area administrativa", () => {
     expect(await screen.findByText("panel de admin")).toBeInTheDocument();
   });
 });
+
+describe("errores del login", () => {
+  it.each([404, 401])(
+    "con %i no revela si el mail tiene cuenta",
+    async (status) => {
+      axiosClient.post.mockRejectedValue({ response: { status, data: {} } });
+      renderApp();
+
+      await iniciarSesion();
+
+      expect(
+        await screen.findByText("El email o la contraseña son incorrectos.")
+      ).toBeInTheDocument();
+    }
+  );
+
+  it("con 429 muestra el aviso de demasiados intentos del backend", async () => {
+    axiosClient.post.mockRejectedValue({
+      response: {
+        status: 429,
+        data: { detail: "Demasiados intentos de inicio de sesión." },
+      },
+    });
+    renderApp();
+
+    await iniciarSesion();
+
+    expect(
+      await screen.findByText("Demasiados intentos de inicio de sesión.")
+    ).toBeInTheDocument();
+  });
+});

@@ -13,8 +13,8 @@ export function esPasswordValida(password) {
 }
 
 // US 34 - Cambiar contraseña: "al menos 8 caracteres", la misma regla que
-// valida el backend al restablecer (PasswordSecurityService). Ojo: el
-// registro de arriba pide 9.
+// valida el backend al restablecer (PasswordSecurityService) y que el registro
+// de arriba.
 const REGEX_PASSWORD_NUEVA = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/;
 
 export function esPasswordNuevaValida(password) {
