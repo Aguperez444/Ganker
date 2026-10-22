@@ -12,12 +12,6 @@ export const PASO_FORMULARIO = "formulario";
 export const PASO_CONFIRMACION = "confirmacion";
 export const PASO_EXITO = "exito";
 
-// US 35 - Estado del reporte de un jugador.
-//
-// El flujo tiene tres pasos: completar el formulario, confirmar el envio y
-// mostrar el resultado. El boton que abre el modal solo monta este hook
-// cuando el modal esta visible, asi el estado (incluido el cooldown leido de
-// localStorage) arranca limpio en cada apertura.
 export default function useReportarJugador({ jugador, currentUserId }) {
   const [motivo, setMotivo] = useState("");
   const [descripcion, setDescripcion] = useState("");
