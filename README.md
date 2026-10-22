@@ -96,7 +96,11 @@ La aplicación publicada está en **[gankerweb.app](https://gankerweb.app/)**. [
 
 La configuración compartida de producción se prepara a partir de [.env.prod.example](.env.prod.example), creando `.env.prod` en la raíz y completando los valores del entorno. Este archivo y los certificados quedan fuera de Git. Los detalles de las variables de cada aplicación están en sus guías.
 
-La red interna usa `GANKER_INTERNAL_SUBNET` (por defecto `172.30.0.0/24`) y una IP fija para Nginx, `GANKER_NGINX_IP` (`172.30.0.10`). Uvicorn solo acepta información de proxy desde esa IP. Si la subred está ocupada, ajustá ambos valores en `.env.prod`. Al actualizar un despliegue existente hay que recrear la red: `docker compose --env-file .env.prod -f docker-compose.prod.yml down` y luego `docker compose --env-file .env.prod -f docker-compose.prod.yml up -d --build`, conservando los volúmenes (sin `--volumes`).
+La red interna usa `GANKER_INTERNAL_SUBNET` (por defecto `172.30.0.0/24`) y una IP fija para Nginx, `GANKER_NGINX_IP` (`172.30.0.10`). Uvicorn solo acepta información de proxy desde esa IP. Si la subred está ocupada, ajustá ambos valores en `.env.prod`. No es obligatorio agregar estas variables a un entorno existente si sirven sus valores por defecto.
+
+El deploy comprueba los alias DNS de `db`, `backend` y `nginx`. Si Compose perdió alguno al recrear la red, fuerza una recreación de los contenedores conservando los volúmenes; también permite un único reintento si sucede durante el mismo despliegue. Puede producir una breve interrupción mientras reinicia PostgreSQL. El backend tiene un healthcheck HTTP que consulta `/api/v1/health`, incluida la base de datos, y Nginx espera a que esté listo. Así `up --wait` no da por válido un backend que solo alcanzó a iniciar el proceso de Alembic.
+
+Si la red existente tiene una subred incompatible y Compose no puede reemplazarla, se puede recrear manualmente con `docker compose --env-file .env.prod -f docker-compose.prod.yml down` y luego `docker compose --env-file .env.prod -f docker-compose.prod.yml up -d --build`, conservando los volúmenes (sin `--volumes`).
 
 El script [scripts/deploy.sh](scripts/deploy.sh) documenta los requisitos de SSH, configuración y certificados en el servidor. Para consultar sus modos desde la raíz:
 
