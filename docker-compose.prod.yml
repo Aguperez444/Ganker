@@ -53,6 +53,7 @@ services:
       - UPLOAD_DIR=/app/media
       - MEDIA_URL=/media
       - DATABASE_URL=postgresql+psycopg2://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
+      - FORWARDED_ALLOW_IPS=${GANKER_NGINX_IP:-172.30.0.10}
     depends_on:
       db:
         condition: service_healthy
@@ -82,7 +83,8 @@ services:
     depends_on:
       - backend
     networks:
-      - ganker_internal
+      ganker_internal:
+        ipv4_address: ${GANKER_NGINX_IP:-172.30.0.10}
     deploy:
       resources:
         limits:
@@ -93,6 +95,9 @@ services:
 networks:
   ganker_internal:
     driver: bridge
+    ipam:
+      config:
+        - subnet: ${GANKER_INTERNAL_SUBNET:-172.30.0.0/24}
 
 volumes:
   uploads_prod_data:

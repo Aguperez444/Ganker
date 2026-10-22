@@ -96,6 +96,8 @@ La aplicación publicada está en **[gankerweb.app](https://gankerweb.app/)**. [
 
 La configuración compartida de producción se prepara a partir de [.env.prod.example](.env.prod.example), creando `.env.prod` en la raíz y completando los valores del entorno. Este archivo y los certificados quedan fuera de Git. Los detalles de las variables de cada aplicación están en sus guías.
 
+La red interna usa `GANKER_INTERNAL_SUBNET` (por defecto `172.30.0.0/24`) y una IP fija para Nginx, `GANKER_NGINX_IP` (`172.30.0.10`). Uvicorn solo acepta información de proxy desde esa IP. Si la subred está ocupada, ajustá ambos valores en `.env.prod`. Al actualizar un despliegue existente hay que recrear la red: `docker compose --env-file .env.prod -f docker-compose.prod.yml down` y luego `docker compose --env-file .env.prod -f docker-compose.prod.yml up -d --build`, conservando los volúmenes (sin `--volumes`).
+
 El script [scripts/deploy.sh](scripts/deploy.sh) documenta los requisitos de SSH, configuración y certificados en el servidor. Para consultar sus modos desde la raíz:
 
 ```bash
