@@ -28,6 +28,7 @@ COPY nginx/prod.conf /etc/nginx/conf.d/default.conf
 
 # Copiar los archivos estáticos compilados del Frontend
 COPY --from=frontend-builder /app/dist /usr/share/nginx/html
+COPY --from=frontend-builder /app/dist/_seo/routes.conf /etc/nginx/snippets/frontend-routes.conf
 
 # Crear directorio para certificados SSL y medios
 RUN mkdir -p /etc/nginx/certs /var/www/media
