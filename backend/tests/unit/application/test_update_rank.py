@@ -1,3 +1,4 @@
+from io import BytesIO
 from unittest.mock import MagicMock
 import pytest
 
@@ -39,11 +40,10 @@ class TestUpdateRankUseCase:
         uow.rank_repo.get_ranks_by_game_id.return_value = [existing]
         uow.rank_repo.update_rank.side_effect = lambda r: r
 
-        mock_icon = MagicMock()
-        mock_icon.filename = "gold_new.png"
-        mock_icon.file = MagicMock()
+        icon_file = BytesIO(b"image bytes")
+        icon_filename = "gold_new.png"
 
-        result = use_case.execute(rank_id=1, name="Gold Updated", value=1200, icon=mock_icon)
+        result = use_case.execute(rank_id=1, name="Gold Updated", value=1200, icon_file=icon_file, icon_filename=icon_filename)
 
         assert result.rank_id == 1
         assert result.name == "Gold Updated"
@@ -52,6 +52,8 @@ class TestUpdateRankUseCase:
 
         storage_service.delete_file.assert_called_once_with("/media/games/league_of_legends/ranks/gold_old.png")
         storage_service.save_image_file.assert_called_once()
+        assert storage_service.save_image_file.call_args.kwargs["file_content"] is icon_file
+        assert storage_service.save_image_file.call_args.kwargs["filename"] == icon_filename
         uow.rank_repo.update_rank.assert_called_once()
 
     def test_update_rank_keep_same_name_change_order_no_icon(self, mock_deps):
@@ -63,7 +65,7 @@ class TestUpdateRankUseCase:
         uow.rank_repo.get_ranks_by_game_id.return_value = [existing]
         uow.rank_repo.update_rank.side_effect = lambda r: r
 
-        result = use_case.execute(rank_id=1, name="Gold", value=1500, icon=None)
+        result = use_case.execute(rank_id=1, name="Gold", value=1500, icon_file=None, icon_filename=None)
 
         assert result.rank_id == 1
         assert result.name == "Gold"
@@ -83,7 +85,7 @@ class TestUpdateRankUseCase:
         uow.rank_repo.get_ranks_by_game_id.return_value = [existing]
         uow.rank_repo.update_rank.side_effect = lambda r: r
 
-        result = use_case.execute(rank_id=1, name="Gold I", value=1000, icon=None)
+        result = use_case.execute(rank_id=1, name="Gold I", value=1000, icon_file=None, icon_filename=None)
 
         assert result.rank_id == 1
         assert result.name == "Gold I"
@@ -103,11 +105,10 @@ class TestUpdateRankUseCase:
         uow.rank_repo.get_ranks_by_game_id.return_value = [existing]
         uow.rank_repo.update_rank.side_effect = lambda r: r
 
-        mock_icon = MagicMock()
-        mock_icon.filename = "gold_new.png"
-        mock_icon.file = MagicMock()
+        icon_file = BytesIO(b"image bytes")
+        icon_filename = "gold_new.png"
 
-        result = use_case.execute(rank_id=1, name="Gold", value=1000, icon=mock_icon)
+        result = use_case.execute(rank_id=1, name="Gold", value=1000, icon_file=icon_file, icon_filename=icon_filename)
 
         assert result.rank_id == 1
         assert result.name == "Gold"
@@ -116,13 +117,15 @@ class TestUpdateRankUseCase:
 
         storage_service.delete_file.assert_called_once_with("/media/games/league_of_legends/ranks/gold_old.png")
         storage_service.save_image_file.assert_called_once()
+        assert storage_service.save_image_file.call_args.kwargs["file_content"] is icon_file
+        assert storage_service.save_image_file.call_args.kwargs["filename"] == icon_filename
         uow.rank_repo.update_rank.assert_called_once()
 
     def test_update_rank_empty_name(self, mock_deps):
         use_case, _, _ = mock_deps
 
         with pytest.raises(InvalidRankNameException) as exc_info:
-            use_case.execute(rank_id=1, name="   ", value=1000, icon=None)
+            use_case.execute(rank_id=1, name="   ", value=1000, icon_file=None, icon_filename=None)
 
         assert exc_info.value.status_code == 400
 
@@ -130,7 +133,7 @@ class TestUpdateRankUseCase:
         use_case, _, _ = mock_deps
 
         with pytest.raises(InvalidRankValueException) as exc_info:
-            use_case.execute(rank_id=1, name="Gold", value=-10, icon=None)
+            use_case.execute(rank_id=1, name="Gold", value=-10, icon_file=None, icon_filename=None)
 
         assert exc_info.value.status_code == 400
 
@@ -139,7 +142,7 @@ class TestUpdateRankUseCase:
         uow.rank_repo.get_rank_by_id.return_value = None
 
         with pytest.raises(RankNotFoundException) as exc_info:
-            use_case.execute(rank_id=999, name="Gold", value=1000, icon=None)
+            use_case.execute(rank_id=999, name="Gold", value=1000, icon_file=None, icon_filename=None)
 
         assert exc_info.value.status_code == 404
 
@@ -154,7 +157,7 @@ class TestUpdateRankUseCase:
         uow.rank_repo.get_rank_by_name_and_videogame.return_value = rank2
 
         with pytest.raises(DuplicatedRankNameException) as exc_info:
-            use_case.execute(rank_id=1, name="Platinum", value=1500, icon=None)
+            use_case.execute(rank_id=1, name="Platinum", value=1500, icon_file=None, icon_filename=None)
 
         assert exc_info.value.status_code == 409
 
@@ -169,7 +172,7 @@ class TestUpdateRankUseCase:
         uow.rank_repo.get_rank_by_value_and_videogame.return_value = rank2
 
         with pytest.raises(DuplicatedRankValueException) as exc_info:
-            use_case.execute(rank_id=1, name="Gold Updated", value=2000, icon=None)
+            use_case.execute(rank_id=1, name="Gold Updated", value=2000, icon_file=None, icon_filename=None)
 
         assert exc_info.value.status_code == 409
 
@@ -182,11 +185,10 @@ class TestUpdateRankUseCase:
         uow.rank_repo.get_ranks_by_game_id.return_value = [rank1]
         uow.rank_repo.update_rank.side_effect = RuntimeError("DB update failure")
 
-        mock_icon = MagicMock()
-        mock_icon.filename = "gold_new.png"
-        mock_icon.file = MagicMock()
+        icon_file = BytesIO(b"image bytes")
+        icon_filename = "gold_new.png"
 
         with pytest.raises(RuntimeError):
-            use_case.execute(rank_id=1, name="Gold", value=1200, icon=mock_icon)
+            use_case.execute(rank_id=1, name="Gold", value=1200, icon_file=icon_file, icon_filename=icon_filename)
 
         storage_service.delete_file.assert_any_call("/media/games/league_of_legends/ranks/gold_new.png")

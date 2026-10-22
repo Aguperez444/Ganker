@@ -65,7 +65,14 @@ def update_videogame(
     storage_service = get_storage_service()
     update_videogame_use_case = UpdateVideogame(storage_service, uow)
 
-    updated_videogame = update_videogame_use_case.execute(videogame_id, name, icon, rank_per_role, has_characters)
+    updated_videogame = update_videogame_use_case.execute(
+        videogame_id=videogame_id,
+        name=name,
+        icon_file=icon.file if icon is not None else None,
+        icon_filename=icon.filename if icon is not None else None,
+        rank_per_role=rank_per_role,
+        has_characters=has_characters,
+    )
 
     return updated_videogame
 

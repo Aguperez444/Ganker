@@ -11,7 +11,7 @@ from app.domain.exceptions.user.invalid_username_exception import InvalidUsernam
 from app.domain.exceptions.auth.password_is_not_secure_exception import PasswordIsNotSecureException
 from app.domain.exceptions.user.username_already_exists_exception import UsernameAlreadyExistsException
 from app.domain.exceptions.user.user_not_found_exception import UserNotFoundException
-from app.domain.exceptions.auth.unauthorized_exception import UnauthorizedException
+from app.domain.exceptions.auth.unauthorized_to_register_exception import UnauthorizedToRegisterException
 from app.infrastructure.api.dto.request.register_user_request import RegisterUserRequest
 
 
@@ -72,10 +72,10 @@ class TestRegisterUserUseCase:
             role=UserRole.OWNER
         )
 
-        with pytest.raises(UnauthorizedException) as exc_info:
+        with pytest.raises(UnauthorizedToRegisterException) as exc_info:
             use_case.execute(req, authenticated_user_id=1)
 
-        assert exc_info.value.status_code == 401
+        assert exc_info.value.status_code == 403
 
     def test_current_user_not_found_raises_user_not_found(self, mock_deps):
         use_case, uow, _ = mock_deps

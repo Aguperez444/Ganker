@@ -1,4 +1,4 @@
-from fastapi import UploadFile
+from typing import BinaryIO
 
 from app.application.ports.i_storage_service import IStorageService
 from app.application.ports.i_unit_of_work import IUnitOfWork
@@ -16,13 +16,8 @@ class UpdateRank:
         self.storage_service = storage_service
         self.uow: IUnitOfWork = uow
 
-    def execute(
-        self,
-        rank_id: int,
-        name: str,
-        value: int,
-        icon: UploadFile | None = None
-    ) -> RankObjectResponse:
+    def execute(self, rank_id: int, name: str, value: int, icon_file: BinaryIO | None = None,
+        icon_filename: str | None = None ) -> RankObjectResponse:
         # Comprobar que el nombre no esté vacío
         if not name or not name.strip():
             raise InvalidRankNameException(name if name is not None else "")
@@ -47,12 +42,12 @@ class UpdateRank:
                 raise DuplicatedRankValueException(value)
 
             new_icon_url = None
-            if icon and icon.filename:
+            if icon_file is not None and icon_filename:
                 game_folder = SlugService.to_slug(existing_rank.videogame.name)
 
                 new_icon_url = self.storage_service.save_image_file(
-                    file_content=icon.file,
-                    filename=icon.filename,
+                    file_content=icon_file,
+                    filename=icon_filename,
                     subfolder=f"games/{game_folder}/ranks",
                     preserve_original_name=True
                 )

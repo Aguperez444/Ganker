@@ -4,7 +4,6 @@ from typing import TYPE_CHECKING
 
 
 if TYPE_CHECKING:
-    from app.application.ports.i_email_service import IEmailService # todo chequear, esto debería ir en la UOW?
     from app.application.ports.i_user_repository import IUserRepository
     from app.application.ports.i_rank_repository import IRankRepository
     from app.application.ports.i_team_repository import ITeamRepository
@@ -35,7 +34,6 @@ class IUnitOfWork(ABC):
     rank_repo: 'IRankRepository'
     role_repo: 'IRoleRepository'
     team_repo: 'ITeamRepository'
-    email_service: 'IEmailService'
     region_repo: 'IRegionRepository'
     message_repo: 'IMessageRepository'
     videogame_repo: 'IVideogameRepository'
