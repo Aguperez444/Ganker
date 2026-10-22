@@ -1,3 +1,4 @@
+from io import BytesIO
 from unittest.mock import MagicMock
 import pytest
 
@@ -38,15 +39,14 @@ class TestUpdateCharacterUseCase:
         uow.character_repo.get_character_by_id.return_value = existing_char
         uow.character_repo.update_character.side_effect = lambda c: c
 
-        mock_icon = MagicMock()
-        mock_icon.file = MagicMock()
-        mock_icon.filename = "new_ahri.png"
+        icon_file = BytesIO(b"image bytes")
+        icon_filename = "new_ahri.png"
 
         result = use_case.execute(
             character_id=10,
             name="Ahri Spirit",
             videogame_id=1,
-            icon=mock_icon
+            icon_file=icon_file, icon_filename=icon_filename
         )
 
         assert result.character_id == 10
@@ -54,13 +54,15 @@ class TestUpdateCharacterUseCase:
         assert result.icon_url == "/media/games/lol/characters/new_ahri.png"
 
         storage_service.save_image_file.assert_called_once()
+        assert storage_service.save_image_file.call_args.kwargs["file_content"] is icon_file
+        assert storage_service.save_image_file.call_args.kwargs["filename"] == icon_filename
         uow.character_repo.update_character.assert_called_once()
 
     def test_update_character_empty_name(self, mock_deps):
         use_case, _, _ = mock_deps
 
         with pytest.raises(InvalidCharacterNameException) as exc_info:
-            use_case.execute(character_id=10, name="  ", videogame_id=1, icon=None)
+            use_case.execute(character_id=10, name="  ", videogame_id=1, icon_file=None, icon_filename=None)
 
         assert exc_info.value.status_code == 400
 
@@ -69,7 +71,7 @@ class TestUpdateCharacterUseCase:
         uow.videogame_repo.get_videogame_by_id.return_value = None
 
         with pytest.raises(VideogameNotFoundException) as exc_info:
-            use_case.execute(character_id=10, name="Ahri", videogame_id=999, icon=None)
+            use_case.execute(character_id=10, name="Ahri", videogame_id=999, icon_file=None, icon_filename=None)
 
         assert exc_info.value.status_code == 404
 
@@ -83,7 +85,7 @@ class TestUpdateCharacterUseCase:
         uow.character_repo.get_character_by_name_and_videogame.return_value = other_char
 
         with pytest.raises(DuplicatedCharacterNameException) as exc_info:
-            use_case.execute(character_id=10, name="Yasuo", videogame_id=1, icon=None)
+            use_case.execute(character_id=10, name="Yasuo", videogame_id=1, icon_file=None, icon_filename=None)
 
         assert exc_info.value.status_code == 409
 
@@ -96,7 +98,7 @@ class TestUpdateCharacterUseCase:
         uow.character_repo.get_character_by_id.return_value = None
 
         with pytest.raises(CharacterNotFoundException) as exc_info:
-            use_case.execute(character_id=999, name="Unknown", videogame_id=1, icon=None)
+            use_case.execute(character_id=999, name="Unknown", videogame_id=1, icon_file=None, icon_filename=None)
 
         assert exc_info.value.status_code == 404
 
@@ -112,20 +114,21 @@ class TestUpdateCharacterUseCase:
         uow.character_repo.get_character_by_name_and_videogame.return_value = existing_char
         uow.character_repo.update_character.side_effect = lambda c: c
 
-        mock_icon = MagicMock()
-        mock_icon.file = MagicMock()
-        mock_icon.filename = "new_icon.png"
+        icon_file = BytesIO(b"image bytes")
+        icon_filename = "new_icon.png"
 
         result = use_case.execute(
             character_id=10,
             name="Ahri",
             videogame_id=1,
-            icon=mock_icon
+            icon_file=icon_file, icon_filename=icon_filename
         )
 
         assert result.character_id == 10
         assert result.name == "Ahri"
         storage_service.save_image_file.assert_called_once()
+        assert storage_service.save_image_file.call_args.kwargs["file_content"] is icon_file
+        assert storage_service.save_image_file.call_args.kwargs["filename"] == icon_filename
         uow.character_repo.update_character.assert_called_once()
 
     def test_update_character_same_name_different_videogame_passes(self, mock_deps):
@@ -141,7 +144,7 @@ class TestUpdateCharacterUseCase:
         uow.character_repo.get_character_by_name_and_videogame.return_value = None
         uow.character_repo.update_character.side_effect = lambda c: c
 
-        result = use_case.execute(character_id=10, name="Jett", videogame_id=1, icon=None)
+        result = use_case.execute(character_id=10, name="Jett", videogame_id=1, icon_file=None, icon_filename=None)
 
         assert result.character_id == 10
         assert result.name == "Jett"

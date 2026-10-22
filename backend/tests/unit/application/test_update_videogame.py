@@ -1,3 +1,4 @@
+from io import BytesIO
 from unittest.mock import AsyncMock, MagicMock
 import pytest
 
@@ -32,11 +33,10 @@ class TestUpdateVideogameUseCase:
         uow.videogame_repo.get_videogame_by_name.return_value = None
         uow.videogame_repo.update_videogame.side_effect = lambda g: g
 
-        mock_icon = MagicMock()
-        mock_icon.filename = "new_logo.png"
-        mock_icon.file = MagicMock()
+        icon_file = BytesIO(b"image bytes")
+        icon_filename = "new_logo.png"
 
-        result = use_case.execute(videogame_id=1, name="League of Legends", icon=mock_icon, rank_per_role=False)
+        result = use_case.execute(videogame_id=1, name="League of Legends", icon_file=icon_file, icon_filename=icon_filename, rank_per_role=False)
 
         assert result.id == 1
         assert result.name == "League of Legends"
@@ -46,6 +46,8 @@ class TestUpdateVideogameUseCase:
 
         storage_service.delete_file.assert_called_once_with("/media/games/lol/old.png")
         storage_service.save_image_file.assert_called_once()
+        assert storage_service.save_image_file.call_args.kwargs["file_content"] is icon_file
+        assert storage_service.save_image_file.call_args.kwargs["filename"] == icon_filename
         uow.videogame_repo.update_videogame.assert_called_once()
 
     def test_update_videogame_change_has_characters(self, mock_deps):
@@ -56,7 +58,7 @@ class TestUpdateVideogameUseCase:
         uow.videogame_repo.get_videogame_by_name.return_value = None
         uow.videogame_repo.update_videogame.side_effect = lambda g: g
 
-        result = use_case.execute(videogame_id=1, name="CS2", icon=None, rank_per_role=False, has_characters=False)
+        result = use_case.execute(videogame_id=1, name="CS2", icon_file=None, icon_filename=None, rank_per_role=False, has_characters=False)
 
         assert result.has_characters is False
         assert existing.has_characters is False
@@ -66,7 +68,7 @@ class TestUpdateVideogameUseCase:
         uow.videogame_repo.get_videogame_by_id.return_value = None
 
         with pytest.raises(VideogameNotFoundException) as exc_info:
-            use_case.execute(videogame_id=999, name="LoL", icon=MagicMock(), rank_per_role=False)
+            use_case.execute(videogame_id=999, name="LoL", icon_file=BytesIO(b"image bytes"), icon_filename="icon.png", rank_per_role=False)
 
         assert exc_info.value.status_code == 404
 
@@ -79,6 +81,6 @@ class TestUpdateVideogameUseCase:
         uow.videogame_repo.get_videogame_by_name.return_value = other_game
 
         with pytest.raises(VideogameAlreadyExistsException) as exc_info:
-            use_case.execute(videogame_id=1, name="Game 2", icon=None, rank_per_role=False)
+            use_case.execute(videogame_id=1, name="Game 2", icon_file=None, icon_filename=None, rank_per_role=False)
 
         assert exc_info.value.status_code == 409

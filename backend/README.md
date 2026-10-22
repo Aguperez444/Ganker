@@ -114,6 +114,16 @@ Las claves personales, como las de Riot y OAuth, pueden ir en `secrets.local.env
 
 Los proveedores de autenticación requieren registrar sus URL de retorno en la consola correspondiente. Las claves de estas integraciones se configuran en el backend.
 
+El login admite 5 intentos por minuto y la recuperación de contraseña 3 solicitudes cada 15 minutos, por IP y por correo. Se configuran de forma independiente con `LOGIN_RATE_LIMIT_*` y `FORGOT_PASSWORD_RATE_LIMIT_*` en las plantillas de entorno. Ambos límites usan memoria del proceso: ejecutar un solo worker; para múltiples procesos o réplicas hace falta un almacén compartido.
+
+Los límites usan `request.client.host`. Uvicorn debe resolver los encabezados reenviados únicamente desde proxies autorizados mediante `FORWARDED_ALLOW_IPS` ([configuración oficial](https://uvicorn.dev/settings/#http)); no usar `*`. El Compose de producción fija la IP de Nginx con `GANKER_NGINX_IP` y la autoriza en el backend. Nginx valida Cloudflare con `set_real_ip_from` y reemplaza `X-Forwarded-For` por la IP verificada. Si ejecutás otro proxy en desarrollo, configurá explícitamente su IP en el entorno de Uvicorn; sin esa configuración, las solicitudes comparten la IP del proxy.
+
+Los baneos requieren una jerarquía superior a la del destinatario: un admin puede banear jugadores y un owner puede banear jugadores o admins. La duración debe ser positiva y no tiene máximo de negocio; se pueden enviar 365.000 días para un baneo de aproximadamente 1000 años. Si la duración supera la capacidad de las fechas de Python, se guarda el final del año 9999. El motivo requiere entre 1 y 500 caracteres, con al menos uno distinto de espacio.
+
+`GET /api/v1/health` comprueba que FastAPI puede consultar la base de datos. Devuelve HTTP 200 con `{"status":"ok"}` o HTTP 503 con un estado genérico si falla la conexión o la consulta. No requiere autenticación y responde con `Cache-Control: no-store`. El smoke test de producción consulta esta ruta y exige HTTP 200, contenido JSON y el estado esperado antes de dar el despliegue por válido.
+
+Al restablecer la contraseña se revocan todos los refresh tokens y enlaces de recuperación del usuario en la misma transacción. Los access tokens ya emitidos siguen válidos hasta su vencimiento.
+
 ### Base de datos y migraciones
 
 Antes del primer arranque y después de incorporar nuevas migraciones:
@@ -163,6 +173,20 @@ También existen los lanzadores `bash start_app.sh`, `.\start_app.ps1` y `start_
 | OpenAPI       | http://127.0.0.1:8000/openapi.json |
 
 En local, FastAPI sirve `/media` desde `backend/media/`. En Docker, Nginx sirve los medios desde el volumen compartido.
+
+La autenticación conserva `/auth/v1` por diseño. Moderación usa `/api/v1/moderation`, bajo el mismo prefijo que el resto de la API:
+
+| Operación | Método y ruta |
+| --------- | ------------- |
+| Login, refresh y logout | `POST /auth/v1/login`, `/auth/v1/refresh`, `/auth/v1/logout` |
+| Recuperar y restablecer contraseña | `POST /auth/v1/forgot-password`, `/auth/v1/reset-password` |
+| Autenticación federada | `/auth/v1/oauth/...` |
+| Reportar un jugador | `POST /api/v1/moderation/` |
+| Listar reportes | `GET /api/v1/moderation/reported_players` |
+| Listar baneos | `GET /api/v1/moderation/banned-players` |
+| Banear y desbanear | `POST /api/v1/moderation/ban`, `/api/v1/moderation/{player_id}/unban` |
+
+Los listados reciben los filtros, fechas ISO 8601 y paginación (`skip`, `limit`) como parámetros de query, sin cuerpo JSON. Por ejemplo: `/api/v1/moderation/banned-players?banned_user=usuario&skip=0&limit=10`. Conservan el permiso de admin u owner. Las rutas antiguas de moderación (`/moderation/...`) ya no se registran; las URL de retorno del frontend `/auth/callback/{provider}` se mantienen.
 
 ## Estructura y organización
 

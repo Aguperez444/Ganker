@@ -1,17 +1,17 @@
 import hashlib
 from datetime import datetime, timezone
 
+from app.application.ports.i_password_hasher import IPasswordHasher
 from app.application.ports.i_unit_of_work import IUnitOfWork
 from app.domain.exceptions.reset_password.expire_reset_token_exception import ExpireResetTokenException
 from app.domain.exceptions.reset_password.not_found_or_is_used_reset_token_exception import \
     NotFoundOrIsUsedResetTokenException
 from app.domain.services.password_security_service import PasswordSecurityService
-from app.infrastructure.api.auth.password_hash_service import PasswordHashService
 
 
 class ResetPassword:
 
-    def __init__(self, hasher: PasswordHashService, uow: IUnitOfWork) -> None:
+    def __init__(self, hasher: IPasswordHasher, uow: IUnitOfWork) -> None:
         self.hasher = hasher
         self.uow = uow
 
@@ -44,3 +44,5 @@ class ResetPassword:
                 new_hashed_password=new_hashed_password
             )
             uow.reset_token_repo.mark_as_used(reset_password_record.id)
+            uow.reset_token_repo.invalidate_all_user_tokens(reset_password_record.user_id)
+            uow.refresh_token_repo.revoke_all_by_user_id(reset_password_record.user_id)

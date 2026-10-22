@@ -146,8 +146,9 @@ class TestUserEndpointsIntegration:
 
         response = client.post("/api/v1/users/register_user", json=payload, headers=admin_auth_headers)
 
-        assert response.status_code == 401
+        assert response.status_code == 403
         assert "no está autorizado para registrar un usuario con rol" in response.json().get("error", "")
+        assert client.get("/api/v1/users/me", headers=admin_auth_headers).status_code == 200
 
     def test_register_user_forbidden_for_player(self, client, player_auth_headers):
         payload = {

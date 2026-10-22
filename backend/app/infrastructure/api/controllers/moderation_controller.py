@@ -1,4 +1,6 @@
-from fastapi import APIRouter, Depends
+from typing import Annotated
+
+from fastapi import APIRouter, Depends, Query
 
 from app.application.use_cases.ban_player import BanPlayer
 from app.application.use_cases.report_player import ReportPlayer
@@ -15,7 +17,7 @@ from app.infrastructure.api.dto.response.list_search_reported_players_response i
 from app.infrastructure.api.dto.response.report_player_response import ReportPlayerResponse
 from app.infrastructure.database.unit_of_work.uow_factory import uow_factory
 
-router = APIRouter(prefix="/moderation", tags=["Moderation"])
+router = APIRouter(prefix="/api/v1/moderation", tags=["Moderation"])
 
 # ENDPOINT PARA REPORTAR UN JUGADOR
 @router.post("/", response_model=ReportPlayerResponse ,status_code=201, dependencies=[Depends(require_player)])
@@ -27,8 +29,8 @@ def report_player(report_request: ReportPlayerRequest, reporter_id: int = Depend
     return new_report
 
 # ENDPOINT PARA BUSCAR REPORTES CON FILTRO
-@router.post("/reported_players", response_model=ListSearchReportedPlayersResponse, status_code=200, dependencies=[Depends(require_admin)])
-def search_reported_players(request: SearchReportedPlayersRequest):
+@router.get("/reported_players", response_model=ListSearchReportedPlayersResponse, status_code=200, dependencies=[Depends(require_admin)])
+def search_reported_players(request: Annotated[SearchReportedPlayersRequest, Query()]):
     uow = uow_factory()
     use_case = SearchReportsPlayers(uow)
     reports_players = use_case.execute(
@@ -64,8 +66,8 @@ def unban_player(player_id: int, admin_id: int = Depends(get_current_user_id)):
     return "Jugador desbaneado exitosamente"
 
 # ENDPOINT PARA BUSCAR JUGADORES BANEADOS
-@router.post("/banned-players", response_model=ListSearchBannedPlayersResponse, status_code=200, dependencies=[Depends(require_admin)])
-def search_banned_players(request: SearchBannedPlayersRequest):
+@router.get("/banned-players", response_model=ListSearchBannedPlayersResponse, status_code=200, dependencies=[Depends(require_admin)])
+def search_banned_players(request: Annotated[SearchBannedPlayersRequest, Query()]):
     uow = uow_factory()
     use_case = SearchBannedPlayers(uow)
     banned_players = use_case.execute(

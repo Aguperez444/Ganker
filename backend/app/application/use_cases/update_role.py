@@ -1,4 +1,4 @@
-from fastapi import UploadFile
+from typing import BinaryIO
 
 from app.application.ports.i_storage_service import IStorageService
 from app.application.ports.i_unit_of_work import IUnitOfWork
@@ -14,12 +14,8 @@ class UpdateRole:
         self.storage_service = storage_service
         self.uow: IUnitOfWork = uow
 
-    def execute(
-        self,
-        role_id: int,
-        name: str,
-        icon: UploadFile | None = None
-    ) -> RoleObjectResponse:
+    def execute(self, role_id: int, name: str, icon_file: BinaryIO | None = None,
+        icon_filename: str | None = None) -> RoleObjectResponse:
         # Comprobar que el nombre no esté vacío
         if not name or not name.strip():
             raise InvalidRoleNameException(name if name is not None else "")
@@ -36,12 +32,12 @@ class UpdateRole:
                 raise DuplicateRoleNameException(cleaned_name)
 
             new_icon_url = None
-            if icon and icon.filename:
+            if icon_file is not None and icon_filename:
                 game_folder = SlugService.to_slug(existing_role.videogame.name)
 
                 new_icon_url = self.storage_service.save_image_file(
-                    file_content=icon.file,
-                    filename=icon.filename,
+                    file_content=icon_file,
+                    filename=icon_filename,
                     subfolder=f"games/{game_folder}/roles",
                     preserve_original_name=True
                 )
