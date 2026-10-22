@@ -1,9 +1,11 @@
-from fastapi import APIRouter, Depends, UploadFile, File, HTTPException, status, Form
+from fastapi import APIRouter, Depends, UploadFile, File, HTTPException, status, Form, Query
 from typing import Optional
 from pydantic import EmailStr
 
 
 from app.application.use_cases.query_users import QueryUsers
+from app.application.use_cases.search_users import SearchUsers
+from app.infrastructure.api.dto.response.user_summary_response import UserSummaryResponse
 from app.application.use_cases.register_user import RegisterUser
 from app.application.use_cases.update_user import UpdateUser
 from app.infrastructure.api.dependencies.auth import get_current_user_id, require_player, require_admin
@@ -104,6 +106,16 @@ def get_user(user_id: int = Depends(get_current_user_id)) -> GetUserResponse:
     get_user_use_case = QueryUsers(uow)
     user_dto = get_user_use_case.get_by_id(user_id)
     return user_dto
+
+
+@router.get("/search", response_model=list[UserSummaryResponse], status_code=200, dependencies=[Depends(require_player)])
+def search_users(
+    username: str = Query(..., min_length=1, pattern=r"\S", description="Coincidencia parcial del username, sin distinguir mayúsculas"),
+    page: int = Query(1, ge=1),
+    size: int = Query(20, ge=1, le=100),
+) -> list[UserSummaryResponse]:
+    uow = uow_factory()
+    return SearchUsers(uow).execute(username, limit=size, offset=(page - 1) * size)
 
 
 @router.get("/{user_id}/profile", response_model=GetPublicUserResponse, status_code=200, dependencies=[Depends(require_player)])

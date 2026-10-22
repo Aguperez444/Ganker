@@ -47,6 +47,25 @@ class UserRepositoryImpl(IUserRepository):
         domain_found = UserMapper.orm_to_domain(found) if found else None
         return domain_found
 
+    def search_users_by_username(self, username: str, limit: int = 20, offset: int = 0) -> list['User']:
+        term = username.strip()
+        if not term:
+            return []
+
+        found = (
+            self.session.query(UserORM)
+            .filter(
+                UserORM.username.icontains(term, autoescape=True),
+                UserORM.deleted == False,
+                UserORM.banned == False,
+            )
+            .order_by(func.lower(UserORM.username), UserORM.user_id)
+            .offset(offset)
+            .limit(limit)
+            .all()
+        )
+        return [UserMapper.orm_to_domain(user) for user in found]
+
     def update_user(self, user: 'User') -> 'User':
         orm_user = self.session.query(UserORM).filter(
             UserORM.user_id == user.user_id,
