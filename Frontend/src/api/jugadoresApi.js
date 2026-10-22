@@ -69,6 +69,17 @@ export function obtenerPerfilJugador(userId) {
     .then((res) => res.data);
 }
 
+// Busqueda de usuarios por username: coincidencia parcial y sin distinguir
+// mayusculas, solo usuarios activos (ni eliminados ni baneados), ordenados
+// por username. GET /api/v1/users/search?username=&page=&size= (size <= 100).
+//
+// Devuelve [{ user_id, username, name, icon_url }].
+export function buscarUsuarios(username, { page = 1, size = 20 } = {}) {
+  return axiosClient
+    .get("/api/v1/users/search", { params: { username, page, size } })
+    .then((res) => res.data);
+}
+
 // US 39 - Registrar usuario (admin). POST /api/v1/users/register_user.
 // Requiere admin u owner; un admin no puede registrar a un owner (eso lo
 // valida el backend y responde 401).

@@ -8,18 +8,19 @@ import { useDarDeBajaUsuario } from "../../hooks/useDarDeBajaUsuario";
 import { useRegistrarUsuario } from "../../hooks/useRegistrarUsuario";
 import { NOMBRES_ROLES } from "../../utils/rutas";
 
-// US 50 - Eliminar cuenta de usuario (admin): se busca al usuario por ID
-// (ver useBuscarUsuario), se ve quien es y recien ahi se lo puede dar de baja.
+// US 50 - Eliminar cuenta de usuario (admin): se busca al usuario por su
+// nombre de usuario (ver useBuscarUsuario), se ve quien es y recien ahi se lo
+// puede dar de baja.
 // US 39 - Registrar usuario (admin): alta de cuentas con el rol elegido.
 const UsuariosPage = () => {
   const [successMessage, setSuccessMessage] = useState("");
 
   const {
-    idBuscado,
+    usernameBuscado,
     encontrado,
     buscando,
     error: errorBusqueda,
-    setIdBuscado,
+    setUsernameBuscado,
     buscar,
     limpiar,
   } = useBuscarUsuario();
@@ -105,24 +106,24 @@ const UsuariosPage = () => {
           >
             <div className="flex-1">
               <label
-                htmlFor="usuarios-id"
+                htmlFor="usuarios-username"
                 className="mb-1 block text-xs font-semibold text-ganker-text"
               >
-                ID del usuario
+                Nombre de usuario
               </label>
               <input
-                id="usuarios-id"
-                type="number"
-                min="1"
-                inputMode="numeric"
-                value={idBuscado}
-                onChange={(e) => setIdBuscado(e.target.value)}
-                placeholder="Ej. 12"
+                id="usuarios-username"
+                type="text"
+                autoComplete="off"
+                spellCheck={false}
+                value={usernameBuscado}
+                onChange={(e) => setUsernameBuscado(e.target.value)}
+                placeholder="Ej. pedro"
                 className="w-full rounded-lg border border-white/10 bg-ganker-surface-light px-3 py-2.5 text-sm text-ganker-text focus:border-ganker-purple focus:ring-2 focus:ring-ganker-purple focus:outline-none"
               />
               <p className="mt-1 text-xs text-ganker-muted">
-                Es el número que aparece en la URL de su perfil
-                (/app/jugadores/&lt;id&gt;).
+                Es el @usuario que aparece en su perfil; no hace falta escribir
+                la @.
               </p>
             </div>
             <button

@@ -5,12 +5,14 @@ import { describe, it, expect, beforeEach, vi } from "vitest";
 import UsuariosPage from "./UsuariosPage";
 import {
   eliminarUsuario,
+  buscarUsuarios,
   obtenerPerfilJugador,
   registrarUsuario,
 } from "../../api/jugadoresApi";
 import { MENSAJE_AUTOELIMINACION } from "../../hooks/useDarDeBajaUsuario";
 
 vi.mock("../../api/jugadoresApi", () => ({
+  buscarUsuarios: vi.fn(),
   obtenerPerfilJugador: vi.fn(),
   eliminarUsuario: vi.fn(),
   registrarUsuario: vi.fn(),
@@ -35,8 +37,8 @@ const PEDRO = {
   profiles: [{ game_profile_id: 1 }],
 };
 
-async function buscar(usuario, id) {
-  await usuario.type(screen.getByLabelText("ID del usuario"), String(id));
+async function buscar(usuario, username) {
+  await usuario.type(screen.getByLabelText("Nombre de usuario"), username);
   await usuario.click(screen.getByRole("button", { name: "Buscar" }));
 }
 
@@ -45,19 +47,26 @@ describe("UsuariosPage - US 50 Eliminar cuenta de usuario", () => {
     vi.clearAllMocks();
     auth.user = { role: "admin" };
     auth.tokens = { access_token: tokenDe(1) };
+    // La busqueda es parcial: trae tambien a "pedro_2" y el exacto se elige
+    // en el front.
+    buscarUsuarios.mockResolvedValue([
+      { user_id: 12, username: "pedro", name: "Pedro", icon_url: "" },
+      { user_id: 13, username: "pedro_2", name: "Pedro 2", icon_url: "" },
+    ]);
     obtenerPerfilJugador.mockResolvedValue(PEDRO);
   });
 
-  it("busca por ID, confirma la baja y muestra el aviso", async () => {
+  it("busca por nombre de usuario, confirma la baja y muestra el aviso", async () => {
     const usuario = userEvent.setup();
     eliminarUsuario.mockResolvedValue({
       message: "El usuario ha sido eliminado exitosamente.",
     });
     render(<UsuariosPage />);
 
-    await buscar(usuario, 12);
-    expect(obtenerPerfilJugador).toHaveBeenCalledWith(12);
+    await buscar(usuario, "pedro");
+    expect(buscarUsuarios).toHaveBeenCalledWith("pedro", { size: 100 });
     expect(await screen.findByText(/@pedro · ID 12/)).toBeInTheDocument();
+    expect(obtenerPerfilJugador).toHaveBeenCalledWith(12);
 
     await usuario.click(screen.getByRole("button", { name: "Dar de baja" }));
     const modal = screen.getByRole("dialog");
@@ -73,17 +82,49 @@ describe("UsuariosPage - US 50 Eliminar cuenta de usuario", () => {
     expect(screen.queryByText(/@pedro · ID 12/)).toBeNull();
   });
 
-  it("avisa si no existe un usuario activo con ese ID", async () => {
+  it("avisa si no existe un usuario activo con ese nombre de usuario", async () => {
     const usuario = userEvent.setup();
-    obtenerPerfilJugador.mockRejectedValue({ response: { status: 404 } });
     render(<UsuariosPage />);
 
-    await buscar(usuario, 999);
+    // "pedr" matchea parcialmente pero ningun username es exactamente ese.
+    await buscar(usuario, "pedr");
 
     expect(
-      await screen.findByText("No existe un usuario activo con ese ID.")
+      await screen.findByText(
+        "No existe un usuario activo con ese nombre de usuario."
+      )
     ).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Dar de baja" })).toBeNull();
+  });
+
+  it("acepta el username escrito con @ y espacios", async () => {
+    const usuario = userEvent.setup();
+    render(<UsuariosPage />);
+
+    await buscar(usuario, "  @pedro ");
+
+    expect(buscarUsuarios).toHaveBeenCalledWith("pedro", { size: 100 });
+  });
+
+  it("no distingue mayúsculas al elegir el username exacto", async () => {
+    const usuario = userEvent.setup();
+    render(<UsuariosPage />);
+
+    await buscar(usuario, "PEDRO");
+
+    expect(await screen.findByText(/@pedro · ID 12/)).toBeInTheDocument();
+  });
+
+  it("avisa si falla la búsqueda", async () => {
+    const usuario = userEvent.setup();
+    buscarUsuarios.mockRejectedValue({ response: { status: 500 } });
+    render(<UsuariosPage />);
+
+    await buscar(usuario, "pedro");
+
+    expect(
+      await screen.findByText("No se pudo buscar el usuario.")
+    ).toBeInTheDocument();
   });
 
   it("avisa si el usuario ya fue dado de baja al confirmar", async () => {
@@ -93,7 +134,7 @@ describe("UsuariosPage - US 50 Eliminar cuenta de usuario", () => {
     });
     render(<UsuariosPage />);
 
-    await buscar(usuario, 12);
+    await buscar(usuario, "pedro");
     await usuario.click(
       await screen.findByRole("button", { name: "Dar de baja" })
     );
@@ -120,7 +161,7 @@ describe("UsuariosPage - US 50 Eliminar cuenta de usuario", () => {
     });
     render(<UsuariosPage />);
 
-    await buscar(usuario, 12);
+    await buscar(usuario, "pedro");
     await usuario.click(
       await screen.findByRole("button", { name: "Dar de baja" })
     );
@@ -142,7 +183,7 @@ describe("UsuariosPage - US 50 Eliminar cuenta de usuario", () => {
     auth.tokens = { access_token: tokenDe(12) };
     render(<UsuariosPage />);
 
-    await buscar(usuario, 12);
+    await buscar(usuario, "pedro");
 
     expect(
       await screen.findByText(/Es tu cuenta: para darla de baja usá Mi cuenta/)
@@ -156,7 +197,7 @@ describe("UsuariosPage - US 50 Eliminar cuenta de usuario", () => {
     const usuario = userEvent.setup();
     render(<UsuariosPage />);
 
-    await buscar(usuario, 12);
+    await buscar(usuario, "pedro");
     await usuario.click(
       await screen.findByRole("button", { name: "Dar de baja" })
     );
@@ -183,10 +224,13 @@ async function completarRegistro(usuario, datos = DATOS_VALIDOS, rol) {
     ["Repetí la contraseña", datos.password],
   ];
   for (const [placeholder, valor] of campos) {
-    if (valor) await usuario.type(screen.getByPlaceholderText(placeholder), valor);
+    if (valor)
+      await usuario.type(screen.getByPlaceholderText(placeholder), valor);
   }
   if (rol) await usuario.selectOptions(screen.getByLabelText("ROL"), rol);
-  await usuario.click(screen.getByRole("button", { name: "Registrar usuario" }));
+  await usuario.click(
+    screen.getByRole("button", { name: "Registrar usuario" })
+  );
 }
 
 describe("UsuariosPage - US 39 Registrar usuario", () => {
@@ -254,7 +298,8 @@ describe("UsuariosPage - US 39 Registrar usuario", () => {
       response: {
         status: 409,
         data: {
-          error: "Ya existe una cuenta registrada con el email ana@ejemplo.com.",
+          error:
+            "Ya existe una cuenta registrada con el email ana@ejemplo.com.",
         },
       },
     });
