@@ -1,38 +1,13 @@
-import os
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timedelta, timezone
 from threading import Barrier
-from uuid import uuid4
-
-import pytest
-from sqlalchemy import create_engine, text
-from sqlalchemy.orm import sessionmaker
 
 from app.application.use_cases.report_player import ReportPlayer
 from app.domain.exceptions.moderation.report_cooldown_exception import ReportCooldownException
 from app.infrastructure.api.dto.request.report_player_request import ReportPlayerRequest
-from app.infrastructure.database.base import Base
 from app.infrastructure.database.models import PlayerReportORM, UserBanRecordORM, UserORM
 from app.infrastructure.database.repositories.moderation_repository_impl import ModerationRepositoryImpl
 from app.infrastructure.database.unit_of_work.unit_of_work_impl import SqlAlchemyUnitOfWork
-
-
-@pytest.fixture
-def postgres_sessions():
-    url = os.environ.get("GANKER_TEST_POSTGRES_URL")
-    if not url:
-        pytest.skip("GANKER_TEST_POSTGRES_URL no configurada")
-    schema = f"test_moderation_{uuid4().hex}"
-    engine = create_engine(url, connect_args={"options": f"-csearch_path={schema} -cTimeZone=UTC"})
-    try:
-        with engine.begin() as connection:
-            connection.execute(text(f'CREATE SCHEMA "{schema}"'))
-        Base.metadata.create_all(engine)
-        yield sessionmaker(bind=engine, autoflush=False, expire_on_commit=False)
-    finally:
-        with engine.begin() as connection:
-            connection.execute(text(f'DROP SCHEMA IF EXISTS "{schema}" CASCADE'))
-        engine.dispose()
 
 
 def test_concurrent_reports_only_create_one_record(postgres_sessions):

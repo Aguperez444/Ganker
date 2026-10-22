@@ -189,6 +189,17 @@ La autenticación conserva `/auth/v1` por diseño. Moderación usa `/api/v1/mode
 
 Los listados reciben los filtros, fechas ISO 8601 y paginación (`skip`, `limit`) como parámetros de query, sin cuerpo JSON. Por ejemplo: `/api/v1/moderation/banned-players?banned_user=usuario&skip=0&limit=10`. Conservan el permiso de admin u owner. Las rutas antiguas de moderación (`/moderation/...`) ya no se registran; las URL de retorno del frontend `/auth/callback/{provider}` se mantienen.
 
+### Borrado de rangos
+
+`DELETE /api/v1/ranks/{rank_id}` reasigna todos los perfiles de rol vinculados,
+incluidos los eliminados lógicamente, y los requisitos mínimo y máximo de los
+equipos activos e inactivos. Usa el rango inmediatamente inferior del mismo
+videojuego o, si no existe, el inmediatamente superior. Solo cambia los límites
+que apuntan al rango eliminado; conserva el estado de los perfiles y equipos.
+La reasignación y el borrado se realizan en una única transacción. Si el rango
+tiene perfiles o equipos asociados y no existe otro rango disponible, devuelve
+HTTP 400 y conserva los datos.
+
 ### Contratos de moderación para el frontend
 
 `GET /api/v1/moderation/banned-players/active?username=usuario&skip=0&limit=10`
@@ -336,16 +347,19 @@ pytest
 
 Las fixtures compartidas de [tests/conftest.py](tests/conftest.py) crean SQLite en memoria y un directorio temporal de medios. El cliente HTTP de pruebas reemplaza el arranque normal para no ejecutar el seed de la aplicación.
 
-Las pruebas adicionales de moderación en PostgreSQL comprueban los reportes
-simultáneos y la selección del último baneo vigente. Se habilitan con
+Las pruebas adicionales en PostgreSQL comprueban los reportes simultáneos,
+la selección del último baneo vigente y el borrado de rangos con perfiles y
+equipos vinculados. Se habilitan con
 `GANKER_TEST_POSTGRES_URL`; crean y eliminan un esquema temporal por prueba:
 
 ```bash
 GANKER_TEST_POSTGRES_URL='postgresql+psycopg2://usuario@localhost/ganker_test' \
-  .venv/bin/pytest tests/integration/database/test_moderation_postgres.py --no-cov
+  .venv/bin/pytest tests/integration/database/test_moderation_postgres.py \
+    tests/integration/database/test_rank_deletion_postgres.py --no-cov
 ```
 
-Sin esa variable, esas dos pruebas se omiten y las demás usan SQLite.
+Sin esa variable, esas pruebas se omiten y las demás usan SQLite. Las pruebas de
+borrado de rangos con equipos en SQLite activan explícitamente las claves foráneas.
 
 En CI se usa Python 3.14 y se ejecuta `pytest`. El flujo de ramas y revisión está en el [README principal](../README.md#flujo-de-trabajo).
 
