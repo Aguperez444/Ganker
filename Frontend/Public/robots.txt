@@ -1,10 +1,9 @@
 User-agent: *
 Allow: /
 Disallow: /api/
-Disallow: /auth/
-Disallow: /app/
-Disallow: /completar-registro
-Disallow: /settings
-Disallow: /profile/edit
+Disallow: /auth/v1/
+
+# Las páginas de acceso y de la app usan noindex en su HTML.
+# Permitir su rastreo para que el buscador pueda leer esa directiva.
 
 Sitemap: https://gankerweb.app/sitemap.xml

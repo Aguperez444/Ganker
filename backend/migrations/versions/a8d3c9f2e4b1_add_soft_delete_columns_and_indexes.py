@@ -20,10 +20,19 @@ depends_on: Union[str, Sequence[str], None] = None
 
 def upgrade() -> None:
     """Upgrade schema with soft delete columns and partial unique indexes."""
+    bind = op.get_bind()
+    inspector = sa.inspect(bind)
+    user_uqs = {uq["name"] for uq in inspector.get_unique_constraints("user") if uq.get("name")}
+    vg_uqs = {uq["name"] for uq in inspector.get_unique_constraints("videogame") if uq.get("name")}
+
     # 1. user
     with op.batch_alter_table('user', schema=None) as batch_op:
         batch_op.add_column(sa.Column('deleted', sa.Boolean(), server_default=sa.false(), nullable=False))
         batch_op.create_index(batch_op.f('ix_user_deleted'), ['deleted'], unique=False)
+        if 'uq__user__mail' in user_uqs:
+            batch_op.drop_constraint('uq__user__mail', type_='unique')
+        if 'uq__user__username' in user_uqs:
+            batch_op.drop_constraint('uq__user__username', type_='unique')
         batch_op.create_index(
             'uq_user_username_active',
             ['username'],
@@ -43,6 +52,8 @@ def upgrade() -> None:
     with op.batch_alter_table('videogame', schema=None) as batch_op:
         batch_op.add_column(sa.Column('deleted', sa.Boolean(), server_default=sa.false(), nullable=False))
         batch_op.create_index(batch_op.f('ix_videogame_deleted'), ['deleted'], unique=False)
+        if 'uq__videogame__name' in vg_uqs:
+            batch_op.drop_constraint('uq__videogame__name', type_='unique')
         batch_op.create_index(
             'uq_videogame_name_active',
             ['name'],
@@ -199,11 +210,14 @@ def downgrade() -> None:
 
     with op.batch_alter_table('videogame', schema=None) as batch_op:
         batch_op.drop_index('uq_videogame_name_active')
+        batch_op.create_unique_constraint('uq__videogame__name', ['name'])
         batch_op.drop_index(batch_op.f('ix_videogame_deleted'))
         batch_op.drop_column('deleted')
 
     with op.batch_alter_table('user', schema=None) as batch_op:
         batch_op.drop_index('uq_user_mail_active')
         batch_op.drop_index('uq_user_username_active')
+        batch_op.create_unique_constraint('uq__user__username', ['username'])
+        batch_op.create_unique_constraint('uq__user__mail', ['mail'])
         batch_op.drop_index(batch_op.f('ix_user_deleted'))
         batch_op.drop_column('deleted')

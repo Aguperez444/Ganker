@@ -24,3 +24,7 @@ class IFederatedIdentityRepository(ABC):
     @abstractmethod
     def save(self, identity: 'FederatedIdentity') -> 'FederatedIdentity':
         raise NotImplementedError
+
+    @abstractmethod
+    def delete_by_user_id(self, user_id: int) -> bool:
+        raise NotImplementedError

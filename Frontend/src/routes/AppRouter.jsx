@@ -1,5 +1,7 @@
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import LandingPage from "../pages/LandingPage.jsx";
+import NotFoundPage from "../pages/NotFoundPage.jsx";
+import RouteMetadata from "../components/common/RouteMetadata.jsx";
 import HomePage from "../pages/HomePage.jsx";
 import RegistroPage from "../pages/RegistroPage.jsx";
 import CuentaPage from "../pages/CuentaPage.jsx";
@@ -39,6 +41,7 @@ import { ROLES_ADMIN } from "../utils/rutas.js";
 function AppRouter() {
   return (
     <BrowserRouter>
+      <RouteMetadata />
       <Routes>
         {/* Landing: accesible siempre, con o sin sesion iniciada */}
         <Route path="/" element={<LandingPage />} />
@@ -46,15 +49,24 @@ function AppRouter() {
         {/* US 34 - Cambiar contraseña. Accesibles con o sin sesion: se entra
             desde el login o desde Mi cuenta, y el link del mail
             ({FRONTEND_URL}/reset-password?token=...) lo arma el backend. */}
-        <Route path="/recuperar-contrasena" element={<RecuperarContrasenaPage />} />
+        <Route
+          path="/recuperar-contrasena"
+          element={<RecuperarContrasenaPage />}
+        />
         <Route path="/reset-password" element={<RestablecerContrasenaPage />} />
 
         {/* Solo accesibles SIN sesion: si ya esta logueado, se lo manda a /app */}
         <Route element={<PublicOnlyRoute />}>
           <Route path="/registro" element={<RegistroPage />} />
           <Route path="/login" element={<LoginPage />} />
-          <Route path="/auth/callback/:provider" element={<CallbackFederadoPage />} />
-          <Route path="/completar-registro" element={<CompletarRegistroFederadoPage />} />
+          <Route
+            path="/auth/callback/:provider"
+            element={<CallbackFederadoPage />}
+          />
+          <Route
+            path="/completar-registro"
+            element={<CompletarRegistroFederadoPage />}
+          />
         </Route>
 
         {/* Privadas: requieren sesion iniciada */}
@@ -71,7 +83,10 @@ function AppRouter() {
             <Route path="jugadores" element={<BuscarJugadoresPage />} />
             {/* Perfil de otro jugador con todos sus perfiles de juego. Se
                 entra desde Buscar jugadores, el chat o un equipo. */}
-            <Route path="jugadores/:jugadorId" element={<JugadorPerfilPage />} />
+            <Route
+              path="jugadores/:jugadorId"
+              element={<JugadorPerfilPage />}
+            />
             <Route
               path="buscar"
               element={<Navigate to="/app/jugadores" replace />}
@@ -117,8 +132,8 @@ function AppRouter() {
           </Route>
         </Route>
 
-        {/* Cualquier URL desconocida vuelve al inicio */}
-        <Route path="*" element={<Navigate to="/" replace />} />
+        {/* Conserva la URL para identificar el recurso que no existe. */}
+        <Route path="*" element={<NotFoundPage />} />
       </Routes>
     </BrowserRouter>
   );
