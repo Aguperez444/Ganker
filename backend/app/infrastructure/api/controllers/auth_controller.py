@@ -6,6 +6,10 @@ from app.application.use_cases.complete_federated_registration import CompleteFe
 from app.application.use_cases.forgot_password import ForgotPassword
 from app.application.use_cases.get_federated_authorization_url import GetFederatedAuthorizationUrl
 from app.application.use_cases.reset_password import ResetPassword
+from app.application.use_cases.confirm_registration import ConfirmRegistration
+from app.application.use_cases.resend_registration import ResendRegistration
+from app.infrastructure.api.dto.request.confirm_registration_request import ConfirmRegistrationRequest, ResendRegistrationRequest
+from app.infrastructure.api.dto.response.registration_message_response import RegistrationMessageResponse
 from app.application.use_cases.user_login import UserLogin
 from app.application.use_cases.refresh_token import RefreshToken
 from app.application.use_cases.user_logout import UserLogout
@@ -14,7 +18,7 @@ from app.infrastructure.email.resend_email_service import ResendEmailService
 from app.infrastructure.api.auth.jwt_federated_state_service import JwtFederatedStateService
 from app.infrastructure.api.auth.jwt_token_service import JwtTokenService
 from app.infrastructure.api.auth.password_hash_service import PasswordHashService
-from app.infrastructure.api.dependencies.auth_rate_limiter import login_rate_limiter, forgot_password_rate_limiter
+from app.infrastructure.api.dependencies.auth_rate_limiter import login_rate_limiter, forgot_password_rate_limiter, registration_rate_limiter
 from app.infrastructure.api.dto.request.federated_auth_request import (
     CompleteFederatedRegistrationRequest,
     FederatedCallbackRequest,
@@ -113,6 +117,29 @@ def reset_password(request: ResetPasswordRequest):
 
     return ResetPasswordMessageResponse(
         message="La contraseña ha sido restablecida correctamente"
+    )
+
+
+@router.post("/confirm-registration", response_model=RegistrationMessageResponse)
+def confirm_registration(request: ConfirmRegistrationRequest) -> RegistrationMessageResponse:
+    ConfirmRegistration(uow_factory()).execute(request.token)
+    return RegistrationMessageResponse(message="Tu cuenta fue creada correctamente. Ya podés iniciar sesión.")
+
+
+@router.post("/resend-registration", response_model=RegistrationMessageResponse)
+def resend_registration(request: ResendRegistrationRequest, background_tasks: BackgroundTasks, http_request: Request) -> RegistrationMessageResponse:
+    registration_rate_limiter.check(http_request, identifier=request.email)
+    result = ResendRegistration(uow_factory()).execute(request.email)
+    if result:
+        raw_token, username = result
+        # permite que se muestre el mensaje de éxito sin esperar a que se envíe el correo electrónico
+        # el correo electrónico se enviará en segundo plano, y si hay un error, se registrará en los logs del servidor
+        background_tasks.add_task(
+            ResendEmailService().send_registration_confirmation_email,
+            to_email=str(request.email).strip().lower(), raw_token=raw_token, username=username,
+        )
+    return RegistrationMessageResponse(
+        message="Si hay un registro pendiente para ese correo, recibirás un nuevo enlace de confirmación.",
     )
 
 

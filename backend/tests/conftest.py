@@ -217,7 +217,17 @@ def owner_auth_headers(jwt_service, seed_owner):
 
 
 @pytest.fixture(scope="function")
-def client(monkeypatch, test_session_factory, jwt_service, tmp_path):
+def registration_email(monkeypatch):
+    from unittest.mock import AsyncMock
+    from app.infrastructure.email.resend_email_service import ResendEmailService
+
+    email = AsyncMock()
+    monkeypatch.setattr(ResendEmailService, "send_registration_confirmation_email", email)
+    return email
+
+
+@pytest.fixture(scope="function")
+def client(monkeypatch, test_session_factory, jwt_service, tmp_path, registration_email):
     """FastAPI TestClient with monkeypatched uow_factory, jwt secret, and temp media dir."""
     test_uow_factory = lambda: SqlAlchemyUnitOfWork(test_session_factory)
 
@@ -274,9 +284,13 @@ def client(monkeypatch, test_session_factory, jwt_service, tmp_path):
     import app.infrastructure.api.dependencies.auth as auth_dep
     monkeypatch.setattr(auth_dep, "token_service", jwt_service)
 
-    from app.infrastructure.api.dependencies.auth_rate_limiter import login_rate_limiter, forgot_password_rate_limiter
+    from app.infrastructure.api.dependencies.auth_rate_limiter import login_rate_limiter, forgot_password_rate_limiter, registration_rate_limiter
     login_rate_limiter.reset()
     forgot_password_rate_limiter.reset()
+    registration_rate_limiter.reset()
+    monkeypatch.setattr(settings, "registration_rate_limit_enabled", True)
+    monkeypatch.setattr(settings, "registration_rate_limit_max_attempts", 3)
+    monkeypatch.setattr(settings, "registration_rate_limit_window_seconds", 900)
     monkeypatch.setattr(settings, "login_rate_limit_enabled", True)
     monkeypatch.setattr(settings, "login_rate_limit_max_attempts", 5)
     monkeypatch.setattr(settings, "login_rate_limit_window_seconds", 60)

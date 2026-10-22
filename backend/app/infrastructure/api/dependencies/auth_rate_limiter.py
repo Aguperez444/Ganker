@@ -88,6 +88,10 @@ class AuthRateLimiter:
 
 
 login_rate_limiter = AuthRateLimiter()
+registration_rate_limiter = AuthRateLimiter(
+    settings_prefix="registration",
+    detail="Demasiadas solicitudes de registro. Por favor, intente nuevamente más tarde.",
+)
 forgot_password_rate_limiter = AuthRateLimiter(
     settings_prefix="forgot_password",
     detail="Demasiadas solicitudes de recuperación. Por favor, intente nuevamente más tarde.",

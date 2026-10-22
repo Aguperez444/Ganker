@@ -19,11 +19,9 @@ class TestUserEndpointsIntegration:
 
         response = client.post("/api/v1/users/register", json=payload)
 
-        assert response.status_code == 201
-        data = response.json()
-        assert "access_token" in data
-        assert "refresh_token" in data
-        assert data.get("token_type") == "Bearer"
+        assert response.status_code == 202
+        assert set(response.json()) == {"message"}
+        assert "confirmar" in response.json()["message"]
 
     def test_register_player_without_mail(self, client):
         # Probar registrar usuario sin ingresar mail (falla)
