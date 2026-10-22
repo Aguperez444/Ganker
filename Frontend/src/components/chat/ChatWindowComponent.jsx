@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import AvatarUsuarioComponent from "../common/AvatarUsuarioComponent";
 import IconoChicoComponent from "../common/IconoChicoComponent";
+import BotonReportarJugadorComponent from "../moderacion/BotonReportarJugadorComponent";
 import { useChatSocket } from "../../hooks/useChatSocket";
 import { useChatHistory } from "../../hooks/useChatHistory";
 import { useChat } from "../../context/ChatContext";
@@ -359,6 +360,18 @@ const ChatWindowInterna = ({
           </span>
         </button>
 
+        {/* US 35 - Reportar al otro jugador desde el chat privado. En los
+            chats de equipo el reporte se ofrece junto a cada autor de
+            mensaje y en la lista de integrantes del equipo. */}
+        {!esDeEquipo && otroParticipante?.user_id && (
+          <BotonReportarJugadorComponent
+            jugador={otroParticipante}
+            currentUserId={currentUserId}
+            variante="icono"
+            soloIcono
+          />
+        )}
+
         {onCerrar && (
           <button
             type="button"
@@ -432,6 +445,23 @@ const ChatWindowInterna = ({
                   autor && onVerPerfil
                     ? () => onVerPerfil(mensaje.sender_id)
                     : undefined
+                }
+                accionAutor={
+                  autor ? (
+                    <BotonReportarJugadorComponent
+                      jugador={{
+                        user_id: mensaje.sender_id,
+                        username:
+                          mensaje.sender_username ||
+                          mensaje.sender_name ||
+                          "jugador",
+                        name: mensaje.sender_name,
+                      }}
+                      currentUserId={currentUserId}
+                      variante="icono"
+                      soloIcono
+                    />
+                  ) : null
                 }
                 // El chatroom no informa quien leyo cada mensaje.
                 mostrarIndicadorLeido={

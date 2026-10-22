@@ -162,6 +162,14 @@ describe("JugadorPerfilPage - perfil de otro jugador", () => {
     expect(chat.iniciarChat).toHaveBeenCalledWith(7);
   });
 
+  it("permite reportar al jugador desde su perfil", async () => {
+    renderPagina();
+
+    expect(
+      await screen.findByRole("button", { name: /reportar a ana/i })
+    ).toBeInTheDocument();
+  });
+
   it("en el propio perfil ofrece editarlo en vez de enviar mensaje", async () => {
     chat.currentUserId = 7;
     renderPagina();
@@ -171,6 +179,9 @@ describe("JugadorPerfilPage - perfil de otro jugador", () => {
     ).toHaveAttribute("href", "/app/perfil");
     expect(
       screen.queryByRole("button", { name: /enviar mensaje/i })
+    ).toBeNull();
+    expect(
+      screen.queryByRole("button", { name: /reportar/i })
     ).toBeNull();
   });
 

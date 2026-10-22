@@ -4,6 +4,7 @@ import AvatarUsuarioComponent from "../components/common/AvatarUsuarioComponent"
 import AvisoComponent from "../components/common/AvisoComponent";
 import DiscordJugadorComponent from "../components/discord/DiscordJugadorComponent";
 import IconoChicoComponent from "../components/common/IconoChicoComponent";
+import BotonReportarJugadorComponent from "../components/moderacion/BotonReportarJugadorComponent";
 import PerfilDeJuegoDetalleComponent from "../components/jugadores/PerfilDeJuegoDetalleComponent";
 import { useChat } from "../context/ChatContext";
 import usePerfilJugador from "../hooks/usePerfilJugador";
@@ -78,23 +79,33 @@ const JugadorPerfilPage = () => {
             )}
           </div>
 
-          {esUnoMismo ? (
-            <Link
-              to="/app/perfil"
-              className="shrink-0 rounded-xl border border-white/10 bg-ganker-surface-light px-5 py-3 text-center text-sm font-semibold text-ganker-text transition hover:border-ganker-purple/40 hover:bg-ganker-purple/20"
-            >
-              Editar mis perfiles
-            </Link>
-          ) : (
-            <button
-              type="button"
-              onClick={handleEnviarMensaje}
-              disabled={abriendoChat}
-              className="shrink-0 cursor-pointer rounded-xl bg-gradient-to-r from-ganker-orange to-ganker-purple px-5 py-3 text-sm font-semibold text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
-            >
-              {abriendoChat ? "Abriendo chat..." : "Enviar mensaje"}
-            </button>
-          )}
+          <div className="flex shrink-0 flex-wrap items-center gap-2">
+            {esUnoMismo ? (
+              <Link
+                to="/app/perfil"
+                className="rounded-xl border border-white/10 bg-ganker-surface-light px-5 py-3 text-center text-sm font-semibold text-ganker-text transition hover:border-ganker-purple/40 hover:bg-ganker-purple/20"
+              >
+                Editar mis perfiles
+              </Link>
+            ) : (
+              <>
+                {/* US 35 - Reportar a otro jugador desde su perfil. */}
+                <BotonReportarJugadorComponent
+                  jugador={perfil}
+                  currentUserId={currentUserId}
+                  variante="perfil"
+                />
+                <button
+                  type="button"
+                  onClick={handleEnviarMensaje}
+                  disabled={abriendoChat}
+                  className="shrink-0 cursor-pointer rounded-xl bg-gradient-to-r from-ganker-orange to-ganker-purple px-5 py-3 text-sm font-semibold text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  {abriendoChat ? "Abriendo chat..." : "Enviar mensaje"}
+                </button>
+              </>
+            )}
+          </div>
         </div>
 
         {/* Discord: solo aparece si el jugador lo comparte con quien mira */}

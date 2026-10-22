@@ -137,3 +137,28 @@ describe("IntegrantesEquipoComponent - íconos de rol y rango", () => {
     expect(screen.queryByRole("button", { name: "pepe" })).toBeNull();
   });
 });
+
+describe("IntegrantesEquipoComponent - US 35 reportar integrantes", () => {
+  it("ofrece reportar solo a los demás integrantes, no al propio jugador", () => {
+    render(
+      <IntegrantesEquipoComponent integrantes={integrantes} currentUserId={1} />
+    );
+
+    expect(
+      screen.getByRole("button", { name: "Reportar a pepe" })
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: "Reportar a lider" })
+    ).toBeNull();
+    // Las vacantes no son jugadores.
+    expect(
+      screen.queryByRole("button", { name: /reportar a libre/i })
+    ).toBeNull();
+  });
+
+  it("sin currentUserId no muestra botones de reporte", () => {
+    render(<IntegrantesEquipoComponent integrantes={integrantes} />);
+
+    expect(screen.queryByRole("button", { name: /reportar/i })).toBeNull();
+  });
+});

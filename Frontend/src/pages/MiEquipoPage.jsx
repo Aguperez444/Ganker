@@ -28,6 +28,7 @@ const MiEquipoPage = () => {
     cargarConversaciones,
     cerrarConversacionActiva,
     seleccionarConversacion,
+    currentUserId,
   } = useChat();
   // Arranca con el mensaje de Crear/Unirse a equipo (si se llego desde ahi)
   // y despues lo reemplaza el de la ultima accion.
@@ -242,6 +243,7 @@ const MiEquipoPage = () => {
           <IntegrantesEquipoComponent
             integrantes={equipo.members}
             iconosDeRoles={iconosDeRoles}
+            currentUserId={currentUserId}
             onVerPerfil={(userId) => navigate(rutaPerfilJugador(userId))}
             onExpulsar={esLider ? handleAbrirExpulsion : undefined}
             onTransferirLiderazgo={

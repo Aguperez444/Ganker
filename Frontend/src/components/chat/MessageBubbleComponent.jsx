@@ -36,6 +36,9 @@ const IndicadorLeido = ({ leido }) => (
 // mostrarHora/mostrarIndicadorLeido los calcula ChatWindowComponent, que es
 // quien conoce el resto de la lista (agrupar por minuto y el check en
 // cascada necesitan saber que viene antes/despues de este mensaje).
+//
+// `accionAutor` (opcional) se muestra al lado del nombre: en el chat del
+// equipo se usa para ofrecer el reporte del jugador que escribio (US 35).
 const MessageBubbleComponent = ({
   mensaje,
   esPropio,
@@ -45,26 +48,31 @@ const MessageBubbleComponent = ({
   autor = null,
   // Si viene, el nombre del autor lleva a su perfil.
   onClickAutor,
+  accionAutor = null,
 }) => {
   const indicadorLeido = esPropio && mostrarIndicadorLeido;
 
   return (
     <div className={`flex flex-col ${esPropio ? "items-end" : "items-start"}`}>
-      {autor &&
-        (onClickAutor ? (
-          <button
-            type="button"
-            onClick={onClickAutor}
-            title="Ver perfil"
-            className="mb-1 cursor-pointer px-1 text-[11px] font-semibold text-ganker-purple-light hover:underline"
-          >
-            {autor}
-          </button>
-        ) : (
-          <span className="mb-1 px-1 text-[11px] font-semibold text-ganker-purple-light">
-            {autor}
-          </span>
-        ))}
+      {autor && (
+        <span className="mb-1 flex items-center gap-1 px-1">
+          {onClickAutor ? (
+            <button
+              type="button"
+              onClick={onClickAutor}
+              title="Ver perfil"
+              className="cursor-pointer text-[11px] font-semibold text-ganker-purple-light hover:underline"
+            >
+              {autor}
+            </button>
+          ) : (
+            <span className="text-[11px] font-semibold text-ganker-purple-light">
+              {autor}
+            </span>
+          )}
+          {accionAutor}
+        </span>
+      )}
       <div
         className={`max-w-[75%] rounded-2xl px-4 py-2.5 text-sm break-words ${
           esPropio

@@ -1,5 +1,6 @@
 import { urlDeMedia } from "../../utils/media";
 import IconoChicoComponent from "../common/IconoChicoComponent";
+import BotonReportarJugadorComponent from "../moderacion/BotonReportarJugadorComponent";
 
 const CLASES_ETIQUETA = "shrink-0 rounded-full border font-semibold";
 
@@ -23,6 +24,10 @@ const CLASES_ETIQUETA = "shrink-0 rounded-full border font-semibold";
 //
 // `onVerPerfil(userId)` (opcional): si viene, el avatar y el nombre de cada
 // integrante (no de las vacantes) llevan a su perfil.
+//
+// `currentUserId` (opcional): si viene, cada integrante que no sea el propio
+// jugador tiene el boton de reporte (US 35). No se muestra en las vacantes
+// ni en la version compacta de las tarjetas de busqueda.
 function DetalleRolYRango({ perfilRol, iconoRol, rango }) {
   return (
     <span className="inline-flex min-w-0 items-center gap-1">
@@ -49,6 +54,7 @@ const IntegrantesEquipoComponent = ({
   compacto = false,
   iconosDeRoles = {},
   onVerPerfil,
+  currentUserId,
 }) => {
   const tamanioAvatar = compacto ? "h-7 w-7" : "h-10 w-10";
   const tamanioEtiqueta = compacto
@@ -150,46 +156,60 @@ const IntegrantesEquipoComponent = ({
               )}
             </div>
 
-            {integrante.is_leader && (
-              <span
-                className={`${CLASES_ETIQUETA} ${tamanioEtiqueta} border-ganker-orange/30 bg-ganker-orange/10 text-ganker-orange-light`}
-              >
-                Líder
-              </span>
-            )}
-
-            {integrante.is_vacant && (
-              <span
-                className={`${CLASES_ETIQUETA} ${tamanioEtiqueta} border-ganker-success/30 bg-ganker-success/10 text-ganker-success`}
-              >
-                Disponible
-              </span>
-            )}
-
-            {(onTransferirLiderazgo || onExpulsar) &&
-              !integrante.is_vacant &&
-              !integrante.is_leader && (
-                <div className="flex shrink-0 items-center gap-2">
-                  {onTransferirLiderazgo && (
-                    <button
-                      type="button"
-                      onClick={() => onTransferirLiderazgo(integrante)}
-                      className="cursor-pointer rounded-lg border border-ganker-purple-light/40 px-3 py-1.5 text-sm font-semibold text-ganker-purple-light transition hover:bg-ganker-purple/20 hover:text-ganker-text"
-                    >
-                      Hacer líder
-                    </button>
-                  )}
-                  {onExpulsar && (
-                    <button
-                      type="button"
-                      onClick={() => onExpulsar(integrante)}
-                      className="cursor-pointer rounded-lg border border-ganker-error/40 px-3 py-1.5 text-sm font-semibold text-ganker-error transition hover:bg-ganker-error/10"
-                    >
-                      Expulsar
-                    </button>
-                  )}
-                </div>
+            <div className="flex shrink-0 flex-wrap items-center justify-end gap-2">
+              {integrante.is_leader && (
+                <span
+                  className={`${CLASES_ETIQUETA} ${tamanioEtiqueta} border-ganker-orange/30 bg-ganker-orange/10 text-ganker-orange-light`}
+                >
+                  Líder
+                </span>
               )}
+
+              {integrante.is_vacant && (
+                <span
+                  className={`${CLASES_ETIQUETA} ${tamanioEtiqueta} border-ganker-success/30 bg-ganker-success/10 text-ganker-success`}
+                >
+                  Disponible
+                </span>
+              )}
+
+              {!compacto &&
+                !integrante.is_vacant &&
+                currentUserId &&
+                integrante.user_id !== currentUserId && (
+                  <BotonReportarJugadorComponent
+                    jugador={integrante}
+                    currentUserId={currentUserId}
+                    variante="icono"
+                    soloIcono
+                  />
+                )}
+
+              {(onTransferirLiderazgo || onExpulsar) &&
+                !integrante.is_vacant &&
+                !integrante.is_leader && (
+                  <div className="flex shrink-0 items-center gap-2">
+                    {onTransferirLiderazgo && (
+                      <button
+                        type="button"
+                        onClick={() => onTransferirLiderazgo(integrante)}
+                        className="cursor-pointer rounded-lg border border-ganker-purple-light/40 px-3 py-1.5 text-sm font-semibold text-ganker-purple-light transition hover:bg-ganker-purple/20 hover:text-ganker-text"
+                      >
+                        Hacer líder
+                      </button>
+                    )}
+                    {onExpulsar && (
+                      <button
+                        type="button"
+                        onClick={() => onExpulsar(integrante)}
+                        className="cursor-pointer rounded-lg border border-ganker-error/40 px-3 py-1.5 text-sm font-semibold text-ganker-error transition hover:bg-ganker-error/10"
+                      >
+                        Expulsar
+                      </button>
+                    )}
+                  </div>
+                )}
+            </div>
           </li>
         );
       })}

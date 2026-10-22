@@ -1,0 +1,38 @@
+USER Story 35
+Como jugador, quiero reportar a otro jugador por incumplimiento de normas de la aplicación.
+
+Criterios de aceptación
+Se debe permitir al jugador acceder a la opción de reporte desde el perfil de otro usuario o desde la interacción dentro de un equipo / sala de chat.
+
+No se debe permitir que un jugador se reporte a sí mismo.
+
+Se debe permitir seleccionar el motivo o categoría de la infracción (por ejemplo: toxicidad, lenguaje inapropiado, inactividad/abandono, trampas o spam, perfil falso).
+
+Se debe permitir ingresar una descripción o detalle opcional sobre lo ocurrido.
+
+La selección de la categoría o motivo del reporte es de carácter obligatorio.
+
+Se debe validar que los campos obligatorios no queden vacíos al momento de enviar el formulario.
+
+Se debe solicitar una confirmación antes de procesar el envío definitivo del reporte.
+
+Al confirmarse, el reporte debe registrarse en el sistema con estado pendiente y quedar asociado al jugador denunciado y al emisor para la revisión de los administradores.
+
+Se debe limitar o controlar el envío consecutivo y reiterado de reportes hacia un mismo jugador en un lapso corto de tiempo para prevenir abusos.
+
+El jugador debe recibir un mensaje de confirmación indicando que el reporte fue enviado exitosamente.
+
+Pruebas de usuario
+Probar reportar a otro jugador seleccionando una categoría válida, ingresando una descripción y confirmando el envío (pasa).
+
+Probar enviar un reporte sin seleccionar la categoría o motivo de la infracción (falla).
+
+Probar intentar reportar a la propia cuenta del usuario autenticado (falla o la opción no se encuentra disponible).
+
+Probar cancelar la acción en la pantalla o modal de confirmación de reporte (el reporte no se envía, pasa).
+
+Probar enviar múltiples reportes idénticos y consecutivos hacia el mismo usuario en un corto intervalo (falla).
+
+Probar enviar un reporte y verificar la recepción de la notificación de confirmación de envío (pasa).
+
+
