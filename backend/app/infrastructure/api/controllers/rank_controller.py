@@ -76,7 +76,8 @@ def update_game_rank(
         rank_id=rank_id,
         name=name,
         value=value,
-        icon=icon
+        icon_file=icon.file if icon is not None else None,
+        icon_filename=icon.filename if icon is not None else None,
     )
     return result
 

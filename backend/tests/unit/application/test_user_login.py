@@ -7,8 +7,7 @@ from app.application.ports.i_token_service import ITokenService
 from app.application.ports.i_password_hasher import IPasswordHasher
 from app.domain.models.user import User
 from app.domain.models.user_role import UserRole
-from app.domain.exceptions.mail.mail_not_found_exception import EmailNotFoundException
-from app.domain.exceptions.auth.wrong_password_exception import WrongPasswordException
+from app.domain.exceptions.auth.invalid_credentials_exception import InvalidCredentialsException
 from app.infrastructure.api.dto.request.login_request import LoginRequest
 
 
@@ -67,17 +66,20 @@ class TestUserLoginUseCase:
         )
 
     def test_login_email_not_found(self, mock_dependencies):
-        use_case, mock_uow, _, _ = mock_dependencies
+        use_case, mock_uow, token_service, password_hasher = mock_dependencies
 
         mock_uow.user_repo.get_user_by_mail.return_value = None
 
         request = LoginRequest(mail="unknown@example.com", password="Password123")
 
-        with pytest.raises(EmailNotFoundException) as exc_info:
+        with pytest.raises(InvalidCredentialsException) as exc_info:
             use_case.execute(request)
 
-        assert "unknown@example.com" in exc_info.value.message
-        assert exc_info.value.status_code == 404
+        assert exc_info.value.message == "El correo o la contraseña son incorrectos."
+        assert exc_info.value.status_code == 401
+        password_hasher.verify_password.assert_not_called()
+        token_service.generate_tokens.assert_not_called()
+        mock_uow.refresh_token_repo.save.assert_not_called()
 
     def test_login_wrong_password(self, mock_dependencies):
         use_case, mock_uow, _, mock_password_hasher = mock_dependencies
@@ -96,8 +98,8 @@ class TestUserLoginUseCase:
 
         request = LoginRequest(mail="john@example.com", password="WrongPassword123")
 
-        with pytest.raises(WrongPasswordException) as exc_info:
+        with pytest.raises(InvalidCredentialsException) as exc_info:
             use_case.execute(request)
 
-        assert "john@example.com" in exc_info.value.message
+        assert exc_info.value.message == "El correo o la contraseña son incorrectos."
         assert exc_info.value.status_code == 401

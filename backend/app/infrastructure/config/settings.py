@@ -48,6 +48,16 @@ class Settings(BaseSettings):
     login_rate_limit_max_attempts: int = Field(default=5, validation_alias="LOGIN_RATE_LIMIT_MAX_ATTEMPTS")
     login_rate_limit_window_seconds: int = Field(default=60, validation_alias="LOGIN_RATE_LIMIT_WINDOW_SECONDS")
 
+    # Límite independiente por IP y correo, incluso cuando la cuenta no existe.
+    forgot_password_rate_limit_enabled: bool = Field(default=True, validation_alias="FORGOT_PASSWORD_RATE_LIMIT_ENABLED")
+    forgot_password_rate_limit_max_attempts: int = Field(default=3, ge=1, validation_alias="FORGOT_PASSWORD_RATE_LIMIT_MAX_ATTEMPTS")
+    forgot_password_rate_limit_window_seconds: int = Field(default=3600, ge=1, validation_alias="FORGOT_PASSWORD_RATE_LIMIT_WINDOW_SECONDS")
+
+    # Espera entre reportes del mismo denunciante al mismo jugador, persistida en la BD.
+    player_report_cooldown_seconds: int = Field(
+        default=86400, ge=1, validation_alias="PLAYER_REPORT_COOLDOWN_SECONDS",
+    )
+
     # Configuración de correo por resend
     resend_api_key: str = Field(default="", validation_alias="RESEND_API_KEY")
     email_from: str = Field(default="", validation_alias="EMAIL_FROM")
@@ -60,9 +70,7 @@ class Settings(BaseSettings):
     smtp_password: str = Field(default="", validation_alias="SMTP_PASSWORD")
     smtp_email_from: str = Field(default="", validation_alias="SMTP_EMAIL_FROM")
 
-    frontend_url: str = Field(
-        default="http://localhost:3000", validation_alias="FRONTEND_URL"
-    )
+    frontend_url: str = Field(default="http://localhost:5173", validation_alias="FRONTEND_URL")
 
     # Data Dragon: API pública y oficial de Riot Games con los campeones de League of Legends (no requiere API key)
     riot_ddragon_base_url: str = Field(default="https://ddragon.leagueoflegends.com", validation_alias="RIOT_DDRAGON_BASE_URL")

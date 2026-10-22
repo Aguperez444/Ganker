@@ -274,8 +274,15 @@ def client(monkeypatch, test_session_factory, jwt_service, tmp_path):
     import app.infrastructure.api.dependencies.auth as auth_dep
     monkeypatch.setattr(auth_dep, "token_service", jwt_service)
 
-    from app.infrastructure.api.dependencies.login_rate_limiter import login_rate_limiter
+    from app.infrastructure.api.dependencies.auth_rate_limiter import login_rate_limiter, forgot_password_rate_limiter
     login_rate_limiter.reset()
+    forgot_password_rate_limiter.reset()
+    monkeypatch.setattr(settings, "login_rate_limit_enabled", True)
+    monkeypatch.setattr(settings, "login_rate_limit_max_attempts", 5)
+    monkeypatch.setattr(settings, "login_rate_limit_window_seconds", 60)
+    monkeypatch.setattr(settings, "forgot_password_rate_limit_enabled", True)
+    monkeypatch.setattr(settings, "forgot_password_rate_limit_max_attempts", 3)
+    monkeypatch.setattr(settings, "forgot_password_rate_limit_window_seconds", 900)
 
     # Tests own their in-memory schema and fixtures. Production startup seeds the local
     # database through a separate engine and must never run from TestClient.

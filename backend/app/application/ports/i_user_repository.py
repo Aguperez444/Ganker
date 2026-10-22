@@ -23,6 +23,10 @@ class IUserRepository(ABC):
         raise NotImplementedError
 
     @abstractmethod
+    def search_users_by_username(self, username: str, limit: int = 20, offset: int = 0) -> list['User']:
+        raise NotImplementedError
+
+    @abstractmethod
     def get_user_by_mail(self, mail: str) -> Optional['User']:
         raise NotImplementedError
 

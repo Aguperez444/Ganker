@@ -172,4 +172,6 @@ Vite incorpora las variables `VITE_*` durante el build. Cambiar la URL de API de
 
 En producción, [nginx/Dockerfile.prod](../nginx/Dockerfile.prod) compila `dist/` y lo copia a la imagen de Nginx. El frontend usa `VITE_API_URL` vacía para comunicarse con la API y los WebSockets del mismo origen mediante HTTPS y WSS. La aplicación ya está desplegada en **[gankerweb.app](https://gankerweb.app/)**.
 
+Los metadatos y la política de indexación se definen en [src/seo/metadata.js](src/seo/metadata.js). Solo la portada es indexable; el sitemap contiene esa URL. Al agregar una pantalla a `AppRouter`, agregá también su ruta a `PAGE_METADATA`: [seo.config.js](seo.config.js) genera el HTML con metadatos para cada ruta y el archivo de rutas que Nginx incluye en producción. `RouteMetadata` mantiene esos mismos datos durante la navegación dentro de la app. Las URL desconocidas muestran la página 404 y Nginx conserva el código HTTP 404.
+
 La configuración compartida y el despliegue a OCI se describen en el [README principal](../README.md#despliegue).

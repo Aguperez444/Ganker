@@ -355,16 +355,64 @@ fi
 # --restart fuerza la RECREACIÓN para aplicar la nueva configuración/env sin
 # recompilar; un simple 'up -d' podría no reiniciar un contenedor sin cambios.
 COMPOSE_UP_ARGS=(up -d --remove-orphans --wait --wait-timeout 180)
+FORCE_RECREATE=false
 if [[ "$MODE" == "--restart" ]]; then
   COMPOSE_UP_ARGS+=(--force-recreate --no-build)
+  FORCE_RECREATE=true
 fi
 
-echo "[*] Actualizando contenedores de Ganker..."
-if ! "${DOCKER_CMD[@]}" compose --env-file .env.prod -f docker-compose.prod.yml "${COMPOSE_UP_ARGS[@]}"; then
+# Al recrear una red, Compose puede reconectar contenedores existentes sin
+# conservar sus alias DNS (p. ej. Postgres sigue activo pero "db" no resuelve).
+# Inspeccionar solo redes y alias, sin imprimir variables ni credenciales.
+network_aliases_need_recreation() {
+  local service container_id aliases alias found
+  for service in db backend nginx; do
+    container_id=$("${DOCKER_CMD[@]}" compose --env-file .env.prod -f docker-compose.prod.yml ps --all --quiet "$service") || \
+      remote_fail "No se pudo consultar el contenedor del servicio $service."
+    [[ -n "$container_id" ]] || continue
+    aliases=$("${DOCKER_CMD[@]}" inspect --format '{{range .NetworkSettings.Networks}}{{range .Aliases}}{{println .}}{{end}}{{end}}' "$container_id") || \
+      remote_fail "No se pudieron inspeccionar los alias de red de $service."
+    found=false
+    while IFS= read -r alias; do
+      if [[ "$alias" == "$service" ]]; then
+        found=true
+        break
+      fi
+    done <<< "$aliases"
+    if [[ "$found" == false ]]; then
+      echo "[AVISO] El servicio $service perdió su alias DNS; se recrearán los contenedores conservando los volúmenes." >&2
+      return 0
+    fi
+  done
+  return 1
+}
+
+if [[ "$FORCE_RECREATE" == false ]] && network_aliases_need_recreation; then
+  COMPOSE_UP_ARGS+=(--force-recreate)
+  FORCE_RECREATE=true
+fi
+
+show_deploy_failure() {
   echo "[ERROR] Falló Docker Compose. Estado y últimos logs de TODOS los servicios:" >&2
   "${DOCKER_CMD[@]}" compose --env-file .env.prod -f docker-compose.prod.yml ps -a || true
   "${DOCKER_CMD[@]}" compose --env-file .env.prod -f docker-compose.prod.yml logs --tail=100 || true
-  exit 1
+}
+
+echo "[*] Actualizando contenedores de Ganker..."
+if ! "${DOCKER_CMD[@]}" compose --env-file .env.prod -f docker-compose.prod.yml "${COMPOSE_UP_ARGS[@]}"; then
+  # La pérdida de alias también puede ocurrir durante este mismo up si cambió
+  # la subred. Reintentar una sola vez sobre la red ya creada.
+  if [[ "$FORCE_RECREATE" == false ]] && network_aliases_need_recreation; then
+    echo "[*] Reparando los alias DNS mediante recreación de contenedores..."
+    COMPOSE_UP_ARGS+=(--force-recreate)
+    if ! "${DOCKER_CMD[@]}" compose --env-file .env.prod -f docker-compose.prod.yml "${COMPOSE_UP_ARGS[@]}"; then
+      show_deploy_failure
+      exit 1
+    fi
+  else
+    show_deploy_failure
+    exit 1
+  fi
 fi
 
 # Eliminar solamente imágenes colgantes (dangling), NO volúmenes ni bases de datos.

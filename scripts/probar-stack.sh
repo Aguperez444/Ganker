@@ -13,6 +13,29 @@ for attempt in {1..30}; do
   sleep 2
 done
 
+# Comprobar FastAPI y su conexión a la base, con reintentos durante el arranque.
+# Exigir JSON evita confundir el fallback del SPA con una API disponible.
+echo "[*] Esperando que la API y la base de datos respondan..."
+api_status="sin respuesta"
+for attempt in {1..30}; do
+  if api_response=$(curl --silent --show-error --connect-timeout 3 --max-time 5 \
+    --header 'Cache-Control: no-cache' --write-out $'\n%{http_code}\n%{content_type}' \
+    "$BASE_URL/api/v1/health?cb=$(date +%s)"); then
+    api_type=${api_response##*$'\n'}
+    api_response=${api_response%$'\n'*}
+    api_status=${api_response##*$'\n'}
+    api_body=${api_response%$'\n'*}
+    if [[ "$api_status" == "200" && "$api_type" == application/json* && "${api_body//[[:space:]]/}" == '{"status":"ok"}' ]]; then
+      echo "OK API y base de datos: HTTP 200 (application/json)"
+      break
+    fi
+  else
+    api_status="sin respuesta"
+  fi
+  [[ "$attempt" -lt 30 ]] || { echo "FALLO API: /api/v1/health no está disponible (HTTP $api_status)" >&2; exit 1; }
+  sleep 2
+done
+
 # 1. Verificar que los archivos ocultos devuelvan 404 (Hardening Nginx)
 env_status=$(curl --silent --output /dev/null --write-out '%{http_code}' "$BASE_URL/.env")
 [[ "$env_status" == "404" ]] || { echo "FALLO Seguridad: /.env devolvió HTTP $env_status (esperado 404)" >&2; exit 1; }
