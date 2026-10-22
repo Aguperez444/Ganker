@@ -1,4 +1,4 @@
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 
 from app.domain.models.player_report import PlayerReport
 from app.domain.models.report_status import ReportStatus
@@ -14,8 +14,9 @@ if TYPE_CHECKING:
 
 
 class ReportPlayer:
-    def __init__ (self, uow: IUnitOfWork):
+    def __init__(self, uow: IUnitOfWork, cooldown: timedelta = timedelta(hours=24)):
         self.uow = uow
+        self.cooldown = cooldown
 
     def execute(self, report_request: 'ReportPlayerRequest', reporter_id: int):
 
@@ -39,7 +40,7 @@ class ReportPlayer:
                 resolver_user=None
             )
 
-            new_report = uow.moderation_repo.report_player(new_report)
+            new_report = uow.moderation_repo.report_player(new_report, self.cooldown)
 
             new_report = ReportPlayerResponse(
                 report_id=new_report.report_id,

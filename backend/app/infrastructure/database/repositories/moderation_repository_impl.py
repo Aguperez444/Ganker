@@ -1,4 +1,7 @@
-from datetime import datetime
+from datetime import datetime, timedelta, timezone
+from math import ceil
+
+from sqlalchemy import func, or_
 
 from app.application.ports.i_moderation_repository import IModerationRepository
 
@@ -9,6 +12,7 @@ from app.infrastructure.database.models import UserORM
 from app.infrastructure.database.models import PlayerReportORM
 
 from app.domain.exceptions.moderation.ban_not_finished_exception import BanNotFinishedException
+from app.domain.exceptions.moderation.report_cooldown_exception import ReportCooldownException
 from app.domain.exceptions.moderation.not_banned_player_exception import NotBannedPlayerException
 
 from app.infrastructure.database.models.user_ban_record_orm import UserBanRecordORM
@@ -26,7 +30,57 @@ class ModerationRepositoryImpl(IModerationRepository):
     def __init__(self, session):
         self.session = session
 
-    def report_player(self, report: 'PlayerReport') -> 'PlayerReport':
+    def get_active_bans(self, username: str | None,skip: int,
+                        limit: int,) -> list[tuple[int, str, str, datetime | None]]:
+        # Seleccionar primero el último registro evita revivir un baneo anterior.
+        latest_bans = self.session.query(
+            UserBanRecordORM.banned_user_id,
+            func.max(UserBanRecordORM.id).label("latest_id"),
+        ).group_by(UserBanRecordORM.banned_user_id).subquery()
+        query = self.session.query(
+            UserORM.user_id, UserORM.username,
+            UserBanRecordORM.reason, UserBanRecordORM.expires_at,
+        ).join(
+            UserBanRecordORM, UserBanRecordORM.banned_user_id == UserORM.user_id,
+        ).join(
+            latest_bans, UserBanRecordORM.id == latest_bans.c.latest_id,
+        ).filter(
+            UserORM.banned.is_(True),
+            UserORM.deleted.is_(False),
+            or_(
+                UserBanRecordORM.expires_at.is_(None),
+                UserBanRecordORM.expires_at > datetime.now(timezone.utc),
+            ),
+        )
+        if username:
+            query = query.filter(UserORM.username.icontains(username, autoescape=True))
+
+        found_rows = query.order_by(UserORM.user_id).offset(skip).limit(limit).all()
+        return [tuple(row) for row in found_rows]
+
+    def report_player(self, report: 'PlayerReport', cooldown: timedelta) -> 'PlayerReport':
+        # La fila del denunciante existe incluso antes de su primer reporte.
+        # PostgreSQL mantiene el bloqueo hasta el commit/rollback del UoW, evitando
+        # que dos peticiones simultáneas comprueben el plazo y se guarden a la vez.
+        self.session.query(UserORM.user_id).filter(
+            UserORM.user_id == report.reporter.user_id,
+        ).with_for_update().one()
+        latest_report = self.session.query(PlayerReportORM.created_at).filter(
+            PlayerReportORM.reporter_id == report.reporter.user_id,
+            PlayerReportORM.reported_id == report.reported.user_id,
+        ).order_by(PlayerReportORM.created_at.desc(), PlayerReportORM.id.desc()).first()
+        now = datetime.now(timezone.utc)
+        if latest_report is not None:
+            # SQLite descarta la zona horaria; los reportes se generan en UTC.
+            last_created = latest_report.created_at
+            if last_created.tzinfo is None:
+                last_created = last_created.replace(tzinfo=timezone.utc)
+            retry_at = last_created + cooldown
+            if now < retry_at:
+                raise ReportCooldownException(
+                    retry_after=ceil((retry_at - now).total_seconds()), retry_at=retry_at,
+                )
+        report.created_at = now
         report_orm = PlayerReportMapper.domain_to_orm(report)
         self.session.add(report_orm)
         self.session.flush()
@@ -82,7 +136,9 @@ class ModerationRepositoryImpl(IModerationRepository):
                     self.session.flush()
                     return
 
-            raise BanNotFinishedException()
+            raise BanNotFinishedException(
+                reason=user_ban_log.reason, expires_at=user_ban_log.expires_at,
+            )
 
         if user and getattr(user, "banned", False) is True:
             raise BanNotFinishedException()
