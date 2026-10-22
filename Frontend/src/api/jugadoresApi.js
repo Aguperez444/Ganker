@@ -8,11 +8,11 @@ export function registrarJugador({ nombre, username, mail, password }) {
       mail,
       password,
     })
-    .then((res) => res.data); // { access_token, refresh_token, token_type }
+    .then((res) => res.data); // { message }: solicita confirmar el correo antes de crear la cuenta.
 }
 
 // Datos del jugador dueño del token. Es la UNICA fuente de `user` en el front:
-// lo llama AuthContext al iniciar sesion, al registrarse y al recargar la pagina.
+// lo llama AuthContext al iniciar sesion, al completar el registro federado y al recargar.
 export function obtenerJugadorActual() {
   return axiosClient.get("/api/v1/users/me").then((res) => res.data);
 }
