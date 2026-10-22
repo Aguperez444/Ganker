@@ -9,6 +9,7 @@ from app.application.ports.i_game_profile_repository import IGameProfileReposito
 from app.application.ports.i_game_profile_report_repository import IGameProfileReportRepository
 from app.application.ports.i_game_usage_report_repository import IGameUsageReportRepository
 from app.application.ports.i_message_repository import IMessageRepository
+from app.application.ports.i_moderation_repository import IModerationRepository
 from app.application.ports.i_password_reset_token_repository import IPasswordResetTokenRepository
 from app.application.ports.i_role_profile_repository import IRoleProfileRepository
 from app.application.ports.i_user_repository import IUserRepository
@@ -29,6 +30,7 @@ from app.infrastructure.database.repositories.game_profile_repository_impl impor
 from app.infrastructure.database.repositories.game_profile_report_repository_impl import GameProfileReportRepositoryImpl
 from app.infrastructure.database.repositories.game_usage_report_repository_impl import GameUsageReportRepositoryImpl
 from app.infrastructure.database.repositories.message_repo_impl import MessageRepoImpl
+from app.infrastructure.database.repositories.moderation_repository_impl import ModerationRepositoryImpl
 from app.infrastructure.database.repositories.password_reset_token_repository_impl import PasswordResetTokenRepositoryImpl
 from app.infrastructure.database.repositories.role_profile_repository_impl import RoleProfileRepositoryImpl
 from app.infrastructure.database.repositories.user_repository_impl import UserRepositoryImpl
@@ -75,6 +77,7 @@ class SqlAlchemyUnitOfWork(IUnitOfWork):
         self.riot_account_link_repo: IRiotAccountLinkRepository
         self.discord_account_link_repo: IDiscordAccountLinkRepository
         self.federated_identity_repo: IFederatedIdentityRepository
+        self.moderation_repo: IModerationRepository
     # Context manager
     def __enter__(self) -> 'SqlAlchemyUnitOfWork':
         self.session: Session = self._sf()  # nueva Session por acción
@@ -97,6 +100,7 @@ class SqlAlchemyUnitOfWork(IUnitOfWork):
         self.discord_account_link_repo: IDiscordAccountLinkRepository = DiscordAccountLinkRepositoryImpl(self.session)
         self.federated_identity_repo: IFederatedIdentityRepository = FederatedIdentityRepositoryImpl(self.session)
         self.find_by_specification_repo: IFindBySpecificationsRepository = FindBySpecificationsRepositoryImpl(self.session)
+        self.moderation_repo: IModerationRepository = ModerationRepositoryImpl(self.session)
         self.reset_token_repo: 'IPasswordResetTokenRepository' = PasswordResetTokenRepositoryImpl(self.session)
         return self
 

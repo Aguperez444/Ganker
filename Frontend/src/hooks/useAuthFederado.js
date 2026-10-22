@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { obtenerUrlAutorizacionFederada } from "../api/federatedAuthApi";
 
 // Paso 1 del login/registro federado: pide al backend la URL firmada del
@@ -7,6 +7,16 @@ import { obtenerUrlAutorizacionFederada } from "../api/federatedAuthApi";
 export function useAuthFederado() {
   const [proveedorCargando, setProveedorCargando] = useState(null);
   const [errorFederado, setErrorFederado] = useState(null);
+
+  // Si el usuario vuelve con "Atrás" desde el proveedor, el navegador restaura
+  // la página desde su caché (bfcache) con el botón todavía en "Conectando...".
+  useEffect(() => {
+    function alVolverALaPagina(event) {
+      if (event.persisted) setProveedorCargando(null);
+    }
+    window.addEventListener("pageshow", alVolverALaPagina);
+    return () => window.removeEventListener("pageshow", alVolverALaPagina);
+  }, []);
 
   async function conectar(proveedorId) {
     setErrorFederado(null);

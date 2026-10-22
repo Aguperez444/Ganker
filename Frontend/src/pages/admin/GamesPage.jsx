@@ -1,12 +1,20 @@
 import { useState } from "react";
 import GameForm from "../../components/games/GameFormComponent";
 import GameListComponent from "../../components/games/GamesListComponent";
+import ModalConfirmacionComponent from "../../components/common/ModalConfirmacionComponent";
+import { useAuth } from "../../context/AuthContext";
 import useGames from "../../hooks/useGames";
+import { esOwner } from "../../utils/rutas";
 
+// Admin de videojuegos: registrar, modificar y eliminar (US 23, solo owner).
 const GamesPage = () => {
   const [mode, setMode] = useState(null);
   const [selectedGame, setSelectedGame] = useState(null);
+  const [gameToDelete, setGameToDelete] = useState(null);
   const [successMessage, setSuccessMessage] = useState("");
+
+  const { user } = useAuth();
+  const puedeEliminar = esOwner(user);
 
   const {
     games,
@@ -16,6 +24,7 @@ const GamesPage = () => {
     actionError,
     registerGame,
     editGame,
+    removeGame,
     clearActionError,
   } = useGames();
 
@@ -68,6 +77,36 @@ const GamesPage = () => {
 
     setMode(null);
     setSelectedGame(null);
+  };
+
+  const handleOpenDelete = (game) => {
+    clearActionError();
+    setSuccessMessage("");
+    // Cerramos el formulario abierto para que no comparta el mensaje de
+    // error con el modal ni quede editando un juego que se va a borrar.
+    setMode(null);
+    setSelectedGame(null);
+    setGameToDelete(game);
+  };
+
+  const handleCancelDelete = () => {
+    clearActionError();
+    setGameToDelete(null);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!gameToDelete) {
+      return;
+    }
+
+    const message = await removeGame(gameToDelete.id);
+
+    if (!message) {
+      return;
+    }
+
+    setSuccessMessage(message);
+    setGameToDelete(null);
   };
 
   return (
@@ -126,6 +165,7 @@ const GamesPage = () => {
               error={error}
               selectedGameId={selectedGame?.id}
               onEdit={handleOpenEdit}
+              onDelete={puedeEliminar ? handleOpenDelete : undefined}
             />
           </section>
 
@@ -156,6 +196,33 @@ const GamesPage = () => {
           )}
         </div>
       </div>
+
+      <ModalConfirmacionComponent
+        isOpen={Boolean(gameToDelete)}
+        title="Eliminar videojuego"
+        message={
+          <>
+            <p>
+              ¿Seguro que querés eliminar el videojuego{" "}
+              <span className="font-semibold text-ganker-text">
+                {gameToDelete?.name}
+              </span>
+              ?
+            </p>
+            <p className="mt-2">
+              También se van a eliminar todos sus roles, rangos y personajes, y
+              los perfiles de juego de los jugadores que lo juegan. El juego
+              dejará de verse en el catálogo, las búsquedas y los perfiles de
+              los jugadores. Esta acción no se puede deshacer.
+            </p>
+          </>
+        }
+        confirmLabel="Eliminar"
+        isLoading={isSaving}
+        error={actionError}
+        onConfirm={handleConfirmDelete}
+        onCancel={handleCancelDelete}
+      />
     </section>
   );
 };

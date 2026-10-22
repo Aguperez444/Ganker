@@ -62,10 +62,13 @@ function HeroSection() {
       {/* Contenido central del Hero */}
       <div className="relative z-10 mx-auto max-w-5xl px-4 text-center">
         {/* Titular con efecto máquina de escribir y resplandor neón gaming */}
-        <h2
+        <h1
           className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-extrabold tracking-tight font-heading inline-flex flex-wrap justify-center items-center gap-x-2 sm:gap-x-3.5"
-          aria-label="Encuentra. Conecta. Compite."
+          aria-label="Ganker — Plataforma para encontrar equipo, lobbies y jugadores. Encuentra. Conecta. Compite."
         >
+          <span className="sr-only">
+            Ganker — Plataforma para encontrar equipo, lobbies y jugadores:{" "}
+          </span>
           {renderedWords.map((word, idx) => (
             <span
               key={idx}
@@ -89,7 +92,7 @@ function HeroSection() {
           >
             _
           </span>
-        </h2>
+        </h1>
 
         <p className="mt-4 text-xs sm:text-sm md:text-base font-semibold uppercase tracking-[0.25em] text-[#f27238] drop-shadow-[0_0_8px_rgba(242,114,56,0.3)]">
           Matchmaking por nivel real

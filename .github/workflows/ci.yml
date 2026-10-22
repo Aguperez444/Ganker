@@ -3,6 +3,17 @@ name: CI - Tests & Build
 on:
   push:
     branches: [main]
+    paths-ignore:
+      - "**/*.md"
+      - "**/.gitignore"
+      - ".github/CODEOWNERS"
+      - "start_all.sh"
+      - "start_all.ps1"
+      - "start_all.bat"
+      - "start_frontend.sh"
+      - "backend/start_app.sh"
+      - "backend/start_app.ps1"
+      - "backend/start_app.bat"
   pull_request:
     branches: [main]
 

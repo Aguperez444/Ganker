@@ -340,3 +340,54 @@ class TestReportEndpointsIntegration:
     def test_list_reports_unauthorized_without_token(self, client):
         response = client.get("/api/v1/reports/game-profiles")
         assert response.status_code == 401
+
+
+    @pytest.mark.parametrize("with_previous_report", [False, True])
+    def test_get_report_matches_saved_generation(self, client, admin_auth_headers, report_data,
+                                                 test_db_session, with_previous_report):
+        url = "/api/v1/reports/game-profiles"
+        first = client.post(url, json={}, headers=admin_auth_headers)
+        assert first.status_code == 201
+        expected = first.json()
+        if with_previous_report:
+            second = client.post(url, json={}, headers=admin_auth_headers)
+            assert second.status_code == 201
+            expected = second.json()
+
+        # Cambiar la población después de generar no debe cambiar la instantánea.
+        existing = test_db_session.query(GameProfileORM).filter_by(
+            videogame_id=report_data["lol"].videogame_id
+        ).first()
+        test_db_session.add(GameProfileORM(
+            player_id=existing.player_id,
+            videogame_id=report_data["cs2"].videogame_id,
+            created_at=datetime(2026, 6, 16),
+        ))
+        test_db_session.commit()
+        history = client.get(url, headers=admin_auth_headers).json()
+        response = client.get(f"{url}/{expected['report_id']}", headers=admin_auth_headers)
+
+        assert response.status_code == 200
+        assert response.headers["content-type"] == "application/json"
+        assert response.json() == expected
+        assert client.get(url, headers=admin_auth_headers).json() == history
+        assert client.get(f"{url}/{first.json()['report_id']}", headers=admin_auth_headers).json() == first.json()
+
+    def test_get_report_with_period_as_owner(self, client, admin_auth_headers, owner_auth_headers, report_data):
+        url = "/api/v1/reports/game-profiles"
+        generated = client.post(url, json={"start_date": "2026-06-01", "end_date": "2026-06-30"},
+                                headers=admin_auth_headers)
+        assert generated.status_code == 201
+        response = client.get(f"{url}/{generated.json()['report_id']}", headers=owner_auth_headers)
+        assert response.status_code == 200
+        assert response.json() == generated.json()
+
+    @pytest.mark.parametrize("report_id, expected_status", [(99999, 404), ("invalid", 422)])
+    def test_get_report_invalid_id(self, client, admin_auth_headers, report_id, expected_status):
+        response = client.get(f"/api/v1/reports/game-profiles/{report_id}", headers=admin_auth_headers)
+        assert response.status_code == expected_status
+
+    def test_get_report_requires_admin(self, client, player_auth_headers):
+        url = "/api/v1/reports/game-profiles/1"
+        assert client.get(url).status_code == 401
+        assert client.get(url, headers=player_auth_headers).status_code == 403

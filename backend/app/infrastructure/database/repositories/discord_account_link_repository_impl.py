@@ -20,6 +20,7 @@ class DiscordAccountLinkRepositoryImpl(IDiscordAccountLinkRepository):
             .filter(
                 DiscordAccountLinkORM.user_id == user_id,
                 UserORM.deleted == False,
+                UserORM.banned == False
             )
             .first()
         )
@@ -32,6 +33,7 @@ class DiscordAccountLinkRepositoryImpl(IDiscordAccountLinkRepository):
             .filter(
                 DiscordAccountLinkORM.discord_user_id == discord_user_id,
                 UserORM.deleted == False,
+                UserORM.banned == False
             )
             .first()
         )

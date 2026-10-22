@@ -14,15 +14,17 @@ function Header() {
     <header className="sticky top-0 z-50 w-full border-b border-[#1f173b]/70 bg-[#0a0718]/90 backdrop-blur-md px-4 sm:px-8 py-3.5 font-heading text-white">
       <div className="mx-auto flex max-w-7xl items-center justify-between">
         <Link to="/" className="flex items-center gap-3 group">
-          <h1 className="sr-only">Ganker</h1>
           <img
             src="/images/Logo_y_letras_blanco.svg"
-            alt="Ganker"
+            alt="Ganker — Plataforma de LFG y Matchmaking para Gamers"
             className="h-8 sm:h-9 w-auto transition-transform duration-300 group-hover:scale-105"
           />
         </Link>
 
-        <nav className="flex items-center gap-4 sm:gap-6 text-xs sm:text-sm font-bold uppercase tracking-wider">
+        <nav
+          aria-label="Navegación principal"
+          className="flex items-center gap-4 sm:gap-6 text-xs sm:text-sm font-bold uppercase tracking-wider"
+        >
           {isAuthenticated ? (
             <>
               <NavLink
