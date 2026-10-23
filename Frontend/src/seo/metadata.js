@@ -47,6 +47,12 @@ export const PAGE_METADATA = [
     description: "Confirmá tu correo para completar el registro en Ganker.",
   },
   {
+    path: "/confirm-email-change",
+    title: "Confirmar nuevo email | Ganker",
+    description:
+      "Confirmá tu nuevo correo para actualizar el email de tu cuenta.",
+  },
+  {
     path: "/auth/callback/:provider",
     title: "Conectando tu cuenta | Ganker",
     description:
