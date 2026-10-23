@@ -2,6 +2,7 @@ from typing import TYPE_CHECKING, Optional
 
 from app.application.ports.i_unit_of_work import IUnitOfWork
 from app.domain.exceptions.character.duplicated_character_in_request import DuplicatedCharacterInRequest
+from app.domain.exceptions.game_profile.characters_required_exception import CharactersRequiredException
 from app.domain.exceptions.role.duplicated_role_in_request import DuplicatedRoleInRequest
 from app.domain.models.character_priority import CharacterPriority
 from app.domain.models.game_profile import GameProfile
@@ -39,6 +40,8 @@ class CreateVideogameProfile:
         with self.uow as uow:
             # Buscar el videojuego en la base de datos
             videogame: 'Videogame' = CatalogValidationService.get_and_validate_exist_videogame(create_videogame_profile_request.videogame_id, uow)
+            if videogame.has_characters and not create_videogame_profile_request.character_ids:
+                raise CharactersRequiredException()
             CatalogValidationService.validate_not_duplicated_game_profile(player_id, videogame.videogame_id, uow)
 
             # Buscar los personajes en la base de datos
