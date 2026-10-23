@@ -16,9 +16,10 @@ class DeleteRank:
             if not rank_to_delete:
                 raise RankNotFoundException(rank_id)
 
-            # Validar si existen jugadores o perfiles asociados actualmente al rango
+            # Las referencias persisten también en perfiles eliminados y equipos inactivos.
             associated_count = uow.role_profile_repo.count_associated_to_rank(rank_id)
-            if associated_count > 0:
+            associated_teams_count = uow.team_repo.count_associated_to_rank(rank_id)
+            if associated_count > 0 or associated_teams_count > 0:
                 game_id = rank_to_delete.videogame.videogame_id
                 all_game_ranks = uow.rank_repo.get_ranks_by_game_id(game_id)
                 other_ranks = [r for r in all_game_ranks if r.rank_id != rank_id]
@@ -41,6 +42,10 @@ class DeleteRank:
                 uow.role_profile_repo.reassign_associated_to_rank(
                     source_rank_id=rank_id,
                     target_rank_id=target_rank.rank_id
+                )
+                uow.team_repo.reassign_associated_to_rank(
+                    source_rank_id=rank_id,
+                    target_rank_id=target_rank.rank_id,
                 )
 
             # Eliminar el rango del sistema

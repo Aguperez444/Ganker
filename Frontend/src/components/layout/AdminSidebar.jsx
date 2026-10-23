@@ -1,44 +1,5 @@
 import { Link, NavLink } from "react-router-dom";
-
-export const adminNavigationItems = [
-  {
-    label: "Inicio",
-    path: "/app/admin",
-    end: true,
-  },
-  {
-    label: "Juegos",
-    path: "/app/admin/games",
-  },
-  {
-    label: "Rangos",
-    path: "/app/admin/ranks",
-  },
-  {
-    label: "Roles",
-    path: "/app/admin/roles",
-  },
-  {
-    label: "Personajes",
-    path: "/app/admin/characters",
-  },
-  {
-    label: "Regiones",
-    path: "/app/admin/regions",
-  },
-  {
-    label: "Reportes",
-    path: "/app/admin/reportes",
-  },
-  {
-    label: "Usuarios",
-    path: "/app/admin/usuarios",
-  },
-  {
-    label: "Moderación",
-    path: "/app/admin/moderacion",
-  },
-];
+import { adminNavigationItems } from "./navegacion.js";
 
 const AdminSidebar = () => {
   return (

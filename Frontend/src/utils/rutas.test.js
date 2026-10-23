@@ -4,6 +4,7 @@ import {
   rutaInicialPara,
   rutaPerfilJugador,
   ROLES_ADMIN,
+  rolesQuePuedeRegistrar,
 } from "./rutas";
 
 // El backend manda el rol en MINUSCULA: el enum UserRole vale "owner",
@@ -44,5 +45,21 @@ describe("rutaPerfilJugador", () => {
   it("preselecciona el videojuego si se indica", () => {
     expect(rutaPerfilJugador(7, 2)).toBe("/app/jugadores/7?juego=2");
     expect(rutaPerfilJugador(7, "")).toBe("/app/jugadores/7");
+  });
+});
+
+describe("rolesQuePuedeRegistrar - US 39", () => {
+  it("devuelve los roles de su jerarquía o inferior", () => {
+    expect(rolesQuePuedeRegistrar({ role: "owner" })).toEqual([
+      "player",
+      "admin",
+      "owner",
+    ]);
+    expect(rolesQuePuedeRegistrar({ role: "admin" })).toEqual([
+      "player",
+      "admin",
+    ]);
+    expect(rolesQuePuedeRegistrar({ role: "player" })).toEqual([]);
+    expect(rolesQuePuedeRegistrar(null)).toEqual([]);
   });
 });

@@ -100,6 +100,14 @@ La red interna usa `GANKER_INTERNAL_SUBNET` (por defecto `172.30.0.0/24`) y una 
 
 El deploy comprueba los alias DNS de `db`, `backend` y `nginx`. Si Compose perdió alguno al recrear la red, fuerza una recreación de los contenedores conservando los volúmenes; también permite un único reintento si sucede durante el mismo despliegue. Puede producir una breve interrupción mientras reinicia PostgreSQL. El backend tiene un healthcheck HTTP que consulta `/api/v1/health`, incluida la base de datos, y Nginx espera a que esté listo. Así `up --wait` no da por válido un backend que solo alcanzó a iniciar el proceso de Alembic.
 
+El healthcheck del backend se ejecuta cada 2 minutos durante el funcionamiento normal
+y cada 5 segundos durante el período inicial de 30 segundos. Tras 3 fallos consecutivos
+se marca como no saludable (aproximadamente 6 minutos si el fallo ocurre justo después
+de una comprobación exitosa). `start_interval` requiere Docker Engine 25.0 o posterior
+y Docker Compose 2.20.2 o posterior, según la
+[documentación de Docker](https://docs.docker.com/reference/dockerfile/#healthcheck)
+y [Compose](https://docs.docker.com/reference/compose-file/services/#healthcheck).
+
 Si la red existente tiene una subred incompatible y Compose no puede reemplazarla, se puede recrear manualmente con `docker compose --env-file .env.prod -f docker-compose.prod.yml down` y luego `docker compose --env-file .env.prod -f docker-compose.prod.yml up -d --build`, conservando los volúmenes (sin `--volumes`).
 
 El script [scripts/deploy.sh](scripts/deploy.sh) documenta los requisitos de SSH, configuración y certificados en el servidor. Para consultar sus modos desde la raíz:

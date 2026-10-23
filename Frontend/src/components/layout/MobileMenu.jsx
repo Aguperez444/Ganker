@@ -1,17 +1,9 @@
-import { Link, NavLink, useNavigate } from "react-router-dom";
-import { navigationItems } from "./Sidebar.jsx";
-import { useAuth } from "../../context/AuthContext.jsx";
+import { Link, NavLink } from "react-router-dom";
+import { navigationItems } from "./navegacion.js";
 
 const MobileMenu = ({ isOpen, onClose }) => {
-  const { logout } = useAuth();
-  const navigate = useNavigate();
-
-  const handleLogout = async () => {
-    await logout();
-    onClose();
-    navigate("/login");
-  };
-
+  // "Cerrar sesión" vive solo en el menu del avatar (TopNavbar), que se ve
+  // en todas las resoluciones: no se duplica en este panel.
   if (!isOpen) {
     return null;
   }
@@ -74,16 +66,6 @@ const MobileMenu = ({ isOpen, onClose }) => {
               {item.label}
             </NavLink>
           ))}
-
-          <div className="my-2 border-t border-white/10" />
-
-          <button
-            type="button"
-            onClick={handleLogout}
-            className="rounded-lg px-4 py-3 text-left text-sm font-semibold text-ganker-muted transition hover:bg-ganker-surface-light hover:text-ganker-text"
-          >
-            Cerrar sesión
-          </button>
         </nav>
       </aside>
     </div>

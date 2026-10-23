@@ -95,12 +95,12 @@ const IntegrantesEquipoComponent = ({
         return (
           <li
             key={integrante.team_member_role_id ?? `lugar-${indice}`}
-            className={`flex items-center justify-between bg-ganker-surface-light ${
-              compacto ? "gap-2 px-3 py-1.5" : "gap-4 px-4 py-3"
+            className={`flex flex-wrap items-center justify-between bg-ganker-surface-light ${
+              compacto ? "gap-2 px-3 py-1.5" : "gap-x-4 gap-y-2 px-4 py-3"
             }`}
           >
             <div
-              className={`flex min-w-0 items-center ${compacto ? "gap-2" : "gap-3"}`}
+              className={`flex min-w-0 flex-1 items-center ${compacto ? "gap-2" : "gap-3"}`}
             >
               {iconUrl ? (
                 <img
@@ -169,7 +169,9 @@ const IntegrantesEquipoComponent = ({
             {(onTransferirLiderazgo || onExpulsar) &&
               !integrante.is_vacant &&
               !integrante.is_leader && (
-                <div className="flex shrink-0 items-center gap-2">
+                // En mobile las acciones bajan a su propio renglon para no
+                // tapar el nombre ni el rol/rango del integrante.
+                <div className="flex w-full shrink-0 items-center justify-end gap-2 sm:w-auto">
                   {onTransferirLiderazgo && (
                     <button
                       type="button"
