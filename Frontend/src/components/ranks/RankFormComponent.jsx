@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import IconSelectComponent from "../common/IconSelectComponent";
 import { resolveIconUrl } from "../../utils/media";
+import { getRanksByGame } from "../../api/rankApi";
 
 // mode "create" registra uno nuevo; "edit" modifica uno existente: el
 // videojuego queda bloqueado (no se puede cambiar) y el icono es opcional
@@ -21,9 +22,21 @@ const RankForm = ({
 
   const [videogameId, setVideogameId] = useState(initialVideogameId ?? "");
   const [name, setName] = useState(initialName);
-  const [value, setValue] = useState(
-    initialValue === "" || initialValue === null ? "" : String(initialValue)
+  const [customValue, setCustomValue] = useState(
+    initialValue === "" || initialValue === null
+      ? isEditMode
+        ? ""
+        : null
+      : String(initialValue)
   );
+  const [rankDefault, setRankDefault] = useState(null);
+  const isLoadingDefault =
+    !isEditMode &&
+    Boolean(videogameId) &&
+    rankDefault?.videogameId !== videogameId;
+  const currentDefault =
+    rankDefault?.videogameId === videogameId ? rankDefault : null;
+  const value = customValue ?? currentDefault?.value ?? "";
   const [iconFile, setIconFile] = useState(null);
   const resolvedInitialPreview = useMemo(
     () => resolveIconUrl(initialIconUrl),
@@ -33,6 +46,35 @@ const RankForm = ({
   const [validationError, setValidationError] = useState("");
   const [isDragging, setIsDragging] = useState(false);
   const fileInputRef = useRef(null);
+
+  useEffect(() => {
+    if (isEditMode || !videogameId) return;
+
+    let active = true;
+    getRanksByGame(videogameId)
+      .then((ranks) => {
+        if (!active) return;
+        const nextValue =
+          (ranks || []).reduce(
+            (max, rank) => Math.max(max, Number(rank.value)),
+            0
+          ) + 1;
+        setRankDefault({ videogameId, value: String(nextValue), error: "" });
+      })
+      .catch(() => {
+        if (!active) return;
+        setRankDefault({
+          videogameId,
+          value: "",
+          error:
+            "No se pudieron cargar los rangos para calcular el valor jerárquico.",
+        });
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [isEditMode, videogameId]);
 
   useEffect(() => {
     return () => {
@@ -145,13 +187,14 @@ const RankForm = ({
     });
   };
 
-  const displayedError = validationError || error;
+  const displayedError = validationError || error || currentDefault?.error;
 
   const hasChanges = isEditMode
     ? (name.trim().length > 0 && name.trim() !== initialName.trim()) ||
       (value !== "" && String(value) !== String(initialValue)) ||
       iconFile !== null
     : Boolean(videogameId) &&
+      !isLoadingDefault &&
       name.trim().length > 0 &&
       value !== "" &&
       iconFile !== null;
@@ -184,6 +227,7 @@ const RankForm = ({
             value={videogameId}
             onChange={(gameId) => {
               setVideogameId(gameId);
+              setCustomValue(null);
               if (validationError) setValidationError("");
             }}
             options={games}
@@ -229,11 +273,11 @@ const RankForm = ({
             step="1"
             value={value}
             onChange={(event) => {
-              setValue(event.target.value);
+              setCustomValue(event.target.value);
               if (validationError) setValidationError("");
             }}
             placeholder="Ej: 2 (a mayor valor, mayor jerarquía)"
-            disabled={isLoading}
+            disabled={isLoading || isLoadingDefault}
             className="w-full rounded-lg border border-white/10 bg-ganker-surface-light px-4 py-3 text-ganker-text placeholder:text-ganker-muted outline-none transition-all duration-200 focus:border-ganker-purple-light focus:ring-2 focus:ring-ganker-purple/30 disabled:cursor-not-allowed disabled:opacity-50"
           />
         </div>

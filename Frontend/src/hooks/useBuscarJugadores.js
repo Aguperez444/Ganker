@@ -211,9 +211,8 @@ export function useBuscarJugadores() {
     return () => {
       cancelado = true;
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- pagina y orden
-    // no van aca: se resuelven en memoria sobre todosLosResultados, no
-    // ameritan volver a pedirle al backend.
+    // pagina y orden no van en las dependencias: se resuelven en memoria sobre
+    // todosLosResultados, no ameritan volver a pedirle al backend.
   }, [selectedGameId, rankId, roleId, characterId, usernameDebounced]);
 
   // Cualquier cambio de filtro/juego vuelve a la pagina 1: si no, se podria

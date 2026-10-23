@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { solicitarRecuperacion } from "../api/recuperacionContrasenaApi";
 import { logError } from "../utils/logs";
 import { validarFormularioRecuperarContrasena } from "../utils/validaciones";
@@ -7,6 +7,10 @@ import { validarFormularioRecuperarContrasena } from "../utils/validaciones";
 export const MENSAJE_RECUPERACION_ENVIADA =
   "Si el correo coincide con una cuenta activa, recibirás un enlace de recuperación.";
 
+// Espera antes de poder pedir otro mail. El backend no limita este endpoint,
+// asi que esto evita al menos que la pantalla sirva para mandar mails en loop.
+export const SEGUNDOS_ENTRE_ENVIOS = 60;
+
 // US 34 - Cambiar contraseña, paso 1: pedir el mail de recuperacion.
 export function useRecuperarContrasena(emailInicial = "") {
   const [valores, setValores] = useState({ email: emailInicial });
@@ -14,6 +18,13 @@ export function useRecuperarContrasena(emailInicial = "") {
   const [cargando, setCargando] = useState(false);
   const [errorServidor, setErrorServidor] = useState(null);
   const [enviado, setEnviado] = useState(null);
+  const [segundosParaReenviar, setSegundosParaReenviar] = useState(0);
+
+  useEffect(() => {
+    if (segundosParaReenviar <= 0) return undefined;
+    const timer = setTimeout(() => setSegundosParaReenviar((s) => s - 1), 1000);
+    return () => clearTimeout(timer);
+  }, [segundosParaReenviar]);
 
   function handleChange(campo, valor) {
     setValores((prev) => ({ ...prev, [campo]: valor }));
@@ -21,6 +32,7 @@ export function useRecuperarContrasena(emailInicial = "") {
 
   async function handleSubmit(e) {
     e.preventDefault();
+    if (segundosParaReenviar > 0) return false;
     setErrorServidor(null);
     setEnviado(null);
 
@@ -32,6 +44,7 @@ export function useRecuperarContrasena(emailInicial = "") {
     try {
       const respuesta = await solicitarRecuperacion(valores.email);
       setEnviado(respuesta?.message ?? MENSAJE_RECUPERACION_ENVIADA);
+      setSegundosParaReenviar(SEGUNDOS_ENTRE_ENVIOS);
       return true;
     } catch (error) {
       logError("Error al pedir la recuperación de contraseña:", error);
@@ -55,6 +68,7 @@ export function useRecuperarContrasena(emailInicial = "") {
     cargando,
     errorServidor,
     enviado,
+    segundosParaReenviar,
     handleChange,
     handleSubmit,
   };

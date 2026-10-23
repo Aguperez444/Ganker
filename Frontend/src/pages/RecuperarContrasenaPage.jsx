@@ -14,6 +14,7 @@ function RecuperarContrasenaPage() {
     cargando,
     errorServidor,
     enviado,
+    segundosParaReenviar,
     handleChange,
     handleSubmit,
   } = useRecuperarContrasena(emailInicial);
@@ -26,6 +27,7 @@ function RecuperarContrasenaPage() {
         cargando={cargando}
         errorServidor={errorServidor}
         enviado={enviado}
+        segundosParaReenviar={segundosParaReenviar}
         onChange={handleChange}
         onSubmit={handleSubmit}
       />

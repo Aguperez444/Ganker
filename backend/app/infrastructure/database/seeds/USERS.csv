@@ -6,3 +6,8 @@ Ana García,ana_player,ana@test.com,"$argon2id$v=19$m=65536,t=3,p=4$X+t8ZBUkteBP
 Bruno Díaz,bruno_player,bruno@test.com,"$argon2id$v=19$m=65536,t=3,p=4$X+t8ZBUkteBPNouiCGlFhg$L1m/T+rult+vBQUt9PRYsFfQvN0fa6VmLWq376yw4Tg",player,/media/users/icons/icon_example_1.png,NULL
 Carla López,caro_player,caro@test.com,"$argon2id$v=19$m=65536,t=3,p=4$X+t8ZBUkteBPNouiCGlFhg$L1m/T+rult+vBQUt9PRYsFfQvN0fa6VmLWq376yw4Tg",player,/media/users/icons/icon_example_1.png,NULL
 Diego Fernández,diego_player,diego@test.com,"$argon2id$v=19$m=65536,t=3,p=4$X+t8ZBUkteBPNouiCGlFhg$L1m/T+rult+vBQUt9PRYsFfQvN0fa6VmLWq376yw4Tg",player,/media/users/icons/icon_example_1.png,NULL
+Pedro Gómez,pedro,pedro@test.com,"$argon2id$v=19$m=65536,t=3,p=4$X+t8ZBUkteBPNouiCGlFhg$L1m/T+rult+vBQUt9PRYsFfQvN0fa6VmLWq376yw4Tg",player,/media/users/icons/icon_example_1.png,NULL
+Pedro Ruiz,pedro_2,pedro2@test.com,"$argon2id$v=19$m=65536,t=3,p=4$X+t8ZBUkteBPNouiCGlFhg$L1m/T+rult+vBQUt9PRYsFfQvN0fa6VmLWq376yw4Tg",player,/media/users/icons/icon_example_1.png,NULL
+Pedro Pro,Pedro_Pro,pedropro@test.com,"$argon2id$v=19$m=65536,t=3,p=4$X+t8ZBUkteBPNouiCGlFhg$L1m/T+rult+vBQUt9PRYsFfQvN0fa6VmLWq376yw4Tg",player,/media/users/icons/icon_example_1.png,NULL
+Pedrito Sosa,pedrito,pedrito@test.com,"$argon2id$v=19$m=65536,t=3,p=4$X+t8ZBUkteBPNouiCGlFhg$L1m/T+rult+vBQUt9PRYsFfQvN0fa6VmLWq376yw4Tg",player,/media/users/icons/icon_example_1.png,NULL
+Pedro Admin,admin_pedro,adminpedro@test.com,"$argon2id$v=19$m=65536,t=3,p=4$X+t8ZBUkteBPNouiCGlFhg$L1m/T+rult+vBQUt9PRYsFfQvN0fa6VmLWq376yw4Tg",admin,/media/users/icons/icon_example_1.png,NULL

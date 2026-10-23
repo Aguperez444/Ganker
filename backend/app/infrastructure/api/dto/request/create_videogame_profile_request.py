@@ -8,9 +8,8 @@ class RoleRankInput(BaseModel):
 class CreateGameProfileRequest(BaseModel):
     videogame_id: int = Field(..., description="ID del videojuego para el cual se crea el perfil")
     character_ids: List[int] = Field(
-        ...,
-        min_length=1,
-        description="Lista de IDs de personajes (debe seleccionar al menos uno)"
+        default_factory=list,
+        description="Lista de IDs de personajes. Puede omitirse o estar vacía si el videojuego no tiene personajes"
     )
     roles: List[RoleRankInput] = Field(
         ...,

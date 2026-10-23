@@ -11,6 +11,16 @@ if TYPE_CHECKING:
 class ITeamRepository(ABC):
 
     @abstractmethod
+    def count_associated_to_rank(self, rank_id: int) -> int:
+        """Cuenta equipos activos e inactivos que usan el rango como mínimo o máximo."""
+        raise NotImplementedError
+
+    @abstractmethod
+    def reassign_associated_to_rank(self, source_rank_id: int, target_rank_id: int) -> int:
+        """Reasigna los límites que usan el rango, incluidos los de equipos inactivos."""
+        raise NotImplementedError
+
+    @abstractmethod
     def get_by_id_for_update(self, team_id: int) -> Optional['Team']:
         """
         Obtiene un equipo por su ID con un bloqueo FOR UPDATE para evitar colisiones en entornos concurrentes.

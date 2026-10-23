@@ -62,10 +62,12 @@ services:
         - python
         - -c
         - "import json, sys, urllib.request; response = urllib.request.urlopen('http://127.0.0.1:8000/api/v1/health', timeout=3); sys.exit(0 if response.status == 200 and json.load(response) == {'status': 'ok'} else 1)"
-      interval: 5s
+      # Comprobar cada 2 minutos en operación normal y cada 5 segundos al arrancar.
+      interval: 2m
       timeout: 5s
-      retries: 12
+      retries: 3
       start_period: 30s
+      start_interval: 5s
     depends_on:
       db:
         condition: service_healthy

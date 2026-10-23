@@ -79,4 +79,18 @@ describe("RecuperarContrasenaPage - US 34 Cambiar contraseña", () => {
       "ana@ejemplo.com"
     );
   });
+
+  it("después de enviar espera antes de permitir otro envío", async () => {
+    const usuario = userEvent.setup();
+    renderPagina();
+
+    await enviar(usuario, "ana@ejemplo.com");
+
+    const boton = await screen.findByRole("button", {
+      name: /Reenviar en \d+ s/,
+    });
+    expect(boton).toBeDisabled();
+    await usuario.click(boton);
+    expect(solicitarRecuperacion).toHaveBeenCalledTimes(1);
+  });
 });

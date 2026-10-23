@@ -58,6 +58,11 @@ class Settings(BaseSettings):
     registration_rate_limit_max_attempts: int = Field(default=3, ge=1, validation_alias="REGISTRATION_RATE_LIMIT_MAX_ATTEMPTS")
     registration_rate_limit_window_seconds: int = Field(default=900, ge=1, validation_alias="REGISTRATION_RATE_LIMIT_WINDOW_SECONDS")
 
+    # Espera entre reportes del mismo denunciante al mismo jugador, persistida en la BD.
+    player_report_cooldown_seconds: int = Field(
+        default=86400, ge=1, validation_alias="PLAYER_REPORT_COOLDOWN_SECONDS",
+    )
+
     # Configuración de correo por resend
     resend_api_key: str = Field(default="", validation_alias="RESEND_API_KEY")
     email_from: str = Field(default="", validation_alias="EMAIL_FROM")

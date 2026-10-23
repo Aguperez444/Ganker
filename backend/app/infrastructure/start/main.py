@@ -15,6 +15,8 @@ from sqlalchemy.orm import Session
 from app.infrastructure.database.seed_data import seed_database
 
 from app.domain.exceptions.domain_exception import DomainException
+from app.domain.exceptions.moderation.ban_not_finished_exception import BanNotFinishedException
+from app.domain.exceptions.moderation.report_cooldown_exception import ReportCooldownException
 from app.infrastructure.config.settings import settings
 from app.infrastructure.database.base import Base
 
@@ -94,7 +96,7 @@ app.add_middleware(
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
-    expose_headers=["Content-Disposition"],
+    expose_headers=["Content-Disposition", "Retry-After"],
 )
 
 class SecuredStaticFiles(StaticFiles):
@@ -129,11 +131,18 @@ async def domain_exception_handler(
     if hasattr(exc, "retry_after"):
         headers["Retry-After"] = str(exc.retry_after)
 
+    content = {"error": exc.message}
+    if isinstance(exc, BanNotFinishedException):
+        content.update(
+            reason=exc.reason,
+            expires_at=exc.expires_at.isoformat() if exc.expires_at is not None else None,
+        )
+    if isinstance(exc, ReportCooldownException):
+        content.update(retry_after=exc.retry_after, retry_at=exc.retry_at.isoformat())
+
     return JSONResponse(
         status_code=exc.status_code,
-        content={
-            "error": exc.message
-        },
+        content=content,
         headers=headers
     )
 
