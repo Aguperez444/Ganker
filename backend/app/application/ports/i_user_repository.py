@@ -15,7 +15,7 @@ class IUserRepository(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    def get_user_by_id(self, user_id: int) -> Optional['User']:
+    def get_user_by_id(self, user_id: int, for_update: bool = False) -> Optional['User']:
         raise NotImplementedError
 
     @abstractmethod
@@ -28,6 +28,10 @@ class IUserRepository(ABC):
 
     @abstractmethod
     def get_user_by_mail(self, mail: str) -> Optional['User']:
+        raise NotImplementedError
+
+    @abstractmethod
+    def update_user_email(self, user_id: int, mail: str) -> None:
         raise NotImplementedError
 
     @abstractmethod

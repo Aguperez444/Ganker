@@ -27,16 +27,24 @@ class SMTPEmailService(IEmailService):
 
     _build_html_template = staticmethod(build_account_email_template)
 
-    def _send_sync(self, to_email: str, raw_token: str, username: str | None = None) -> None:
-        path = "confirm-registration" if username is not None else "reset-password"
+    def _send_sync(self, to_email: str, raw_token: str, username: str | None = None, email_change: bool = False) -> None:
+        if email_change:
+            path = "confirm-email-change"
+            subject = "Confirmá tu nuevo email - Ganker"
+        elif username is not None:
+            path = "confirm-registration"
+            subject = "Confirmá tu cuenta - Ganker"
+        else:
+            path = "reset-password"
+            subject = "Recuperar acceso a tu cuenta - Ganker"
         reset_url = f"{self.frontend_url.rstrip('/')}/{path}?token={raw_token}"
 
         message = EmailMessage()
-        message["Subject"] = "Confirmá tu cuenta - Ganker" if username is not None else "Recuperar acceso a tu cuenta - Ganker"
+        message["Subject"] = subject
         message["From"] = self.sender_email
         message["To"] = to_email
 
-        html_content = build_account_email_template(reset_url, registration_username=username)
+        html_content = build_account_email_template(reset_url, registration_username=username, email_change=email_change)
         message.set_content("Por favor, habilita HTML para ver este correo.")
         message.add_alternative(html_content, subtype="html")
 
@@ -57,3 +65,6 @@ class SMTPEmailService(IEmailService):
 
     async def send_registration_confirmation_email(self, to_email: str, raw_token: str, username: str) -> None:
         await anyio.to_thread.run_sync(self._send_sync, to_email, raw_token, username)
+
+    async def send_email_change_confirmation_email(self, to_email: str, raw_token: str) -> None:
+        await anyio.to_thread.run_sync(self._send_sync, to_email, raw_token, None, True)

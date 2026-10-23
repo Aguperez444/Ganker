@@ -1,11 +1,12 @@
 from html import escape
 
 
-def build_account_email_template(reset_url: str, registration_username: str | None = None) -> str:
+def build_account_email_template(reset_url: str, registration_username: str | None = None, email_change: bool = False) -> str:
     """
-    Función para construir la plantilla de correo electrónico para restablecer la contraseña o confirmar el registro de una cuenta.
+    Construye la plantilla de recuperación de contraseña, registro o cambio de email.
     :param reset_url: URL para restablecer la contraseña o confirmar el registro.
     :param registration_username: Nombre de usuario para confirmar el registro (opcional).
+    :param email_change: Indica si el enlace confirma un cambio de email.
     :return: Plantilla de correo electrónico en formato HTML.
     """
     title = "Restablecer tu contraseña"
@@ -19,6 +20,12 @@ def build_account_email_template(reset_url: str, registration_username: str | No
         button = "Confirmar mi cuenta"
         validity = "24 horas"
         ignore_message = "Si vos no solicitaste este registro, ignorá este correo. La cuenta no se creará sin tu confirmación."
+    if email_change:
+        title = "Confirmá tu nuevo email"
+        intro = "Recibimos una solicitud para usar este correo en tu cuenta de Ganker. Confirmá que te pertenece para aplicar el cambio:"
+        button = "Confirmar nuevo email"
+        validity = "24 horas"
+        ignore_message = "Si vos no solicitaste este cambio, ignorá este correo. El email actual de la cuenta se mantendrá sin cambios."
     reset_url = escape(reset_url, quote=True)
     return f"""<!DOCTYPE html>
 <html lang="es">

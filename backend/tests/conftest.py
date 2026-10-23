@@ -284,7 +284,8 @@ def client(monkeypatch, test_session_factory, jwt_service, tmp_path, registratio
     import app.infrastructure.api.dependencies.auth as auth_dep
     monkeypatch.setattr(auth_dep, "token_service", jwt_service)
 
-    from app.infrastructure.api.dependencies.auth_rate_limiter import login_rate_limiter, forgot_password_rate_limiter, registration_rate_limiter
+    from app.infrastructure.api.dependencies.auth_rate_limiter import login_rate_limiter, forgot_password_rate_limiter, registration_rate_limiter, email_change_rate_limiter
+    email_change_rate_limiter.reset()
     login_rate_limiter.reset()
     forgot_password_rate_limiter.reset()
     registration_rate_limiter.reset()

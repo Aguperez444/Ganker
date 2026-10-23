@@ -87,6 +87,9 @@ class AuthRateLimiter:
             self._attempts[key].append(now)
 
 
+email_change_rate_limiter = AuthRateLimiter(
+    detail="Demasiados intentos de cambio de email. Por favor, intente nuevamente más tarde.",
+)
 login_rate_limiter = AuthRateLimiter()
 registration_rate_limiter = AuthRateLimiter(
     settings_prefix="registration",

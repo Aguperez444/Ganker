@@ -22,6 +22,7 @@ from app.application.ports.i_character_priority_repository import ICharacterPrio
 from app.application.ports.i_game_profile_report_repository import IGameProfileReportRepository
 from app.application.ports.i_discord_account_link_repository import IDiscordAccountLinkRepository
 from app.application.ports.i_password_reset_token_repository import IPasswordResetTokenRepository
+from app.application.ports.i_pending_email_change_repository import IPendingEmailChangeRepository
 from app.application.ports.i_find_by_specifications_service import IFindBySpecificationsRepository
 from app.application.ports.i_pending_registration_repository import IPendingRegistrationRepository
 
@@ -45,6 +46,7 @@ from app.infrastructure.database.repositories.character_priority_repository_impl
 from app.infrastructure.database.repositories.game_profile_report_repository_impl import GameProfileReportRepositoryImpl
 from app.infrastructure.database.repositories.password_reset_token_repository_impl import PasswordResetTokenRepositoryImpl
 from app.infrastructure.database.repositories.discord_account_link_repository_impl import DiscordAccountLinkRepositoryImpl
+from app.infrastructure.database.repositories.pending_email_change_repository_impl import PendingEmailChangeRepositoryImpl
 from app.infrastructure.database.repositories.pending_registration_repository_impl import PendingRegistrationRepositoryImpl
 from app.infrastructure.database.repositories.find_by_specification_repository_impl import FindBySpecificationsRepositoryImpl
 
@@ -73,13 +75,14 @@ class SqlAlchemyUnitOfWork(IUnitOfWork):
         self.role_profile_repo: IRoleProfileRepository
         self.conversation_repo: IConversationRepository
         self.refresh_token_repo: IRefreshTokenRepository
-        self.reset_token_repo: 'IPasswordResetTokenRepository'
+        self.reset_token_repo: IPasswordResetTokenRepository
         self.game_usage_report_repo: IGameUsageReportRepository
         self.riot_account_link_repo: IRiotAccountLinkRepository
         self.character_priority_repo: ICharacterPriorityRepository
         self.federated_identity_repo: IFederatedIdentityRepository
         self.game_profile_report_repo: IGameProfileReportRepository
         self.discord_account_link_repo: IDiscordAccountLinkRepository
+        self.pending_email_change_repo: IPendingEmailChangeRepository
         self.pending_registration_repo: IPendingRegistrationRepository
         self.find_by_specification_repo: IFindBySpecificationsRepository
     # Context manager
@@ -91,6 +94,7 @@ class SqlAlchemyUnitOfWork(IUnitOfWork):
         self.team_repo: ITeamRepository = TeamRepositoryImpl(self.session)
         self.message_repo: IMessageRepository = MessageRepoImpl(self.session)
         self.region_repo: IRegionRepository = RegionRepositoryImpl(self.session)
+        self.pending_email_change_repo = PendingEmailChangeRepositoryImpl(self.session)
         self.pending_registration_repo = PendingRegistrationRepositoryImpl(self.session)
         self.character_repo: ICharacterRepository = CharacterRepositoryImpl(self.session)
         self.videogame_repo: IVideogameRepository = VideogameRepositoryImpl(self.session)
@@ -101,7 +105,7 @@ class SqlAlchemyUnitOfWork(IUnitOfWork):
         self.refresh_token_repo: IRefreshTokenRepository = RefreshTokenRepositoryImpl(self.session)
         self.game_usage_report_repo: IGameUsageReportRepository = GameUsageReportRepositoryImpl(self.session)
         self.riot_account_link_repo: IRiotAccountLinkRepository = RiotAccountLinkRepositoryImpl(self.session)
-        self.reset_token_repo: 'IPasswordResetTokenRepository' = PasswordResetTokenRepositoryImpl(self.session)
+        self.reset_token_repo: IPasswordResetTokenRepository = PasswordResetTokenRepositoryImpl(self.session)
         self.character_priority_repo: ICharacterPriorityRepository = CharacterPriorityRepositoryImpl(self.session)
         self.federated_identity_repo: IFederatedIdentityRepository = FederatedIdentityRepositoryImpl(self.session)
         self.game_profile_report_repo: IGameProfileReportRepository = GameProfileReportRepositoryImpl(self.session)

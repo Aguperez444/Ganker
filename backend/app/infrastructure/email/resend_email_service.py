@@ -21,6 +21,13 @@ class ResendEmailService(IEmailService):
 
     _build_html_template = staticmethod(build_account_email_template)
 
+    async def send_email_change_confirmation_email(self, to_email: str, raw_token: str) -> None:
+        confirmation_url = f"{self.frontend_url}/confirm-email-change?token={raw_token}"
+        await self._send_email(
+            to_email, "Confirmá tu nuevo email - Ganker",
+            build_account_email_template(confirmation_url, email_change=True),
+        )
+
     async def send_password_reset_email(self, to_email: str, raw_token: str) -> None:
         reset_url = f"{self.frontend_url}/reset-password?token={raw_token}"
 

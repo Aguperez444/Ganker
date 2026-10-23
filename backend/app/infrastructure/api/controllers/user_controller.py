@@ -1,6 +1,5 @@
 from fastapi import APIRouter, Depends, UploadFile, File, HTTPException, status, Form, Query, BackgroundTasks, Request
 from typing import Optional
-from pydantic import EmailStr
 
 
 from app.application.use_cases.query_users import QueryUsers
@@ -8,6 +7,10 @@ from app.application.use_cases.search_users import SearchUsers
 from app.infrastructure.api.dto.response.user_summary_response import UserSummaryResponse
 from app.application.use_cases.register_user import RegisterUser
 from app.application.use_cases.update_user import UpdateUser
+from app.application.use_cases.request_email_change import RequestEmailChange
+from app.infrastructure.api.dto.request.email_change_request import RequestEmailChangeRequest
+from app.infrastructure.api.dto.response.email_change_message_response import EmailChangeMessageResponse
+from app.infrastructure.api.dependencies.auth_rate_limiter import email_change_rate_limiter
 from app.infrastructure.api.dependencies.auth import get_current_user_id, require_player, require_admin
 from app.infrastructure.api.dto.response.registration_message_response import RegistrationMessageResponse
 from app.infrastructure.api.dependencies.auth_rate_limiter import registration_rate_limiter
@@ -86,7 +89,7 @@ def register_user(request: RegisterUserRequest, user_id: int = Depends(get_curre
 
 
 @router.put("/", response_model=UpdateUserResponse, status_code=200, dependencies=[Depends(require_player)])
-def update_user(username: str = Form(...), name: str = Form(...), mail: EmailStr = Form(...),
+def update_user(username: str = Form(...), name: str = Form(...),
                       icon: Optional[UploadFile] = File(None, description="Archivo de imagen del ícono"),
                       user_id: int = Depends(get_current_user_id)
                       ) -> UpdateUserResponse:
@@ -106,7 +109,23 @@ def update_user(username: str = Form(...), name: str = Form(...), mail: EmailStr
     storage_service = get_storage_service()
 
     update_user_use_case = UpdateUser(uow, storage_service)
-    return update_user_use_case.execute(user_id, username, name, mail, file_obj, file_name)
+    return update_user_use_case.execute(user_id, username, name, file_obj, file_name)
+
+@router.post("/me/email-change", response_model=EmailChangeMessageResponse, status_code=202, dependencies=[Depends(require_player)])
+def request_email_change(request: RequestEmailChangeRequest, background_tasks: BackgroundTasks,
+                         http_request: Request, user_id: int = Depends(get_current_user_id)) -> EmailChangeMessageResponse:
+    email_change_rate_limiter.check(http_request, identifier=str(user_id))
+    use_case = RequestEmailChange(uow_factory(), PasswordHashService())
+    raw_token = use_case.execute(user_id, request.mail, request.password)
+    background_tasks.add_task(
+        ResendEmailService().send_email_change_confirmation_email,
+        to_email=request.mail.strip().lower(),
+        raw_token=raw_token,
+    )
+    return EmailChangeMessageResponse(
+        message="Te enviamos un enlace al nuevo email. El correo actual se mantendrá hasta que confirmes el cambio. El enlace vence en 24 horas.",
+    )
+
 
 @router.get("/me", response_model=GetUserResponse, status_code=200, dependencies=[Depends(require_player)])
 def get_user(user_id: int = Depends(get_current_user_id)) -> GetUserResponse:

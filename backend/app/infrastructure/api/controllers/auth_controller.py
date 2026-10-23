@@ -7,6 +7,9 @@ from app.application.use_cases.forgot_password import ForgotPassword
 from app.application.use_cases.get_federated_authorization_url import GetFederatedAuthorizationUrl
 from app.application.use_cases.reset_password import ResetPassword
 from app.application.use_cases.confirm_registration import ConfirmRegistration
+from app.application.use_cases.confirm_email_change import ConfirmEmailChange
+from app.infrastructure.api.dto.request.email_change_request import ConfirmEmailChangeRequest
+from app.infrastructure.api.dto.response.email_change_message_response import EmailChangeMessageResponse
 from app.application.use_cases.resend_registration import ResendRegistration
 from app.infrastructure.api.dto.request.confirm_registration_request import ConfirmRegistrationRequest, ResendRegistrationRequest
 from app.infrastructure.api.dto.response.registration_message_response import RegistrationMessageResponse
@@ -118,6 +121,13 @@ def reset_password(request: ResetPasswordRequest):
     return ResetPasswordMessageResponse(
         message="La contraseña ha sido restablecida correctamente"
     )
+
+
+@router.post("/confirm-email-change", response_model=EmailChangeMessageResponse)
+def confirm_email_change(request: ConfirmEmailChangeRequest) -> EmailChangeMessageResponse:
+    use_case = ConfirmEmailChange(uow_factory())
+    use_case.execute(request.token)
+    return EmailChangeMessageResponse(message="Tu email se actualizó correctamente. Ya podés usar el nuevo correo para iniciar sesión.")
 
 
 @router.post("/confirm-registration", response_model=RegistrationMessageResponse)

@@ -24,6 +24,7 @@ if TYPE_CHECKING:
     from app.application.ports.i_game_profile_report_repository import IGameProfileReportRepository
     from app.application.ports.i_discord_account_link_repository import IDiscordAccountLinkRepository
     from app.application.ports.i_password_reset_token_repository import IPasswordResetTokenRepository
+    from app.application.ports.i_pending_email_change_repository import IPendingEmailChangeRepository
     from app.application.ports.i_pending_registration_repository import IPendingRegistrationRepository
     from app.application.ports.i_find_by_specifications_service import IFindBySpecificationsRepository
     
@@ -51,6 +52,7 @@ class IUnitOfWork(ABC):
     federated_identity_repo: 'IFederatedIdentityRepository'
     game_profile_report_repo: 'IGameProfileReportRepository'
     discord_account_link_repo: 'IDiscordAccountLinkRepository'
+    pending_email_change_repo: 'IPendingEmailChangeRepository'
     pending_registration_repo: 'IPendingRegistrationRepository'
     find_by_specification_repo: 'IFindBySpecificationsRepository'
 

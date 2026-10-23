@@ -22,6 +22,7 @@ from app.infrastructure.database.models.team_orm import TeamORM
 from app.infrastructure.database.models.team_member_role_orm import TeamMemberRoleORM
 from app.infrastructure.database.models.user_orm import UserORM
 from app.infrastructure.database.models.pending_registration_orm import PendingRegistrationORM
+from app.infrastructure.database.models.pending_email_change_orm import PendingEmailChangeORM
 from app.infrastructure.database.models.user_ban_record_orm import UserBanRecordORM
 from app.infrastructure.database.models.videogame_orm import VideogameORM
 
@@ -48,6 +49,7 @@ __all__ = [
     "TeamMemberRoleORM",
     "UserORM",
     "PendingRegistrationORM",
+    "PendingEmailChangeORM",
     "VideogameORM",
     "UserBanRecordORM",
     "PlayerReportORM"

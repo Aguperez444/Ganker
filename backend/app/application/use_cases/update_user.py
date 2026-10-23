@@ -15,14 +15,13 @@ class UpdateUser:
         self.uow: IUnitOfWork = unit_of_work
         self.storage_service: IStorageService = storage_service
 
-    def execute(self, user_id: int, username: str, name: str, mail: str,
+    def execute(self, user_id: int, username: str, name: str,
                 icon_file: Optional[BinaryIO] = None, icon_filename: Optional[str] = None) -> UpdateUserResponse:
         icon_changed: bool = False
         old_icon_url: str | None = None
         with self.uow as uow:
-            # Valido que el nuevo username y mail no existan en la base de datos para otro jugador
+            # Valido que el nuevo username no exista para otro jugador
             CatalogValidationService.validate_username_uniqueness(username, user_id, uow)
-            CatalogValidationService.validate_mail_uniqueness(mail, user_id, uow)
             # Busco al jugador a actualizar (Doy por hecho que el id existe porque lo tomé de una sesión vigente)
             user = uow.user_repo.get_user_by_id(user_id)
 
@@ -32,7 +31,6 @@ class UpdateUser:
             # Actualizo los datos del jugador con los nuevos valores
             user.name = name
             user.username = username
-            user.mail = mail
 
             new_icon_url = user.icon_url  # por defecto persisto la url anterior
             # compruebo si me llegó una imagen nueva
