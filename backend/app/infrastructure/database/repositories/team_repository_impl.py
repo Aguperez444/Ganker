@@ -1,7 +1,7 @@
 from datetime import datetime
 from typing import TYPE_CHECKING, Optional
 
-from sqlalchemy import func
+from sqlalchemy import case, func, or_
 from sqlalchemy.orm import Session, selectinload
 
 from app.application.ports.i_team_repository import ITeamRepository
@@ -23,6 +23,27 @@ if TYPE_CHECKING:
 class TeamRepositoryImpl(ITeamRepository):
     def __init__(self, session: Session):
         self.session = session
+
+    def count_associated_to_rank(self, rank_id: int) -> int:
+        return self.session.query(TeamORM).filter(
+            or_(TeamORM.min_rank_id == rank_id, TeamORM.max_rank_id == rank_id),
+        ).count()
+
+    def reassign_associated_to_rank(self, source_rank_id: int, target_rank_id: int) -> int:
+        updated = self.session.query(TeamORM).filter(
+            or_(TeamORM.min_rank_id == source_rank_id, TeamORM.max_rank_id == source_rank_id),
+        ).update({
+            TeamORM.min_rank_id: case(
+                (TeamORM.min_rank_id == source_rank_id, target_rank_id),
+                else_=TeamORM.min_rank_id,
+            ),
+            TeamORM.max_rank_id: case(
+                (TeamORM.max_rank_id == source_rank_id, target_rank_id),
+                else_=TeamORM.max_rank_id,
+            ),
+        }, synchronize_session="fetch")
+        self.session.flush()
+        return updated
 
     def get_by_id_for_update(self, team_id: int) -> Optional['Team']:
         team_orm = (

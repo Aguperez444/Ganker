@@ -20,7 +20,6 @@ class RoleProfileRepositoryImpl(IRoleProfileRepository):
     def reassign_associated_to_rank(self, source_rank_id: int, target_rank_id: int) -> int:
         updated_rows = self.session.query(RoleProfileORM).filter(
             RoleProfileORM.rank_id == source_rank_id,
-            RoleProfileORM.deleted == False,
         ).update({RoleProfileORM.rank_id: target_rank_id}, synchronize_session='fetch')
         self.session.flush()
         return updated_rows
@@ -28,7 +27,6 @@ class RoleProfileRepositoryImpl(IRoleProfileRepository):
     def count_associated_to_rank(self, rank_id: int) -> int:
         return self.session.query(RoleProfileORM).filter(
             RoleProfileORM.rank_id == rank_id,
-            RoleProfileORM.deleted == False,
         ).count()
 
     def count_associated_to_role(self, role_id: int) -> int:

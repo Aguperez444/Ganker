@@ -117,12 +117,12 @@ const JugadorCardComponent = ({
         <AvatarUsuarioComponent user={jugador} />
       </button>
 
-      <div className="min-w-0">
+      <div className="w-full min-w-0">
         {onVerPerfil ? (
           <button
             type="button"
             onClick={() => onVerPerfil(jugador)}
-            className="block max-w-full cursor-pointer truncate font-heading text-base font-semibold text-ganker-text hover:underline"
+            className="mx-auto block max-w-full cursor-pointer truncate font-heading text-base font-semibold text-ganker-text hover:underline"
           >
             {jugador.name}
           </button>

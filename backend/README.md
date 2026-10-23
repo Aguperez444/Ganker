@@ -196,9 +196,79 @@ La autenticación conserva `/auth/v1` por diseño. Moderación usa `/api/v1/mode
 | Reportar un jugador | `POST /api/v1/moderation/` |
 | Listar reportes | `GET /api/v1/moderation/reported_players` |
 | Listar baneos | `GET /api/v1/moderation/banned-players` |
+| Listar jugadores con baneo vigente | `GET /api/v1/moderation/banned-players/active` |
 | Banear y desbanear | `POST /api/v1/moderation/ban`, `/api/v1/moderation/{player_id}/unban` |
 
 Los listados reciben los filtros, fechas ISO 8601 y paginación (`skip`, `limit`) como parámetros de query, sin cuerpo JSON. Por ejemplo: `/api/v1/moderation/banned-players?banned_user=usuario&skip=0&limit=10`. Conservan el permiso de admin u owner. Las rutas antiguas de moderación (`/moderation/...`) ya no se registran; las URL de retorno del frontend `/auth/callback/{provider}` se mantienen.
+
+### Borrado de rangos
+
+`DELETE /api/v1/ranks/{rank_id}` reasigna todos los perfiles de rol vinculados,
+incluidos los eliminados lógicamente, y los requisitos mínimo y máximo de los
+equipos activos e inactivos. Usa el rango inmediatamente inferior del mismo
+videojuego o, si no existe, el inmediatamente superior. Solo cambia los límites
+que apuntan al rango eliminado; conserva el estado de los perfiles y equipos.
+La reasignación y el borrado se realizan en una única transacción. Si el rango
+tiene perfiles o equipos asociados y no existe otro rango disponible, devuelve
+HTTP 400 y conserva los datos.
+
+### Contratos de moderación para el frontend
+
+`GET /api/v1/moderation/banned-players/active?username=usuario&skip=0&limit=10`
+requiere admin u owner y devuelve solo usuarios no eliminados cuyo último baneo sigue
+vigente y cuyo flag `banned` está activo. Excluye baneos vencidos y desbaneos manuales.
+`username` es opcional y busca coincidencias parciales sin distinguir mayúsculas;
+`skip` debe ser mayor o igual a 0 y `limit` debe estar entre 1 y 100 (por defecto, 10).
+El orden es por `user_id` ascendente y cada usuario aparece una sola vez:
+
+```json
+{
+  "players": [
+    {
+      "user_id": 42,
+      "username": "usuario",
+      "reason": "Insultos reiterados",
+      "expires_at": "2026-11-01T12:00:00+00:00"
+    }
+  ]
+}
+```
+
+`expires_at: null` indica un baneo sin vencimiento. Una página vacía devuelve
+`{"players": []}`. El endpoint `/banned-players` sigue devolviendo el historial.
+
+El login con credenciales válidas de un usuario baneado conserva HTTP 400 y el campo
+`error`, e incluye `reason` y `expires_at` del último baneo. El mensaje también
+contiene el motivo y el vencimiento para los clientes que solo muestran `error`:
+
+```json
+{
+  "error": "El baneo del jugador aún no ha finalizado. Motivo: Insultos reiterados. Vencimiento: 2026-11-01T12:00:00+00:00",
+  "reason": "Insultos reiterados",
+  "expires_at": "2026-11-01T12:00:00+00:00"
+}
+```
+
+Las fechas se envían en ISO 8601. Si un usuario tiene el flag de baneo activo pero
+no tiene registro de baneo, `reason` y `expires_at` son `null`; el login sigue
+bloqueado. Las credenciales incorrectas no revelan estos datos.
+
+`POST /api/v1/moderation/` permite un reporte del mismo denunciante al mismo jugador
+cada 24 horas por defecto, incluso si el anterior ya fue resuelto o el nuevo tiene
+otro motivo. La espera se configura en segundos con `PLAYER_REPORT_COOLDOWN_SECONDS`
+(mínimo 1). Otros denunciantes pueden reportar al mismo jugador y el denunciante
+puede reportar a otros usuarios durante ese plazo. El control consulta los reportes
+persistidos y serializa las solicitudes de cada denunciante con un bloqueo de fila
+en PostgreSQL durante la transacción. Un intento anticipado no crea un reporte ni
+extiende el plazo; devuelve HTTP 429, el encabezado `Retry-After` en segundos y:
+
+```json
+{
+  "error": "Ya reportaste a este jugador recientemente. Podrás volver a reportarlo a partir de 2026-11-01T12:00:00+00:00.",
+  "retry_after": 3600,
+  "retry_at": "2026-11-01T12:00:00+00:00"
+}
+```
 
 ## Estructura y organización
 
@@ -288,6 +358,20 @@ pytest
 | `pytest tests/unit/application/test_create_team.py --no-cov` | Ejecutar un archivo concreto       |
 
 Las fixtures compartidas de [tests/conftest.py](tests/conftest.py) crean SQLite en memoria y un directorio temporal de medios. El cliente HTTP de pruebas reemplaza el arranque normal para no ejecutar el seed de la aplicación.
+
+Las pruebas adicionales en PostgreSQL comprueban los reportes simultáneos,
+la selección del último baneo vigente y el borrado de rangos con perfiles y
+equipos vinculados. Se habilitan con
+`GANKER_TEST_POSTGRES_URL`; crean y eliminan un esquema temporal por prueba:
+
+```bash
+GANKER_TEST_POSTGRES_URL='postgresql+psycopg2://usuario@localhost/ganker_test' \
+  .venv/bin/pytest tests/integration/database/test_moderation_postgres.py \
+    tests/integration/database/test_rank_deletion_postgres.py --no-cov
+```
+
+Sin esa variable, esas pruebas se omiten y las demás usan SQLite. Las pruebas de
+borrado de rangos con equipos en SQLite activan explícitamente las claves foráneas.
 
 En CI se usa Python 3.14 y se ejecuta `pytest`. El flujo de ramas y revisión está en el [README principal](../README.md#flujo-de-trabajo).
 

@@ -28,12 +28,17 @@ export function useIniciarSesion() {
     setCargando(false);
 
     if (!result.success) {
-      // El backend distingue los dos casos con status codes distintos:
-      // 404 = EmailNotFoundException, 401 = WrongPasswordException.
-      if (result.status === 404) {
-        setErrorServidor("No existe una cuenta registrada con ese email.");
-      } else if (result.status === 401) {
-        setErrorServidor("La contraseña es incorrecta.");
+      // El backend distingue mail inexistente (404) de contraseña incorrecta
+      // (401), pero mostrarlo por separado le confirma a cualquiera que mail
+      // tiene cuenta. Se responde lo mismo en los dos casos.
+      if (result.status === 404 || result.status === 401) {
+        setErrorServidor("El email o la contraseña son incorrectos.");
+      } else if (result.status === 429) {
+        // Limite de intentos del backend: su mensaje dice que hay que esperar.
+        setErrorServidor(
+          result.error?.detail ??
+            "Demasiados intentos. Esperá un minuto y probá de nuevo."
+        );
       } else {
         setErrorServidor("No pudimos iniciar sesión. Probá de nuevo.");
       }

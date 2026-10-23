@@ -1,9 +1,11 @@
 from typing import Annotated
+from datetime import timedelta
 
 from fastapi import APIRouter, Depends, Query
 
 from app.application.use_cases.ban_player import BanPlayer
 from app.application.use_cases.report_player import ReportPlayer
+from app.application.use_cases.query_active_bans import QueryActiveBans
 from app.application.use_cases.search_banned_players import SearchBannedPlayers
 from app.application.use_cases.search_reports_players import SearchReportsPlayers
 from app.application.use_cases.unban_player import UnbanPlayer
@@ -15,15 +17,28 @@ from app.infrastructure.api.dto.request.search_reported_players_request import S
 from app.infrastructure.api.dto.response.list_search_banned_players_response import ListSearchBannedPlayersResponse
 from app.infrastructure.api.dto.response.list_search_reported_players_response import ListSearchReportedPlayersResponse
 from app.infrastructure.api.dto.response.report_player_response import ReportPlayerResponse
+from app.infrastructure.api.dto.response.active_banned_players_response import ActiveBannedPlayersResponse
 from app.infrastructure.database.unit_of_work.uow_factory import uow_factory
+from app.infrastructure.config.settings import settings
 
 router = APIRouter(prefix="/api/v1/moderation", tags=["Moderation"])
+
+
+@router.get("/banned-players/active", response_model=ActiveBannedPlayersResponse,
+            status_code=200, dependencies=[Depends(require_admin)])
+def get_active_banned_players(
+    username: Annotated[str | None, Query(max_length=100)] = None,
+    skip: Annotated[int, Query(ge=0)] = 0,
+    limit: Annotated[int, Query(ge=1, le=100)] = 10,
+):
+    return QueryActiveBans(uow_factory()).execute(username=username, skip=skip, limit=limit)
+
 
 # ENDPOINT PARA REPORTAR UN JUGADOR
 @router.post("/", response_model=ReportPlayerResponse ,status_code=201, dependencies=[Depends(require_player)])
 def report_player(report_request: ReportPlayerRequest, reporter_id: int = Depends(get_current_user_id)):
     uow = uow_factory()
-    use_case = ReportPlayer(uow)
+    use_case = ReportPlayer(uow, cooldown=timedelta(seconds=settings.player_report_cooldown_seconds))
     new_report = use_case.execute(report_request, reporter_id)
 
     return new_report

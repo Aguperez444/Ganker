@@ -5,11 +5,12 @@ import {
   useEffect,
   useCallback,
 } from "react";
-import axiosClient, {
+import {
   registrarOnSesionExpirada,
   registrarOnTokensRenovados,
   revocarRefreshToken,
 } from "../api/axiosClient";
+import { iniciarSesion } from "../api/authApi";
 import { obtenerJugadorActual } from "../api/jugadoresApi";
 import { logError } from "../utils/logs";
 
@@ -170,18 +171,10 @@ export function AuthProvider({ children }) {
 
   const login = async (email, password) => {
     try {
-      const response = await axiosClient.post(
-        "/auth/v1/login/",
-        new URLSearchParams({
-          username: email,
-          password: password,
-        }),
-        {
-          headers: { "Content-Type": "application/x-www-form-urlencoded" },
-        }
+      const { access_token, refresh_token, token_type } = await iniciarSesion(
+        email,
+        password
       );
-
-      const { access_token, refresh_token, token_type } = response.data;
 
       const usuario = await guardarSesion({
         access_token,

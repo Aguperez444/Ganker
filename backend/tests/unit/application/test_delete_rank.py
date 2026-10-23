@@ -17,6 +17,7 @@ class TestDeleteRankUseCase:
         uow.__enter__.return_value = uow
         uow.__exit__.return_value = None
         uow.rank_repo = MagicMock()
+        uow.team_repo.count_associated_to_rank.return_value = 0
 
         storage_service = MagicMock(spec=IStorageService)
         storage_service.delete_file = MagicMock(return_value=True)
@@ -36,7 +37,8 @@ class TestDeleteRankUseCase:
         res = use_case.execute(rank_id=10)
 
         assert "exitosamente" in res.message.lower()
-        uow.rank_repo.reassign_associated_to_rank.assert_not_called()
+        uow.role_profile_repo.reassign_associated_to_rank.assert_not_called()
+        uow.team_repo.reassign_associated_to_rank.assert_not_called()
         uow.rank_repo.delete_rank.assert_called_once_with(10)
         storage_service.delete_file.assert_called_once_with("/media/gold.png")
 
