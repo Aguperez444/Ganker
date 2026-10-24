@@ -5,10 +5,17 @@ import { MemoryRouter, Route, Routes } from "react-router-dom";
 
 import JugadorPerfilPage from "./JugadorPerfilPage";
 import { eliminarUsuario, obtenerPerfilJugador } from "../api/jugadoresApi";
+import { banearJugador } from "../api/moderacionApi";
 
 vi.mock("../api/jugadoresApi", () => ({
   obtenerPerfilJugador: vi.fn(),
   eliminarUsuario: vi.fn(),
+}));
+
+// US 36 - El admin puede banear desde el perfil. Se mockea para no pegarle
+// a la red en los tests.
+vi.mock("../api/moderacionApi", () => ({
+  banearJugador: vi.fn(),
 }));
 
 // Access token falso con el id del usuario logueado en el claim "sub" (lo
@@ -179,6 +186,14 @@ describe("JugadorPerfilPage - perfil de otro jugador", () => {
     expect(chat.iniciarChat).toHaveBeenCalledWith(7);
   });
 
+  it("permite reportar al jugador desde su perfil", async () => {
+    renderPagina();
+
+    expect(
+      await screen.findByRole("button", { name: /reportar a ana/i })
+    ).toBeInTheDocument();
+  });
+
   it("en el propio perfil ofrece editarlo en vez de enviar mensaje", async () => {
     chat.currentUserId = 7;
     renderPagina();
@@ -189,6 +204,7 @@ describe("JugadorPerfilPage - perfil de otro jugador", () => {
     expect(
       screen.queryByRole("button", { name: /enviar mensaje/i })
     ).toBeNull();
+    expect(screen.queryByRole("button", { name: /reportar/i })).toBeNull();
   });
 
   it("avisa si el jugador no tiene perfiles de juego", async () => {
@@ -302,5 +318,53 @@ describe("JugadorPerfilPage - US 50 Eliminar cuenta de usuario", () => {
     expect(
       screen.queryByRole("button", { name: "Dar de baja cuenta" })
     ).toBeNull();
+  });
+});
+
+describe("JugadorPerfilPage - US 36 Banear jugador", () => {
+  it("un jugador común no ve la opción de banear", async () => {
+    renderPagina();
+
+    await screen.findByRole("heading", { name: "Ana" });
+    expect(screen.queryByRole("button", { name: "Banear jugador" })).toBeNull();
+  });
+
+  it("el admin ve el botón de banear en el panel de administración", async () => {
+    auth.user = { role: "admin" };
+    renderPagina();
+
+    expect(
+      await screen.findByRole("button", { name: "Banear jugador" })
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Dar de baja cuenta" })
+    ).toBeInTheDocument();
+  });
+
+  it("al banear desde el perfil, la página muestra el aviso", async () => {
+    banearJugador.mockResolvedValue({});
+    auth.user = { role: "admin" };
+    const user = userEvent.setup();
+    renderPagina();
+
+    await user.click(
+      await screen.findByRole("button", { name: "Banear jugador" })
+    );
+    await user.type(
+      screen.getByLabelText(/Motivo o justificación/),
+      "Insultos reiterados"
+    );
+    await user.click(screen.getByRole("button", { name: "Revisar sanción" }));
+    await user.click(screen.getByRole("button", { name: "Confirmar baneo" }));
+    await user.click(await screen.findByRole("button", { name: "Cerrar" }));
+
+    expect(banearJugador).toHaveBeenCalledWith({
+      jugadorId: 7,
+      motivo: "Insultos reiterados",
+      duracionDias: 1,
+    });
+    expect(
+      await screen.findByRole("heading", { name: "Jugador baneado" })
+    ).toBeInTheDocument();
   });
 });

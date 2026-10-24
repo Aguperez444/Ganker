@@ -6,6 +6,7 @@ import ModalUnirseEquipoComponent from "../components/equipos/ModalUnirseEquipoC
 import useEquipo from "../hooks/useEquipo";
 import useIconosDeRoles from "../hooks/useIconosDeRoles";
 import useUnirseEquipo from "../hooks/useUnirseEquipo";
+import { useChat } from "../context/ChatContext";
 import { elegibilidadDelEquipo } from "../utils/validacionesEquipos";
 import { rutaPerfilJugador } from "../utils/rutas";
 
@@ -17,6 +18,7 @@ const EquipoPage = () => {
   const { equipoId } = useParams();
   const navigate = useNavigate();
   const { equipo, cargando, error, reemplazarEquipo } = useEquipo(equipoId);
+  const { currentUserId } = useChat();
   const union = useUnirseEquipo({ alActualizarEquipo: reemplazarEquipo });
   const iconosDeRoles = useIconosDeRoles(equipo?.videogame?.videogame_id);
 
@@ -99,6 +101,7 @@ const EquipoPage = () => {
           <IntegrantesEquipoComponent
             integrantes={equipo.members}
             iconosDeRoles={iconosDeRoles}
+            currentUserId={currentUserId}
             onVerPerfil={(userId) => navigate(rutaPerfilJugador(userId))}
           />
         </div>

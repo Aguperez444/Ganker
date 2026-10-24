@@ -170,3 +170,62 @@ describe("ChatWindowComponent - acceso al perfil de otro jugador", () => {
     expect(screen.queryByRole("button", { name: "Pepe" })).toBeNull();
   });
 });
+
+describe("ChatWindowComponent - US 35 reportar jugadores", () => {
+  beforeEach(() => vi.clearAllMocks());
+
+  it("ofrece reportar al otro jugador desde el chat privado", async () => {
+    obtenerHistorialMensajes.mockResolvedValue([]);
+    render(
+      <ChatWindowComponent
+        conversacion={{
+          conversation_id: 4,
+          other_participant: {
+            user_id: 7,
+            username: "ana",
+            name: "Ana",
+            icon_url: "",
+          },
+        }}
+        currentUserId={1}
+      />
+    );
+
+    expect(
+      await screen.findByRole("button", { name: "Reportar a ana" })
+    ).toBeInTheDocument();
+  });
+
+  it("ofrece reportar al autor de un mensaje del chat del equipo", async () => {
+    obtenerHistorialChatroom.mockResolvedValue([
+      {
+        message_id: 1,
+        sender_id: 2,
+        sender_name: "Pepe",
+        content: "jugamos hoy?",
+        timestamp: "2026-10-12T20:00:00",
+      },
+    ]);
+    renderChat();
+
+    expect(
+      await screen.findByRole("button", { name: "Reportar a Pepe" })
+    ).toBeInTheDocument();
+  });
+
+  it("no ofrece reportar los mensajes propios", async () => {
+    obtenerHistorialChatroom.mockResolvedValue([
+      {
+        message_id: 1,
+        sender_id: 1,
+        sender_name: "Yo",
+        content: "hola",
+        timestamp: "2026-10-12T20:00:00",
+      },
+    ]);
+    renderChat();
+
+    expect(await screen.findByText("hola")).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /reportar/i })).toBeNull();
+  });
+});

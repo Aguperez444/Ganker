@@ -2,6 +2,7 @@ import { useState } from "react";
 import AvatarUsuarioComponent from "../../components/common/AvatarUsuarioComponent";
 import ModalDarDeBajaUsuarioComponent from "../../components/jugadores/ModalDarDeBajaUsuarioComponent";
 import RegistrarUsuarioFormComponent from "../../components/jugadores/RegistrarUsuarioFormComponent";
+import BotonBanearJugadorComponent from "../../components/moderacion/BotonBanearJugadorComponent";
 import { CLASES_BOTON_ELIMINAR } from "../../components/common/botonesAccion";
 import { useBuscarUsuario } from "../../hooks/useBuscarUsuario";
 import { useDarDeBajaUsuario } from "../../hooks/useDarDeBajaUsuario";
@@ -11,6 +12,8 @@ import { NOMBRES_ROLES } from "../../utils/rutas";
 // US 50 - Eliminar cuenta de usuario (admin): se busca al usuario por su
 // nombre de usuario (ver useBuscarUsuario), se ve quien es y recien ahi se lo
 // puede dar de baja.
+// US 36 - Banear jugador (admin): desde la misma tarjeta del usuario buscado,
+// al lado de "Dar de baja", se aplica la sancion con su motivo y duracion.
 // US 39 - Registrar usuario (admin): alta de cuentas con el rol elegido.
 const UsuariosPage = () => {
   const [successMessage, setSuccessMessage] = useState("");
@@ -43,6 +46,13 @@ const UsuariosPage = () => {
     e.preventDefault();
     setSuccessMessage("");
     buscar();
+  };
+
+  // US 36 - Un jugador baneado deja de aparecer en las búsquedas: se avisa y
+  // se limpia la tarjeta, igual que al darlo de baja.
+  const handleBaneado = (mensaje) => {
+    setSuccessMessage(mensaje);
+    limpiar();
   };
 
   const handleConfirmarBaja = async () => {
@@ -98,7 +108,7 @@ const UsuariosPage = () => {
 
         <section className="mt-8 rounded-2xl border border-white/10 bg-ganker-surface p-6 shadow-xl">
           <h2 className="mb-5 font-heading text-xl font-semibold text-ganker-text">
-            Dar de baja usuario
+            Dar de baja o banear usuario
           </h2>
           <form
             onSubmit={handleBuscar}
@@ -161,13 +171,19 @@ const UsuariosPage = () => {
                   Es tu cuenta: para darla de baja usá Mi cuenta.
                 </p>
               ) : (
-                <button
-                  type="button"
-                  onClick={() => baja.abrir(encontrado)}
-                  className={`shrink-0 ${CLASES_BOTON_ELIMINAR}`}
-                >
-                  Dar de baja
-                </button>
+                <div className="flex shrink-0 flex-wrap gap-2">
+                  <BotonBanearJugadorComponent
+                    jugador={encontrado}
+                    onBaneado={handleBaneado}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => baja.abrir(encontrado)}
+                    className={CLASES_BOTON_ELIMINAR}
+                  >
+                    Dar de baja
+                  </button>
+                </div>
               )}
             </div>
           )}

@@ -2,7 +2,6 @@ import { render, screen } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import { describe, it, expect } from "vitest";
 
-import ModeracionPage from "./admin/ModeracionPage";
 import HomePage from "./HomePage";
 import AdminHomePage from "./admin/AdminHomePage";
 
@@ -17,23 +16,9 @@ describe("Páginas placeholder para funcionalidades en desarrollo", () => {
   // personaje). Su propio test viviria en CharactersPage.test.jsx si se
   // agrega cobertura (mismo criterio que Ranks/Roles, sin tests propios).
 
-  it("ModeracionPage muestra el mensaje de funcionalidad en próximo sprint", () => {
-    render(
-      <MemoryRouter>
-        <ModeracionPage />
-      </MemoryRouter>
-    );
-
-    expect(
-      screen.getByRole("heading", { level: 1, name: "Moderación" })
-    ).toBeInTheDocument();
-
-    expect(
-      screen.getByText(
-        /\[Moderación\] se implementará en un próximo sprint\.\.\./i
-      )
-    ).toBeInTheDocument();
-  });
+  // ModeracionPage dejo de ser un placeholder (US 36 - Banear jugador).
+  // Ahora usa useAuth y pide el listado de baneos, asi que ya no renderiza
+  // sin un AuthProvider.
 
   it("HomePage muestra enlaces a las funcionalidades y su mensaje placeholder", () => {
     render(

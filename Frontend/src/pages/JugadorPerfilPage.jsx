@@ -4,6 +4,8 @@ import AvatarUsuarioComponent from "../components/common/AvatarUsuarioComponent"
 import AvisoComponent from "../components/common/AvisoComponent";
 import DiscordJugadorComponent from "../components/discord/DiscordJugadorComponent";
 import IconoChicoComponent from "../components/common/IconoChicoComponent";
+import BotonReportarJugadorComponent from "../components/moderacion/BotonReportarJugadorComponent";
+import BotonBanearJugadorComponent from "../components/moderacion/BotonBanearJugadorComponent";
 import ModalDarDeBajaUsuarioComponent from "../components/jugadores/ModalDarDeBajaUsuarioComponent";
 import PerfilDeJuegoDetalleComponent from "../components/jugadores/PerfilDeJuegoDetalleComponent";
 import { CLASES_BOTON_ELIMINAR } from "../components/common/botonesAccion";
@@ -29,13 +31,12 @@ const JugadorPerfilPage = () => {
   const [juegoElegidoId, setJuegoElegidoId] = useState(null);
   const [abriendoChat, setAbriendoChat] = useState(false);
 
-  // US 50 - Un admin puede dar de baja la cuenta desde el perfil. Se guarda
-  // el id dado de baja (no un booleano) para que el aviso no quede pegado al
-  // pasar a otro perfil sin desmontar la pagina.
+  // US 50 / US 36 - Un admin puede dar de baja o banear la cuenta desde el
+  // perfil. Se guarda el id afectado (no un booleano) para que el aviso no
+  // quede pegado al pasar a otro perfil sin desmontar la pagina.
   const { user } = useAuth();
   const baja = useDarDeBajaUsuario();
-  const [idDadoDeBaja, setIdDadoDeBaja] = useState(null);
-  const [mensajeBaja, setMensajeBaja] = useState("");
+  const [avisoAdmin, setAvisoAdmin] = useState(null);
 
   const handleEnviarMensaje = async () => {
     setAbriendoChat(true);
@@ -48,16 +49,29 @@ const JugadorPerfilPage = () => {
     const mensaje = await baja.confirmar();
     if (!mensaje) return;
 
-    setMensajeBaja(mensaje);
-    setIdDadoDeBaja(idObjetivo);
+    setAvisoAdmin({
+      userId: idObjetivo,
+      titulo: "Cuenta dada de baja",
+      mensaje,
+    });
+  };
+
+  // US 36 - Una cuenta baneada deja de tener perfil visible: se reemplaza la
+  // pagina por el aviso, igual que al darla de baja.
+  const handleBaneado = (mensaje) => {
+    setAvisoAdmin({
+      userId: perfil.user_id,
+      titulo: "Jugador baneado",
+      mensaje,
+    });
   };
 
   let contenido;
 
-  if (idDadoDeBaja !== null && String(idDadoDeBaja) === String(jugadorId)) {
+  if (avisoAdmin && String(avisoAdmin.userId) === String(jugadorId)) {
     contenido = (
       <AvisoComponent
-        titulo="Cuenta dada de baja"
+        titulo={avisoAdmin.titulo}
         accion={
           <Link
             to="/app/jugadores"
@@ -67,7 +81,7 @@ const JugadorPerfilPage = () => {
           </Link>
         }
       >
-        {mensajeBaja}
+        {avisoAdmin.mensaje}
       </AvisoComponent>
     );
   } else if (cargando) {
@@ -116,23 +130,33 @@ const JugadorPerfilPage = () => {
             )}
           </div>
 
-          {esUnoMismo ? (
-            <Link
-              to="/app/perfil"
-              className="shrink-0 rounded-xl border border-white/10 bg-ganker-surface-light px-5 py-3 text-center text-sm font-semibold text-ganker-text transition hover:border-ganker-purple/40 hover:bg-ganker-purple/20"
-            >
-              Editar mis perfiles
-            </Link>
-          ) : (
-            <button
-              type="button"
-              onClick={handleEnviarMensaje}
-              disabled={abriendoChat}
-              className="shrink-0 cursor-pointer rounded-xl bg-gradient-to-r from-ganker-orange to-ganker-purple px-5 py-3 text-sm font-semibold text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
-            >
-              {abriendoChat ? "Abriendo chat..." : "Enviar mensaje"}
-            </button>
-          )}
+          <div className="flex shrink-0 flex-wrap items-center gap-2">
+            {esUnoMismo ? (
+              <Link
+                to="/app/perfil"
+                className="rounded-xl border border-white/10 bg-ganker-surface-light px-5 py-3 text-center text-sm font-semibold text-ganker-text transition hover:border-ganker-purple/40 hover:bg-ganker-purple/20"
+              >
+                Editar mis perfiles
+              </Link>
+            ) : (
+              <>
+                {/* US 35 - Reportar a otro jugador desde su perfil. */}
+                <BotonReportarJugadorComponent
+                  jugador={perfil}
+                  currentUserId={currentUserId}
+                  variante="perfil"
+                />
+                <button
+                  type="button"
+                  onClick={handleEnviarMensaje}
+                  disabled={abriendoChat}
+                  className="shrink-0 cursor-pointer rounded-xl bg-gradient-to-r from-ganker-orange to-ganker-purple px-5 py-3 text-sm font-semibold text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  {abriendoChat ? "Abriendo chat..." : "Enviar mensaje"}
+                </button>
+              </>
+            )}
+          </div>
         </div>
 
         {/* Discord: solo aparece si el jugador lo comparte con quien mira */}
@@ -145,17 +169,27 @@ const JugadorPerfilPage = () => {
               <h2 className="font-heading text-lg font-semibold text-ganker-text">
                 Administración
               </h2>
+              {/* US 36 - Banear la cuenta o darla de baja junto con sus
+                  perfiles de juego. */}
               <p className="mt-1 text-sm text-ganker-muted">
-                Dar de baja esta cuenta y todos sus perfiles de juego.
+                Aplicá una sanción a esta cuenta o dala de baja definitivamente.
               </p>
             </div>
-            <button
-              type="button"
-              onClick={() => baja.abrir(perfil)}
-              className={`shrink-0 ${CLASES_BOTON_ELIMINAR}`}
-            >
-              Dar de baja cuenta
-            </button>
+            <div className="flex shrink-0 flex-wrap items-center gap-2">
+              {/* US 36 - Banear jugador desde el perfil. */}
+              <BotonBanearJugadorComponent
+                jugador={perfil}
+                miId={currentUserId}
+                onBaneado={handleBaneado}
+              />
+              <button
+                type="button"
+                onClick={() => baja.abrir(perfil)}
+                className={CLASES_BOTON_ELIMINAR}
+              >
+                Dar de baja cuenta
+              </button>
+            </div>
           </div>
         )}
 

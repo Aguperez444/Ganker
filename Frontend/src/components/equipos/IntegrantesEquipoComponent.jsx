@@ -1,5 +1,6 @@
 import { urlDeMedia } from "../../utils/media";
 import IconoChicoComponent from "../common/IconoChicoComponent";
+import BotonReportarJugadorComponent from "../moderacion/BotonReportarJugadorComponent";
 
 const CLASES_ETIQUETA = "shrink-0 rounded-full border font-semibold";
 
@@ -23,6 +24,10 @@ const CLASES_ETIQUETA = "shrink-0 rounded-full border font-semibold";
 //
 // `onVerPerfil(userId)` (opcional): si viene, el avatar y el nombre de cada
 // integrante (no de las vacantes) llevan a su perfil.
+//
+// `currentUserId` (opcional): si viene, cada integrante que no sea el propio
+// jugador tiene el boton de reporte (US 35). No se muestra en las vacantes
+// ni en la version compacta de las tarjetas de busqueda.
 function DetalleRolYRango({ perfilRol, iconoRol, rango }) {
   return (
     <span className="inline-flex min-w-0 items-center gap-1">
@@ -49,6 +54,7 @@ const IntegrantesEquipoComponent = ({
   compacto = false,
   iconosDeRoles = {},
   onVerPerfil,
+  currentUserId,
 }) => {
   const tamanioAvatar = compacto ? "h-7 w-7" : "h-10 w-10";
   const tamanioEtiqueta = compacto
@@ -78,6 +84,11 @@ const IntegrantesEquipoComponent = ({
           : "text-ganker-text";
         const puedeVerPerfil = Boolean(
           onVerPerfil && !integrante.is_vacant && integrante.user_id
+        );
+        const tieneAccionesLider = Boolean(
+          (onTransferirLiderazgo || onExpulsar) &&
+          !integrante.is_vacant &&
+          !integrante.is_leader
         );
         const textoNombre = puedeVerPerfil ? (
           <button
@@ -150,28 +161,43 @@ const IntegrantesEquipoComponent = ({
               )}
             </div>
 
-            {integrante.is_leader && (
-              <span
-                className={`${CLASES_ETIQUETA} ${tamanioEtiqueta} border-ganker-orange/30 bg-ganker-orange/10 text-ganker-orange-light`}
-              >
-                Líder
-              </span>
-            )}
+            {/* En mobile, si hay acciones de lider, el bloque baja a su propio
+                renglon para no tapar el nombre ni el rol/rango del integrante. */}
+            <div
+              className={`flex shrink-0 flex-wrap items-center justify-end gap-2 ${
+                tieneAccionesLider ? "w-full sm:w-auto" : ""
+              }`}
+            >
+              {integrante.is_leader && (
+                <span
+                  className={`${CLASES_ETIQUETA} ${tamanioEtiqueta} border-ganker-orange/30 bg-ganker-orange/10 text-ganker-orange-light`}
+                >
+                  Líder
+                </span>
+              )}
 
-            {integrante.is_vacant && (
-              <span
-                className={`${CLASES_ETIQUETA} ${tamanioEtiqueta} border-ganker-success/30 bg-ganker-success/10 text-ganker-success`}
-              >
-                Disponible
-              </span>
-            )}
+              {integrante.is_vacant && (
+                <span
+                  className={`${CLASES_ETIQUETA} ${tamanioEtiqueta} border-ganker-success/30 bg-ganker-success/10 text-ganker-success`}
+                >
+                  Disponible
+                </span>
+              )}
 
-            {(onTransferirLiderazgo || onExpulsar) &&
-              !integrante.is_vacant &&
-              !integrante.is_leader && (
-                // En mobile las acciones bajan a su propio renglon para no
-                // tapar el nombre ni el rol/rango del integrante.
-                <div className="flex w-full shrink-0 items-center justify-end gap-2 sm:w-auto">
+              {!compacto &&
+                !integrante.is_vacant &&
+                currentUserId &&
+                integrante.user_id !== currentUserId && (
+                  <BotonReportarJugadorComponent
+                    jugador={integrante}
+                    currentUserId={currentUserId}
+                    variante="icono"
+                    soloIcono
+                  />
+                )}
+
+              {tieneAccionesLider && (
+                <div className="flex shrink-0 items-center gap-2">
                   {onTransferirLiderazgo && (
                     <button
                       type="button"
@@ -192,6 +218,7 @@ const IntegrantesEquipoComponent = ({
                   )}
                 </div>
               )}
+            </div>
           </li>
         );
       })}

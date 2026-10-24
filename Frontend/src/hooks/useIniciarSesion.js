@@ -1,8 +1,20 @@
 import { useState } from "react";
 import { useAuth } from "../context/AuthContext";
+import { mensajeDeCuentaBaneada } from "../utils/baneos";
 import { validarFormularioLogin } from "../utils/validaciones";
 
 const VALORES_INICIALES = { email: "", password: "" };
+
+// US 36 - BanNotFinishedException llega como HTTP 400 con un mensaje propio.
+// Se detecta por el texto para no confundirlo con otros 400 de validación.
+function esCuentaBaneada(result) {
+  const mensaje = result?.error?.error;
+  return (
+    result?.status === 400 &&
+    typeof mensaje === "string" &&
+    /bane/i.test(mensaje)
+  );
+}
 
 export function useIniciarSesion() {
   const { login } = useAuth();
@@ -39,6 +51,10 @@ export function useIniciarSesion() {
           result.error?.detail ??
             "Demasiados intentos. Esperá un minuto y probá de nuevo."
         );
+      } else if (esCuentaBaneada(result)) {
+        // US 36 - Cuenta suspendida: se muestra la restriccion con el motivo
+        // y el vencimiento que manda el backend.
+        setErrorServidor(mensajeDeCuentaBaneada(result.error.error));
       } else {
         setErrorServidor("No pudimos iniciar sesión. Probá de nuevo.");
       }
