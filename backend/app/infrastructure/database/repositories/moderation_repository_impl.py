@@ -106,7 +106,7 @@ class ModerationRepositoryImpl(IModerationRepository):
         ).all()
         for report in reports:
             report.status = ReportStatus.RESOLVED
-            report.resolved_at = datetime.now()
+            report.resolved_at = datetime.now(timezone.utc)
             report.resolver_id = ban_record.banned_by_user.user_id
 
         self.session.flush()
@@ -128,8 +128,11 @@ class ModerationRepositoryImpl(IModerationRepository):
                 return
 
             if user_ban_log.expires_at is not None:
-                now_dt = datetime.now(user_ban_log.expires_at.tzinfo) if user_ban_log.expires_at.tzinfo else datetime.now()
-                if user_ban_log.expires_at <= now_dt:
+                expires_at = user_ban_log.expires_at
+                # SQLite descarta la zona horaria; los baneos se generan en UTC.
+                if expires_at.tzinfo is None:
+                    expires_at = expires_at.replace(tzinfo=timezone.utc)
+                if expires_at <= datetime.now(timezone.utc):
                     # Desactivo el flag de baneado en el usuario
                     if user:
                         user.banned = False
@@ -159,7 +162,7 @@ class ModerationRepositoryImpl(IModerationRepository):
                 user.banned = False
 
             # Marca él ban como expirado
-            register.expires_at = datetime.now()
+            register.expires_at = datetime.now(timezone.utc)
 
             self.session.flush()
         elif user and getattr(user, "banned", False) is True:

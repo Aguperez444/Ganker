@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Optional
 
 from app.application.ports.i_federated_auth_provider import IFederatedAuthProviderResolver
@@ -55,7 +55,7 @@ class AuthenticateFederatedUser:
                     jti=jti,
                     expires_at=expires_at,
                 )
-                user.last_connection = datetime.now()
+                user.last_connection = datetime.now(timezone.utc).replace(tzinfo=None)
                 uow.user_repo.update_user(user)
 
                 return FederatedCallbackResponse(
@@ -107,7 +107,7 @@ class AuthenticateFederatedUser:
                                 provider=FederatedProvider.DISCORD,
                                 provider_user_id=account.provider_user_id,
                                 email=account.email,
-                                linked_at=datetime.now(),
+                                linked_at=datetime.now(timezone.utc).replace(tzinfo=None),
                             )
                         )
                     return user
@@ -127,7 +127,7 @@ class AuthenticateFederatedUser:
                             provider=account.provider,
                             provider_user_id=account.provider_user_id,
                             email=account.email,
-                            linked_at=datetime.now(),
+                            linked_at=datetime.now(timezone.utc).replace(tzinfo=None),
                         )
                     )
                 return user_by_mail
@@ -155,7 +155,7 @@ class AuthenticateFederatedUser:
                     avatar_url=account.avatar_url,
                 ),
                 visibility=DiscordVisibility.TEAMMATES,
-                linked_at=datetime.now(),
+                linked_at=datetime.now(timezone.utc).replace(tzinfo=None),
             )
         )
 

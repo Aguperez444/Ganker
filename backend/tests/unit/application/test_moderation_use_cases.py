@@ -183,7 +183,7 @@ class TestBanAndUnbanUseCasesUnit:
         assert called_register.banned_user is target
         assert called_register.banned_by_user is admin
         assert called_register.reason == "Comportamiento abusivo reiterado"
-        assert called_register.expires_at > datetime.now() + timedelta(days=6)
+        assert called_register.expires_at > datetime.now(called_register.expires_at.tzinfo) + timedelta(days=6)
 
     def test_ban_player_self_ban_raises_400(self):
         uow = _make_mock_uow()

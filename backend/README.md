@@ -349,13 +349,16 @@ Las fixtures compartidas de [tests/conftest.py](tests/conftest.py) crean SQLite 
 
 Las pruebas adicionales en PostgreSQL comprueban los reportes simultáneos,
 la selección del último baneo vigente y el borrado de rangos con perfiles y
-equipos vinculados. Se habilitan con
+equipos vinculados. También prueban recuperación de contraseña y fechas con
+zonas distintas en Python y PostgreSQL (UTC, Córdoba y Tokio). Se habilitan con
 `GANKER_TEST_POSTGRES_URL`; crean y eliminan un esquema temporal por prueba:
 
 ```bash
 GANKER_TEST_POSTGRES_URL='postgresql+psycopg2://usuario@localhost/ganker_test' \
   .venv/bin/pytest tests/integration/database/test_moderation_postgres.py \
-    tests/integration/database/test_rank_deletion_postgres.py --no-cov
+    tests/integration/database/test_rank_deletion_postgres.py \
+    tests/integration/database/test_password_reset_postgres.py \
+    tests/integration/database/test_datetime_postgres.py --no-cov
 ```
 
 Sin esa variable, esas pruebas se omiten y las demás usan SQLite. Las pruebas de
@@ -364,6 +367,14 @@ borrado de rangos con equipos en SQLite activan explícitamente las claves forá
 En CI se usa Python 3.14 y se ejecuta `pytest`. El flujo de ramas y revisión está en el [README principal](../README.md#flujo-de-trabajo).
 
 ## Backend en producción
+
+Las fechas nuevas se generan en UTC explícitamente. Las columnas con
+`DateTime(timezone=True)` reciben fechas con zona (tokens, mensajes, baneos y
+reportes de jugadores). Las columnas `DateTime` sin zona mantienen UTC sin
+`tzinfo` (última conexión, vínculos de cuentas e informes), para conservar el
+esquema y permitir comparaciones sin depender de la zona del proceso. Al importar
+fechas ISO con offset desde CSV, se convierten a UTC antes de quitar la zona.
+Las fechas históricas no se reinterpretan ni corrigen automáticamente.
 
 El [stack de producción](../docker-compose.prod.yml) inyecta las variables desde `.env.prod`, usa PostgreSQL y desactiva los datos de demostración. La preparación del entorno y el despliegue se describen en el [README principal](../README.md#despliegue).
 

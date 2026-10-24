@@ -9,12 +9,13 @@ from app.infrastructure.database.base import Base
 
 
 @pytest.fixture
-def postgres_sessions():
+def postgres_sessions(request):
     url = os.environ.get("GANKER_TEST_POSTGRES_URL")
     if not url:
         pytest.skip("GANKER_TEST_POSTGRES_URL no configurada")
     schema = f"test_ganker_{uuid4().hex}"
-    engine = create_engine(url, connect_args={"options": f"-csearch_path={schema} -cTimeZone=UTC"})
+    db_timezone = getattr(request, "param", "UTC")
+    engine = create_engine(url, connect_args={"options": f"-csearch_path={schema} -cTimeZone={db_timezone}"})
     try:
         with engine.begin() as connection:
             connection.execute(text(f'CREATE SCHEMA "{schema}"'))

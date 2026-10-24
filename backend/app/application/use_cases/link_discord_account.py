@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timezone
 
 from app.application.ports.i_discord_oauth_provider import IDiscordOAuthProvider
 from app.application.ports.i_oauth_state_service import IOAuthStateService
@@ -36,7 +36,7 @@ class LinkDiscordAccount:
             uow.discord_account_link_repo.delete_by_user_id(user_id)
             link = uow.discord_account_link_repo.save(
                 DiscordAccountLink(link_id=None, user_id=user_id, account=account, visibility=visibility,
-                                   linked_at=datetime.now())
+                                   linked_at=datetime.now(timezone.utc).replace(tzinfo=None))
             )
 
         return CreateDiscordDTOService.create_response(link, for_owner=True)

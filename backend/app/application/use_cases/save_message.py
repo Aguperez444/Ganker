@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timezone
 
 from app.application.ports.i_unit_of_work import IUnitOfWork
 from app.domain.exceptions.chat.conversation_id_is_not_provided_exception import ConversationIdIsNotProvidedException
@@ -30,7 +30,7 @@ class SaveMessage:
 
             # no se válida la seguridad en cada mensaje, el websocket se encarga de validar la seguridad durante la conexión inicial
 
-            new_message = Message(None, content, sender, conversation_id, datetime.now(), is_read)
+            new_message = Message(None, content, sender, conversation_id, datetime.now(timezone.utc), is_read)
             message = uow.message_repo.save_message(new_message)
 
             return MessageResponse(message_id=message.message_id, conversation_id=message.conversation_id,

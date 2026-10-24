@@ -1,5 +1,5 @@
 import csv
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 
 from sqlalchemy import select
@@ -50,8 +50,12 @@ def _parse_datetime(val: str | None) -> datetime | None:
     if not parsed:
         return None
     try:
-        # Ajusta el formato ISO si tus CSV guardan timestamps reales (ej: 2026-10-04 12:00:00)
-        return datetime.fromisoformat(parsed)
+        value = datetime.fromisoformat(parsed)
+        # last_connection se persiste como UTC sin zona; conservar el instante
+        # si el CSV incluye un offset y asumir UTC si no lo incluye.
+        if value.tzinfo is not None:
+            value = value.astimezone(timezone.utc).replace(tzinfo=None)
+        return value
     except ValueError:
         return None
 

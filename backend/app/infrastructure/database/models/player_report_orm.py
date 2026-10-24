@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import TYPE_CHECKING, Optional
 from sqlalchemy import ForeignKey, Integer, String, DateTime
 from sqlalchemy import Enum as SQLEnum
@@ -23,7 +23,7 @@ class PlayerReportORM(Base):
     status: Mapped[str] = mapped_column(SQLEnum(ReportStatus),default=ReportStatus.PENDING, nullable=False)
     reason: Mapped[str] = mapped_column(SQLEnum(ReportReason),nullable=False)
     description: Mapped[Optional[str]] = mapped_column(String(500), nullable=True)
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=datetime.now, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), nullable=False)
     resolved_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
     resolver_id: Mapped[Optional[int]] = mapped_column(Integer, ForeignKey("user.user_id", ondelete="SET NULL"), nullable=True)
 

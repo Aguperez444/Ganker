@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timezone
 
 from app.application.ports.i_unit_of_work import IUnitOfWork
 from app.application.use_cases.chatroom_access import get_chatroom_for_member
@@ -26,7 +26,7 @@ class SendChatroomMessage:
             chatroom = get_chatroom_for_member(uow, chatroom_id, sender_id)
             sender = chatroom.get_member(sender_id).user
 
-            saved = uow.message_repo.save_message(Message(None, clean_content, sender, chatroom_id, datetime.now(), False))
+            saved = uow.message_repo.save_message(Message(None, clean_content, sender, chatroom_id, datetime.now(timezone.utc), False))
 
             readers = (online_user_ids or set()) | {sender_id}
             member_ids = [m.user.user_id for m in chatroom.members]

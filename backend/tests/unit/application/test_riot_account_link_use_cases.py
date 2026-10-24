@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from unittest.mock import MagicMock
 
 import pytest
@@ -200,7 +200,7 @@ class TestRefreshRiotStats:
     def _linked(self, uow, synced_minutes_ago: int):
         uow.riot_account_link_repo.get_by_game_profile_id.return_value = RiotAccountLink(
             link_id=1, game_profile_id=10, account=ACCOUNT, server="la2", stats=None,
-            last_synced_at=datetime.now() - timedelta(minutes=synced_minutes_ago))
+            last_synced_at=datetime.now(timezone.utc).replace(tzinfo=None) - timedelta(minutes=synced_minutes_ago))
 
     def test_refresh_updates_stats(self, deps):
         uow, resolver, lol, _ = deps
@@ -211,7 +211,7 @@ class TestRefreshRiotStats:
         lol.fetch_stats.assert_called_once_with(ACCOUNT, "la2")
         assert result.stats.summoner_level == 120
         assert result.rank_sync.status == "updated"
-        assert result.next_refresh_at > datetime.now()
+        assert result.next_refresh_at > datetime.now(timezone.utc).replace(tzinfo=None)
 
     def test_refresh_fills_in_game_name_with_riot_id(self, deps):
         uow, resolver, _, _ = deps

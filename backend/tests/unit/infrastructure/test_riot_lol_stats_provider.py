@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timezone
 
 import httpx
 import pytest
@@ -137,7 +137,8 @@ class TestRiotLolStatsProvider:
         first, second, third = stats.matches
         assert (first.champion_name, first.kills, first.deaths, first.assists, first.win) == ("Wukong", 7, 3, 9, True)
         assert (first.role, first.cs, first.queue, first.duration_seconds) == ("Jungla", 162, "Solo/Dúo", 1800)
-        assert first.played_at == datetime.fromtimestamp(GAME_END_MS / 1000)
+        assert first.played_at == datetime.fromtimestamp(GAME_END_MS / 1000, tz=timezone.utc)
+        assert first.played_at.utcoffset().total_seconds() == 0
         assert (second.role, second.queue) == (None, "ARAM")
         assert third.queue == "Arena"
 

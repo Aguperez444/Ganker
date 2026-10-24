@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import TYPE_CHECKING, Optional
 
 from app.application.ports.i_riot_game_provider import IRiotGameProvider
@@ -77,7 +77,7 @@ class LinkRiotAccount:
             uow.riot_account_link_repo.delete_by_game_profile_id(game_profile_id)
             link = uow.riot_account_link_repo.save(
                 RiotAccountLink(link_id=None, game_profile_id=game_profile_id, account=account, server=account_server,
-                                stats=stats, last_synced_at=datetime.now() if stats else None)
+                                stats=stats, last_synced_at=datetime.now(timezone.utc).replace(tzinfo=None) if stats else None)
             )
 
         return CreateRiotLinkDTOService.create_link_response(link, provider, self.refresh_cooldown, rank_sync)

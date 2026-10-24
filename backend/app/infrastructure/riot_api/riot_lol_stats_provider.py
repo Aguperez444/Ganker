@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Optional
 from urllib.parse import quote
 
@@ -172,7 +172,7 @@ class RiotLolStatsProvider(IRiotGameProvider):
             cs=participant.get("totalMinionsKilled", 0) + participant.get("neutralMinionsKilled", 0),
             duration_seconds=info["gameDuration"],
             queue=QUEUES.get(info.get("queueId")) or GAME_MODES.get(info.get("gameMode"), "Otro modo"),
-            played_at=datetime.fromtimestamp(timestamp / 1000),
+            played_at=datetime.fromtimestamp(timestamp / 1000, tz=timezone.utc),
         )
 
     def _champion_icon(self, version: str, champion_id: Optional[str]) -> Optional[str]:
