@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 from app.application.ports.i_unit_of_work import IUnitOfWork
 from app.domain.exceptions.domain_exception import DomainException
@@ -30,13 +30,14 @@ class BanPlayer:
             ):
                 raise DomainException("No tienes permisos para banear a un usuario de igual o mayor jerarquía.", status_code=403)
 
-            created_at = datetime.now()
+            created_at = datetime.now(timezone.utc)
             try:
                 expires_at = created_at + timedelta(days=ban_request.duration_days)
             except OverflowError:
                 # Sin máximo de negocio: las duraciones que exceden datetime
-                # se conservan como un baneo hasta la última fecha representable.
-                expires_at = datetime.max
+                # se conservan cerca del máximo. Un día de margen evita llegar al
+                # año 10000 al leer TIMESTAMPTZ desde una zona con offset positivo.
+                expires_at = datetime.max.replace(tzinfo=timezone.utc) - timedelta(days=1)
             new_ban_record = UserBanRecord(
                 user_ban_record_id=None,
                 banned_user=reported_user,

@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timezone
 
 from app.application.ports.i_federated_state_service import IFederatedStateService
 from app.application.ports.i_token_service import ITokenService
@@ -74,7 +74,7 @@ class CompleteFederatedRegistration:
                 role=UserRole.PLAYER,
                 profiles=[],
                 icon_url=account.avatar_url,
-                last_connection=datetime.now(),
+                last_connection=datetime.now(timezone.utc).replace(tzinfo=None),
             )
             registered_player = uow.user_repo.create_user(new_player)
             player_id = registered_player.user_id
@@ -87,7 +87,7 @@ class CompleteFederatedRegistration:
                     provider=account.provider,
                     provider_user_id=account.provider_user_id,
                     email=final_mail,
-                    linked_at=datetime.now(),
+                    linked_at=datetime.now(timezone.utc).replace(tzinfo=None),
                 )
             )
 
@@ -103,7 +103,7 @@ class CompleteFederatedRegistration:
                             avatar_url=account.avatar_url,
                         ),
                         visibility=DiscordVisibility.TEAMMATES,
-                        linked_at=datetime.now(),
+                        linked_at=datetime.now(timezone.utc).replace(tzinfo=None),
                     )
                 )
 

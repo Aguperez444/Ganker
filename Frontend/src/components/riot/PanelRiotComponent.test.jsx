@@ -237,6 +237,23 @@ describe("PanelRiotComponent", () => {
     ).toBeInTheDocument();
   });
 
+  it.each([-1, 1])(
+    "respeta el cooldown UTC sin zona (%i minutos)",
+    async (minutos) => {
+      getRiotAccount.mockResolvedValue({
+        ...VINCULADA,
+        next_refresh_at: new Date(Date.now() + minutos * 60_000)
+          .toISOString()
+          .replace("Z", ""),
+      });
+      render(<PanelRiotComponent gameProfileId={10} esPropio />);
+
+      const boton = await screen.findByRole("button", { name: "Actualizar" });
+      if (minutos < 0) expect(boton).toBeEnabled();
+      else expect(boton).toBeDisabled();
+    }
+  );
+
   it("no deja actualizar antes de que termine la espera", async () => {
     getRiotAccount.mockResolvedValue({
       ...VINCULADA,

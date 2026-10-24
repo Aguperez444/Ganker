@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Optional, TYPE_CHECKING
 
 from sqlalchemy import Integer, ForeignKey, String, DateTime
@@ -17,7 +17,7 @@ class UserBanRecordORM(Base):
     banned_user_id: Mapped[int] = mapped_column(Integer, ForeignKey("user.user_id", ondelete="CASCADE"), nullable=False)
     banned_by_user_id: Mapped[int] = mapped_column(Integer, ForeignKey("user.user_id", ondelete="SET NULL"), nullable=True)
     reason: Mapped[str] = mapped_column(String(500), nullable=False)
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=datetime.now, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), nullable=False)
     expires_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
 
     banned_user: Mapped["UserORM"] = relationship("UserORM", foreign_keys=[banned_user_id], back_populates="banned_player")

@@ -5,6 +5,7 @@ import { getCharactersByGame } from "../api/characterApi";
 import { getRolesByGame } from "../api/roleApi";
 import { getRanksByGame } from "../api/rankApi";
 import { logError } from "../utils/logs";
+import { parsearFechaUTC } from "../utils/tiempo";
 
 // El filtro de username exige minimo 4 caracteres del lado del backend
 // (SearchVideogameProfilesRequest.name, Field(min_length=4)); mandar menos
@@ -28,12 +29,16 @@ const ORDENES = {
   reciente: (a, b) => {
     if (!a.last_connection) return 1;
     if (!b.last_connection) return -1;
-    return new Date(b.last_connection) - new Date(a.last_connection);
+    return (
+      parsearFechaUTC(b.last_connection) - parsearFechaUTC(a.last_connection)
+    );
   },
   antiguo: (a, b) => {
     if (!a.last_connection) return 1;
     if (!b.last_connection) return -1;
-    return new Date(a.last_connection) - new Date(b.last_connection);
+    return (
+      parsearFechaUTC(a.last_connection) - parsearFechaUTC(b.last_connection)
+    );
   },
 };
 

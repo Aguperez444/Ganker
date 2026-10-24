@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import TYPE_CHECKING
 
 from app.application.ports.i_password_hasher import IPasswordHasher
@@ -36,7 +36,7 @@ class RegisterPlayer:
                 raise UsernameAlreadyExistsException(player_data.username)
 
             hashed_pass = self.pass_hasher.hash_password(player_data.password)
-            new_player = User(None, player_data.username, player_data.name, player_data.mail, hashed_pass, UserRole.PLAYER, [], None, datetime.now())
+            new_player = User(None, player_data.username, player_data.name, player_data.mail, hashed_pass, UserRole.PLAYER, [], None, datetime.now(timezone.utc).replace(tzinfo=None))
 
             registered_player = uow.user_repo.create_user(new_player)
             player_id = registered_player.user_id

@@ -1,10 +1,11 @@
 import { Link } from "react-router-dom";
 import AvatarUsuarioComponent from "../common/AvatarUsuarioComponent";
 import IconoChicoComponent from "../common/IconoChicoComponent";
+import { parsearFechaUTC } from "../../utils/tiempo";
 
 function formatearFechaReciente(timestamp) {
   if (!timestamp) return "";
-  const fecha = new Date(timestamp);
+  const fecha = parsearFechaUTC(timestamp);
   if (Number.isNaN(fecha.getTime())) return "";
 
   const ahora = new Date();

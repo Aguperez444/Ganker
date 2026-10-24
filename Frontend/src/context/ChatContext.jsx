@@ -20,6 +20,7 @@ import { reproducirSonidoNotificacion } from "../utils/sonido";
 import { useNotificacionesSocket } from "../hooks/useNotificacionesSocket";
 import { useIsDesktop } from "../hooks/useIsDesktop";
 import { logError } from "../utils/logs";
+import { parsearFechaUTC } from "../utils/tiempo";
 
 const ChatContext = createContext(null);
 
@@ -65,7 +66,7 @@ function chatroomComoConversacion(chatroom) {
 function ordenarPorUltimoMensaje(conversaciones) {
   const fecha = (c) =>
     c.last_message?.timestamp
-      ? new Date(c.last_message.timestamp).getTime()
+      ? parsearFechaUTC(c.last_message.timestamp).getTime()
       : 0;
   return [...conversaciones].sort((a, b) => fecha(b) - fecha(a));
 }

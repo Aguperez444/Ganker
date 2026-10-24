@@ -85,7 +85,7 @@ def test_ban_caps_unrepresentable_expiration_without_overflow(
     }, headers=admin_auth_headers)
     assert response.status_code == 200
     record = test_db_session.query(UserBanRecordORM).one()
-    assert record.expires_at == datetime.max
+    assert record.expires_at == datetime.max - timedelta(days=1)
     test_db_session.expire_all()
     assert seed_player.banned is True
     # El registro se puede consultar y el usuario continúa bloqueado.

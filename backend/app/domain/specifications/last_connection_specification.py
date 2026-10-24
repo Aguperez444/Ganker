@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from app.domain.specifications.base import Specification
 
 
@@ -7,4 +7,4 @@ class ByLastConnectionSpecification(Specification):
         self.days = days
 
     def to_expression(self):
-        return datetime.now() - timedelta(days=self.days)  # Filtra jugadores que se conectaron en los últimos self.days días
+        return datetime.now(timezone.utc).replace(tzinfo=None) - timedelta(days=self.days)  # Filtra jugadores que se conectaron en los últimos self.days días

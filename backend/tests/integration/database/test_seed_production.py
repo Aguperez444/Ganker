@@ -1,3 +1,6 @@
+from datetime import datetime
+
+import pytest
 from sqlalchemy import create_engine, select, func
 from sqlalchemy.orm import sessionmaker
 
@@ -12,7 +15,15 @@ from app.infrastructure.database.models import (
     UserORM,
     VideogameORM,
 )
-from app.infrastructure.database.seed_data import seed_database
+from app.infrastructure.database.seed_data import _parse_datetime, seed_database
+
+
+@pytest.mark.parametrize("value", [
+    "2026-10-24T05:00:00", "2026-10-24T05:00:00Z",
+    "2026-10-24T02:00:00-03:00", "2026-10-24T14:00:00+09:00",
+])
+def test_seed_activity_dates_are_normalized_to_utc_without_timezone(value):
+    assert _parse_datetime(value) == datetime(2026, 10, 24, 5)
 
 
 def test_seed_database_production_only_seeds_initial_owner(monkeypatch):

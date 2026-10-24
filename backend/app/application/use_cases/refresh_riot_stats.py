@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 from app.application.ports.i_riot_game_provider_resolver import IRiotGameProviderResolver
 from app.application.ports.i_unit_of_work import IUnitOfWork
@@ -33,7 +33,7 @@ class RefreshRiotStats:
             if link is None:
                 raise RiotAccountNotLinkedException(game_profile_id)
 
-            now = datetime.now()
+            now = datetime.now(timezone.utc).replace(tzinfo=None)
             if not link.can_refresh(now, self.refresh_cooldown):
                 seconds_left = int((link.next_refresh_at(self.refresh_cooldown) - now).total_seconds())
                 raise RiotStatsRefreshTooSoonException(seconds_left)

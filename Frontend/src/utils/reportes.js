@@ -1,3 +1,5 @@
+import { parsearFechaUTC } from "./tiempo";
+
 // Utilidades de los reportes del panel admin (US 37).
 
 export const FORMATOS_EXPORTACION = [
@@ -26,10 +28,7 @@ export function describirPeriodo({ start_date, end_date }) {
 // navegador lo muestre en la hora local.
 export function formatearGeneradoEl(fechaIso) {
   if (!fechaIso) return "";
-  const conZona = /[zZ]|[+-]\d\d:\d\d$/.test(fechaIso)
-    ? fechaIso
-    : `${fechaIso}Z`;
-  return new Date(conZona).toLocaleString("es-AR", {
+  return parsearFechaUTC(fechaIso).toLocaleString("es-AR", {
     dateStyle: "short",
     timeStyle: "short",
   });
