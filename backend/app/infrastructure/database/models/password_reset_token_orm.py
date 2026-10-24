@@ -1,4 +1,4 @@
-from datetime import timezone, datetime
+from datetime import datetime
 from typing import TYPE_CHECKING
 
 from sqlalchemy import Integer, ForeignKey, String, DateTime, Boolean, func
@@ -22,7 +22,7 @@ class PasswordResetTokenORM(Base):
     is_used = mapped_column(Boolean, default=False, nullable=False)
     create_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
-        default=func.now(timezone.utc),
+        default=func.now(),
         nullable=False
     )
 
