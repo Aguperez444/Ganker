@@ -1,5 +1,7 @@
+import { parsearFechaUTC } from "../../utils/tiempo";
+
 function formatearFechaMensaje(timestamp) {
-  const fecha = new Date(timestamp);
+  const fecha = parsearFechaUTC(timestamp);
   if (Number.isNaN(fecha.getTime())) return "";
 
   const ahora = new Date();

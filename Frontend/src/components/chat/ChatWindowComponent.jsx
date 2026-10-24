@@ -7,6 +7,7 @@ import { useChat } from "../../context/ChatContext";
 import MessageBubbleComponent from "./MessageBubbleComponent";
 import MessageInputComponent from "./MessageInputComponent";
 import { logError } from "../../utils/logs";
+import { parsearFechaUTC } from "../../utils/tiempo";
 
 // Estado del socket PROPIO, no la presencia del otro participante: el backend
 // no informa si la otra persona esta conectada. Por eso con el socket abierto
@@ -24,8 +25,8 @@ const TAMANO_PAGINA_HISTORIAL = 50;
 function mismoMinuto(a, b) {
   if (!a || !b) return false;
 
-  const fechaA = new Date(a);
-  const fechaB = new Date(b);
+  const fechaA = parsearFechaUTC(a);
+  const fechaB = parsearFechaUTC(b);
 
   if (Number.isNaN(fechaA.getTime()) || Number.isNaN(fechaB.getTime())) {
     return false;

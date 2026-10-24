@@ -1,3 +1,14 @@
+// El backend conserva algunos timestamps UTC sin zona en el esquema actual.
+// Agregar Z solo si falta la zona; los offsets explícitos ya definen el instante.
+// La conversión a la hora local se hace al mostrar la fecha.
+export function parsearFechaUTC(timestamp) {
+  const sinZona =
+    typeof timestamp === "string" &&
+    /[T ]\d{2}:\d{2}/.test(timestamp) &&
+    !/(?:Z|[+-]\d{2}:?\d{2})$/i.test(timestamp);
+  return new Date(sinZona ? `${timestamp}Z` : timestamp);
+}
+
 // Formatea un timestamp de ultima conexion como texto relativo corto
 // ("hace 5 min", "hace 2 h", "hace 3 d"). Usado en Buscar jugadores, donde
 // el backend ya filtra a jugadores conectados en los ultimos 4 dias (ver
@@ -5,7 +16,7 @@
 export function formatearConexionReciente(timestamp) {
   if (!timestamp) return null;
 
-  const fecha = new Date(timestamp);
+  const fecha = parsearFechaUTC(timestamp);
   if (Number.isNaN(fecha.getTime())) return null;
 
   const segundos = Math.floor((Date.now() - fecha.getTime()) / 1000);
@@ -26,10 +37,13 @@ export function formatearConexionReciente(timestamp) {
 export function formatearTiempoRelativo(timestamp) {
   if (!timestamp) return "";
 
-  const fecha = new Date(timestamp);
+  const fecha = parsearFechaUTC(timestamp);
   if (Number.isNaN(fecha.getTime())) return "";
 
-  const segundos = Math.max(0, Math.floor((Date.now() - fecha.getTime()) / 1000));
+  const segundos = Math.max(
+    0,
+    Math.floor((Date.now() - fecha.getTime()) / 1000)
+  );
   if (segundos < 60) return "hace instantes";
 
   const minutos = Math.floor(segundos / 60);

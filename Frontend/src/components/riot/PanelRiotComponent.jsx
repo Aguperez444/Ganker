@@ -5,7 +5,7 @@ import {
   esRiotIdValido,
   nombreServidor,
 } from "../../utils/riot";
-import { formatearTiempoRelativo } from "../../utils/tiempo";
+import { formatearTiempoRelativo, parsearFechaUTC } from "../../utils/tiempo";
 import EstadisticasRiotComponent from "./EstadisticasRiotComponent";
 
 const CLASES_BOTON_SECUNDARIO =
@@ -141,7 +141,8 @@ const PanelRiotComponent = ({
   }
 
   const puedeActualizar =
-    !cuenta.next_refresh_at || new Date(cuenta.next_refresh_at) <= new Date();
+    !cuenta.next_refresh_at ||
+    parsearFechaUTC(cuenta.next_refresh_at) <= new Date();
 
   return (
     <section className="rounded-2xl border border-white/10 bg-ganker-surface p-5 sm:p-6">
