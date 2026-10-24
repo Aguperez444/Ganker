@@ -7,8 +7,8 @@ import { validarFormularioRecuperarContrasena } from "../utils/validaciones";
 export const MENSAJE_RECUPERACION_ENVIADA =
   "Si el correo coincide con una cuenta activa, recibirás un enlace de recuperación.";
 
-// Espera antes de poder pedir otro mail. El backend no limita este endpoint,
-// asi que esto evita al menos que la pantalla sirva para mandar mails en loop.
+// Espera antes de poder pedir otro mail. El backend ademas limita los pedidos
+// por IP y por mail (responde 429); esto evita llegar a ese limite sin querer.
 export const SEGUNDOS_ENTRE_ENVIOS = 60;
 
 // US 34 - Cambiar contraseña, paso 1: pedir el mail de recuperacion.
@@ -48,9 +48,20 @@ export function useRecuperarContrasena(emailInicial = "") {
       return true;
     } catch (error) {
       logError("Error al pedir la recuperación de contraseña:", error);
-      if (error.response?.status === 422) {
+      const status = error.response?.status;
+      const mensaje = error.response?.data?.error;
+
+      if (status === 422) {
         // El backend valida el formato con EmailStr.
         setErrores({ email: "El email no tiene un formato válido." });
+      } else if (status === 429) {
+        // Se paso el limite de pedidos por IP y por mail: no es que el mail
+        // no se pueda enviar, hay que esperar.
+        setErrorServidor(
+          typeof mensaje === "string"
+            ? mensaje
+            : "Hiciste demasiados pedidos. Esperá unos minutos y probá de nuevo."
+        );
       } else {
         setErrorServidor(
           "No pudimos enviar el enlace de recuperación. Probá de nuevo."

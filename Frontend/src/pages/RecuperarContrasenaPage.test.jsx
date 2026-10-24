@@ -93,4 +93,27 @@ describe("RecuperarContrasenaPage - US 34 Cambiar contraseña", () => {
     await usuario.click(boton);
     expect(solicitarRecuperacion).toHaveBeenCalledTimes(1);
   });
+
+  it("si el backend corta por demasiados pedidos (429) muestra su mensaje", async () => {
+    const usuario = userEvent.setup();
+    solicitarRecuperacion.mockRejectedValue({
+      response: {
+        status: 429,
+        data: {
+          error:
+            "Demasiadas solicitudes de recuperación. Por favor, intente nuevamente más tarde.",
+        },
+      },
+    });
+    renderPagina();
+
+    await enviar(usuario, "ana@ejemplo.com");
+
+    expect(
+      await screen.findByText(/Demasiadas solicitudes de recuperación/)
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByText(/No pudimos enviar el enlace/)
+    ).not.toBeInTheDocument();
+  });
 });
