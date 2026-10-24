@@ -3,6 +3,7 @@ import { describe, it, expect } from "vitest";
 import {
   validarFormularioNuevaContrasena,
   validarFormularioRecuperarContrasena,
+  validarFormularioReenviarConfirmacion,
   validarFormularioRegistro,
   validarFormularioRegistroFederado,
 } from "./validaciones";
@@ -39,6 +40,20 @@ describe("US 34 - validarFormularioRecuperarContrasena", () => {
     ).toBe("El email no tiene un formato válido.");
     expect(
       validarFormularioRecuperarContrasena({ email: "ana@ejemplo.com" })
+    ).toEqual({});
+  });
+});
+
+describe("validarFormularioReenviarConfirmacion", () => {
+  it("exige un email con formato válido", () => {
+    expect(validarFormularioReenviarConfirmacion({ email: "" }).email).toBe(
+      "Ingresá tu email."
+    );
+    expect(
+      validarFormularioReenviarConfirmacion({ email: "no-es-mail" }).email
+    ).toBe("El email no tiene un formato válido.");
+    expect(
+      validarFormularioReenviarConfirmacion({ email: "ana@ejemplo.com" })
     ).toEqual({});
   });
 });

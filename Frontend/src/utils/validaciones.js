@@ -33,6 +33,19 @@ export function validarFormularioRecuperarContrasena({ email }) {
   return errores;
 }
 
+// Confirmación de registro: el reenvío del mail solo pide el email.
+export function validarFormularioReenviarConfirmacion({ email }) {
+  const errores = {};
+
+  if (!email.trim()) {
+    errores.email = "Ingresá tu email.";
+  } else if (!esEmailValido(email)) {
+    errores.email = "El email no tiene un formato válido.";
+  }
+
+  return errores;
+}
+
 export function validarFormularioNuevaContrasena({
   password,
   confirmarPassword,

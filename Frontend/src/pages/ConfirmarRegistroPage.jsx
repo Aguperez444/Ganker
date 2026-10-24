@@ -5,6 +5,9 @@ import ReenviarConfirmacionRegistroComponent from "../components/jugadores/Reenv
 import { useConfirmarRegistro } from "../hooks/useConfirmarRegistro";
 import { useReenviarConfirmacionRegistro } from "../hooks/useReenviarConfirmacionRegistro";
 
+// Confirmación de registro. Se llega de dos formas: despues de registrarse
+// (state con el email y el mensaje del backend) o desde el link del mail
+// (?token=...), que es el que crea la cuenta.
 function ConfirmarRegistroPage() {
   const [searchParams] = useSearchParams();
   const token = searchParams.get("token") ?? "";
@@ -28,6 +31,7 @@ function ConfirmarRegistroPage() {
           cargando={reenvio.cargando}
           errorServidor={reenvio.errorServidor}
           enviado={reenvio.enviado}
+          segundosParaReenviar={reenvio.segundosParaReenviar}
           onChange={reenvio.setEmail}
           onSubmit={reenvio.handleSubmit}
         />

@@ -84,6 +84,25 @@ describe("ConfirmarRegistroPage", () => {
     expect(confirmarRegistro).not.toHaveBeenCalled();
   });
 
+  it("después de reenviar espera antes de permitir otro reenvío", async () => {
+    renderPagina({
+      pathname: "/confirm-registration",
+      state: { email: "juan@example.com" },
+    });
+    const usuario = userEvent.setup();
+
+    await usuario.click(
+      screen.getByRole("button", { name: "Reenviar confirmación" })
+    );
+
+    const boton = await screen.findByRole("button", {
+      name: /Reenviar en \d+ s/,
+    });
+    expect(boton).toBeDisabled();
+    await usuario.click(boton);
+    expect(reenviarConfirmacionRegistro).toHaveBeenCalledTimes(1);
+  });
+
   it("si falta el token permite solicitar un enlace nuevo", async () => {
     renderPagina("/confirm-registration");
     expect(

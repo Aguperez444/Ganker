@@ -12,14 +12,14 @@ function ConfirmarRegistroComponent({
   onConfirmar,
   children,
 }) {
+  let titulo = "Confirmá tu cuenta";
+  if (exito) titulo = "Cuenta confirmada";
+  else if (mensaje) titulo = "Revisá tu correo";
+
   return (
     <div className="space-y-5 rounded-2xl border border-ganker-bg bg-ganker-surface p-8 shadow-[0_0px_10px] shadow-ganker-purple">
       <h1 className="font-heading text-xl font-bold text-ganker-text">
-        {exito
-          ? "Cuenta confirmada"
-          : mensaje
-            ? "Revisá tu correo"
-            : "Confirmá tu cuenta"}
+        {titulo}
       </h1>
       {exito ? (
         <>

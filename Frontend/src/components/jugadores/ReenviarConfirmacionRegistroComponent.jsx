@@ -6,6 +6,7 @@ function ReenviarConfirmacionRegistroComponent({
   cargando,
   errorServidor,
   enviado,
+  segundosParaReenviar = 0,
   onChange,
   onSubmit,
 }) {
@@ -36,10 +37,14 @@ function ReenviarConfirmacionRegistroComponent({
       )}
       <button
         type="submit"
-        disabled={cargando}
+        disabled={cargando || segundosParaReenviar > 0}
         className="w-full rounded-lg border border-ganker-purple py-3 text-sm font-bold text-ganker-purple-light transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-60"
       >
-        {cargando ? "Enviando..." : "Reenviar confirmación"}
+        {cargando
+          ? "Enviando..."
+          : segundosParaReenviar > 0
+            ? `Reenviar en ${segundosParaReenviar} s`
+            : "Reenviar confirmación"}
       </button>
     </form>
   );
