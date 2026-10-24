@@ -32,22 +32,43 @@ export function banearJugador({ jugadorId, motivo, duracionDias }) {
     .then((res) => res.data);
 }
 
-// US 53 - Jugadores con un baneo vigente (requiere admin).
-//   GET /api/v1/moderation/banned-players/active?username=&skip=&limit=
+// Buscar jugadores baneados (admin).
+//   GET /api/v1/moderation/banned-players?banned_user=&banned_by=&reason=
+//       &min_date_create=&max_date_create=&min_date_expire=&max_date_expire=
+//       &skip=&limit=
 //
-// El backend ya filtra los vencidos y los levantados. `limit` va de 1 a 100.
-// Devuelve [{ user_id, username, reason, expires_at }], con expires_at null
-// si el baneo no vence.
-export function obtenerJugadoresBaneados({
-  username,
+// Devuelve el historial de baneos (vigentes, vencidos y levantados), ordenado
+// del más nuevo al más viejo y sin los usuarios borrados: [{ id,
+// banned_by_user_id, banned_by_user_username, banned_user_id,
+// banned_user_username, date_created, date_expire, reason }].
+// Los nombres buscan coincidencias parciales; `reason`, el motivo exacto.
+// Las fechas van en ISO 8601. No devuelve el total de resultados.
+export function buscarBaneos({
+  usuario,
+  admin,
+  motivo,
+  creadoDesde,
+  creadoHasta,
+  vencimientoDesde,
+  vencimientoHasta,
   skip = 0,
-  limit = 100,
+  limit = 10,
 } = {}) {
   return axiosClient
-    .get("/api/v1/moderation/banned-players/active", {
-      params: { username: username || undefined, skip, limit },
+    .get("/api/v1/moderation/banned-players", {
+      params: {
+        banned_user: usuario || undefined,
+        banned_by: admin || undefined,
+        reason: motivo || undefined,
+        min_date_create: creadoDesde || undefined,
+        max_date_create: creadoHasta || undefined,
+        min_date_expire: vencimientoDesde || undefined,
+        max_date_expire: vencimientoHasta || undefined,
+        skip,
+        limit,
+      },
     })
-    .then((res) => res.data.players ?? []);
+    .then((res) => res.data.list_banned_players ?? []);
 }
 
 // US 53 - Levantar la suspensión de un jugador (admin).

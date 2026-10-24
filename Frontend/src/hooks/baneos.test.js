@@ -1,17 +1,29 @@
 import { renderHook, waitFor, act } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import { useJugadoresBaneados } from "./useJugadoresBaneados";
+import { TAMANIO_PAGINA_BANEOS, useBuscarBaneos } from "./useBuscarBaneos";
 import { useDesbanearJugador } from "./useDesbanearJugador";
-import {
-  desbanearJugador,
-  obtenerJugadoresBaneados,
-} from "../api/moderacionApi";
+import { buscarBaneos, desbanearJugador } from "../api/moderacionApi";
+import { FILTROS_BANEOS_VACIOS } from "../utils/baneos";
 
 vi.mock("../api/moderacionApi", () => ({
-  obtenerJugadoresBaneados: vi.fn(),
+  buscarBaneos: vi.fn(),
   desbanearJugador: vi.fn(),
 }));
+
+// Registro tal como lo devuelve GET /api/v1/moderation/banned-players.
+function registro(id, userId) {
+  return {
+    id,
+    banned_by_user_id: 1,
+    banned_by_user_username: "admin",
+    banned_user_id: userId,
+    banned_user_username: `jugador${userId}`,
+    date_created: "2026-10-20T10:00:00+00:00",
+    date_expire: null,
+    reason: `motivo ${id}`,
+  };
+}
 
 function banFuturo(id, userId) {
   return {
@@ -22,53 +34,107 @@ function banFuturo(id, userId) {
   };
 }
 
-describe("useJugadoresBaneados - US 53", () => {
+describe("useBuscarBaneos - Buscar jugadores baneados", () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
 
-  it("carga al montar y muestra lo que devuelve el backend sin filtrar", async () => {
-    obtenerJugadoresBaneados.mockResolvedValue([
-      banFuturo(1, 10),
-      banFuturo(2, 20),
-    ]);
+  it("al montar busca sin filtros en la primera página", async () => {
+    buscarBaneos.mockResolvedValue([registro(1, 10), registro(2, 20)]);
 
-    const { result } = renderHook(() => useJugadoresBaneados());
+    const { result } = renderHook(() => useBuscarBaneos());
 
     await waitFor(() => {
       expect(result.current.cargando).toBe(false);
     });
-    expect(obtenerJugadoresBaneados).toHaveBeenCalledTimes(1);
-    expect(result.current.baneados.map((b) => b.user_id)).toEqual([10, 20]);
+    expect(buscarBaneos).toHaveBeenCalledWith(
+      expect.objectContaining({
+        usuario: "",
+        skip: 0,
+        limit: TAMANIO_PAGINA_BANEOS + 1,
+      })
+    );
+    expect(result.current.baneos).toEqual([
+      expect.objectContaining({
+        id: 1,
+        user_id: 10,
+        username: "jugador10",
+        admin_username: "admin",
+        reason: "motivo 1",
+      }),
+      expect.objectContaining({ id: 2, user_id: 20 }),
+    ]);
+    expect(result.current.hayMas).toBe(false);
   });
 
-  it("recargar vuelve a pedir el listado al backend", async () => {
-    obtenerJugadoresBaneados.mockResolvedValueOnce([banFuturo(1, 10)]);
-    obtenerJugadoresBaneados.mockResolvedValueOnce([]);
+  it("detecta que hay página siguiente y la pide con los mismos filtros", async () => {
+    const pagina1 = Array.from({ length: TAMANIO_PAGINA_BANEOS + 1 }, (_, i) =>
+      registro(i + 1, i + 1)
+    );
+    buscarBaneos.mockResolvedValue(pagina1);
 
-    const { result } = renderHook(() => useJugadoresBaneados());
+    const { result } = renderHook(() => useBuscarBaneos());
     await waitFor(() => {
-      expect(result.current.baneados).toHaveLength(1);
+      expect(result.current.cargando).toBe(false);
     });
 
     await act(async () => {
-      await result.current.recargar();
+      await result.current.buscar({ ...FILTROS_BANEOS_VACIOS, admin: "mod" });
+    });
+    expect(result.current.baneos).toHaveLength(TAMANIO_PAGINA_BANEOS);
+    expect(result.current.hayMas).toBe(true);
+
+    buscarBaneos.mockResolvedValue([registro(99, 99)]);
+    await act(async () => {
+      await result.current.paginaSiguiente();
     });
 
-    expect(obtenerJugadoresBaneados).toHaveBeenCalledTimes(2);
-    expect(result.current.baneados).toHaveLength(0);
+    expect(buscarBaneos).toHaveBeenLastCalledWith(
+      expect.objectContaining({ admin: "mod", skip: TAMANIO_PAGINA_BANEOS })
+    );
+    expect(result.current.pagina).toBe(1);
+    expect(result.current.hayMas).toBe(false);
   });
 
-  it("muestra un error si el admin no tiene permisos", async () => {
-    obtenerJugadoresBaneados.mockRejectedValue({ response: { status: 403 } });
+  it("buscar con filtros combinados vuelve a la primera página", async () => {
+    buscarBaneos.mockResolvedValue([]);
 
-    const { result } = renderHook(() => useJugadoresBaneados());
+    const { result } = renderHook(() => useBuscarBaneos());
+    await waitFor(() => {
+      expect(result.current.cargando).toBe(false);
+    });
+
+    await act(async () => {
+      await result.current.buscar({
+        ...FILTROS_BANEOS_VACIOS,
+        usuario: "@pedro",
+        motivo: "Cheats",
+        creadoDesde: "2026-10-01",
+      });
+    });
+
+    expect(buscarBaneos).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        usuario: "pedro",
+        motivo: "Cheats",
+        creadoDesde: new Date(2026, 9, 1).toISOString(),
+        skip: 0,
+      })
+    );
+    expect(result.current.baneos).toEqual([]);
+  });
+
+  it("muestra un error si no tiene permisos de admin", async () => {
+    buscarBaneos.mockRejectedValue({ response: { status: 403 } });
+
+    const { result } = renderHook(() => useBuscarBaneos());
 
     await waitFor(() => {
       expect(result.current.error).toBe(
         "No tenés permisos para ver los baneos."
       );
     });
+    expect(result.current.baneos).toEqual([]);
   });
 });
 
