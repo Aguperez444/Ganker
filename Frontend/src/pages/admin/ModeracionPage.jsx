@@ -2,10 +2,13 @@ import { useState } from "react";
 import AvatarUsuarioComponent from "../../components/common/AvatarUsuarioComponent";
 import ModalConfirmacionComponent from "../../components/common/ModalConfirmacionComponent";
 import FiltrosBaneosComponent from "../../components/moderacion/FiltrosBaneosComponent";
+import FiltrosDenunciasComponent from "../../components/moderacion/FiltrosDenunciasComponent";
 import ListaBaneosComponent from "../../components/moderacion/ListaBaneosComponent";
+import ListaDenunciasComponent from "../../components/moderacion/ListaDenunciasComponent";
 import ModalBanearJugadorComponent from "../../components/moderacion/ModalBanearJugadorComponent";
 import { useAuth } from "../../context/AuthContext";
 import { useBuscarBaneos } from "../../hooks/useBuscarBaneos";
+import { FILTROS_DENUNCIAS_VACIOS, hayFiltrosDeDenuncias, useBuscarDenuncias } from "../../hooks/useBuscarDenuncias";
 import { useBuscarUsuario } from "../../hooks/useBuscarUsuario";
 import { useDesbanearJugador } from "../../hooks/useDesbanearJugador";
 import { obtenerIdUsuarioDesdeToken } from "../../utils/jwt";
@@ -28,6 +31,9 @@ import {
 // Buscar jugadores baneados: el listado es el historial de baneos del
 // backend, con filtros combinables y paginado (ver useBuscarBaneos). Los
 // filtros del formulario recién se aplican al tocar "Buscar".
+//
+// US 51 - Buscar denuncias a un jugador: filtros combinables, paginación y
+// orden por fecha de creación desde el backend.
 const ModeracionPage = () => {
   const { tokens } = useAuth();
   const miId = obtenerIdUsuarioDesdeToken(tokens?.access_token);
@@ -37,6 +43,7 @@ const ModeracionPage = () => {
   const [mensajeBaneo, setMensajeBaneo] = useState("");
   const [filtrosBaneos, setFiltrosBaneos] = useState(FILTROS_BANEOS_VACIOS);
   const [erroresFiltros, setErroresFiltros] = useState({});
+  const [filtrosDenuncias, setFiltrosDenuncias] = useState(FILTROS_DENUNCIAS_VACIOS);
 
   const {
     usernameBuscado,
@@ -48,6 +55,7 @@ const ModeracionPage = () => {
     limpiar,
   } = useBuscarUsuario();
   const baneos = useBuscarBaneos();
+  const denuncias = useBuscarDenuncias();
   const desbaneo = useDesbanearJugador();
 
   const handleBuscar = (e) => {
@@ -74,6 +82,20 @@ const ModeracionPage = () => {
     setFiltrosBaneos(FILTROS_BANEOS_VACIOS);
     setErroresFiltros({});
     baneos.buscar(FILTROS_BANEOS_VACIOS);
+  };
+
+  const handleCambiarFiltroDenuncia = (campo, valor) => {
+    setFiltrosDenuncias((actuales) => ({ ...actuales, [campo]: valor }));
+  };
+
+  const handleBuscarDenuncias = () => {
+    setSuccessMessage("");
+    denuncias.buscar(filtrosDenuncias);
+  };
+
+  const handleLimpiarFiltrosDenuncias = () => {
+    setFiltrosDenuncias(FILTROS_DENUNCIAS_VACIOS);
+    denuncias.buscar(FILTROS_DENUNCIAS_VACIOS);
   };
 
   const handleAbrirBaneo = (jugador) => {
@@ -232,6 +254,36 @@ const ModeracionPage = () => {
             onDesbanear={desbaneo.abrir}
             onPaginaAnterior={baneos.paginaAnterior}
             onPaginaSiguiente={baneos.paginaSiguiente}
+          />
+        </section>
+
+        <section className="rounded-2xl border border-white/10 bg-ganker-surface p-6 shadow-xl">
+          <h2 className="font-heading text-lg font-semibold text-ganker-text">
+            Denuncias a jugadores
+          </h2>
+          <p className="mt-1 text-sm text-ganker-muted">
+            Buscá denuncias por jugador reportado, denunciante, administrador que
+            resolvió, estado, motivo o fecha. Los resultados se ordenan por fecha
+            de creación y se ignoran usuarios eliminados.
+          </p>
+
+          <FiltrosDenunciasComponent
+            filtros={filtrosDenuncias}
+            cargando={denuncias.cargando}
+            onChange={handleCambiarFiltroDenuncia}
+            onBuscar={handleBuscarDenuncias}
+            onLimpiar={handleLimpiarFiltrosDenuncias}
+          />
+
+          <ListaDenunciasComponent
+            denuncias={denuncias.denuncias}
+            cargando={denuncias.cargando}
+            error={denuncias.error}
+            hayFiltros={hayFiltrosDeDenuncias(denuncias.filtrosAplicados)}
+            pagina={denuncias.pagina}
+            hayMas={denuncias.hayMas}
+            onPaginaAnterior={denuncias.paginaAnterior}
+            onPaginaSiguiente={denuncias.paginaSiguiente}
           />
         </section>
       </div>
