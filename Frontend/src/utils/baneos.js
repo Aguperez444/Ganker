@@ -100,10 +100,112 @@ export function formatearVencimiento(fechaIso) {
   const fecha = fechaDesdeBackend(fechaIso);
   if (!fecha) return "sin vencimiento";
 
+  return formatearFechaBaneo(fechaIso);
+}
+
+// Fecha y hora local de un baneo (cuándo se aplicó o cuándo vence).
+export function formatearFechaBaneo(fechaIso) {
+  const fecha = fechaDesdeBackend(fechaIso);
+  if (!fecha) return "";
+
   return fecha.toLocaleString("es-AR", {
     dateStyle: "short",
     timeStyle: "short",
   });
+}
+
+// Buscar jugadores baneados: el historial trae también los baneos vencidos y
+// los levantados a mano (el backend les pone como vencimiento el momento del
+// desbaneo), así que un registro está vigente si no vence o vence más
+// adelante. Solo decide si se ofrece "Desbanear": el backend vuelve a
+// validarlo y responde 400 si el jugador ya no está baneado.
+export function esBaneoVigente(fechaIso, ahora = new Date()) {
+  if (!fechaIso) return true;
+
+  const fecha = fechaDesdeBackend(fechaIso);
+  return fecha !== null && fecha > ahora;
+}
+
+export const FILTROS_BANEOS_VACIOS = {
+  usuario: "",
+  admin: "",
+  motivo: "",
+  creadoDesde: "",
+  creadoHasta: "",
+  vencimientoDesde: "",
+  vencimientoHasta: "",
+};
+
+export function hayFiltrosDeBaneos(filtros) {
+  return Object.values(filtros ?? {}).some((valor) => valor.trim() !== "");
+}
+
+// Los <input type="date"> dan "YYYY-MM-DD" sin hora. Para que "hasta el 10"
+// incluya todo ese día, el rango va del inicio del día "desde" al final del
+// día "hasta", en la hora local del admin, y viaja al backend en UTC.
+function inicioDelDia(fecha) {
+  return fecha ? new Date(`${fecha}T00:00:00`).toISOString() : undefined;
+}
+
+function finDelDia(fecha) {
+  return fecha ? new Date(`${fecha}T23:59:59.999`).toISOString() : undefined;
+}
+
+// Filtros del formulario -> parámetros de buscarBaneos. Los nombres se
+// aceptan con o sin @, como en el resto de Moderación.
+export function armarFiltrosBusquedaBaneos(filtros = FILTROS_BANEOS_VACIOS) {
+  const sinArroba = (texto) => (texto ?? "").trim().replace(/^@/, "");
+
+  return {
+    usuario: sinArroba(filtros.usuario),
+    admin: sinArroba(filtros.admin),
+    motivo: (filtros.motivo ?? "").trim(),
+    creadoDesde: inicioDelDia(filtros.creadoDesde),
+    creadoHasta: finDelDia(filtros.creadoHasta),
+    vencimientoDesde: inicioDelDia(filtros.vencimientoDesde),
+    vencimientoHasta: finDelDia(filtros.vencimientoHasta),
+  };
+}
+
+// Mismo criterio que validarPeriodoReporte: en "YYYY-MM-DD" el orden
+// alfabético es el cronológico.
+export function validarFiltrosBaneos(filtros) {
+  const errores = {};
+
+  if (
+    filtros.creadoDesde &&
+    filtros.creadoHasta &&
+    filtros.creadoDesde > filtros.creadoHasta
+  ) {
+    errores.creado = "La fecha inicial no puede ser posterior a la final.";
+  }
+  if (
+    filtros.vencimientoDesde &&
+    filtros.vencimientoHasta &&
+    filtros.vencimientoDesde > filtros.vencimientoHasta
+  ) {
+    errores.vencimiento = "La fecha inicial no puede ser posterior a la final.";
+  }
+
+  return errores;
+}
+
+export function mensajeDeErrorBusquedaBaneos(error) {
+  const data = error?.response?.data;
+  const status = error?.response?.status;
+
+  if (!error?.response) {
+    return "No pudimos conectar con el servidor. Intentá de nuevo.";
+  }
+  if (status === 403) {
+    return "No tenés permisos para ver los baneos.";
+  }
+  if (status === 422) {
+    return "Revisá los filtros: alguna fecha no es válida.";
+  }
+  if (typeof data?.error === "string") return data.error;
+
+  return "No se pudo cargar la lista de baneados.";
 }
 
 // US 36 - Mensaje del login para una cuenta suspendida. El backend manda

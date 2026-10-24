@@ -1,15 +1,18 @@
 import { useState } from "react";
 import AvatarUsuarioComponent from "../../components/common/AvatarUsuarioComponent";
 import ModalConfirmacionComponent from "../../components/common/ModalConfirmacionComponent";
+import FiltrosBaneosComponent from "../../components/moderacion/FiltrosBaneosComponent";
+import ListaBaneosComponent from "../../components/moderacion/ListaBaneosComponent";
 import ModalBanearJugadorComponent from "../../components/moderacion/ModalBanearJugadorComponent";
 import { useAuth } from "../../context/AuthContext";
+import { useBuscarBaneos } from "../../hooks/useBuscarBaneos";
 import { useBuscarUsuario } from "../../hooks/useBuscarUsuario";
 import { useDesbanearJugador } from "../../hooks/useDesbanearJugador";
-import { useJugadoresBaneados } from "../../hooks/useJugadoresBaneados";
 import { obtenerIdUsuarioDesdeToken } from "../../utils/jwt";
 import {
-  esVencimientoPermanente,
-  formatearVencimiento,
+  FILTROS_BANEOS_VACIOS,
+  hayFiltrosDeBaneos,
+  validarFiltrosBaneos,
 } from "../../utils/baneos";
 
 // US 36 - Banear jugador (admin): se busca al jugador por su nombre de usuario
@@ -20,9 +23,11 @@ import {
 // el backend (require_admin). Acá además se oculta la acción sobre la propia
 // cuenta del administrador.
 //
-// US 53 - Levantar suspensión: el listado de baneados viene resuelto del
-// backend (solo baneos vigentes); acá se muestra, se filtra por username en
-// el backend y se ofrece "Desbanear".
+// US 53 - Levantar suspensión: "Desbanear" desde el listado de baneados.
+//
+// Buscar jugadores baneados: el listado es el historial de baneos del
+// backend, con filtros combinables y paginado (ver useBuscarBaneos). Los
+// filtros del formulario recién se aplican al tocar "Buscar".
 const ModeracionPage = () => {
   const { tokens } = useAuth();
   const miId = obtenerIdUsuarioDesdeToken(tokens?.access_token);
@@ -30,7 +35,8 @@ const ModeracionPage = () => {
   const [successMessage, setSuccessMessage] = useState("");
   const [jugadorABanear, setJugadorABanear] = useState(null);
   const [mensajeBaneo, setMensajeBaneo] = useState("");
-  const [filtroBaneados, setFiltroBaneados] = useState("");
+  const [filtrosBaneos, setFiltrosBaneos] = useState(FILTROS_BANEOS_VACIOS);
+  const [erroresFiltros, setErroresFiltros] = useState({});
 
   const {
     usernameBuscado,
@@ -41,7 +47,7 @@ const ModeracionPage = () => {
     buscar,
     limpiar,
   } = useBuscarUsuario();
-  const baneos = useJugadoresBaneados();
+  const baneos = useBuscarBaneos();
   const desbaneo = useDesbanearJugador();
 
   const handleBuscar = (e) => {
@@ -50,12 +56,24 @@ const ModeracionPage = () => {
     buscar();
   };
 
-  const recargarBaneados = () =>
-    baneos.recargar({ username: filtroBaneados.trim().replace(/^@/, "") });
+  const handleCambiarFiltro = (campo, valor) => {
+    setFiltrosBaneos((actuales) => ({ ...actuales, [campo]: valor }));
+    setErroresFiltros({});
+  };
 
-  const handleFiltrarBaneados = (e) => {
-    e.preventDefault();
-    recargarBaneados();
+  const handleBuscarBaneos = () => {
+    const errores = validarFiltrosBaneos(filtrosBaneos);
+    setErroresFiltros(errores);
+    if (Object.keys(errores).length > 0) return;
+
+    setSuccessMessage("");
+    baneos.buscar(filtrosBaneos);
+  };
+
+  const handleLimpiarFiltros = () => {
+    setFiltrosBaneos(FILTROS_BANEOS_VACIOS);
+    setErroresFiltros({});
+    baneos.buscar(FILTROS_BANEOS_VACIOS);
   };
 
   const handleAbrirBaneo = (jugador) => {
@@ -65,14 +83,15 @@ const ModeracionPage = () => {
   };
 
   // Si el baneo se aplicó, el jugador deja de aparecer en las búsquedas: se
-  // limpia la tarjeta y se refresca el listado de baneados.
+  // limpia la tarjeta y se refresca el listado de baneados desde la primera
+  // página, que es donde aparece el baneo nuevo.
   const handleCerrarBaneo = () => {
     setJugadorABanear(null);
     if (!mensajeBaneo) return;
 
     setSuccessMessage(mensajeBaneo);
     limpiar();
-    recargarBaneados();
+    baneos.buscar(baneos.filtrosAplicados);
   };
 
   // US 53 - Desbanear a mano desde el listado de baneados.
@@ -81,7 +100,7 @@ const ModeracionPage = () => {
     if (!mensaje) return;
 
     setSuccessMessage(mensaje);
-    recargarBaneados();
+    baneos.recargar();
   };
 
   const esUnoMismo = (usuario) => miId !== null && usuario?.user_id === miId;
@@ -185,98 +204,35 @@ const ModeracionPage = () => {
         </section>
 
         <section className="rounded-2xl border border-white/10 bg-ganker-surface p-6 shadow-xl">
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <div>
-              <h2 className="font-heading text-lg font-semibold text-ganker-text">
-                Jugadores baneados
-              </h2>
-              <p className="mt-1 text-sm text-ganker-muted">
-                Se desbanean solos al vencer. También podés desbanear a mano.
-              </p>
-            </div>
-          </div>
+          <h2 className="font-heading text-lg font-semibold text-ganker-text">
+            Jugadores baneados
+          </h2>
+          <p className="mt-1 text-sm text-ganker-muted">
+            Historial de baneos, del más reciente al más antiguo. Los vigentes
+            se levantan solos al vencer, o podés desbanearlos a mano.
+          </p>
 
-          <form
-            onSubmit={handleFiltrarBaneados}
-            className="mt-5 flex flex-col gap-3 sm:flex-row sm:items-end"
-          >
-            <div className="flex-1">
-              <label
-                htmlFor="moderacion-filtro-baneados"
-                className="mb-1 block text-xs font-semibold text-ganker-text"
-              >
-                Filtrar por nombre de usuario
-              </label>
-              <input
-                id="moderacion-filtro-baneados"
-                type="text"
-                autoComplete="off"
-                spellCheck={false}
-                value={filtroBaneados}
-                onChange={(e) => setFiltroBaneados(e.target.value)}
-                placeholder="Vacío para ver todos"
-                className="w-full rounded-lg border border-white/10 bg-ganker-surface-light px-3 py-2.5 text-sm text-ganker-text focus:border-ganker-purple focus:ring-2 focus:ring-ganker-purple focus:outline-none"
-              />
-            </div>
-            <button
-              type="submit"
-              disabled={baneos.cargando}
-              className="cursor-pointer self-start rounded-lg border border-white/10 px-4 py-2.5 text-sm font-semibold text-ganker-text transition hover:bg-white/5 disabled:cursor-not-allowed disabled:opacity-50 sm:self-auto"
-            >
-              {baneos.cargando ? "Cargando..." : "Filtrar"}
-            </button>
-          </form>
+          <FiltrosBaneosComponent
+            filtros={filtrosBaneos}
+            errores={erroresFiltros}
+            cargando={baneos.cargando}
+            onChange={handleCambiarFiltro}
+            onBuscar={handleBuscarBaneos}
+            onLimpiar={handleLimpiarFiltros}
+          />
 
-          {baneos.error && (
-            <div className="mt-4 rounded-lg border border-ganker-error/20 bg-ganker-error/10 px-4 py-3">
-              <p className="text-sm text-ganker-error">{baneos.error}</p>
-            </div>
-          )}
-
-          {baneos.baneados.length === 0 ? (
-            <p className="mt-5 text-sm text-ganker-muted">
-              {baneos.cargando
-                ? "Cargando baneos..."
-                : "No hay jugadores baneados."}
-            </p>
-          ) : (
-            <ul className="mt-5 divide-y divide-white/10 overflow-hidden rounded-xl border border-white/10">
-              {baneos.baneados.map((baneo) => (
-                <li
-                  key={baneo.user_id}
-                  className="flex flex-col gap-1 bg-ganker-surface-light px-4 py-3 sm:flex-row sm:items-center sm:justify-between"
-                >
-                  <div className="min-w-0">
-                    <p className="truncate font-medium text-ganker-text">
-                      @{baneo.username} · ID {baneo.user_id}
-                    </p>
-                    <p className="mt-0.5 truncate text-xs text-ganker-muted">
-                      {baneo.reason}
-                    </p>
-                  </div>
-                  <div className="flex shrink-0 flex-wrap items-center gap-3">
-                    <p className="text-xs text-ganker-muted">
-                      {!baneo.expires_at ||
-                      esVencimientoPermanente(baneo.expires_at)
-                        ? "Permanente"
-                        : `Vence ${formatearVencimiento(baneo.expires_at)}`}
-                    </p>
-                    {/* US 53 - Levanta el baneo antes de su vencimiento. No se
-                    ofrece sobre la propia cuenta: el backend lo rechaza. */}
-                    {baneo.user_id !== miId && (
-                      <button
-                        type="button"
-                        onClick={() => desbaneo.abrir(baneo)}
-                        className="cursor-pointer rounded-lg border border-ganker-purple/60 px-3 py-1.5 text-sm font-semibold text-ganker-purple-light transition hover:bg-ganker-purple/20"
-                      >
-                        Desbanear
-                      </button>
-                    )}
-                  </div>
-                </li>
-              ))}
-            </ul>
-          )}
+          <ListaBaneosComponent
+            baneos={baneos.baneos}
+            cargando={baneos.cargando}
+            error={baneos.error}
+            hayFiltros={hayFiltrosDeBaneos(baneos.filtrosAplicados)}
+            pagina={baneos.pagina}
+            hayMas={baneos.hayMas}
+            miId={miId}
+            onDesbanear={desbaneo.abrir}
+            onPaginaAnterior={baneos.paginaAnterior}
+            onPaginaSiguiente={baneos.paginaSiguiente}
+          />
         </section>
       </div>
 
