@@ -271,7 +271,7 @@ const ModalReportarJugadorComponent = ({ jugador, currentUserId, onClose }) => {
             disabled={enviando}
             className={CLASES_BOTON_PRINCIPAL}
           >
-            Revisar reporte
+            Enviar reporte
           </button>
         </div>
       </form>
