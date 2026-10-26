@@ -4,6 +4,8 @@ import NotFoundPage from "../pages/NotFoundPage.jsx";
 import RouteMetadata from "../components/common/RouteMetadata.jsx";
 import HomePage from "../pages/HomePage.jsx";
 import RegistroPage from "../pages/RegistroPage.jsx";
+import ConfirmarCambioEmailPage from "../pages/ConfirmarCambioEmailPage";
+import ConfirmarRegistroPage from "../pages/ConfirmarRegistroPage.jsx";
 import CuentaPage from "../pages/CuentaPage.jsx";
 import LoginPage from "../pages/LoginPage.jsx";
 import CallbackFederadoPage from "../pages/CallbackFederadoPage.jsx";
@@ -53,7 +55,15 @@ function AppRouter() {
           path="/recuperar-contrasena"
           element={<RecuperarContrasenaPage />}
         />
+        <Route
+          path="/confirm-email-change"
+          element={<ConfirmarCambioEmailPage />}
+        />
         <Route path="/reset-password" element={<RestablecerContrasenaPage />} />
+        <Route
+          path="/confirm-registration"
+          element={<ConfirmarRegistroPage />}
+        />
 
         {/* Solo accesibles SIN sesion: si ya esta logueado, se lo manda a /app */}
         <Route element={<PublicOnlyRoute />}>

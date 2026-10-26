@@ -43,6 +43,8 @@ class ResetPassword:
                 reset_password_record.user_id,
                 new_hashed_password=new_hashed_password
             )
+            # si cambio la contraseña debo borrar cualquier cambio de email pendiente, invalidar todos los tokens de reseteo y revocar todos los refresh tokens
+            uow.pending_email_change_repo.delete_by_user_id(reset_password_record.user_id)
             uow.reset_token_repo.mark_as_used(reset_password_record.id)
             uow.reset_token_repo.invalidate_all_user_tokens(reset_password_record.user_id)
             uow.refresh_token_repo.revoke_all_by_user_id(reset_password_record.user_id)

@@ -1,6 +1,5 @@
-from fastapi import APIRouter, Depends, UploadFile, File, HTTPException, status, Form, Query
+from fastapi import APIRouter, Depends, UploadFile, File, HTTPException, status, Form, Query, BackgroundTasks, Request
 from typing import Optional
-from pydantic import EmailStr
 
 
 from app.application.use_cases.query_users import QueryUsers
@@ -8,8 +7,14 @@ from app.application.use_cases.search_users import SearchUsers
 from app.infrastructure.api.dto.response.user_summary_response import UserSummaryResponse
 from app.application.use_cases.register_user import RegisterUser
 from app.application.use_cases.update_user import UpdateUser
+from app.application.use_cases.request_email_change import RequestEmailChange
+from app.infrastructure.api.dto.request.email_change_request import RequestEmailChangeRequest
+from app.infrastructure.api.dto.response.email_change_message_response import EmailChangeMessageResponse
+from app.infrastructure.api.dependencies.auth_rate_limiter import email_change_rate_limiter
 from app.infrastructure.api.dependencies.auth import get_current_user_id, require_player, require_admin
-from app.infrastructure.api.dto.response.auth_tokens_response import AuthTokensResponse
+from app.infrastructure.api.dto.response.registration_message_response import RegistrationMessageResponse
+from app.infrastructure.api.dependencies.auth_rate_limiter import registration_rate_limiter
+from app.infrastructure.email.resend_email_service import ResendEmailService
 from app.infrastructure.api.dto.response.get.get_user_response import GetUserResponse
 from app.infrastructure.api.dto.response.get.get_public_user_response import GetPublicUserResponse
 from app.infrastructure.api.dto.request.register_user_request import RegisterUserRequest
@@ -18,7 +23,6 @@ from app.infrastructure.api.dto.response.update.update_user_response import Upda
 from app.infrastructure.config.settings import settings
 
 from app.infrastructure.api.dto.request.register_player_request import RegisterPlayerRequest
-from app.infrastructure.api.auth.jwt_token_service import JwtTokenService
 from app.infrastructure.api.auth.password_hash_service import PasswordHashService
 from app.application.use_cases.register_player import RegisterPlayer
 from app.infrastructure.database.unit_of_work.uow_factory import uow_factory
@@ -49,16 +53,23 @@ def get_discord_oauth_provider():
 def get_oauth_state_service():
     return JwtOAuthStateService(settings.jwt_secret_key)
 
-@router.post("/register", response_model=AuthTokensResponse, status_code=201)
-def register_player(request: RegisterPlayerRequest) -> AuthTokensResponse:
+@router.post("/register", response_model=RegistrationMessageResponse, status_code=202)
+def register_player(request: RegisterPlayerRequest, background_tasks: BackgroundTasks, http_request: Request) -> RegistrationMessageResponse:
+    registration_rate_limiter.check(http_request, identifier=request.mail)
     uow = uow_factory()
 
     password_hasher_service = PasswordHashService()
-    token_service = JwtTokenService(settings.jwt_secret_key)
-    register_player_use_case = RegisterPlayer(uow, token_service, password_hasher_service)
-
-    tokens = register_player_use_case.execute(request)
-    return tokens
+    register_player_use_case = RegisterPlayer(uow, password_hasher_service)
+    raw_token = register_player_use_case.execute(request)
+    # Enviar correo de confirmación de registro en segundo plano
+    # permite que se muestre rápidamente la respuesta al usuario sin esperar a que se envíe el correo
+    background_tasks.add_task(
+        ResendEmailService().send_registration_confirmation_email,
+        to_email=str(request.mail).strip().lower(), raw_token=raw_token, username=request.username.strip(),
+    )
+    return RegistrationMessageResponse(
+        message="Te enviamos un correo para confirmar la creación de tu cuenta. El enlace vence en 24 horas.",
+    )
 
 @router.post("/register_user", response_model=RegisterUserResponse, status_code=201, dependencies=[Depends(require_admin)])
 def register_user(request: RegisterUserRequest, user_id: int = Depends(get_current_user_id)) -> RegisterUserResponse:
@@ -78,7 +89,7 @@ def register_user(request: RegisterUserRequest, user_id: int = Depends(get_curre
 
 
 @router.put("/", response_model=UpdateUserResponse, status_code=200, dependencies=[Depends(require_player)])
-def update_user(username: str = Form(...), name: str = Form(...), mail: EmailStr = Form(...),
+def update_user(username: str = Form(...), name: str = Form(...),
                       icon: Optional[UploadFile] = File(None, description="Archivo de imagen del ícono"),
                       user_id: int = Depends(get_current_user_id)
                       ) -> UpdateUserResponse:
@@ -98,7 +109,23 @@ def update_user(username: str = Form(...), name: str = Form(...), mail: EmailStr
     storage_service = get_storage_service()
 
     update_user_use_case = UpdateUser(uow, storage_service)
-    return update_user_use_case.execute(user_id, username, name, mail, file_obj, file_name)
+    return update_user_use_case.execute(user_id, username, name, file_obj, file_name)
+
+@router.post("/me/email-change", response_model=EmailChangeMessageResponse, status_code=202, dependencies=[Depends(require_player)])
+def request_email_change(request: RequestEmailChangeRequest, background_tasks: BackgroundTasks,
+                         http_request: Request, user_id: int = Depends(get_current_user_id)) -> EmailChangeMessageResponse:
+    email_change_rate_limiter.check(http_request, identifier=str(user_id))
+    use_case = RequestEmailChange(uow_factory(), PasswordHashService())
+    raw_token = use_case.execute(user_id, request.mail, request.password)
+    background_tasks.add_task(
+        ResendEmailService().send_email_change_confirmation_email,
+        to_email=request.mail.strip().lower(),
+        raw_token=raw_token,
+    )
+    return EmailChangeMessageResponse(
+        message="Te enviamos un enlace al nuevo email. El correo actual se mantendrá hasta que confirmes el cambio. El enlace vence en 24 horas.",
+    )
+
 
 @router.get("/me", response_model=GetUserResponse, status_code=200, dependencies=[Depends(require_player)])
 def get_user(user_id: int = Depends(get_current_user_id)) -> GetUserResponse:

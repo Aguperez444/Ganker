@@ -103,18 +103,19 @@ export function validarFormularioLogin({ email, password }) {
 // US 02 - Modificar mis datos.
 // La contrasena NO se valida ni se toca aca: cambiarla es la US 34 y tiene su
 // propia pantalla.
-export function validarFormularioCuenta({ nombre, username, mail }) {
+export function validarFormularioCuenta({ nombre, username }) {
   const errores = {};
-
   if (!nombre.trim()) errores.nombre = "Ingresá tu nombre completo.";
   if (!username.trim()) errores.username = "Ingresá un nombre de usuario.";
+  return errores;
+}
 
-  if (!mail.trim()) {
-    errores.mail = "Ingresá tu email.";
-  } else if (!esEmailValido(mail)) {
+export function validarFormularioCambioEmail({ mail, password }) {
+  const errores = {};
+  if (!mail.trim()) errores.mail = "Ingresá el nuevo email.";
+  else if (!esEmailValido(mail))
     errores.mail = "El email no tiene un formato válido.";
-  }
-
+  if (!password) errores.password = "Ingresá tu contraseña actual.";
   return errores;
 }
 
