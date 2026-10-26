@@ -97,11 +97,10 @@ function renderPagina() {
 }
 
 async function elegirJuego(usuario, nombre) {
-  const select = await screen.findByLabelText("Videojuego");
-  await waitFor(() =>
-    expect(within(select).getByText(nombre)).toBeInTheDocument()
+  const grupo = await screen.findByRole("radiogroup", { name: "Videojuego" });
+  await usuario.click(
+    await within(grupo).findByRole("radio", { name: nombre })
   );
-  await usuario.selectOptions(select, nombre);
 }
 
 async function generar(usuario) {

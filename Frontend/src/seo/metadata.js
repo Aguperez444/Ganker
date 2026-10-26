@@ -42,6 +42,17 @@ export const PAGE_METADATA = [
     description: "Elegí una nueva contraseña para tu cuenta de Ganker.",
   },
   {
+    path: "/confirm-registration",
+    title: "Confirmar cuenta | Ganker",
+    description: "Confirmá tu correo para completar el registro en Ganker.",
+  },
+  {
+    path: "/confirm-email-change",
+    title: "Confirmar nuevo email | Ganker",
+    description:
+      "Confirmá tu nuevo correo para actualizar el email de tu cuenta.",
+  },
+  {
     path: "/auth/callback/:provider",
     title: "Conectando tu cuenta | Ganker",
     description:
@@ -54,7 +65,7 @@ export const PAGE_METADATA = [
   },
   ...[
     ["/app", "Mi inicio"],
-    ["/app/perfil", "Mi perfil"],
+    ["/app/perfil", "Perfiles de juego"],
     ["/app/cuenta", "Mi cuenta"],
     ["/app/discord/callback", "Conectar Discord"],
     ["/app/jugadores", "Buscar jugadores"],

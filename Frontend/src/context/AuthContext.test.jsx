@@ -67,13 +67,12 @@ beforeEach(() => {
 });
 
 describe("AuthContext: `user` no depende de por donde entro el jugador", () => {
-  // Este es EL test del bug: antes, RegistroPage llamaba a guardarSesion() sin
-  // datos de usuario y `user` quedaba en null, mientras que por login quedaba
-  // en { email }. Mismo jugador logueado, dos estados distintos.
-  it("el registro deja el mismo `user` que el login", async () => {
+  it("el registro local espera la confirmación y el login carga el perfil completo", async () => {
     const usuario = userEvent.setup();
 
-    registrarJugador.mockResolvedValue(TOKENS);
+    registrarJugador.mockResolvedValue({
+      message: "Confirmá tu correo para crear la cuenta.",
+    });
     const registro = renderConSesion(<RegistroPage />);
 
     await usuario.type(
@@ -100,7 +99,11 @@ describe("AuthContext: `user` no depende de por donde entro el jugador", () => {
       screen.getByRole("button", { name: /crear mi cuenta/i })
     );
 
-    const userTrasRegistro = await esperarUsuarioCargado();
+    await waitFor(() => expect(registrarJugador).toHaveBeenCalledOnce());
+    expect(screen.getByTestId("user")).toHaveTextContent("null");
+    expect(obtenerJugadorActual).not.toHaveBeenCalled();
+    expect(localStorage.getItem("access_token")).toBeNull();
+    expect(localStorage.getItem("refresh_token")).toBeNull();
     registro.unmount();
 
     axiosClient.post.mockResolvedValue({ data: TOKENS });
@@ -120,8 +123,7 @@ describe("AuthContext: `user` no depende de por donde entro el jugador", () => {
 
     const userTrasLogin = await esperarUsuarioCargado();
 
-    expect(userTrasRegistro).toBe(userTrasLogin);
-    expect(JSON.parse(userTrasRegistro)).toEqual(JUGADOR);
+    expect(JSON.parse(userTrasLogin)).toEqual(JUGADOR);
     // Tipea el registro y el login completos tecla por tecla: con toda la
     // suite corriendo en paralelo roza el limite de 5s por defecto.
   }, 15000);

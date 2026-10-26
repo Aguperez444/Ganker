@@ -3,9 +3,9 @@ import RoleForm from "../../components/roles/RoleFormComponent";
 import RolesListComponent from "../../components/roles/RolesListComponent";
 import ListaConBuscadorComponent from "../../components/common/ListaConBuscadorComponent";
 import ModalConfirmacionComponent from "../../components/common/ModalConfirmacionComponent";
-import IconSelectComponent from "../../components/common/IconSelectComponent";
 import useGames from "../../hooks/useGames";
 import useRoles from "../../hooks/useRoles";
+import SelectorJuegoComponent from "../../components/games/SelectorJuegoComponent";
 
 // Admin de roles: registrar, modificar (US 29) y eliminar (US 30).
 const RolesPage = () => {
@@ -157,19 +157,13 @@ const RolesPage = () => {
                 </h2>
 
                 <div className="mt-3">
-                  <label htmlFor="roles-videogame-filter" className="sr-only">
-                    Ver roles de
-                  </label>
-                  <div className="max-w-xs">
-                    <IconSelectComponent
-                      id="roles-videogame-filter"
-                      value={selectedGameId}
-                      onChange={setSelectedGameId}
-                      options={games}
-                      placeholder="Ver roles de..."
-                      disabled={isLoadingGames}
-                    />
-                  </div>
+                  <SelectorJuegoComponent
+                    etiqueta="Ver roles de"
+                    juegos={games}
+                    value={selectedGameId}
+                    onChange={setSelectedGameId}
+                    disabled={isLoadingGames}
+                  />
                 </div>
               </div>
 

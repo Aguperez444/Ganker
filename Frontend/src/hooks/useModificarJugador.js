@@ -7,7 +7,7 @@ import { validarFormularioCuenta } from "../utils/validaciones";
  * US 02 - Como jugador, quiero modificar mis datos.
  *
  * Los campos editables son los que acepta PUT /api/v1/users/: nombre,
- * username y mail. La contrasena queda deliberadamente afuera (US 34).
+ * username y avatar. El email tiene su propio flujo de confirmación.
  *
  * Sigue el mismo patron que useRegistrarJugador: valida en el blur de cada
  * campo y de nuevo entero antes de mandar, asi un formulario invalido nunca
@@ -26,7 +26,6 @@ export function useModificarJugador() {
   const [valores, setValores] = useState({
     nombre: user.name,
     username: user.username,
-    mail: user.mail ?? "",
     icon: null,
   });
 
@@ -96,17 +95,11 @@ export function useModificarJugador() {
     } catch (error) {
       const mensaje = error.response?.data?.error;
 
-      // El backend responde 409 tanto si el username como si el mail ya estan
-      // ocupados, y solo se distinguen por el texto:
-      //   UsernameAlreadyExistsException -> 'El username: "x" ya está ocupado.'
-      //   MailAlreadyExistsException     -> 'El correo: "x" ya está ocupado.'
       if (error.response?.status === 409) {
         const texto = mensaje?.toLowerCase() ?? "";
 
         if (texto.includes("username")) {
           setErrores((prev) => ({ ...prev, username: mensaje }));
-        } else if (texto.includes("correo") || texto.includes("email")) {
-          setErrores((prev) => ({ ...prev, mail: mensaje }));
         } else {
           setErrorServidor(
             mensaje ?? "Esos datos ya están en uso por otra cuenta."

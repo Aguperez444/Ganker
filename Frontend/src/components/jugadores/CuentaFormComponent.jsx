@@ -19,24 +19,8 @@ const ICONO_USUARIO = (
   </svg>
 );
 
-const ICONO_MAIL = (
-  <svg
-    className="h-4 w-4"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="2"
-    viewBox="0 0 24 24"
-  >
-    <path
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      d="M3 8l9 6 9-6M5 6h14a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2z"
-    />
-  </svg>
-);
-
 // Formulario de datos de la cuenta (US 02).
-// Permite modificar nombre de usuario, email, nombre completo y foto de perfil (avatar).
+// Permite modificar nombre de usuario, nombre completo y foto de perfil (avatar).
 // No incluye contrasena a proposito: cambiarla es la US 34.
 function CuentaFormComponent({
   user,
@@ -197,16 +181,6 @@ function CuentaFormComponent({
             onChange={(e) => onChange("username", e.target.value)}
             onBlur={() => onBlur("username")}
             error={errores.username}
-          />
-          <CampoTexto
-            label="EMAIL"
-            icono={ICONO_MAIL}
-            type="email"
-            placeholder="tuemail@ejemplo.com"
-            value={valores.mail}
-            onChange={(e) => onChange("mail", e.target.value)}
-            onBlur={() => onBlur("mail")}
-            error={errores.mail}
           />
         </div>
 

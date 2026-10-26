@@ -6,7 +6,6 @@ from app.application.ports.i_storage_service import IStorageService
 from app.domain.models.user import User
 from app.domain.models.user_role import UserRole
 from app.domain.exceptions.user.username_already_exists_exception import UsernameAlreadyExistsException
-from app.domain.exceptions.mail.email_already_exists_exception import EmailAlreadyExistsException
 from app.domain.exceptions.user.user_not_found_exception import UserNotFoundException
 
 
@@ -52,14 +51,13 @@ class TestUpdateUserUseCase:
             user_id=1,
             username="newuser",
             name="New Name",
-            mail="new@example.com",
             icon_file=mock_icon.file,
             icon_filename=mock_icon.filename
         )
 
         assert updated.username == "newuser"
         assert updated.name == "New Name"
-        assert updated.mail == "new@example.com"
+        assert updated.mail == "old@example.com"
         assert updated.icon_url == "/media/users/icons/new_icon.png"
 
         # Deleted old icon and saved new icon
@@ -79,23 +77,10 @@ class TestUpdateUserUseCase:
         uow.user_repo.get_user_by_username.return_value = another_user
 
         with pytest.raises(UsernameAlreadyExistsException) as exc_info:
-            use_case.execute(user_id=1, username="taken_name", name="Name", mail="mail@example.com")
+            use_case.execute(user_id=1, username="taken_name", name="Name")
 
         assert exc_info.value.status_code == 409
         assert "taken_name" in exc_info.value.message
-
-    def test_update_user_mail_taken_by_another_user(self, mock_deps):
-        use_case, uow, _ = mock_deps
-
-        uow.user_repo.get_user_by_username.return_value = None
-        another_user = User(user_id=99, username="other", name="Other", mail="taken@example.com", password_hash="hash", role=UserRole.PLAYER, profiles=[])
-        uow.user_repo.get_user_by_mail.return_value = another_user
-
-        with pytest.raises(EmailAlreadyExistsException) as exc_info:
-            use_case.execute(user_id=1, username="newname", name="Name", mail="taken@example.com")
-
-        assert exc_info.value.status_code == 409
-        assert "taken@example.com" in exc_info.value.message
 
     def test_update_user_not_found(self, mock_deps):
         use_case, uow, _ = mock_deps
@@ -105,7 +90,7 @@ class TestUpdateUserUseCase:
         uow.user_repo.get_user_by_id.return_value = None
 
         with pytest.raises(UserNotFoundException) as exc_info:
-            use_case.execute(user_id=404, username="user", name="Name", mail="mail@example.com")
+            use_case.execute(user_id=404, username="user", name="Name")
 
         assert exc_info.value.status_code == 404
 
@@ -136,8 +121,7 @@ class TestUpdateUserUseCase:
                 user_id=1,
                 username="newuser",
                 name="New Name",
-                mail="new@example.com",
-                icon_file=mock_icon.file,
+                    icon_file=mock_icon.file,
                 icon_filename=mock_icon.filename
             )
 

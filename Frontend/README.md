@@ -108,6 +108,10 @@ Frontend/
 
 [src/routes/AppRouter.jsx](src/routes/AppRouter.jsx) reúne las rutas; `ProtectedRoute` y `PublicOnlyRoute` controlan el acceso según la sesión y el rol. El backend aplica los permisos de los endpoints.
 
+El registro con correo y contraseña lleva a `/confirm-registration` para avisar que se envió un correo y permitir reenviarlo. El enlace del correo incluye `?token=...`; la pantalla requiere presionar **Confirmar mi cuenta** antes de crearla y luego ofrece iniciar sesión. Los enlaces vencen en 24 horas y cada reenvío invalida el anterior. No se guardan tokens de sesión al solicitar ni al confirmar el registro local. El registro federado sigue iniciando sesión al completarse.
+
+La ruta de confirmación está disponible con o sin sesión y registrada en `src/seo/metadata.js`, que también genera las rutas de Nginx para permitir abrir directamente el enlace del correo.
+
 La carpeta de estáticos se llama **`Public/`** y se sirve desde la raíz: por ejemplo, `Public/images/logo_svg.svg` se accede como `/images/logo_svg.svg`. Tailwind se integra con el plugin de Vite y el tema se define en `src/index.css`.
 
 ## Convenciones de nombrado

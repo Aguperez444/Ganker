@@ -1,8 +1,10 @@
 import { Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { useModificarJugador } from "../hooks/useModificarJugador";
+import { useCambiarEmail } from "../hooks/useCambiarEmail";
 import { useEliminarCuenta } from "../hooks/useEliminarCuenta";
 import CuentaFormComponent from "../components/jugadores/CuentaFormComponent";
+import CambiarEmailFormComponent from "../components/jugadores/CambiarEmailFormComponent";
 import AvatarUsuarioComponent from "../components/common/AvatarUsuarioComponent";
 import CuentaDiscordComponent from "../components/discord/CuentaDiscordComponent";
 import EliminarCuentaComponent from "../components/jugadores/EliminarCuentaComponent";
@@ -26,6 +28,7 @@ function CuentaPage() {
     handleSubmit,
   } = useModificarJugador();
   const eliminarCuenta = useEliminarCuenta();
+  const cambioEmail = useCambiarEmail();
 
   return (
     <section className="min-h-full bg-ganker-bg p-6">
@@ -68,6 +71,18 @@ function CuentaPage() {
           onAvatarChange={handleAvatarChange}
           onQuitarAvatar={handleQuitarAvatar}
           onSubmit={handleSubmit}
+        />
+
+        <CambiarEmailFormComponent
+          mailActual={user.mail}
+          valores={cambioEmail.valores}
+          errores={cambioEmail.errores}
+          cargando={cambioEmail.cargando}
+          errorServidor={cambioEmail.errorServidor}
+          exito={cambioEmail.exito}
+          onChange={cambioEmail.handleChange}
+          onBlur={cambioEmail.handleBlur}
+          onSubmit={cambioEmail.handleSubmit}
         />
 
         <CuentaDiscordComponent />

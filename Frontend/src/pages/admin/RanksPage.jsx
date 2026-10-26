@@ -2,9 +2,9 @@ import { useEffect, useState } from "react";
 import RankForm from "../../components/ranks/RankFormComponent";
 import RanksListComponent from "../../components/ranks/RanksListComponent";
 import ModalConfirmacionComponent from "../../components/common/ModalConfirmacionComponent";
-import IconSelectComponent from "../../components/common/IconSelectComponent";
 import useGames from "../../hooks/useGames";
 import useRanks from "../../hooks/useRanks";
+import SelectorJuegoComponent from "../../components/games/SelectorJuegoComponent";
 
 // Admin de rangos: registrar, modificar y eliminar.
 const RanksPage = () => {
@@ -156,19 +156,13 @@ const RanksPage = () => {
                 </h2>
 
                 <div className="mt-3">
-                  <label htmlFor="ranks-videogame-filter" className="sr-only">
-                    Ver rangos de
-                  </label>
-                  <div className="max-w-xs">
-                    <IconSelectComponent
-                      id="ranks-videogame-filter"
-                      value={selectedGameId}
-                      onChange={setSelectedGameId}
-                      options={games}
-                      placeholder="Ver rangos de..."
-                      disabled={isLoadingGames}
-                    />
-                  </div>
+                  <SelectorJuegoComponent
+                    etiqueta="Ver rangos de"
+                    juegos={games}
+                    value={selectedGameId}
+                    onChange={setSelectedGameId}
+                    disabled={isLoadingGames}
+                  />
                 </div>
               </div>
 
