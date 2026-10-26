@@ -1,7 +1,7 @@
 import CampoTexto from "../common/CampoTexto";
 import IconSelectComponent from "../common/IconSelectComponent";
 import { OPCIONES_VACANTES_MINIMAS } from "../../hooks/useBuscarEquipos";
-import SelectorJuegoComponent from "../games/SelectorJuegoComponent";
+import SelectorJuegoConBannerComponent from "../games/SelectorJuegoConBannerComponent";
 
 const CLASES_ETIQUETA =
   "mb-2 block text-xs font-semibold text-ganker-muted uppercase";
@@ -32,15 +32,10 @@ const FiltrosEquiposComponent = ({ busqueda }) => {
   return (
     <div className="rounded-2xl border border-white/10 bg-ganker-surface p-5 sm:p-6">
       <div>
-        <label className="mb-3 block text-sm font-semibold text-ganker-text">
-          Videojuego
-        </label>
-
         {cargandoVideojuegos ? (
           <p className="text-sm text-ganker-muted">Cargando videojuegos...</p>
         ) : (
-          <SelectorJuegoComponent
-            etiqueta="Videojuego"
+          <SelectorJuegoConBannerComponent
             juegos={videojuegos}
             value={videojuegoId}
             onChange={seleccionarVideojuego}
