@@ -5,11 +5,9 @@ import { describe, it, expect, beforeEach, vi } from "vitest";
 import HomePage from "./HomePage";
 import { useAuth } from "../context/AuthContext";
 import useMiEquipo from "../hooks/useMiEquipo";
-import useGames from "../hooks/useGames";
 
 vi.mock("../context/AuthContext", () => ({ useAuth: vi.fn() }));
 vi.mock("../hooks/useMiEquipo", () => ({ default: vi.fn() }));
-vi.mock("../hooks/useGames", () => ({ default: vi.fn() }));
 
 const perfilValorant = {
   game_profile_id: 4,
@@ -30,6 +28,12 @@ const perfilValorant = {
   ],
 };
 
+// Access token falso con el id del jugador en el claim "sub" (lo lee
+// utils/jwt.js).
+function tokenDe(userId) {
+  return `x.${btoa(JSON.stringify({ sub: String(userId) }))}.x`;
+}
+
 function renderPagina() {
   render(
     <MemoryRouter>
@@ -45,7 +49,6 @@ describe("HomePage - inicio del jugador", () => {
       user: { username: "ana_player", icon_url: null, profiles: [] },
     });
     useMiEquipo.mockReturnValue({ equipo: null, cargando: false, error: "" });
-    useGames.mockReturnValue({ games: [], isLoading: false });
   });
 
   it("saluda al jugador y ofrece buscar jugadores y equipos", () => {
@@ -80,26 +83,36 @@ describe("HomePage - inicio del jugador", () => {
         icon_url: null,
         profiles: [perfilValorant],
       },
+      tokens: { access_token: tokenDe(3) },
     });
     renderPagina();
 
     const tarjeta = screen.getByRole("link", { name: "Perfil de Valorant" });
+    expect(tarjeta).toHaveAttribute("href", "/app/jugadores/3?juego=1");
     expect(tarjeta).toHaveTextContent("Rango principal");
     expect(tarjeta).toHaveTextContent("Platino 1");
     expect(tarjeta).toHaveTextContent("Duelista");
     expect(tarjeta).toHaveTextContent("Controlador · Oro 2");
   });
 
-  it("sin equipo ofrece crear uno", () => {
+  it("sin equipo no muestra la sección Mi equipo", () => {
     renderPagina();
 
     expect(
-      screen.getByText(/Todavía no estás en un equipo/)
-    ).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "Crear equipo" })).toHaveAttribute(
-      "href",
-      "/app/equipos/crear"
-    );
+      screen.queryByRole("heading", { name: "Mi equipo" })
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("link", { name: /ver equipo/i })
+    ).not.toBeInTheDocument();
+  });
+
+  it("mientras carga el equipo no muestra la sección Mi equipo", () => {
+    useMiEquipo.mockReturnValue({ equipo: null, cargando: true, error: "" });
+    renderPagina();
+
+    expect(
+      screen.queryByRole("heading", { name: "Mi equipo" })
+    ).not.toBeInTheDocument();
   });
 
   it("con equipo muestra su resumen y el enlace a Mi equipo", () => {
@@ -128,23 +141,5 @@ describe("HomePage - inicio del jugador", () => {
       "/app/equipos/mi-equipo"
     );
     expect(screen.getAllByRole("img", { name: "ana_player" })).toHaveLength(1);
-  });
-
-  it("lista los juegos del catálogo", () => {
-    useGames.mockReturnValue({
-      games: [
-        { id: 1, name: "Valorant" },
-        { id: 2, name: "League of Legends" },
-      ],
-      isLoading: false,
-    });
-    renderPagina();
-
-    expect(
-      screen.getByRole("link", { name: "Equipos de Valorant" })
-    ).toBeInTheDocument();
-    expect(
-      screen.getByRole("link", { name: "Equipos de League of Legends" })
-    ).toBeInTheDocument();
   });
 });

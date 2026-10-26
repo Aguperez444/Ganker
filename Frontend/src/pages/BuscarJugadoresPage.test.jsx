@@ -236,15 +236,39 @@ beforeEach(() => {
 });
 
 describe("US 03 - Buscar jugadores", () => {
-  it("no muestra resultados hasta elegir un videojuego", async () => {
+  it("sin perfiles arranca con el primer videojuego y muestra los filtros", async () => {
+    await renderPagina({ userId: 999 });
+
+    expect(
+      await screen.findByRole("radio", { name: "League of Legends" })
+    ).toHaveAttribute("aria-checked", "true");
+    expect(await screen.findByText("Rango")).toBeInTheDocument();
+    expect(screen.getByText("Personaje")).toBeInTheDocument();
+    expect(
+      await screen.findAllByRole("button", { name: /enviar mensaje/i })
+    ).toHaveLength(3);
+  });
+
+  it("arranca con el videojuego del primer perfil del jugador", async () => {
+    getGames.mockResolvedValue([
+      ...JUEGOS,
+      { id: 2, name: "Valorant", icon_url: null, rank_per_role: false },
+    ]);
+    obtenerJugadorActual.mockResolvedValue({
+      ...JUGADOR,
+      profiles: [
+        { game_profile_id: 5, videogame: { id: 2, name: "Valorant" } },
+      ],
+    });
     await renderPagina();
 
     expect(
-      screen.getByText(/seleccioná un videojuego para empezar a buscar/i)
-    ).toBeInTheDocument();
+      await screen.findByRole("radio", { name: "Valorant" })
+    ).toHaveAttribute("aria-checked", "true");
     expect(
-      screen.queryByRole("button", { name: /enviar mensaje/i })
-    ).toBeNull();
+      screen.getByRole("radio", { name: "League of Legends" })
+    ).toHaveAttribute("aria-checked", "false");
+    expect(getRanksByGame).toHaveBeenCalledWith("2");
   });
 
   it("al elegir un videojuego muestra la lista de jugadores con sus insignias", async () => {

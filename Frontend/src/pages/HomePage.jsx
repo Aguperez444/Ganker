@@ -1,75 +1,11 @@
 import { Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
-import useGames from "../hooks/useGames";
 import useMiEquipo from "../hooks/useMiEquipo";
-import AccesosInicioComponent from "../components/inicio/AccesosInicioComponent";
 import BienvenidaInicioComponent from "../components/inicio/BienvenidaInicioComponent";
-import FondoJuegoComponent from "../components/inicio/FondoJuegoComponent";
 import MiEquipoResumenComponent from "../components/inicio/MiEquipoResumenComponent";
 import PerfilJuegoCardComponent from "../components/inicio/PerfilJuegoCardComponent";
 import { rolConMejorRango } from "../utils/juegos";
-
-const icono = (d) => (
-  <svg
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="1.8"
-    strokeLinecap="round"
-    strokeLinejoin="round"
-    className="h-5 w-5"
-    aria-hidden="true"
-  >
-    {d}
-  </svg>
-);
-
-const ACCESOS = [
-  {
-    titulo: "Buscar jugadores",
-    descripcion: "Compañeros según juego, rol y rango",
-    path: "/app/jugadores",
-    icono: icono(
-      <>
-        <circle cx="11" cy="11" r="7" />
-        <path d="m20 20-3.5-3.5" />
-      </>
-    ),
-  },
-  {
-    titulo: "Equipos",
-    descripcion: "Encontrá un equipo con lugar para vos",
-    path: "/app/equipos",
-    icono: icono(
-      <>
-        <path d="M12 2l8 4.5v6c0 5-3.5 9.5-8 11-4.5-1.5-8-6-8-11v-6L12 2z" />
-        <path d="M9 12l2 2 4-4" />
-      </>
-    ),
-  },
-  {
-    titulo: "Perfiles de juego",
-    descripcion: "Perfiles de juego, roles y personajes",
-    path: "/app/perfil",
-    icono: icono(
-      <>
-        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
-        <circle cx="12" cy="7" r="4" />
-      </>
-    ),
-  },
-  {
-    titulo: "Mi cuenta",
-    descripcion: "Datos personales, avatar y contraseña",
-    path: "/app/cuenta",
-    icono: icono(
-      <>
-        <circle cx="12" cy="12" r="3" />
-        <path d="M12 2v3M12 19v3M4.2 4.2l2.1 2.1M17.7 17.7l2.1 2.1M2 12h3M19 12h3M4.2 19.8l2.1-2.1M17.7 6.3l2.1-2.1" />
-      </>
-    ),
-  },
-];
+import { obtenerIdUsuarioDesdeToken } from "../utils/jwt";
 
 // El perfil "principal" es el de mejor rango: define la portada de la cabecera.
 function elegirPerfilPrincipal(perfiles) {
@@ -81,9 +17,10 @@ function elegirPerfilPrincipal(perfiles) {
 }
 
 const HomePage = () => {
-  const { user } = useAuth();
-  const { equipo, cargando, error } = useMiEquipo();
-  const { games, isLoading: cargandoJuegos } = useGames();
+  const { user, tokens } = useAuth();
+  // /me no devuelve el id: sale del token, como en ModeracionPage.
+  const miId = obtenerIdUsuarioDesdeToken(tokens?.access_token);
+  const { equipo } = useMiEquipo();
 
   const perfiles = user?.profiles ?? [];
   const perfilPrincipal =
@@ -97,8 +34,12 @@ const HomePage = () => {
           perfilPrincipal={perfilPrincipal}
         />
 
-        <div className="grid items-start gap-6 lg:grid-cols-3">
-          <div className="lg:col-span-2">
+        {/* El resumen de Mi equipo solo existe si el jugador está en un
+        equipo; sin él, los perfiles ocupan todo el ancho. */}
+        <div
+          className={`grid items-start gap-6 ${equipo ? "lg:grid-cols-3" : ""}`}
+        >
+          <div className={equipo ? "lg:col-span-2" : ""}>
             <section>
               <div className="mb-3 flex items-center justify-between">
                 <h2 className="font-heading text-xl font-semibold text-ganker-text">
@@ -118,6 +59,7 @@ const HomePage = () => {
                     <PerfilJuegoCardComponent
                       key={perfil.game_profile_id}
                       perfil={perfil}
+                      jugadorId={miId}
                     />
                   ))}
                 </div>
@@ -139,45 +81,13 @@ const HomePage = () => {
                 </div>
               )}
             </section>
-            {!cargandoJuegos && games.length > 0 && (
-              <section className="mt-6">
-                <h2 className="mb-3 font-heading text-xl font-semibold text-ganker-text">
-                  Juegos en Ganker
-                </h2>
-                <ul className="grid grid-cols-2 gap-4">
-                  {games.map((juego) => (
-                    <li key={juego.id}>
-                      <Link
-                        to="/app/equipos"
-                        aria-label={`Equipos de ${juego.name}`}
-                        className="group block rounded-2xl border border-white/10 transition hover:border-ganker-purple-light/50"
-                      >
-                        <FondoJuegoComponent
-                          nombreJuego={juego.name}
-                          className="h-24 rounded-2xl"
-                        >
-                          <div className="flex h-full items-end p-3">
-                            <span className="font-heading text-sm font-bold text-ganker-text drop-shadow sm:text-base">
-                              {juego.name}
-                            </span>
-                          </div>
-                        </FondoJuegoComponent>
-                      </Link>
-                    </li>
-                  ))}
-                </ul>
-              </section>
-            )}
           </div>
 
-          <aside className="space-y-6">
-            <MiEquipoResumenComponent
-              equipo={equipo}
-              cargando={cargando}
-              error={error}
-            />
-            <AccesosInicioComponent accesos={ACCESOS} />
-          </aside>
+          {equipo && (
+            <aside>
+              <MiEquipoResumenComponent equipo={equipo} />
+            </aside>
+          )}
         </div>
       </div>
     </section>

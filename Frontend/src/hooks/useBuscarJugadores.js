@@ -4,6 +4,7 @@ import { searchGameProfiles } from "../api/gameProfileApi";
 import { getCharactersByGame } from "../api/characterApi";
 import { getRolesByGame } from "../api/roleApi";
 import { getRanksByGame } from "../api/rankApi";
+import { useAuth } from "../context/AuthContext";
 import { logError } from "../utils/logs";
 import { parsearFechaUTC } from "../utils/tiempo";
 
@@ -60,12 +61,20 @@ function mapearPerfilAJugador(perfil) {
   };
 }
 
+// Arranca con un videojuego ya elegido, como Buscar equipos: el del primer
+// perfil del jugador o, si no tiene perfiles, el primero del catálogo. Así los
+// filtros de rango, rol y personaje se ven desde el principio.
 export function useBuscarJugadores() {
+  const { user } = useAuth();
+  const juegoInicial = user?.profiles?.[0]?.videogame?.id;
+
   const [games, setGames] = useState([]);
   const [isLoadingGames, setIsLoadingGames] = useState(true);
   const [gamesError, setGamesError] = useState("");
 
-  const [selectedGameId, setSelectedGameId] = useState("");
+  const [selectedGameId, setSelectedGameId] = useState(
+    juegoInicial ? String(juegoInicial) : ""
+  );
   const [ranks, setRanks] = useState([]);
   const [roles, setRoles] = useState([]);
   const [characters, setCharacters] = useState([]);
@@ -95,7 +104,13 @@ export function useBuscarJugadores() {
         setGamesError("");
 
         const videojuegos = await getGames();
-        if (!cancelado) setGames(videojuegos ?? []);
+        if (cancelado) return;
+
+        setGames(videojuegos ?? []);
+        // Sin perfiles no hay juego inicial: se usa el primero del catálogo.
+        if (videojuegos?.length > 0) {
+          setSelectedGameId((actual) => actual || String(videojuegos[0].id));
+        }
       } catch (error) {
         logError("Error al cargar videojuegos:", error);
         if (!cancelado) {

@@ -2,16 +2,23 @@ import { Link } from "react-router-dom";
 import FondoJuegoComponent from "./FondoJuegoComponent";
 import { urlDeMedia } from "../../utils/media";
 import { rolConMejorRango } from "../../utils/juegos";
+import { rutaPerfilJugador } from "../../utils/rutas";
 
 // Tarjeta de un perfil de juego en el inicio: portada del juego, rango
 // principal grande (como el "ranked solo" de OP.GG) y los roles con su rango.
-function PerfilJuegoCardComponent({ perfil }) {
+// Lleva al perfil público del jugador con ese juego preseleccionado. Sin
+// `jugadorId` (no debería pasar con sesión iniciada) va a Perfiles de juego.
+function PerfilJuegoCardComponent({ perfil, jugadorId }) {
   const mejorRol = rolConMejorRango(perfil);
   const roles = perfil.role_profiles ?? [];
 
   return (
     <Link
-      to="/app/perfil"
+      to={
+        jugadorId != null
+          ? rutaPerfilJugador(jugadorId, perfil.videogame.id)
+          : "/app/perfil"
+      }
       aria-label={`Perfil de ${perfil.videogame.name}`}
       className="group block rounded-2xl border border-white/10 bg-ganker-surface transition hover:border-ganker-purple-light/50 hover:shadow-[0_0_18px] hover:shadow-ganker-purple/30"
     >

@@ -199,10 +199,10 @@ const BuscarJugadoresPage = () => {
         </div>
 
         {/* Resultados */}
-        {!selectedGameId && (
+        {!selectedGameId && !isLoadingGames && !gamesError && (
           <div className="rounded-2xl border border-white/10 bg-ganker-surface p-10 text-center">
             <p className="text-sm text-ganker-muted">
-              Seleccioná un videojuego para empezar a buscar jugadores.
+              No hay videojuegos disponibles para buscar jugadores.
             </p>
           </div>
         )}
