@@ -8,7 +8,12 @@ import ListaDenunciasComponent from "../../components/moderacion/ListaDenunciasC
 import ModalBanearJugadorComponent from "../../components/moderacion/ModalBanearJugadorComponent";
 import { useAuth } from "../../context/AuthContext";
 import { useBuscarBaneos } from "../../hooks/useBuscarBaneos";
-import { FILTROS_DENUNCIAS_VACIOS, hayFiltrosDeDenuncias, useBuscarDenuncias } from "../../hooks/useBuscarDenuncias";
+import {
+  FILTROS_DENUNCIAS_VACIOS,
+  hayFiltrosDeDenuncias,
+  validarFiltrosDenuncias,
+  useBuscarDenuncias,
+} from "../../hooks/useBuscarDenuncias";
 import { useBuscarUsuario } from "../../hooks/useBuscarUsuario";
 import { useDesbanearJugador } from "../../hooks/useDesbanearJugador";
 import { obtenerIdUsuarioDesdeToken } from "../../utils/jwt";
@@ -43,7 +48,10 @@ const ModeracionPage = () => {
   const [mensajeBaneo, setMensajeBaneo] = useState("");
   const [filtrosBaneos, setFiltrosBaneos] = useState(FILTROS_BANEOS_VACIOS);
   const [erroresFiltros, setErroresFiltros] = useState({});
-  const [filtrosDenuncias, setFiltrosDenuncias] = useState(FILTROS_DENUNCIAS_VACIOS);
+  const [filtrosDenuncias, setFiltrosDenuncias] = useState(
+    FILTROS_DENUNCIAS_VACIOS
+  );
+  const [erroresFiltrosDenuncias, setErroresFiltrosDenuncias] = useState({});
 
   const {
     usernameBuscado,
@@ -85,16 +93,28 @@ const ModeracionPage = () => {
   };
 
   const handleCambiarFiltroDenuncia = (campo, valor) => {
-    setFiltrosDenuncias((actuales) => ({ ...actuales, [campo]: valor }));
+    setFiltrosDenuncias((actuales) => ({
+      ...actuales,
+      [campo]: valor,
+    }));
+
+    setErroresFiltrosDenuncias({});
   };
 
   const handleBuscarDenuncias = () => {
+    const errores = validarFiltrosDenuncias(filtrosDenuncias);
+
+    setErroresFiltrosDenuncias(errores);
+
+    if (Object.keys(errores).length > 0) return;
+
     setSuccessMessage("");
     denuncias.buscar(filtrosDenuncias);
   };
 
   const handleLimpiarFiltrosDenuncias = () => {
     setFiltrosDenuncias(FILTROS_DENUNCIAS_VACIOS);
+    setErroresFiltrosDenuncias({});
     denuncias.buscar(FILTROS_DENUNCIAS_VACIOS);
   };
 
@@ -262,9 +282,9 @@ const ModeracionPage = () => {
             Denuncias a jugadores
           </h2>
           <p className="mt-1 text-sm text-ganker-muted">
-            Buscá denuncias por jugador reportado, denunciante, administrador que
-            resolvió, estado, motivo o fecha. Los resultados se ordenan por fecha
-            de creación y se ignoran usuarios eliminados.
+            Buscá denuncias por jugador reportado, denunciante, administrador
+            que resolvió, estado, motivo o fecha. Los resultados se ordenan por
+            fecha de creación y se ignoran usuarios eliminados.
           </p>
 
           <FiltrosDenunciasComponent
@@ -273,6 +293,7 @@ const ModeracionPage = () => {
             onChange={handleCambiarFiltroDenuncia}
             onBuscar={handleBuscarDenuncias}
             onLimpiar={handleLimpiarFiltrosDenuncias}
+            errores={erroresFiltrosDenuncias}
           />
 
           <ListaDenunciasComponent

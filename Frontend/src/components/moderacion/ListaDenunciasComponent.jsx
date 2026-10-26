@@ -12,6 +12,7 @@ const formatearFecha = (fecha) => {
 const estadoEtiqueta = (estado) => {
   if (estado === "resolved") return "Resuelto";
   if (estado === "pending") return "Pendiente";
+  if (estado === "rejected") return "Rechazado";
   return estado || "-";
 };
 
@@ -89,20 +90,36 @@ const ListaDenunciasComponent = ({
             {denuncias.map((denuncia) => (
               <tr key={denuncia.id} className="hover:bg-white/5">
                 <td className="px-4 py-3">
-                  <p className="font-semibold text-ganker-text">@{denuncia.reported_user_name}</p>
-                  <p className="text-xs text-ganker-muted">ID {denuncia.reported_user_id}</p>
+                  <p className="font-semibold text-ganker-text">
+                    @{denuncia.reported_user_name}
+                  </p>
+                  <p className="text-xs text-ganker-muted">
+                    ID {denuncia.reported_user_id}
+                  </p>
                 </td>
                 <td className="px-4 py-3">
-                  <p className="text-ganker-text">@{denuncia.reporter_user_name}</p>
-                  <p className="text-xs text-ganker-muted">ID {denuncia.reporter_user_id}</p>
+                  <p className="text-ganker-text">
+                    @{denuncia.reporter_user_name}
+                  </p>
+                  <p className="text-xs text-ganker-muted">
+                    ID {denuncia.reporter_user_id}
+                  </p>
                 </td>
-                <td className="px-4 py-3 text-ganker-text">{nombreDeMotivoReporte(denuncia.reason)}</td>
-                <td className="px-4 py-3 text-ganker-text">{estadoEtiqueta(denuncia.status)}</td>
-                <td className="px-4 py-3 text-ganker-muted">{formatearFecha(denuncia.created_at)}</td>
+                <td className="px-4 py-3 text-ganker-text">
+                  {nombreDeMotivoReporte(denuncia.reason)}
+                </td>
+                <td className="px-4 py-3 text-ganker-text">
+                  {estadoEtiqueta(denuncia.status)}
+                </td>
+                <td className="px-4 py-3 text-ganker-muted">
+                  {formatearFecha(denuncia.created_at)}
+                </td>
                 <td className="px-4 py-3 text-ganker-muted">
                   {denuncia.resolved_by ? `@${denuncia.resolved_by}` : "-"}
                 </td>
-                <td className="px-4 py-3 text-ganker-muted">{formatearFecha(denuncia.resolved_at)}</td>
+                <td className="px-4 py-3 text-ganker-muted">
+                  {formatearFecha(denuncia.resolved_at)}
+                </td>
                 <td className="max-w-xs px-4 py-3 text-ganker-muted">
                   <p className="line-clamp-3">{denuncia.description}</p>
                 </td>
