@@ -81,3 +81,40 @@ export function desbanearJugador(jugadorId) {
     .post(`/api/v1/moderation/${Number(jugadorId)}/unban`)
     .then((res) => res.data);
 }
+
+// US 51 - Buscar denuncias a jugadores (admin).
+//   GET /api/v1/moderation/reported_players
+// Filtros: reported_by, reported_user, status, reason, resolved_by,
+// min_create_date, max_create_date, min_resolve_date, max_resolve_date,
+// skip, limit
+export function buscarDenuncias({
+  denunciado,
+  denunciante,
+  resueltoPor,
+  estado,
+  motivo,
+  fechaCreacionDesde,
+  fechaCreacionHasta,
+  fechaResolucionDesde,
+  fechaResolucionHasta,
+  skip = 0,
+  limit = 10,
+} = {}) {
+  return axiosClient
+    .get("/api/v1/moderation/reported_players", {
+      params: {
+        reported_user: denunciado || undefined,
+        reported_by: denunciante || undefined,
+        resolved_by: resueltoPor || undefined,
+        status: estado || undefined,
+        reason: motivo || undefined,
+        min_create_date: fechaCreacionDesde || undefined,
+        max_create_date: fechaCreacionHasta || undefined,
+        min_resolve_date: fechaResolucionDesde || undefined,
+        max_resolve_date: fechaResolucionHasta || undefined,
+        skip,
+        limit,
+      },
+    })
+    .then((res) => res.data.reports ?? []);
+}
