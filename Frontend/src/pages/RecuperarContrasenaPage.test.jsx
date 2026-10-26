@@ -116,4 +116,28 @@ describe("RecuperarContrasenaPage - US 34 Cambiar contraseña", () => {
       screen.queryByText(/No pudimos enviar el enlace/)
     ).not.toBeInTheDocument();
   });
+  it("con 429 y Retry-After indica cuánto esperar y bloquea el botón", async () => {
+    const usuario = userEvent.setup();
+    solicitarRecuperacion.mockRejectedValue({
+      response: {
+        status: 429,
+        headers: { "retry-after": "3352" },
+        data: {
+          error:
+            "Demasiadas solicitudes de recuperación. Por favor, intente nuevamente más tarde.",
+        },
+      },
+    });
+    renderPagina();
+
+    await enviar(usuario, "ana@ejemplo.com");
+
+    expect(
+      await screen.findByText(/Podés volver a intentar en 56 min\./)
+    ).toBeInTheDocument();
+    const boton = screen.getByRole("button", { name: "Reenviar en 56 min" });
+    expect(boton).toBeDisabled();
+    await usuario.click(boton);
+    expect(solicitarRecuperacion).toHaveBeenCalledTimes(1);
+  });
 });
