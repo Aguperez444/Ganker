@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import CampoTexto from "../common/CampoTexto";
+import { formatearEspera } from "../../utils/tiempo";
 
 const ICONO_MAIL = (
   <svg
@@ -77,7 +78,7 @@ function RecuperarContrasenaFormComponent({
         {cargando
           ? "Enviando..."
           : segundosParaReenviar > 0
-            ? `Reenviar en ${segundosParaReenviar} s`
+            ? `Reenviar en ${formatearEspera(segundosParaReenviar)}`
             : "Enviar enlace"}
       </button>
 

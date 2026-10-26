@@ -19,11 +19,9 @@ class TestUserEndpointsIntegration:
 
         response = client.post("/api/v1/users/register", json=payload)
 
-        assert response.status_code == 201
-        data = response.json()
-        assert "access_token" in data
-        assert "refresh_token" in data
-        assert data.get("token_type") == "Bearer"
+        assert response.status_code == 202
+        assert set(response.json()) == {"message"}
+        assert "confirmar" in response.json()["message"]
 
     def test_register_player_without_mail(self, client):
         # Probar registrar usuario sin ingresar mail (falla)
@@ -242,7 +240,7 @@ class TestUserEndpointsIntegration:
         assert result["user_id"] == seed_player.user_id
         assert result["username"] == "johnupdated"
         assert result["name"] == "John Updated"
-        assert result["mail"] == "john.updated@example.com"
+        assert result["mail"] == seed_player.mail
         assert result["icon_url"].startswith("/media/users/icons/")
         assert result["icon_url"].endswith(".png")
 
@@ -265,15 +263,16 @@ class TestUserEndpointsIntegration:
         response = client.put("/api/v1/users/", data=data, headers=player_auth_headers)
         assert response.status_code == 422
 
-    def test_update_user_invalid_email_format(self, client, player_auth_headers):
-        # Probar modificar el email ingresando un formato inválido (falla)
+    def test_update_user_ignores_email_field(self, client, player_auth_headers, seed_player):
+        # El guardado general no debe modificar el correo, incluso enviándolo a mano.
         data = {
             "username": "validusername",
             "name": "Valid Name",
             "mail": "not-an-email"
         }
         response = client.put("/api/v1/users/", data=data, headers=player_auth_headers)
-        assert response.status_code == 422
+        assert response.status_code == 200
+        assert response.json()["mail"] == seed_player.mail
 
     def test_update_user_empty_filename_rejected(self, client, player_auth_headers):
         data = {
@@ -292,7 +291,7 @@ class TestUserEndpointsIntegration:
 
         assert response.status_code in [400, 422]
 
-    def test_update_user_duplicate_email_conflict(self, client, player_auth_headers, seed_admin):
+    def test_update_user_cannot_overwrite_email(self, client, player_auth_headers, seed_admin, seed_player):
         data = {
             "username": "myuniqueusername",
             "name": "My Name",
@@ -307,8 +306,8 @@ class TestUserEndpointsIntegration:
             headers=player_auth_headers
         )
 
-        assert response.status_code == 409
-        assert "Ya existe una cuenta registrada con el email" in response.json().get("error", "")
+        assert response.status_code == 200
+        assert response.json()["mail"] == seed_player.mail
 
     def test_update_user_duplicate_username_conflict(self, client, player_auth_headers, seed_admin):
         data = {

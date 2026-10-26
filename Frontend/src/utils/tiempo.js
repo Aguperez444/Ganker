@@ -34,6 +34,20 @@ export function formatearConexionReciente(timestamp) {
 
 // Texto relativo corto para una fecha pasada: "hace instantes", "hace 5 min",
 // "hace 2 h", "hace 3 d". Usado en las estadisticas de Riot.
+// Texto corto para una espera hacia adelante: "45 s", "12 min", "1 h 5 min".
+// Usado con el header Retry-After de los 429 (ej. recuperar contraseña).
+export function formatearEspera(segundos) {
+  const total = Math.max(0, Math.ceil(segundos));
+  if (total <= 60) return `${total} s`;
+
+  const minutos = Math.ceil(total / 60);
+  if (minutos < 60) return `${minutos} min`;
+
+  const horas = Math.floor(minutos / 60);
+  const resto = minutos % 60;
+  return resto > 0 ? `${horas} h ${resto} min` : `${horas} h`;
+}
+
 export function formatearTiempoRelativo(timestamp) {
   if (!timestamp) return "";
 

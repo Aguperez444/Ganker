@@ -145,7 +145,7 @@ const ProfilePage = () => {
       <div className="mx-auto w-full max-w-6xl">
         <header className="mb-8">
           <h1 className="font-heading text-3xl font-bold text-ganker-text sm:text-4xl">
-            Mi perfil
+            Perfiles de juego
           </h1>
 
           <p className="mt-2 max-w-2xl text-sm text-ganker-muted sm:text-base">

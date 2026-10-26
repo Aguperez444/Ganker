@@ -1,5 +1,4 @@
-const CLASES_SELECT =
-  "w-full rounded-lg border border-white/10 bg-ganker-surface-light px-3 py-2.5 text-sm text-ganker-text focus:border-ganker-purple focus:ring-2 focus:ring-ganker-purple focus:outline-none disabled:opacity-60";
+import SelectorJuegoComponent from "../games/SelectorJuegoComponent";
 
 // US 38 - Videojuego ("" = todos) y tipo de analisis del reporte de uso. Los
 // tipos (rangos, personajes, equipos) vienen del catalogo del backend.
@@ -14,26 +13,17 @@ const SeleccionReporteUsoComponent = ({
 }) => (
   <>
     <div>
-      <label
-        htmlFor="reporte-uso-juego"
-        className="mb-1 block text-xs font-semibold text-ganker-text"
-      >
+      <p className="mb-2 block text-xs font-semibold text-ganker-text">
         Videojuego
-      </label>
-      <select
-        id="reporte-uso-juego"
+      </p>
+      <SelectorJuegoComponent
+        etiqueta="Videojuego"
+        juegos={juegos}
         value={videogameId}
-        onChange={(e) => onJuegoChange(e.target.value)}
+        onChange={onJuegoChange}
         disabled={deshabilitado}
-        className={CLASES_SELECT}
-      >
-        <option value="">Todos los videojuegos</option>
-        {juegos.map((juego) => (
-          <option key={juego.id} value={String(juego.id)}>
-            {juego.name}
-          </option>
-        ))}
-      </select>
+        opcionTodos="Todos los videojuegos"
+      />
     </div>
 
     <fieldset>

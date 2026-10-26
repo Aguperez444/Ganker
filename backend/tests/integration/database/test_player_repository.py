@@ -83,7 +83,7 @@ class TestUserRepositoryIntegration:
 
         assert updated.name == "Updated Name"
         assert updated.username == "updated_user"
-        assert updated.mail == "updated@example.com"
+        assert updated.mail == "orig@example.com"
         assert updated.icon_url == "/new_icon.png"
 
     def test_unique_username_constraint(self, test_db_session):

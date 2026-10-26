@@ -53,8 +53,8 @@ describe("CharactersPage - videojuegos sin personajes", () => {
     const usuario = userEvent.setup();
     render(<CharactersPage />);
 
-    // Los selectores de videojuego usan IconSelectComponent (no un <select>
-    // nativo): se abre la lista con un click y se elige por texto.
+    // El filtro muestra los juegos siempre visibles (SelectorJuegoComponent);
+    // el del formulario es un IconSelectComponent: se abre con un click.
     const filtro = screen.getByLabelText("Ver personajes de");
     await usuario.click(filtro);
     await usuario.click(within(filtro.parentElement).getByText("CS2"));

@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   formatearConexionReciente,
+  formatearEspera,
   formatearTiempoRelativo,
   parsearFechaUTC,
 } from "./tiempo";
@@ -43,5 +44,19 @@ describe("fechas UTC del backend", () => {
         })
       ).toBe("12:00");
     }
+  });
+});
+
+describe("formatearEspera", () => {
+  it.each([
+    [45, "45 s"],
+    [60, "60 s"],
+    [61, "2 min"],
+    [3352, "56 min"],
+    [3600, "1 h"],
+    [3900, "1 h 5 min"],
+    [-5, "0 s"],
+  ])("%i segundos -> %s", (segundos, esperado) => {
+    expect(formatearEspera(segundos)).toBe(esperado);
   });
 });

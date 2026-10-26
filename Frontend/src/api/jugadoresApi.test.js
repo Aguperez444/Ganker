@@ -20,7 +20,7 @@ describe("jugadoresApi", () => {
   });
 
   describe("actualizarJugador - Nueva firma PUT /api/v1/users/", () => {
-    it("envía username, name y mail en FormData con Content-Type multipart/form-data", async () => {
+    it("envía los datos personales sin permitir modificar el email por FormData", async () => {
       axiosClient.put.mockResolvedValue({
         data: {
           user_id: 1,
@@ -44,7 +44,7 @@ describe("jugadoresApi", () => {
       expect(formData).toBeInstanceOf(FormData);
       expect(formData.get("username")).toBe("player1");
       expect(formData.get("name")).toBe("Jugador Uno");
-      expect(formData.get("mail")).toBe("p1@ganker.com");
+      expect(formData.get("mail")).toBeNull();
       expect(formData.get("icon")).toBeNull();
 
       expect(config).toEqual({

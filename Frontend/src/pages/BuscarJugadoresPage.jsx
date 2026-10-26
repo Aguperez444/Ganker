@@ -6,6 +6,7 @@ import JugadorCardComponent from "../components/jugadores/JugadorCardComponent";
 import { useChat } from "../context/ChatContext";
 import { useBuscarJugadores } from "../hooks/useBuscarJugadores";
 import { rutaPerfilJugador } from "../utils/rutas";
+import SelectorJuegoConBannerComponent from "../components/games/SelectorJuegoConBannerComponent";
 
 const BuscarJugadoresPage = () => {
   const navigate = useNavigate();
@@ -97,24 +98,16 @@ const BuscarJugadoresPage = () => {
         {/* Filtros */}
         <div className="rounded-2xl border border-white/10 bg-ganker-surface p-5 sm:p-6">
           <div>
-            <label className="mb-3 block text-sm font-semibold text-ganker-text">
-              Videojuego
-            </label>
-
             {isLoadingGames ? (
               <p className="text-sm text-ganker-muted">
                 Cargando videojuegos...
               </p>
             ) : (
-              <div className="max-w-sm">
-                <IconSelectComponent
-                  value={selectedGameId}
-                  onChange={selectGame}
-                  options={games}
-                  placeholder="Seleccioná un videojuego"
-                  getOptionId={(game) => game.id}
-                />
-              </div>
+              <SelectorJuegoConBannerComponent
+                juegos={games}
+                value={selectedGameId}
+                onChange={selectGame}
+              />
             )}
 
             {gamesError && (
@@ -201,10 +194,10 @@ const BuscarJugadoresPage = () => {
         </div>
 
         {/* Resultados */}
-        {!selectedGameId && (
+        {!selectedGameId && !isLoadingGames && !gamesError && (
           <div className="rounded-2xl border border-white/10 bg-ganker-surface p-10 text-center">
             <p className="text-sm text-ganker-muted">
-              Seleccioná un videojuego para empezar a buscar jugadores.
+              No hay videojuegos disponibles para buscar jugadores.
             </p>
           </div>
         )}
