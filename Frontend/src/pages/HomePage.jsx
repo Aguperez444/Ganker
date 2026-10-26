@@ -48,7 +48,7 @@ const ACCESOS = [
     ),
   },
   {
-    titulo: "Mi perfil",
+    titulo: "Perfiles de juego",
     descripcion: "Perfiles de juego, roles y personajes",
     path: "/app/perfil",
     icono: icono(

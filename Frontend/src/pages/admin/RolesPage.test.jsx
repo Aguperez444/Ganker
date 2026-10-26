@@ -19,15 +19,15 @@ const ROLES = [
   { role_id: 11, name: "Jungla", icon_url: "/media/roles/jungla.png" },
 ];
 
-// El selector de videojuego usa IconSelectComponent (no un <select> nativo):
-// se espera a que carguen los juegos, se abre la lista y se elige por texto.
+// Sirve para los dos selectores de videojuego: el filtro de la lista usa
+// SelectorJuegoComponent (juegos siempre visibles; el click en el grupo no
+// hace nada) y el formulario IconSelectComponent (el click abre la lista).
+// En ambos se espera a que carguen los juegos y se elige por texto.
 async function elegirJuego(usuario, label, juego) {
   const disparador = await screen.findByLabelText(label);
   await waitFor(() => expect(disparador).toBeEnabled());
   await usuario.click(disparador);
-  await usuario.click(
-    await within(disparador.parentElement).findByText(juego)
-  );
+  await usuario.click(await within(disparador.parentElement).findByText(juego));
 }
 
 async function abrirRolesDeLol(usuario) {

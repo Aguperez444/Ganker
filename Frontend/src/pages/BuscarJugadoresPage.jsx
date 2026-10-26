@@ -6,6 +6,7 @@ import JugadorCardComponent from "../components/jugadores/JugadorCardComponent";
 import { useChat } from "../context/ChatContext";
 import { useBuscarJugadores } from "../hooks/useBuscarJugadores";
 import { rutaPerfilJugador } from "../utils/rutas";
+import SelectorJuegoComponent from "../components/games/SelectorJuegoComponent";
 
 const BuscarJugadoresPage = () => {
   const navigate = useNavigate();
@@ -97,24 +98,21 @@ const BuscarJugadoresPage = () => {
         {/* Filtros */}
         <div className="rounded-2xl border border-white/10 bg-ganker-surface p-5 sm:p-6">
           <div>
-            <label className="mb-3 block text-sm font-semibold text-ganker-text">
+            <p className="mb-3 block text-sm font-semibold text-ganker-text">
               Videojuego
-            </label>
+            </p>
 
             {isLoadingGames ? (
               <p className="text-sm text-ganker-muted">
                 Cargando videojuegos...
               </p>
             ) : (
-              <div className="max-w-sm">
-                <IconSelectComponent
-                  value={selectedGameId}
-                  onChange={selectGame}
-                  options={games}
-                  placeholder="Seleccioná un videojuego"
-                  getOptionId={(game) => game.id}
-                />
-              </div>
+              <SelectorJuegoComponent
+                etiqueta="Videojuego"
+                juegos={games}
+                value={selectedGameId}
+                onChange={selectGame}
+              />
             )}
 
             {gamesError && (

@@ -1,6 +1,7 @@
 import CampoTexto from "../common/CampoTexto";
 import IconSelectComponent from "../common/IconSelectComponent";
 import { OPCIONES_VACANTES_MINIMAS } from "../../hooks/useBuscarEquipos";
+import SelectorJuegoComponent from "../games/SelectorJuegoComponent";
 
 const CLASES_ETIQUETA =
   "mb-2 block text-xs font-semibold text-ganker-muted uppercase";
@@ -38,15 +39,12 @@ const FiltrosEquiposComponent = ({ busqueda }) => {
         {cargandoVideojuegos ? (
           <p className="text-sm text-ganker-muted">Cargando videojuegos...</p>
         ) : (
-          <div className="max-w-sm">
-            <IconSelectComponent
-              value={videojuegoId}
-              onChange={seleccionarVideojuego}
-              options={videojuegos}
-              placeholder="Seleccioná un videojuego"
-              getOptionId={(juego) => juego.id}
-            />
-          </div>
+          <SelectorJuegoComponent
+            etiqueta="Videojuego"
+            juegos={videojuegos}
+            value={videojuegoId}
+            onChange={seleccionarVideojuego}
+          />
         )}
 
         {errorVideojuegos && (

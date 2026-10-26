@@ -209,15 +209,12 @@ async function renderPagina({ userId = 2 } = {}) {
     </AuthProvider>
   );
 
-  return screen.findByRole("button", { name: /seleccioná un videojuego/i });
+  return screen.findByRole("radiogroup", { name: "Videojuego" });
 }
 
 async function seleccionarVideojuego(usuario) {
   await usuario.click(
-    screen.getByRole("button", { name: /seleccioná un videojuego/i })
-  );
-  await usuario.click(
-    await screen.findByRole("button", { name: /League of Legends/ })
+    await screen.findByRole("radio", { name: "League of Legends" })
   );
   await screen.findAllByRole("button", { name: /enviar mensaje/i });
 }

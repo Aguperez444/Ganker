@@ -54,7 +54,7 @@ export const PAGE_METADATA = [
   },
   ...[
     ["/app", "Mi inicio"],
-    ["/app/perfil", "Mi perfil"],
+    ["/app/perfil", "Perfiles de juego"],
     ["/app/cuenta", "Mi cuenta"],
     ["/app/discord/callback", "Conectar Discord"],
     ["/app/jugadores", "Buscar jugadores"],
