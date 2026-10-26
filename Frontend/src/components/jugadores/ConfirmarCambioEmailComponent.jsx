@@ -1,5 +1,8 @@
 import { Link } from "react-router-dom";
 
+const CLASES_BOTON =
+  "block w-full rounded-lg bg-gradient-to-r from-ganker-orange to-ganker-purple py-3 text-center text-sm font-bold uppercase tracking-wide text-ganker-text font-heading transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-60";
+
 function ConfirmarCambioEmailComponent({
   token,
   cargando,
@@ -13,18 +16,21 @@ function ConfirmarCambioEmailComponent({
         {exito ? "Email confirmado" : "Confirmá tu nuevo email"}
       </h1>
       {exito ? (
-        <p role="status" className="text-sm text-ganker-success">
+        <p
+          role="status"
+          className="rounded-lg border border-ganker-success/40 bg-ganker-success/10 px-3 py-2 text-sm text-ganker-success font-body"
+        >
           {exito}
         </p>
       ) : (
         <>
-          <p className="text-sm text-ganker-muted">
+          <p className="text-sm text-ganker-muted font-body">
             {token
               ? "Confirmá que este correo te pertenece para aplicar el cambio de email. Si no lo solicitaste, cerrá esta página."
               : "Falta el enlace de confirmación. Solicitá uno nuevo desde Mi cuenta."}
           </p>
           {errorServidor && (
-            <p role="alert" className="text-sm text-ganker-error">
+            <p role="alert" className="text-sm text-ganker-error font-body">
               {errorServidor}
             </p>
           )}
@@ -33,25 +39,26 @@ function ConfirmarCambioEmailComponent({
               type="button"
               disabled={cargando}
               onClick={onConfirmar}
-              className="w-full rounded-lg bg-gradient-to-r from-ganker-orange to-ganker-purple py-3 text-sm font-bold text-ganker-text disabled:cursor-not-allowed disabled:opacity-60"
+              className={CLASES_BOTON}
             >
               {cargando ? "Confirmando..." : "Confirmar nuevo email"}
             </button>
           )}
         </>
       )}
-      <Link
-        to="/app/cuenta"
-        className="block text-sm text-ganker-purple-light hover:underline"
-      >
-        Ir a Mi cuenta
-      </Link>
-      <Link
-        to="/login"
-        className="block text-sm text-ganker-purple-light hover:underline"
-      >
-        Iniciar sesión
-      </Link>
+      <p className="text-center text-sm font-body">
+        <Link
+          to="/app/cuenta"
+          className="text-ganker-purple-light hover:underline"
+        >
+          Ir a Mi cuenta
+        </Link>
+      </p>
+      <p className="text-center text-sm font-body">
+        <Link to="/login" className="text-ganker-purple-light hover:underline">
+          Iniciar sesión
+        </Link>
+      </p>
     </div>
   );
 }
