@@ -30,11 +30,14 @@ class UserRepositoryImpl(IUserRepository):
         domain_found = UserMapper.orm_to_domain(found) if found else None
         return domain_found
 
-    def get_user_by_id(self, user_id: int) -> Optional['User']:
-        found = self.session.query(UserORM).filter(
+    def get_user_by_id(self, user_id: int, for_update: bool = False) -> Optional['User']:
+        query = self.session.query(UserORM).filter(
             UserORM.user_id == user_id,
             UserORM.deleted == False,
-        ).first()
+        )
+        if for_update:
+            query = query.with_for_update()
+        found = query.first()
         domain_found = UserMapper.orm_to_domain(found) if found else None
         return domain_found
 
@@ -74,13 +77,21 @@ class UserRepositoryImpl(IUserRepository):
         if orm_user:
             orm_user.name = user.name
             orm_user.username = user.username
-            orm_user.mail = user.mail
             orm_user.icon_url = user.icon_url
             orm_user.last_connection = user.last_connection
             self.session.flush()
             self.session.refresh(orm_user)
             return UserMapper.orm_to_domain(orm_user)
         return user
+
+    def update_user_email(self, user_id: int, mail: str) -> None:
+        orm_user = self.session.query(UserORM).filter(
+            UserORM.user_id == user_id,
+            UserORM.deleted == False,
+        ).first()
+        if orm_user:
+            orm_user.mail = mail.strip().lower()
+            self.session.flush()
 
     def update_user_password(self, user_id: int, new_hashed_password: str) -> None:
         orm_user = self.session.query(UserORM).filter(

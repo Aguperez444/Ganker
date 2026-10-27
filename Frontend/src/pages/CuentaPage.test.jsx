@@ -5,6 +5,9 @@ import { describe, it, expect, beforeEach, vi } from "vitest";
 
 import { AuthProvider, useAuth } from "../context/AuthContext";
 import CuentaPage from "./CuentaPage";
+import { solicitarCambioEmail } from "../api/cambioEmailApi";
+
+vi.mock("../api/cambioEmailApi", () => ({ solicitarCambioEmail: vi.fn() }));
 import { actualizarJugador, obtenerJugadorActual } from "../api/jugadoresApi";
 
 // La seccion de Discord se prueba en components/discord/Discord.test.jsx
@@ -94,7 +97,10 @@ describe("US 02 - Modificar mis datos", () => {
     await renderCuenta();
 
     expect(screen.getByDisplayValue(JUGADOR.name)).toBeInTheDocument();
-    expect(screen.getByDisplayValue(JUGADOR.mail)).toBeInTheDocument();
+    expect(screen.queryByDisplayValue(JUGADOR.mail)).not.toBeInTheDocument();
+    expect(screen.getByRole("textbox", { name: "Nuevo email" })).toHaveValue(
+      ""
+    );
   });
 
   it("muestra la foto de perfil que devuelve /me", async () => {
@@ -119,10 +125,13 @@ describe("US 02 - Modificar mis datos", () => {
     expect(screen.getAllByText("J").length).toBeGreaterThan(0);
   });
 
-  it("no ofrece cambiar la contraseña desde esta pantalla", async () => {
+  it("pide la contraseña actual solamente para cambiar el email", async () => {
     await renderCuenta();
 
-    expect(document.querySelector('input[type="password"]')).toBeNull();
+    expect(screen.getByLabelText("Contraseña actual")).toHaveAttribute(
+      "type",
+      "password"
+    );
   });
 
   it("guarda los cambios y confirma cuando los datos son válidos", async () => {
@@ -145,7 +154,6 @@ describe("US 02 - Modificar mis datos", () => {
       expect(actualizarJugador).toHaveBeenCalledWith({
         nombre: JUGADOR.name,
         username: "joaco_ganker",
-        mail: JUGADOR.mail,
         icon: null,
       })
     );
@@ -170,40 +178,75 @@ describe("US 02 - Modificar mis datos", () => {
     expect(actualizarJugador).not.toHaveBeenCalled();
   });
 
-  it("no guarda si el email tiene un formato inválido", async () => {
+  it("valida el nuevo email sin bloquear el guardado de datos personales", async () => {
     const usuario = userEvent.setup();
     await renderCuenta();
-
-    const campoMail = screen.getByPlaceholderText("tuemail@ejemplo.com");
-    await usuario.clear(campoMail);
-    await usuario.type(campoMail, "joaco.ejemplo.com");
+    await usuario.type(
+      screen.getByRole("textbox", { name: "Nuevo email" }),
+      "invalido"
+    );
+    await usuario.click(
+      screen.getByRole("button", { name: /enviar confirmación de email/i })
+    );
+    expect(await screen.findByText(/formato válido/i)).toBeInTheDocument();
+    expect(solicitarCambioEmail).not.toHaveBeenCalled();
     await usuario.click(
       screen.getByRole("button", { name: /guardar cambios/i })
     );
+    await waitFor(() => expect(actualizarJugador).toHaveBeenCalled());
+  });
 
-    expect(await screen.findByText(/formato válido/i)).toBeInTheDocument();
+  it("solicita confirmación con contraseña y conserva el correo actual", async () => {
+    solicitarCambioEmail.mockResolvedValue({
+      message: "Revisá el nuevo correo para confirmar el cambio.",
+    });
+    const usuario = userEvent.setup();
+    await renderCuenta();
+    await usuario.type(
+      screen.getByRole("textbox", { name: "Nuevo email" }),
+      "nuevo@example.com"
+    );
+    await usuario.type(
+      screen.getByLabelText("Contraseña actual"),
+      "Password123"
+    );
+    await usuario.click(
+      screen.getByRole("button", { name: /enviar confirmación de email/i })
+    );
+    expect(solicitarCambioEmail).toHaveBeenCalledExactlyOnceWith({
+      mail: "nuevo@example.com",
+      password: "Password123",
+    });
+    expect(await screen.findByRole("status")).toHaveTextContent(
+      /revisá el nuevo correo/i
+    );
+    expect(screen.getByLabelText("Contraseña actual")).toHaveValue("");
+    expect(screen.getByText(JUGADOR.mail)).toBeInTheDocument();
+    expect(obtenerJugadorActual).toHaveBeenCalledTimes(1);
     expect(actualizarJugador).not.toHaveBeenCalled();
   });
 
-  it("muestra el error en el campo cuando el email ya está usado por otra cuenta", async () => {
+  it("muestra el error cuando el nuevo email está ocupado", async () => {
+    solicitarCambioEmail.mockRejectedValue(
+      conflicto("El correo ya está ocupado.")
+    );
     const usuario = userEvent.setup();
-    actualizarJugador.mockRejectedValue(
-      conflicto('El correo: "ocupado@ejemplo.com" ya está ocupado.')
-    );
-
     await renderCuenta();
-
-    const campoMail = screen.getByPlaceholderText("tuemail@ejemplo.com");
-    await usuario.clear(campoMail);
-    await usuario.type(campoMail, "ocupado@ejemplo.com");
-    await usuario.click(
-      screen.getByRole("button", { name: /guardar cambios/i })
+    await usuario.type(
+      screen.getByRole("textbox", { name: "Nuevo email" }),
+      "ocupado@example.com"
     );
-
+    await usuario.type(
+      screen.getByLabelText("Contraseña actual"),
+      "Password123"
+    );
+    await usuario.click(
+      screen.getByRole("button", { name: /enviar confirmación de email/i })
+    );
     expect(
-      await screen.findByText(/el correo.*ya está ocupado/i)
+      await screen.findByText(/el correo ya está ocupado/i)
     ).toBeInTheDocument();
-    expect(screen.queryByRole("status")).toBeNull();
+    expect(actualizarJugador).not.toHaveBeenCalled();
   });
 
   it("muestra el error en el campo cuando el username ya está ocupado", async () => {
@@ -320,7 +363,6 @@ describe("US 02 - Modificar mis datos", () => {
         expect(actualizarJugador).toHaveBeenCalledWith({
           nombre: JUGADOR.name,
           username: JUGADOR.username,
-          mail: JUGADOR.mail,
           icon: expect.any(File),
         })
       );
@@ -444,7 +486,6 @@ describe("US 02 - Modificar mis datos", () => {
         expect(actualizarJugador).toHaveBeenCalledWith({
           nombre: JUGADOR.name,
           username: JUGADOR.username,
-          mail: JUGADOR.mail,
           icon: null,
         })
       );

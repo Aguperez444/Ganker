@@ -104,15 +104,27 @@ Las claves personales, como las de Riot y OAuth, pueden ir en `secrets.local.env
 | ---------------------------------------------------------- | ----------------------------------------------------------------------------------- |
 | `DATABASE_URL`                                             | Conexión de SQLAlchemy; por defecto usa `app/infrastructure/database/db.db`         |
 | `CORS_ORIGINS`                                             | Orígenes del frontend permitidos, separados por comas                               |
-| `FRONTEND_URL`                                             | URL del cliente utilizada al construir enlaces de recuperación de contraseña        |
+| `FRONTEND_URL`                                             | URL del cliente utilizada al construir enlaces de recuperación y confirmación de registro |
 | `SEED_DEMO_DATA`                                           | Activa la sincronización de catálogos, usuarios, perfiles y equipos de demostración |
 | `INITIAL_OWNER_*`                                          | Alta del owner inicial si están completas las credenciales y todavía no existe      |
 | `RIOT_API_KEY`                                             | Acceso a las funciones de Riot que requieren una clave                              |
 | `DISCORD_*`, `GOOGLE_*`, `TWITCH_*`, `STEAM_*`             | Credenciales y redirecciones de las integraciones de autenticación                  |
-| `SMTP_*` o `RESEND_API_KEY`, `EMAIL_API_URL`, `EMAIL_FROM` | Envío de correo para recuperar contraseñas                                          |
+| `RESEND_API_KEY`, `EMAIL_API_URL`, `EMAIL_FROM` | Envío de correos de recuperación y confirmación del registro mediante Resend |
 | `UPLOAD_DIR`, `MEDIA_URL`                                  | Directorio físico y ruta pública de archivos multimedia                             |
 
 Los proveedores de autenticación requieren registrar sus URL de retorno en la consola correspondiente. Las claves de estas integraciones se configuran en el backend.
+
+### Confirmación del registro por correo
+
+El registro local requiere confirmar el correo antes de crear la cuenta. `POST /api/v1/users/register` recibe los mismos datos y ahora devuelve **202** con `{ "message": "..." }`, sin tokens de sesión. Guarda una solicitud en `pending_registrations`, con la contraseña hasheada y únicamente el hash SHA-256 del token de confirmación. Las cuentas existentes y el registro federado conservan su comportamiento.
+
+El correo usa la misma configuración de Resend que la recuperación y enlaza a `{FRONTEND_URL}/confirm-registration?token=...`. Desde esa pantalla el usuario confirma explícitamente; `POST /auth/v1/confirm-registration` recibe `{ "token": "..." }` y crea la cuenta. El enlace dura **24 horas**, se consume una sola vez y se comprueba nuevamente la disponibilidad del correo y del username. Después de confirmar se inicia sesión con las credenciales elegidas.
+
+`POST /auth/v1/resend-registration` recibe `{ "email": "..." }`. Para solicitudes pendientes genera un enlace nuevo, invalida el anterior y renueva el vencimiento. Su respuesta es genérica, exista o no la solicitud. Volver a enviar el formulario de registro reemplaza los datos pendientes para ese correo; no reserva el username hasta confirmar.
+
+Registro y reenvío comparten un límite por IP y correo de 3 solicitudes cada 15 minutos, configurable con `REGISTRATION_RATE_LIMIT_ENABLED`, `REGISTRATION_RATE_LIMIT_MAX_ATTEMPTS` y `REGISTRATION_RATE_LIMIT_WINDOW_SECONDS`.
+
+Antes de ejecutar esta versión sobre una base existente, aplicá la migración desde `backend/` con `alembic upgrade head`. No requiere modificar las cuentas creadas previamente.
 
 El login admite 5 intentos por minuto y la recuperación de contraseña 3 solicitudes cada 15 minutos, por IP y por correo. Se configuran de forma independiente con `LOGIN_RATE_LIMIT_*` y `FORGOT_PASSWORD_RATE_LIMIT_*` en las plantillas de entorno. Ambos límites usan memoria del proceso: ejecutar un solo worker; para múltiples procesos o réplicas hace falta un almacén compartido.
 

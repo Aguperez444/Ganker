@@ -2,10 +2,10 @@ import { useEffect, useState } from "react";
 import CharacterForm from "../../components/characters/CharacterFormComponent";
 import CharactersListComponent from "../../components/characters/CharactersListComponent";
 import ListaConBuscadorComponent from "../../components/common/ListaConBuscadorComponent";
-import IconSelectComponent from "../../components/common/IconSelectComponent";
 import useGames from "../../hooks/useGames";
 import useCharacters from "../../hooks/useCharacters";
 import ModalConfirmacionComponent from "../../components/common/ModalConfirmacionComponent";
+import SelectorJuegoComponent from "../../components/games/SelectorJuegoComponent";
 
 const CharactersPage = () => {
   const [selectedGameId, setSelectedGameId] = useState("");
@@ -212,22 +212,13 @@ const CharactersPage = () => {
                 </h2>
 
                 <div className="mt-3">
-                  <label
-                    htmlFor="characters-videogame-filter"
-                    className="sr-only"
-                  >
-                    Ver personajes de
-                  </label>
-                  <div className="max-w-xs">
-                    <IconSelectComponent
-                      id="characters-videogame-filter"
-                      value={selectedGameId}
-                      onChange={setSelectedGameId}
-                      options={games}
-                      placeholder="Ver personajes de..."
-                      disabled={isLoadingGames}
-                    />
-                  </div>
+                  <SelectorJuegoComponent
+                    etiqueta="Ver personajes de"
+                    juegos={games}
+                    value={selectedGameId}
+                    onChange={setSelectedGameId}
+                    disabled={isLoadingGames}
+                  />
                 </div>
               </div>
 

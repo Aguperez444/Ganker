@@ -17,7 +17,7 @@ export const navigationItems = [
     path: "/app/equipos",
   },
   {
-    label: "Mi perfil",
+    label: "Perfiles de juego",
     path: "/app/perfil",
   },
   // "Cuenta" (/app/cuenta) vive en el menu desplegable del avatar, en el

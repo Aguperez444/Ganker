@@ -4,31 +4,27 @@ import BotonesAuthFederadoComponent from "../components/jugadores/BotonesAuthFed
 import JugadorForm from "../components/jugadores/JugadorForm";
 import { useAuthFederado } from "../hooks/useAuthFederado";
 import { useRegistrarJugador } from "../hooks/useRegistrarJugador";
-import { useAuth } from "../context/AuthContext";
 
 function RegistroPage() {
-  const { valores, errores, cargando, errorServidor, handleChange, handleBlur, handleSubmit } =
-    useRegistrarJugador();
+  const {
+    valores,
+    errores,
+    cargando,
+    errorServidor,
+    handleChange,
+    handleBlur,
+    handleSubmit,
+  } = useRegistrarJugador();
   const { proveedorCargando, errorFederado, conectar } = useAuthFederado();
-  const { guardarSesion } = useAuth();
   const navigate = useNavigate();
 
   async function onSubmit(e) {
-    const tokens = await handleSubmit(e);
-    if (!tokens) return;
-
-    try {
-      await guardarSesion(tokens);
-      navigate("/app", { replace: true });
-    } catch {
-      // La cuenta se creo, pero no pudimos traer el perfil. guardarSesion ya
-      // dejo la sesion limpia, asi que lo mandamos a loguearse en vez de
-      // dejarlo mirando el formulario sin saber que su cuenta ya existe.
-      navigate("/login", {
-        replace: true,
-        state: { mensaje: "Tu cuenta se creo correctamente. Inicia sesion para entrar." },
-      });
-    }
+    const respuesta = await handleSubmit(e);
+    if (!respuesta) return;
+    navigate("/confirm-registration", {
+      replace: true,
+      state: { email: valores.mail, mensaje: respuesta.message },
+    });
   }
 
   return (

@@ -3,9 +3,9 @@ import ModalConfirmacionComponent from "../../components/common/ModalConfirmacio
 import RegionForm from "../../components/region/RegionFormComponent";
 import RegionsListComponent from "../../components/region/RegionsListComponent";
 import ListaConBuscadorComponent from "../../components/common/ListaConBuscadorComponent";
-import IconSelectComponent from "../../components/common/IconSelectComponent";
 import useGames from "../../hooks/useGames";
 import useRegions from "../../hooks/useRegions";
+import SelectorJuegoComponent from "../../components/games/SelectorJuegoComponent";
 
 const RegionsPage = () => {
   const [selectedGameId, setSelectedGameId] = useState("");
@@ -193,23 +193,13 @@ const RegionsPage = () => {
                   </h2>
 
                   <div className="mt-3">
-                    <label
-                      htmlFor="regions-videogame-filter"
-                      className="sr-only"
-                    >
-                      Ver regiones de
-                    </label>
-
-                    <div className="max-w-xs">
-                      <IconSelectComponent
-                        id="regions-videogame-filter"
-                        value={selectedGameId}
-                        onChange={handleGameChange}
-                        options={games}
-                        placeholder="Ver regiones de..."
-                        disabled={isLoadingGames}
-                      />
-                    </div>
+                    <SelectorJuegoComponent
+                      etiqueta="Ver regiones de"
+                      juegos={games}
+                      value={selectedGameId}
+                      onChange={handleGameChange}
+                      disabled={isLoadingGames}
+                    />
                   </div>
 
                   {selectedGameId && (

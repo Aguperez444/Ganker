@@ -1,9 +1,11 @@
 import axiosClient from "./axiosClient";
 
+// Siempre del menor al mayor `value`: asi salen en todos los selectores y
+// filtros de rango (buscar jugadores, perfiles, equipos, reportes).
 export const getRanksByGame = async (videogameId) => {
   const response = await axiosClient.get(`/api/v1/ranks/${videogameId}`);
 
-  return response.data.ranks;
+  return [...(response.data.ranks ?? [])].sort((a, b) => a.value - b.value);
 };
 
 export const createRank = async ({ videogame_id, name, value, icon }) => {

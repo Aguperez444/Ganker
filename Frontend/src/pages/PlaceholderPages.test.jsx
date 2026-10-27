@@ -2,9 +2,6 @@ import { render, screen } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import { describe, it, expect } from "vitest";
 
-import HomePage from "./HomePage";
-import AdminHomePage from "./admin/AdminHomePage";
-
 describe("Páginas placeholder para funcionalidades en desarrollo", () => {
   // BuscarJugadoresPage dejo de ser un placeholder (US 10 - Iniciar
   // conversacion privada). Su propio test vive en BuscarJugadoresPage.test.jsx.
@@ -20,56 +17,9 @@ describe("Páginas placeholder para funcionalidades en desarrollo", () => {
   // Ahora usa useAuth y pide el listado de baneos, asi que ya no renderiza
   // sin un AuthProvider.
 
-  it("HomePage muestra enlaces a las funcionalidades y su mensaje placeholder", () => {
-    render(
-      <MemoryRouter>
-        <HomePage />
-      </MemoryRouter>
-    );
-
-    expect(
-      screen.getByRole("heading", { level: 1, name: "Inicio" })
-    ).toBeInTheDocument();
-
-    expect(
-      screen.getByText(/\[Inicio\] se implementará en un próximo sprint\.\.\./i)
-    ).toBeInTheDocument();
-
-    expect(
-      screen.getByRole("link", { name: /buscar jugadores/i })
-    ).toHaveAttribute("href", "/app/jugadores");
-
-    expect(screen.getByRole("link", { name: /ver equipos/i })).toHaveAttribute(
-      "href",
-      "/app/equipos"
-    );
-  });
-
-  it("AdminHomePage muestra enlaces a los módulos administrativos", () => {
-    render(
-      <MemoryRouter>
-        <AdminHomePage />
-      </MemoryRouter>
-    );
-
-    expect(
-      screen.getByRole("heading", { level: 1, name: "Panel administrativo" })
-    ).toBeInTheDocument();
-
-    expect(
-      screen.getByText(
-        /\[Panel administrativo\] se implementará en un próximo sprint\.\.\./i
-      )
-    ).toBeInTheDocument();
-
-    expect(
-      screen.getByRole("link", { name: /gestionar personajes/i })
-    ).toHaveAttribute("href", "/app/admin/characters");
-
-    expect(
-      screen.getByRole("link", { name: /ir a moderación/i })
-    ).toHaveAttribute("href", "/app/admin/moderacion");
-  });
+  // HomePage y AdminHomePage dejaron de ser placeholders (inicio del jugador
+  // y del panel admin). Sus tests viven en HomePage.test.jsx y
+  // admin/AdminHomePage.test.jsx.
 
   it("Sidebar y AdminSidebar utilizan el mismo logo de Ganker (/images/logo_svg.svg)", async () => {
     const { default: Sidebar } = await import("../components/layout/Sidebar");

@@ -149,7 +149,7 @@ export function AuthProvider({ children }) {
 
   // Guarda una sesion recien creada y trae al usuario. Recibe
   // { access_token, refresh_token, token_type }, que es lo que devuelven tanto
-  // el login como el registro.
+  // el login como el registro federado.
   //
   // No recibe datos del usuario a proposito: es lo que impide que una pantalla
   // vuelva a armar `user` por su cuenta.
