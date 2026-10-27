@@ -314,7 +314,7 @@ const ModalBanearJugadorComponent = ({ jugador, onClose, onBaneado }) => {
             disabled={baneando}
             className={CLASES_BOTON_PRINCIPAL}
           >
-            Revisar sanción
+            Enviar sanción
           </button>
         </div>
       </form>

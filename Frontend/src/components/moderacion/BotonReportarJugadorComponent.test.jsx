@@ -50,7 +50,7 @@ describe("BotonReportarJugadorComponent - US 35", () => {
 
     await abrirModal(usuario);
     await usuario.click(
-      screen.getByRole("button", { name: /revisar reporte/i })
+      screen.getByRole("button", { name: /enviar reporte/i })
     );
 
     expect(
@@ -83,7 +83,7 @@ describe("BotonReportarJugadorComponent - US 35", () => {
       "Insultó a todos."
     );
     await usuario.click(
-      screen.getByRole("button", { name: /revisar reporte/i })
+      screen.getByRole("button", { name: /enviar reporte/i })
     );
 
     expect(
@@ -115,7 +115,7 @@ describe("BotonReportarJugadorComponent - US 35", () => {
       "cheating"
     );
     await usuario.click(
-      screen.getByRole("button", { name: /revisar reporte/i })
+      screen.getByRole("button", { name: /enviar reporte/i })
     );
     await usuario.click(
       screen.getByRole("button", { name: /confirmar y enviar/i })
@@ -151,7 +151,7 @@ describe("BotonReportarJugadorComponent - US 35", () => {
       "spamming"
     );
     await usuario.click(
-      screen.getByRole("button", { name: /revisar reporte/i })
+      screen.getByRole("button", { name: /enviar reporte/i })
     );
     await usuario.click(
       screen.getByRole("button", { name: /confirmar y enviar/i })
