@@ -354,7 +354,7 @@ describe("JugadorPerfilPage - US 36 Banear jugador", () => {
       screen.getByLabelText(/Motivo o justificación/),
       "Insultos reiterados"
     );
-    await user.click(screen.getByRole("button", { name: "Revisar sanción" }));
+    await user.click(screen.getByRole("button", { name: "Enviar sanción" }));
     await user.click(screen.getByRole("button", { name: "Confirmar baneo" }));
     await user.click(await screen.findByRole("button", { name: "Cerrar" }));
 
