@@ -27,13 +27,74 @@ export const MOTIVOS_REPORTE = [
 
 export const LARGO_MAXIMO_DESCRIPCION_REPORTE = 500;
 
+// Evidencia opcional: una imagen y/o un link de YouTube. El backend vuelve a
+// validar ambos (tipo real del archivo, 5 MB y formato del link).
+export const TIPOS_IMAGEN_EVIDENCIA = ["image/png", "image/jpeg", "image/webp"];
+export const TAMANO_MAXIMO_EVIDENCIA_MB = 5;
+
+const ID_VIDEO_YOUTUBE = /^[A-Za-z0-9_-]{11}$/;
+const HOSTS_YOUTUBE = [
+  "youtube.com",
+  "www.youtube.com",
+  "m.youtube.com",
+  "music.youtube.com",
+];
+const HOSTS_YOUTUBE_CORTO = ["youtu.be", "www.youtu.be"];
+const PREFIJOS_RUTA_YOUTUBE = ["/shorts/", "/embed/", "/live/", "/v/"];
+
+// Devuelve el id del video si el link es de YouTube (watch, youtu.be, shorts,
+// embed o live), o null si no lo es. Misma regla que YoutubeUrlService.
+export function idDeVideoYoutube(link) {
+  let url;
+  try {
+    url = new URL((link ?? "").trim());
+  } catch {
+    return null;
+  }
+  if (!["http:", "https:"].includes(url.protocol)) return null;
+
+  const host = url.hostname.toLowerCase();
+  let id = null;
+
+  if (HOSTS_YOUTUBE_CORTO.includes(host)) {
+    id = url.pathname.replace(/^\/+/, "").split("/")[0];
+  } else if (HOSTS_YOUTUBE.includes(host)) {
+    if (url.pathname === "/watch") {
+      id = url.searchParams.get("v");
+    } else {
+      const prefijo = PREFIJOS_RUTA_YOUTUBE.find((p) =>
+        url.pathname.startsWith(p)
+      );
+      if (prefijo) id = url.pathname.slice(prefijo.length).split("/")[0];
+    }
+  }
+
+  return id && ID_VIDEO_YOUTUBE.test(id) ? id : null;
+}
+
+export function validarImagenEvidencia(imagen) {
+  if (!imagen) return undefined;
+  if (!TIPOS_IMAGEN_EVIDENCIA.includes(imagen.type)) {
+    return "La imagen debe ser PNG, JPG o WEBP.";
+  }
+  if (imagen.size > TAMANO_MAXIMO_EVIDENCIA_MB * 1024 * 1024) {
+    return `La imagen no puede superar los ${TAMANO_MAXIMO_EVIDENCIA_MB} MB.`;
+  }
+  return undefined;
+}
+
 export function nombreDeMotivoReporte(motivo) {
   return (
     MOTIVOS_REPORTE.find((opcion) => opcion.value === motivo)?.label ?? motivo
   );
 }
 
-export function validarFormularioReporte({ motivo, descripcion }) {
+export function validarFormularioReporte({
+  motivo,
+  descripcion,
+  imagen,
+  linkVideo,
+}) {
   const errores = {};
 
   if (!motivo) {
@@ -44,6 +105,13 @@ export function validarFormularioReporte({ motivo, descripcion }) {
 
   if ((descripcion ?? "").trim().length > LARGO_MAXIMO_DESCRIPCION_REPORTE) {
     errores.descripcion = `La descripción no puede superar los ${LARGO_MAXIMO_DESCRIPCION_REPORTE} caracteres.`;
+  }
+
+  const errorImagen = validarImagenEvidencia(imagen);
+  if (errorImagen) errores.imagen = errorImagen;
+
+  if ((linkVideo ?? "").trim() && !idDeVideoYoutube(linkVideo)) {
+    errores.linkVideo = "Pegá un link válido de un video de YouTube.";
   }
 
   return errores;
@@ -91,7 +159,7 @@ export function mensajeDeErrorReporte(error) {
     );
   }
   if (status === 422) {
-    return "Revisá los datos del reporte: el motivo es obligatorio y la descripción no puede superar los 500 caracteres.";
+    return "Revisá los datos del reporte: el motivo es obligatorio, la descripción no puede superar los 500 caracteres y el link de video no puede superar los 500.";
   }
   if (typeof data?.error === "string") return data.error;
   if (typeof data?.detail === "string") return data.detail;

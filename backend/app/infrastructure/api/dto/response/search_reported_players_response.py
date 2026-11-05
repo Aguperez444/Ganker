@@ -15,6 +15,8 @@ class SearchReportedPlayersResponse(BaseModel):
     created_at: datetime
     resolved_at: datetime | None
     resolved_by: str | None
+    evidence_image_url: str | None = None
+    evidence_video_url: str | None = None
 
     @field_validator("description", mode="before")
     @classmethod

@@ -7,6 +7,8 @@ import useReportarJugador, {
 import {
   LARGO_MAXIMO_DESCRIPCION_REPORTE,
   MOTIVOS_REPORTE,
+  TAMANO_MAXIMO_EVIDENCIA_MB,
+  TIPOS_IMAGEN_EVIDENCIA,
   nombreDeMotivoReporte,
 } from "../../utils/reportesJugadores";
 
@@ -36,7 +38,8 @@ function ResumenDato({ etiqueta, children }) {
 // US 35 - Reporte de un jugador.
 //
 // Es un flujo de tres pasos dentro del mismo modal:
-//   1. formulario: motivo (obligatorio) y descripcion (opcional).
+//   1. formulario: motivo (obligatorio), descripcion y evidencia (imagen y/o
+//      link de YouTube, opcionales).
 //   2. confirmacion: resumen de lo que se va a enviar.
 //   3. exito: mensaje de confirmacion para el jugador.
 //
@@ -52,14 +55,20 @@ const ModalReportarJugadorComponent = ({ jugador, currentUserId, onClose }) => {
     paso,
     reporte,
     esPropio,
+    imagen,
+    vistaPreviaImagen,
+    linkVideo,
     seleccionarMotivo,
     cambiarDescripcion,
+    seleccionarImagen,
+    cambiarLinkVideo,
     continuar,
     volverAlFormulario,
     confirmarEnvio,
   } = useReportarJugador({ jugador, currentUserId });
 
   const nombreJugador = jugador?.username || jugador?.name || "este jugador";
+  const hayEvidencia = Boolean(imagen || linkVideo.trim());
 
   useEffect(() => {
     function handleKeyDown(evento) {
@@ -164,6 +173,26 @@ const ModalReportarJugadorComponent = ({ jugador, currentUserId, onClose }) => {
           <ResumenDato etiqueta="Descripción">
             {descripcion.trim() || "Sin descripción adicional"}
           </ResumenDato>
+          <ResumenDato etiqueta="Evidencia">
+            {hayEvidencia ? (
+              <div className="space-y-2">
+                {vistaPreviaImagen && (
+                  <img
+                    src={vistaPreviaImagen}
+                    alt="Imagen adjunta como evidencia"
+                    className="max-h-32 rounded-lg border border-white/10 object-contain"
+                  />
+                )}
+                {linkVideo.trim() && (
+                  <p className="break-all text-ganker-purple-light">
+                    {linkVideo.trim()}
+                  </p>
+                )}
+              </div>
+            ) : (
+              "Sin evidencia adjunta"
+            )}
+          </ResumenDato>
         </dl>
 
         {errorEnvio && (
@@ -250,6 +279,66 @@ const ModalReportarJugadorComponent = ({ jugador, currentUserId, onClose }) => {
         <p className="-mt-2 text-right text-xs text-ganker-muted">
           {descripcion.length}/{LARGO_MAXIMO_DESCRIPCION_REPORTE}
         </p>
+
+        <Campo
+          id="reporte-imagen"
+          label="Imagen de evidencia"
+          error={errores.imagen}
+          ayuda={`Opcional. PNG, JPG o WEBP de hasta ${TAMANO_MAXIMO_EVIDENCIA_MB} MB.`}
+        >
+          {vistaPreviaImagen ? (
+            <div className="flex items-center gap-3 rounded-lg border border-white/10 bg-ganker-surface-light p-3">
+              <img
+                src={vistaPreviaImagen}
+                alt="Vista previa de la evidencia"
+                className="h-16 w-16 shrink-0 rounded-md object-cover"
+              />
+              <p className="min-w-0 flex-1 truncate text-sm text-ganker-text">
+                {imagen?.name}
+              </p>
+              <button
+                type="button"
+                onClick={() => seleccionarImagen(null)}
+                disabled={enviando}
+                className={CLASES_BOTON_SECUNDARIO}
+              >
+                Quitar
+              </button>
+            </div>
+          ) : (
+            <input
+              id="reporte-imagen"
+              type="file"
+              accept={TIPOS_IMAGEN_EVIDENCIA.join(",")}
+              onChange={(evento) => {
+                seleccionarImagen(evento.target.files?.[0] ?? null);
+                // Permite volver a elegir el mismo archivo si fue rechazado.
+                evento.target.value = "";
+              }}
+              disabled={enviando}
+              className={`${clasesControl(errores.imagen)} cursor-pointer text-sm file:mr-3 file:cursor-pointer file:rounded-md file:border-0 file:bg-ganker-purple/30 file:px-3 file:py-1.5 file:text-sm file:font-semibold file:text-ganker-text`}
+            />
+          )}
+        </Campo>
+
+        <Campo
+          id="reporte-video"
+          label="Link de YouTube"
+          error={errores.linkVideo}
+          ayuda="Opcional. Un clip de la partida o del chat que muestre lo ocurrido."
+        >
+          <input
+            id="reporte-video"
+            type="url"
+            inputMode="url"
+            value={linkVideo}
+            onChange={(evento) => cambiarLinkVideo(evento.target.value)}
+            maxLength={500}
+            disabled={enviando}
+            placeholder="https://www.youtube.com/watch?v=..."
+            className={clasesControl(errores.linkVideo)}
+          />
+        </Campo>
 
         {errorEnvio && (
           <div className="rounded-lg border border-ganker-error/20 bg-ganker-error/10 px-4 py-3">

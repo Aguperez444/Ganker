@@ -1,9 +1,10 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { reportarJugador } from "../api/moderacionApi";
 import { logError } from "../utils/logs";
 import {
   mensajeDeErrorReporte,
   validarFormularioReporte,
+  validarImagenEvidencia,
 } from "../utils/reportesJugadores";
 
 export const PASO_FORMULARIO = "formulario";
@@ -18,6 +19,20 @@ export default function useReportarJugador({ jugador, currentUserId }) {
   const [enviando, setEnviando] = useState(false);
   const [paso, setPaso] = useState(PASO_FORMULARIO);
   const [reporte, setReporte] = useState(null);
+  // Evidencia opcional: imagen (File) y/o link de YouTube.
+  const [imagen, setImagen] = useState(null);
+  const [vistaPreviaImagen, setVistaPreviaImagen] = useState(null);
+  const [linkVideo, setLinkVideo] = useState("");
+
+  const vistaPreviaRef = useRef(null);
+
+  // Libera la URL de vista previa al cerrar el modal.
+  useEffect(
+    () => () => {
+      if (vistaPreviaRef.current) URL.revokeObjectURL(vistaPreviaRef.current);
+    },
+    []
+  );
 
   const esPropio = Boolean(
     jugador?.user_id && currentUserId && jugador.user_id === currentUserId
@@ -35,6 +50,26 @@ export default function useReportarJugador({ jugador, currentUserId }) {
     setErrores((actuales) => ({ ...actuales, descripcion: undefined }));
   }
 
+  // Valida la imagen al elegirla para avisar enseguida si no sirve.
+  function seleccionarImagen(archivo) {
+    setErrorEnvio("");
+    const error = validarImagenEvidencia(archivo);
+    setErrores((actuales) => ({ ...actuales, imagen: error }));
+
+    if (vistaPreviaRef.current) URL.revokeObjectURL(vistaPreviaRef.current);
+    const valida = error ? null : (archivo ?? null);
+    vistaPreviaRef.current = valida ? URL.createObjectURL(valida) : null;
+
+    setImagen(valida);
+    setVistaPreviaImagen(vistaPreviaRef.current);
+  }
+
+  function cambiarLinkVideo(valor) {
+    setLinkVideo(valor);
+    setErrorEnvio("");
+    setErrores((actuales) => ({ ...actuales, linkVideo: undefined }));
+  }
+
   // Valida y pasa al resumen. Devuelve false si no se puede continuar.
   function continuar() {
     setErrorEnvio("");
@@ -47,6 +82,8 @@ export default function useReportarJugador({ jugador, currentUserId }) {
     const erroresValidacion = validarFormularioReporte({
       motivo,
       descripcion,
+      imagen,
+      linkVideo,
     });
     setErrores(erroresValidacion);
 
@@ -79,6 +116,8 @@ export default function useReportarJugador({ jugador, currentUserId }) {
         reportedId: jugador.user_id,
         motivo,
         descripcion,
+        imagen,
+        linkVideo,
       });
 
       setReporte(creado);
@@ -103,8 +142,13 @@ export default function useReportarJugador({ jugador, currentUserId }) {
     paso,
     reporte,
     esPropio,
+    imagen,
+    vistaPreviaImagen,
+    linkVideo,
     seleccionarMotivo,
     cambiarDescripcion,
+    seleccionarImagen,
+    cambiarLinkVideo,
     continuar,
     volverAlFormulario,
     confirmarEnvio,
