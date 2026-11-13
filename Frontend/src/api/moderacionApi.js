@@ -1,18 +1,34 @@
 import axiosClient from "./axiosClient";
 
 // US 35 - Reportar a otro jugador.
-//   POST /api/v1/moderation/ -> { reported_id, reason, description }
+//   POST /api/v1/moderation/ (multipart/form-data) ->
+//     reported_id, reason, description, evidence_video_url?, evidence_image?
 //
 // `reason` es uno de los valores de ReportReason en el backend:
 // cheating | abusive_behavior | spamming | inappropriate_content | other.
-// La descripcion es opcional para el jugador, pero el backend la declara
-// obligatoria en el request: se manda siempre, vacia si no escribio nada.
-export function reportarJugador({ reportedId, motivo, descripcion }) {
+// La descripcion es opcional: se manda siempre, vacia si no escribio nada.
+// La evidencia (imagen y/o link de YouTube) es opcional y solo se adjunta si
+// el jugador la cargo. La respuesta incluye evidence_image_url y
+// evidence_video_url (este ultimo normalizado a youtube.com/watch?v=ID).
+export function reportarJugador({
+  reportedId,
+  motivo,
+  descripcion,
+  imagen,
+  linkVideo,
+}) {
+  const formData = new FormData();
+  formData.append("reported_id", String(Number(reportedId)));
+  formData.append("reason", motivo);
+  formData.append("description", (descripcion ?? "").trim());
+
+  const link = (linkVideo ?? "").trim();
+  if (link) formData.append("evidence_video_url", link);
+  if (imagen) formData.append("evidence_image", imagen, imagen.name);
+
   return axiosClient
-    .post("/api/v1/moderation/", {
-      reported_id: Number(reportedId),
-      reason: motivo,
-      description: (descripcion ?? "").trim(),
+    .post("/api/v1/moderation/", formData, {
+      headers: { "Content-Type": "multipart/form-data" },
     })
     .then((res) => res.data);
 }

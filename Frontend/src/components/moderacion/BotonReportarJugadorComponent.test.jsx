@@ -129,7 +129,74 @@ describe("BotonReportarJugadorComponent - US 35", () => {
       reportedId: 7,
       motivo: "cheating",
       descripcion: "",
+      imagen: null,
+      linkVideo: "",
     });
+  });
+
+  it("adjunta imagen y link de YouTube como evidencia", async () => {
+    const usuario = userEvent.setup();
+    renderBoton();
+    const imagen = new File(["png"], "captura.png", { type: "image/png" });
+
+    await abrirModal(usuario);
+    await usuario.selectOptions(
+      screen.getByLabelText(/motivo del reporte/i),
+      "cheating"
+    );
+    await usuario.upload(screen.getByLabelText(/imagen de evidencia/i), imagen);
+    expect(screen.getByText("captura.png")).toBeInTheDocument();
+    await usuario.type(
+      screen.getByLabelText(/link de youtube/i),
+      "https://youtu.be/dQw4w9WgXcQ"
+    );
+    await usuario.click(
+      screen.getByRole("button", { name: /enviar reporte/i })
+    );
+
+    expect(
+      screen.getByRole("img", { name: /imagen adjunta como evidencia/i })
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText("https://youtu.be/dQw4w9WgXcQ")
+    ).toBeInTheDocument();
+
+    await usuario.click(
+      screen.getByRole("button", { name: /confirmar y enviar/i })
+    );
+
+    expect(reportarJugador).toHaveBeenCalledWith({
+      reportedId: 7,
+      motivo: "cheating",
+      descripcion: "",
+      imagen,
+      linkVideo: "https://youtu.be/dQw4w9WgXcQ",
+    });
+  });
+
+  it("no deja avanzar con un link que no es de YouTube", async () => {
+    const usuario = userEvent.setup();
+    renderBoton();
+
+    await abrirModal(usuario);
+    await usuario.selectOptions(
+      screen.getByLabelText(/motivo del reporte/i),
+      "other"
+    );
+    await usuario.type(
+      screen.getByLabelText(/link de youtube/i),
+      "https://vimeo.com/1"
+    );
+    await usuario.click(
+      screen.getByRole("button", { name: /enviar reporte/i })
+    );
+
+    expect(
+      screen.getByText(/link válido de un video de youtube/i)
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: /confirmar y enviar/i })
+    ).not.toBeInTheDocument();
   });
 
   it("si el backend rechaza un reporte repetido (429), muestra el aviso", async () => {

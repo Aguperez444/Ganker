@@ -12,7 +12,8 @@ if TYPE_CHECKING:
 
 class PlayerReport:
     def __init__(self, report_id: int|None, reporter: 'User', reported: 'User', status: 'ReportStatus', reason: 'ReportReason',
-                 description: str | None, created_at: datetime, resolved_at: datetime | None, resolver_user: User | None):
+                 description: str | None, created_at: datetime, resolved_at: datetime | None, resolver_user: User | None,
+                 evidence_image_url: str | None = None, evidence_video_url: str | None = None):
         self._report_id: int|None = report_id
         self._reporter: 'User' = reporter
         self._reported: 'User' = reported
@@ -22,6 +23,8 @@ class PlayerReport:
         self._created_at: datetime = created_at
         self._resolved_at: datetime | None = resolved_at
         self._resolver_user: User | None = resolver_user
+        self._evidence_image_url: str | None = evidence_image_url
+        self._evidence_video_url: str | None = evidence_video_url
 
     @property
     def report_id(self) -> int:
@@ -87,6 +90,20 @@ class PlayerReport:
     @resolver_user.setter
     def resolver_user(self, value: User):
         self._resolver_user = value
+
+    @property
+    def evidence_image_url(self) -> str | None:
+        return self._evidence_image_url
+    @evidence_image_url.setter
+    def evidence_image_url(self, value: str | None):
+        self._evidence_image_url = value
+
+    @property
+    def evidence_video_url(self) -> str | None:
+        return self._evidence_video_url
+    @evidence_video_url.setter
+    def evidence_video_url(self, value: str | None):
+        self._evidence_video_url = value
 
     def is_persisted(self) -> bool:
         return self._report_id is not None

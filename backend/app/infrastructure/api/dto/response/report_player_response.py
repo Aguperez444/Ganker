@@ -11,6 +11,8 @@ class ReportPlayerResponse(BaseModel):
     reason: str = Field(..., description="Razón del reporte")
     description: str|None = Field(..., description="Descripción del reporte")
     created_at: datetime = Field(..., description="Fecha de creación del reporte")
+    evidence_image_url: str | None = Field(None, description="URL de la imagen adjunta como evidencia")
+    evidence_video_url: str | None = Field(None, description="Link de YouTube adjunto como evidencia")
 
 
     @field_validator("description", mode="before")

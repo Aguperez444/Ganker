@@ -35,9 +35,9 @@ def test_report_cooldown_survives_new_requests_and_expires_at_boundary(
     target = _player(test_db_session, "target")
     payload = {"reported_id": target.user_id, "reason": "spamming", "description": "Spam reiterado"}
     with freeze_time("2026-10-22 12:00:00") as clock:
-        first = client.post(REPORT_URL, json=payload, headers=_headers(jwt_service, seed_player))
+        first = client.post(REPORT_URL, data=payload, headers=_headers(jwt_service, seed_player))
         assert first.status_code == 201
-        blocked = client.post(REPORT_URL, json=payload, headers=_headers(jwt_service, seed_player))
+        blocked = client.post(REPORT_URL, data=payload, headers=_headers(jwt_service, seed_player))
         assert blocked.status_code == 429
         assert blocked.headers["Retry-After"] == "86400"
         assert blocked.json()["retry_after"] == 86400
@@ -52,14 +52,14 @@ def test_report_cooldown_survives_new_requests_and_expires_at_boundary(
         test_db_session.commit()
         clock.tick(timedelta(days=1) - timedelta(milliseconds=500))
         payload.update(reason="cheating", description="Otro motivo")
-        almost = client.post(REPORT_URL, json=payload, headers=_headers(jwt_service, seed_player))
+        almost = client.post(REPORT_URL, data=payload, headers=_headers(jwt_service, seed_player))
         assert almost.status_code == 429
         assert almost.headers["Retry-After"] == "1"
         assert test_db_session.query(PlayerReportORM).count() == 1
 
         # Los intentos rechazados no extienden la espera.
         clock.tick(timedelta(milliseconds=500))
-        allowed = client.post(REPORT_URL, json=payload, headers=_headers(jwt_service, seed_player))
+        allowed = client.post(REPORT_URL, data=payload, headers=_headers(jwt_service, seed_player))
         assert allowed.status_code == 201
         assert test_db_session.query(PlayerReportORM).count() == 2
 
@@ -70,7 +70,7 @@ def test_report_cooldown_is_scoped_to_reporter_and_target(
     target = _player(test_db_session, "target")
     other = _player(test_db_session, "other")
     for reporter, reported in [(seed_player, target), (other, target), (seed_player, other)]:
-        response = client.post(REPORT_URL, json={
+        response = client.post(REPORT_URL, data={
             "reported_id": reported.user_id, "reason": "spamming", "description": "Spam reiterado",
         }, headers=_headers(jwt_service, reporter))
         assert response.status_code == 201
@@ -84,11 +84,11 @@ def test_report_cooldown_uses_configured_interval(
     target = _player(test_db_session, "target")
     payload = {"reported_id": target.user_id, "reason": "spamming", "description": "Spam reiterado"}
     with freeze_time("2026-10-22 12:00:00") as clock:
-        first = client.post(REPORT_URL, json=payload, headers=_headers(jwt_service, seed_player))
+        first = client.post(REPORT_URL, data=payload, headers=_headers(jwt_service, seed_player))
         assert first.status_code == 201
-        blocked = client.post(REPORT_URL, json=payload, headers=_headers(jwt_service, seed_player))
+        blocked = client.post(REPORT_URL, data=payload, headers=_headers(jwt_service, seed_player))
         assert blocked.status_code == 429
         assert blocked.headers["Retry-After"] == "300"
         clock.tick(timedelta(minutes=5))
-        allowed = client.post(REPORT_URL, json=payload, headers=_headers(jwt_service, seed_player))
+        allowed = client.post(REPORT_URL, data=payload, headers=_headers(jwt_service, seed_player))
         assert allowed.status_code == 201
