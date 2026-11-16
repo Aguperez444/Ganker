@@ -35,5 +35,30 @@ class IModerationRepository(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    def manual_unban_user(self, user_id: int) -> None:
+    def manual_unban_user(self, user_id: int, admin_id: int | None = None, source: str = "manual") -> None:
+        raise NotImplementedError
+
+    @abstractmethod
+    def get_ban_record(self, ban_id: int) -> tuple['UserBanRecord', bool] | None:
+        raise NotImplementedError
+
+    @abstractmethod
+    def get_player_ban_history(self, user_id: int, before_ban_id: int | None, skip: int, limit: int) -> list[tuple['UserBanRecord', bool]]:
+        raise NotImplementedError
+
+    @abstractmethod
+    def get_report_for_resolution(self, report_id: int) -> 'PlayerReport | None':
+        raise NotImplementedError
+
+    @abstractmethod
+    def dismiss_report(self, report: 'PlayerReport') -> None:
+        raise NotImplementedError
+
+    @abstractmethod
+    def get_player_report(self, report_id: int) -> 'PlayerReport | None':
+        raise NotImplementedError
+
+    @abstractmethod
+    def get_cross_reports(self, reporter_id: int, reported_id: int,
+                          start: datetime, end: datetime, skip: int, limit: int) -> list['PlayerReport']:
         raise NotImplementedError

@@ -163,6 +163,7 @@ class TestPlayerReportingIntegration:
         assert response.status_code == 400
         assert "No se puede reportar a uno mismo" in response.json().get("error", "")
 
+    @pytest.mark.parametrize("multipart", [False, True])
     @pytest.mark.parametrize(
         "reason_value",
         [
@@ -174,7 +175,7 @@ class TestPlayerReportingIntegration:
         ],
     )
     def test_report_player_accepts_all_valid_enum_reasons(
-        self, client, test_db_session, password_hasher, player_auth_headers, reason_value
+        self, client, test_db_session, password_hasher, player_auth_headers, reason_value, multipart
     ):
         target = _create_user(
             test_db_session,
@@ -187,9 +188,40 @@ class TestPlayerReportingIntegration:
             "reason": reason_value,
             "description": f"Reporte por {reason_value}",
         }
-        response = client.post("/api/v1/moderation/", data=payload, headers=player_auth_headers)
+        # FormData del navegador usa multipart incluso sin adjuntar una imagen.
+        body = (
+            {"files": {key: (None, str(value)) for key, value in payload.items()}}
+            if multipart else {"data": payload}
+        )
+        response = client.post("/api/v1/moderation/", headers=player_auth_headers, **body)
         assert response.status_code == 201
         assert response.json()["reason"] == reason_value
+
+    @pytest.mark.parametrize("field,value", [
+        ("reported_id", None),
+        ("reported_id", "no-es-un-id"),
+        ("reason", None),
+        ("reason", "motivo_invalido"),
+        ("description", "x" * 501),
+        ("evidence_video_url", "x" * 501),
+    ])
+    def test_report_player_validates_multipart_fields(
+        self, client, seed_admin, player_auth_headers, test_db_session, field, value,
+    ):
+        payload = {"reported_id": str(seed_admin.user_id), "reason": "other"}
+        if value is None:
+            payload.pop(field)
+        else:
+            payload[field] = value
+        response = client.post(
+            "/api/v1/moderation/",
+            files={key: (None, val) for key, val in payload.items()},
+            headers=player_auth_headers,
+        )
+
+        assert response.status_code == 422
+        assert any(error["loc"] == ["body", field] for error in response.json()["detail"])
+        assert test_db_session.query(PlayerReportORM).count() == 0
 
     def test_report_player_rejects_invalid_enum_reason(
         self, client, test_db_session, password_hasher, player_auth_headers

@@ -208,7 +208,7 @@ class TestBanAndUnbanUseCasesUnit:
         use_case = UnbanPlayer(uow)
         use_case.execute(player_id=2, admin_id=1)
 
-        uow.moderation_repo.manual_unban_user.assert_called_once_with(2)
+        uow.moderation_repo.manual_unban_user.assert_called_once_with(2, admin_id=1)
 
     def test_unban_player_self_unban_raises_403(self):
         uow = _make_mock_uow()

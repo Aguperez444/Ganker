@@ -1,4 +1,5 @@
 from app.infrastructure.database.mappers.user_mapper import UserMapper
+from app.infrastructure.database.mappers.videogame_mapper import VideogameMapper
 from app.infrastructure.database.models.player_report_orm import PlayerReportORM
 from app.domain.models.player_report import PlayerReport
 from app.domain.models.report_reason import ReportReason
@@ -19,7 +20,8 @@ class PlayerReportMapper:
             resolved_at=player_report_orm.resolved_at,
             resolver_user=UserMapper.orm_to_domain(player_report_orm.resolver_user) if player_report_orm.resolver_user else None,
             evidence_image_url=player_report_orm.evidence_image_url,
-            evidence_video_url=player_report_orm.evidence_video_url
+            evidence_video_url=player_report_orm.evidence_video_url,
+            videogame=VideogameMapper.orm_to_domain(player_report_orm.videogame) if player_report_orm.videogame else None,
         )
 
     @staticmethod
@@ -35,7 +37,8 @@ class PlayerReportMapper:
                 resolved_at=player_report.resolved_at,
                 resolver_id=player_report.resolver_user.user_id if player_report.resolver_user else None,
                 evidence_image_url=player_report.evidence_image_url,
-                evidence_video_url=player_report.evidence_video_url
+                evidence_video_url=player_report.evidence_video_url,
+                videogame_id=player_report.videogame.videogame_id if player_report.videogame else None,
             )
         return PlayerReportORM(
             id=player_report.report_id,
@@ -48,5 +51,6 @@ class PlayerReportMapper:
             resolved_at=player_report.resolved_at,
             resolver_id=player_report.resolver_user.user_id if player_report.resolver_user else None,
             evidence_image_url=player_report.evidence_image_url,
-            evidence_video_url=player_report.evidence_video_url
+            evidence_video_url=player_report.evidence_video_url,
+            videogame_id=player_report.videogame.videogame_id if player_report.videogame else None,
         )

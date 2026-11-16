@@ -72,11 +72,14 @@ def test_ban_resolution_and_manual_unban_preserve_instants(postgres_sessions, se
         assert ban.expires_at - ban.created_at == timedelta(days=1)
         assert before <= report.resolved_at <= after
         before_unban = datetime.now(timezone.utc)
-        ModerationRepositoryImpl(session).manual_unban_user(seed_player.user_id)
+        ModerationRepositoryImpl(session).manual_unban_user(seed_player.user_id, admin_id=seed_admin.user_id)
         session.commit()
     with postgres_sessions() as session:
         ban = session.query(UserBanRecordORM).one()
-        assert before_unban <= ban.expires_at <= datetime.now(timezone.utc)
+        assert before_unban <= ban.ended_at <= datetime.now(timezone.utc)
+        assert ban.expires_at - ban.created_at == timedelta(days=1)
+        assert ban.ended_by_user_id == seed_admin.user_id
+        assert ban.end_reason == "manual"
         assert session.get(UserORM, seed_player.user_id).banned is False
 
 

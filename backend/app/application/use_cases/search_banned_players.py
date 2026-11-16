@@ -52,12 +52,12 @@ class SearchBannedPlayers:
             return [
                 SearchBannedPlayersResponse(
                     id=user_ban_record.user_ban_record_id,
-                    banned_by_user_id=user_ban_record.banned_by_user.user_id,
-                    banned_by_user_username=user_ban_record.banned_by_user.username,
+                    banned_by_user_id=user_ban_record.banned_by_user.user_id if user_ban_record.banned_by_user else None,
+                    banned_by_user_username=user_ban_record.banned_by_user.username if user_ban_record.banned_by_user else None,
                     banned_user_id=user_ban_record.banned_user.user_id,
                     banned_user_username=user_ban_record.banned_user.username,
                     date_created=user_ban_record.created_at,
-                    date_expire=user_ban_record.expires_at,
+                    date_expire=user_ban_record.ended_at or user_ban_record.expires_at,
                     reason=user_ban_record.reason
                 ) for user_ban_record in user_ban_records
             ]

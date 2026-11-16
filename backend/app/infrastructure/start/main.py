@@ -36,6 +36,8 @@ from app.infrastructure.api.controllers.team_controller import router as team_ro
 from app.infrastructure.api.controllers.region_controller import router as region_router
 from app.infrastructure.api.controllers.report_controller import router as report_router
 from app.infrastructure.api.controllers.moderation_controller import router as moderation_controller
+from app.infrastructure.api.controllers.ban_appeal_controller import router as ban_appeal_router
+from app.infrastructure.api.auth.jwt_ban_appeal_token_service import JwtBanAppealTokenService
 
 
 from app.infrastructure.api.controllers.chat_websocket import router as chat_websocket
@@ -132,11 +134,21 @@ async def domain_exception_handler(
         headers["Retry-After"] = str(exc.retry_after)
 
     content = {"error": exc.message}
+    # Esto se encarga de generar un token de apelación del baneo si la excepción es BanNotFinishedException
+    # así permitimos que el usuario inicie sesión pero sin darle un token con permisos para nada de la app, sino
+    # solo para poder realizar la apelación del baneo.
+    # El token se genera con el user_id y el ban_id, y se devuelve en la respuesta
     if isinstance(exc, BanNotFinishedException):
+        headers["Cache-Control"] = "no-store"
         content.update(
             reason=exc.reason,
             expires_at=exc.expires_at.isoformat() if exc.expires_at is not None else None,
         )
+        if exc.user_id is not None and exc.ban_id is not None:
+            content.update(
+                code="ACCOUNT_BANNED", ban_id=exc.ban_id,
+                appeal_token=JwtBanAppealTokenService(settings.jwt_secret_key).generate_token(exc.user_id, exc.ban_id),
+            )
     if isinstance(exc, ReportCooldownException):
         content.update(retry_after=exc.retry_after, retry_at=exc.retry_at.isoformat())
 
@@ -163,6 +175,7 @@ app.include_router(region_router)
 app.include_router(report_router)
 
 app.include_router(moderation_controller)
+app.include_router(ban_appeal_router)
 
 host = "127.0.0.1"
 port = 8000

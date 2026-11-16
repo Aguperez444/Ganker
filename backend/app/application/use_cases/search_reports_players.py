@@ -5,7 +5,9 @@ from app.domain.specifications.base import Specification
 from app.domain.specifications.reports_players.create_at_specification import ByCreateAtSpecification
 from app.domain.specifications.reports_players.reason_specification import ByReasonsSpecification
 from app.domain.specifications.reports_players.reported_by_specification import ByReportedBySpecification
-from app.domain.specifications.reports_players.reported_user_specification import ByReportedUserSpecification
+from app.domain.specifications.reports_players.reported_user_specification import (
+    ByReportedUserSpecification, ByReportedUserIdSpecification,
+)
 from app.domain.specifications.reports_players.resolved_at_specification import ByResolvedAtSpecification
 from app.domain.specifications.reports_players.resolved_by_specification import ByResolvedBySpecification
 from app.domain.specifications.reports_players.status_specification import ByStatusSpecification
@@ -21,9 +23,12 @@ class SearchReportsPlayers:
                 status: str | None = None, reason: str | None = None, resolved_by: str | None = None,
                 min_create_date: datetime | None = None, max_create_date: datetime | None = None,
                 min_resolve_date: datetime | None = None, max_resolve_date: datetime | None = None,
-                skip: int = 0, limit: int = 10):
+                skip: int = 0, limit: int = 10, reported_user_id: int | None = None):
         with self.uow as uow:
             specs: list[Specification] = []
+
+            if reported_user_id is not None:
+                specs.append(ByReportedUserIdSpecification(reported_user_id))
 
             if reported_by is not None:
                 reported_by = reported_by.strip()
@@ -72,5 +77,7 @@ class SearchReportsPlayers:
                     resolved_by=report_player.resolver_user.username if report_player.resolver_user is not None else None,
                     evidence_image_url=report_player.evidence_image_url,
                     evidence_video_url=report_player.evidence_video_url,
+                    videogame_id=report_player.videogame.videogame_id if report_player.videogame else None,
+                    videogame_name=report_player.videogame.name if report_player.videogame else None,
                 ) for report_player in reports_players
             ]

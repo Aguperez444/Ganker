@@ -1,4 +1,5 @@
-from typing import Optional
+from typing import Optional, Annotated
+from datetime import datetime
 from urllib.parse import quote
 
 from fastapi import APIRouter, Depends, Query, Response
@@ -15,6 +16,8 @@ from app.application.use_cases.query_game_usage_report import QueryGameUsageRepo
 from app.application.use_cases.query_game_usage_reports import QueryGameUsageReports
 from app.application.use_cases.query_last_game_profile_report import QueryLastGameProfileReport
 from app.application.use_cases.query_last_game_usage_report import QueryLastGameUsageReport
+from app.application.use_cases.query_moderation_statistics import QueryModerationStatistics
+from app.infrastructure.api.dto.response.moderation_statistics_response import ModerationStatisticsResponse
 from app.infrastructure.api.dependencies.auth import get_current_user_id, require_admin
 from app.infrastructure.api.dto.request.generate_game_profile_report_request import GenerateGameProfileReportRequest
 from app.infrastructure.api.dto.request.generate_game_usage_report_request import GenerateGameUsageReportRequest
@@ -28,6 +31,17 @@ from app.infrastructure.api.dto.response.get.get_last_game_usage_report_response
 from app.infrastructure.database.unit_of_work.uow_factory import uow_factory
 
 router = APIRouter(prefix="/api/v1/reports", tags=["Reports"])
+
+
+@router.get("/moderation-summary", response_model=ModerationStatisticsResponse, dependencies=[Depends(require_admin)])
+def get_moderation_summary(
+    start_date: datetime | None = None,
+    end_date: datetime | None = None,
+    ranking_limit: Annotated[int, Query(ge=1, le=100)] = 10,
+):
+    uow = uow_factory()
+    use_case = QueryModerationStatistics(uow)
+    return use_case.execute(start_date, end_date, ranking_limit)
 
 
 @router.post("/game-profiles", response_model=GenerateGameProfileReportResponse, status_code=201, dependencies=[Depends(require_admin)])
