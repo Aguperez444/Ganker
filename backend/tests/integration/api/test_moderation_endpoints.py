@@ -132,7 +132,7 @@ class TestPlayerReportingIntegration:
             "reason": "cheating",
             "description": "Uso de scripts evidentes durante la partida",
         }
-        response = client.post("/api/v1/moderation/", json=payload, headers=player_auth_headers)
+        response = client.post("/api/v1/moderation/", data=payload, headers=player_auth_headers)
 
         assert response.status_code == 201
         data = response.json()
@@ -158,7 +158,7 @@ class TestPlayerReportingIntegration:
             "reason": "spamming",
             "description": "Intentando reportarme a mí mismo",
         }
-        response = client.post("/api/v1/moderation/", json=payload, headers=player_auth_headers)
+        response = client.post("/api/v1/moderation/", data=payload, headers=player_auth_headers)
 
         assert response.status_code == 400
         assert "No se puede reportar a uno mismo" in response.json().get("error", "")
@@ -187,7 +187,7 @@ class TestPlayerReportingIntegration:
             "reason": reason_value,
             "description": f"Reporte por {reason_value}",
         }
-        response = client.post("/api/v1/moderation/", json=payload, headers=player_auth_headers)
+        response = client.post("/api/v1/moderation/", data=payload, headers=player_auth_headers)
         assert response.status_code == 201
         assert response.json()["reason"] == reason_value
 
@@ -202,8 +202,92 @@ class TestPlayerReportingIntegration:
             "reason": "motivo_inexistente_no_valido",
             "description": "Razón fuera del Enum",
         }
-        response = client.post("/api/v1/moderation/", json=payload, headers=player_auth_headers)
+        response = client.post("/api/v1/moderation/", data=payload, headers=player_auth_headers)
         assert response.status_code in (400, 422)
+
+    def test_report_player_with_image_and_youtube_evidence(
+        self, client, test_db_session, password_hasher, player_auth_headers
+    ):
+        from app.infrastructure.config.settings import settings
+
+        target = _create_user(
+            test_db_session, password_hasher, username="evidencia", mail="evidencia@example.com"
+        )
+        payload = {
+            "reported_id": target.user_id,
+            "reason": "cheating",
+            "description": "Ver clip",
+            "evidence_video_url": "https://youtu.be/dQw4w9WgXcQ?t=42",
+        }
+        png = b"\x89PNG\r\n\x1a\n" + b"\x00" * 32
+        response = client.post(
+            "/api/v1/moderation/",
+            data=payload,
+            files={"evidence_image": ("captura.png", png, "image/png")},
+            headers=player_auth_headers,
+        )
+
+        assert response.status_code == 201
+        data = response.json()
+        assert data["evidence_video_url"] == "https://www.youtube.com/watch?v=dQw4w9WgXcQ"
+        assert "/reports/evidence/" in data["evidence_image_url"]
+        saved = settings.media_dir / "reports" / "evidence" / data["evidence_image_url"].rsplit("/", 1)[-1]
+        assert saved.read_bytes() == png
+
+        report_in_db = test_db_session.query(PlayerReportORM).filter(PlayerReportORM.id == data["report_id"]).one()
+        assert report_in_db.evidence_image_url == data["evidence_image_url"]
+        assert report_in_db.evidence_video_url == data["evidence_video_url"]
+
+    def test_report_player_without_evidence_returns_null_fields(
+        self, client, test_db_session, password_hasher, player_auth_headers
+    ):
+        target = _create_user(
+            test_db_session, password_hasher, username="sinevidencia", mail="sinevidencia@example.com"
+        )
+        payload = {"reported_id": target.user_id, "reason": "spamming", "description": ""}
+        response = client.post("/api/v1/moderation/", data=payload, headers=player_auth_headers)
+
+        assert response.status_code == 201
+        assert response.json()["evidence_image_url"] is None
+        assert response.json()["evidence_video_url"] is None
+
+    @pytest.mark.parametrize("url", [
+        "https://vimeo.com/123456",
+        "https://www.youtube.com/watch?v=corto",
+        "javascript:alert(1)",
+        "https://evil.com/?youtube.com/watch?v=dQw4w9WgXcQ",
+    ])
+    def test_report_player_rejects_invalid_youtube_link(
+        self, client, test_db_session, password_hasher, player_auth_headers, url
+    ):
+        target = _create_user(
+            test_db_session, password_hasher, username="linkmalo", mail="linkmalo@example.com"
+        )
+        payload = {
+            "reported_id": target.user_id, "reason": "other", "description": "", "evidence_video_url": url,
+        }
+        response = client.post("/api/v1/moderation/", data=payload, headers=player_auth_headers)
+
+        assert response.status_code == 400
+        assert "YouTube" in response.json()["error"]
+        assert test_db_session.query(PlayerReportORM).count() == 0
+
+    def test_report_player_rejects_non_image_evidence(
+        self, client, test_db_session, password_hasher, player_auth_headers
+    ):
+        target = _create_user(
+            test_db_session, password_hasher, username="archivomalo", mail="archivomalo@example.com"
+        )
+        payload = {"reported_id": target.user_id, "reason": "other", "description": ""}
+        response = client.post(
+            "/api/v1/moderation/",
+            data=payload,
+            files={"evidence_image": ("captura.png", b"<html>no soy imagen</html>", "image/png")},
+            headers=player_auth_headers,
+        )
+
+        assert response.status_code == 400
+        assert test_db_session.query(PlayerReportORM).count() == 0
 
 
 class TestBanSystemAndSpecificationsIntegration:
@@ -219,7 +303,7 @@ class TestBanSystemAndSpecificationsIntegration:
         # Primero creamos un reporte pendiente contra el jugador
         report_res = client.post(
             "/api/v1/moderation/",
-            json={
+            data={
                 "reported_id": offender.user_id,
                 "reason": "abusive_behavior",
                 "description": "Insultos constantes",
@@ -421,7 +505,7 @@ class TestBanSystemAndSpecificationsIntegration:
 
         client.post(
             "/api/v1/moderation/",
-            json={
+            data={
                 "reported_id": target1.user_id,
                 "reason": "cheating",
                 "description": "Cheats en partida",
@@ -430,7 +514,7 @@ class TestBanSystemAndSpecificationsIntegration:
         )
         client.post(
             "/api/v1/moderation/",
-            json={
+            data={
                 "reported_id": target2.user_id,
                 "reason": "spamming",
                 "description": "Spam en el chat",

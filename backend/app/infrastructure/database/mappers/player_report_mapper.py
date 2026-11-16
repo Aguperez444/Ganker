@@ -17,7 +17,9 @@ class PlayerReportMapper:
             status=ReportStatus(player_report_orm.status.lower()),
             created_at=player_report_orm.created_at,
             resolved_at=player_report_orm.resolved_at,
-            resolver_user=UserMapper.orm_to_domain(player_report_orm.resolver_user) if player_report_orm.resolver_user else None
+            resolver_user=UserMapper.orm_to_domain(player_report_orm.resolver_user) if player_report_orm.resolver_user else None,
+            evidence_image_url=player_report_orm.evidence_image_url,
+            evidence_video_url=player_report_orm.evidence_video_url
         )
 
     @staticmethod
@@ -31,7 +33,9 @@ class PlayerReportMapper:
                 status=player_report.status,
                 created_at=player_report.created_at,
                 resolved_at=player_report.resolved_at,
-                resolver_id=player_report.resolver_user.user_id if player_report.resolver_user else None
+                resolver_id=player_report.resolver_user.user_id if player_report.resolver_user else None,
+                evidence_image_url=player_report.evidence_image_url,
+                evidence_video_url=player_report.evidence_video_url
             )
         return PlayerReportORM(
             id=player_report.report_id,
@@ -42,5 +46,7 @@ class PlayerReportMapper:
             status=player_report.status,
             created_at=player_report.created_at,
             resolved_at=player_report.resolved_at,
-            resolver_id=player_report.resolver_user.user_id if player_report.resolver_user else None
+            resolver_id=player_report.resolver_user.user_id if player_report.resolver_user else None,
+            evidence_image_url=player_report.evidence_image_url,
+            evidence_video_url=player_report.evidence_video_url
         )

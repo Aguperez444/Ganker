@@ -13,6 +13,14 @@ describe("reportarJugador", () => {
     axiosClient.post.mockResolvedValue({ data: { id: 1 } });
   });
 
+  // El reporte viaja como multipart/form-data para poder adjuntar la imagen.
+  const formDataEnviado = () => {
+    const [url, formData, config] = axiosClient.post.mock.calls[0];
+    expect(url).toBe("/api/v1/moderation/");
+    expect(config.headers["Content-Type"]).toBe("multipart/form-data");
+    return formData;
+  };
+
   it("envía el reporte al endpoint de moderación con el contrato del backend", async () => {
     await reportarJugador({
       reportedId: 7,
@@ -20,21 +28,35 @@ describe("reportarJugador", () => {
       descripcion: "  Insultó a otros jugadores.  ",
     });
 
-    expect(axiosClient.post).toHaveBeenCalledWith("/api/v1/moderation/", {
-      reported_id: 7,
-      reason: "abusive_behavior",
-      description: "Insultó a otros jugadores.",
-    });
+    const formData = formDataEnviado();
+    expect(formData.get("reported_id")).toBe("7");
+    expect(formData.get("reason")).toBe("abusive_behavior");
+    expect(formData.get("description")).toBe("Insultó a otros jugadores.");
+    expect(formData.has("evidence_image")).toBe(false);
+    expect(formData.has("evidence_video_url")).toBe(false);
   });
 
   it("manda una descripción vacía cuando no se escribió nada", async () => {
     await reportarJugador({ reportedId: "7", motivo: "other" });
 
-    expect(axiosClient.post).toHaveBeenCalledWith("/api/v1/moderation/", {
-      reported_id: 7,
-      reason: "other",
-      description: "",
+    expect(formDataEnviado().get("description")).toBe("");
+  });
+
+  it("adjunta la imagen y el link de YouTube como evidencia", async () => {
+    const imagen = new File(["png"], "captura.png", { type: "image/png" });
+
+    await reportarJugador({
+      reportedId: 7,
+      motivo: "cheating",
+      imagen,
+      linkVideo: "  https://youtu.be/dQw4w9WgXcQ  ",
     });
+
+    const formData = formDataEnviado();
+    expect(formData.get("evidence_image").name).toBe("captura.png");
+    expect(formData.get("evidence_video_url")).toBe(
+      "https://youtu.be/dQw4w9WgXcQ"
+    );
   });
 
   it("devuelve el reporte creado", async () => {

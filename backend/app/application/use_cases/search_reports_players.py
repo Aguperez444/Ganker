@@ -70,5 +70,7 @@ class SearchReportsPlayers:
                     created_at=report_player.created_at,
                     resolved_at=report_player.resolved_at,
                     resolved_by=report_player.resolver_user.username if report_player.resolver_user is not None else None,
+                    evidence_image_url=report_player.evidence_image_url,
+                    evidence_video_url=report_player.evidence_video_url,
                 ) for report_player in reports_players
             ]

@@ -29,6 +29,8 @@ function aFilaDeDenuncia(registro) {
     created_at: registro.created_at,
     resolved_at: registro.resolved_at,
     resolved_by: registro.resolved_by,
+    evidence_image_url: registro.evidence_image_url ?? null,
+    evidence_video_url: registro.evidence_video_url ?? null,
   };
 }
 

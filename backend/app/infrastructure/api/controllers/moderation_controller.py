@@ -1,7 +1,7 @@
 from typing import Annotated
 from datetime import timedelta
 
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, Query, Form, File, UploadFile, HTTPException
 
 from app.application.use_cases.ban_player import BanPlayer
 from app.application.use_cases.report_player import ReportPlayer
@@ -20,8 +20,13 @@ from app.infrastructure.api.dto.response.report_player_response import ReportPla
 from app.infrastructure.api.dto.response.active_banned_players_response import ActiveBannedPlayersResponse
 from app.infrastructure.database.unit_of_work.uow_factory import uow_factory
 from app.infrastructure.config.settings import settings
+from app.infrastructure.storage.local_disk_storage_service import LocalDiskStorageService
 
 router = APIRouter(prefix="/api/v1/moderation", tags=["Moderation"])
+
+
+def get_storage_service():
+    return LocalDiskStorageService()
 
 
 @router.get("/banned-players/active", response_model=ActiveBannedPlayersResponse,
@@ -35,11 +40,23 @@ def get_active_banned_players(
 
 
 # ENDPOINT PARA REPORTAR UN JUGADOR
+# Recibe multipart/form-data: la evidencia puede ser una imagen y/o un link de YouTube (ambos opcionales)
 @router.post("/", response_model=ReportPlayerResponse ,status_code=201, dependencies=[Depends(require_player)])
-def report_player(report_request: ReportPlayerRequest, reporter_id: int = Depends(get_current_user_id)):
+def report_player(report_request: Annotated[ReportPlayerRequest, Form()],
+                  evidence_image: UploadFile | None = File(None, description="Imagen opcional como evidencia"),
+                  reporter_id: int = Depends(get_current_user_id)):
+    if evidence_image and not evidence_image.filename:
+        raise HTTPException(status_code=400, detail="La imagen de evidencia debe tener un nombre válido.")
+
     uow = uow_factory()
-    use_case = ReportPlayer(uow, cooldown=timedelta(seconds=settings.player_report_cooldown_seconds))
-    new_report = use_case.execute(report_request, reporter_id)
+    use_case = ReportPlayer(uow, get_storage_service(),
+                            cooldown=timedelta(seconds=settings.player_report_cooldown_seconds))
+    new_report = use_case.execute(
+        report_request,
+        reporter_id,
+        evidence_image.file if evidence_image else None,
+        evidence_image.filename if evidence_image else None,
+    )
 
     return new_report
 

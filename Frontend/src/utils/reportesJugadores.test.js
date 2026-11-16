@@ -2,10 +2,63 @@ import { describe, expect, it } from "vitest";
 
 import {
   LARGO_MAXIMO_DESCRIPCION_REPORTE,
+  TAMANO_MAXIMO_EVIDENCIA_MB,
+  idDeVideoYoutube,
   mensajeDeErrorReporte,
   nombreDeMotivoReporte,
   validarFormularioReporte,
+  validarImagenEvidencia,
 } from "./reportesJugadores";
+
+describe("idDeVideoYoutube", () => {
+  it.each([
+    "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+    "http://youtube.com/watch?v=dQw4w9WgXcQ&t=30s",
+    "https://m.youtube.com/watch?feature=share&v=dQw4w9WgXcQ",
+    "https://youtu.be/dQw4w9WgXcQ?si=abc",
+    "https://www.youtube.com/shorts/dQw4w9WgXcQ",
+    "https://www.youtube.com/embed/dQw4w9WgXcQ",
+    "  https://www.youtube.com/live/dQw4w9WgXcQ  ",
+  ])("reconoce %s", (link) => {
+    expect(idDeVideoYoutube(link)).toBe("dQw4w9WgXcQ");
+  });
+
+  it.each([
+    "",
+    "dQw4w9WgXcQ",
+    "javascript:alert(1)",
+    "https://vimeo.com/123456",
+    "https://youtube.com.evil.com/watch?v=dQw4w9WgXcQ",
+    "https://www.youtube.com/watch?v=corto",
+    "https://www.youtube.com/channel/UC1234567890",
+  ])("rechaza %s", (link) => {
+    expect(idDeVideoYoutube(link)).toBeNull();
+  });
+});
+
+describe("validarImagenEvidencia", () => {
+  it("acepta PNG, JPG y WEBP", () => {
+    for (const type of ["image/png", "image/jpeg", "image/webp"]) {
+      expect(
+        validarImagenEvidencia(new File(["x"], "a", { type }))
+      ).toBeUndefined();
+    }
+  });
+
+  it("rechaza otros tipos", () => {
+    expect(
+      validarImagenEvidencia(new File(["x"], "a.gif", { type: "image/gif" }))
+    ).toMatch(/PNG, JPG o WEBP/);
+  });
+
+  it("rechaza imágenes demasiado pesadas", () => {
+    const pesada = new File(["x"], "a.png", { type: "image/png" });
+    Object.defineProperty(pesada, "size", {
+      value: TAMANO_MAXIMO_EVIDENCIA_MB * 1024 * 1024 + 1,
+    });
+    expect(validarImagenEvidencia(pesada)).toMatch(/no puede superar/);
+  });
+});
 
 describe("validarFormularioReporte", () => {
   it("exige un motivo", () => {
@@ -37,6 +90,21 @@ describe("validarFormularioReporte", () => {
 
     expect(errores.descripcion).toBeDefined();
     expect(errores.motivo).toBeUndefined();
+  });
+
+  it("rechaza un link que no es de YouTube y acepta uno válido", () => {
+    expect(
+      validarFormularioReporte({
+        motivo: "other",
+        linkVideo: "https://vimeo.com/1",
+      }).linkVideo
+    ).toBeDefined();
+    expect(
+      validarFormularioReporte({
+        motivo: "other",
+        linkVideo: "https://youtu.be/dQw4w9WgXcQ",
+      })
+    ).toEqual({});
   });
 });
 

@@ -25,6 +25,8 @@ class PlayerReportORM(Base):
     description: Mapped[Optional[str]] = mapped_column(String(500), nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), nullable=False)
     resolved_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
+    evidence_image_url: Mapped[Optional[str]] = mapped_column(String(500), nullable=True)
+    evidence_video_url: Mapped[Optional[str]] = mapped_column(String(500), nullable=True)
     resolver_id: Mapped[Optional[int]] = mapped_column(Integer, ForeignKey("user.user_id", ondelete="SET NULL"), nullable=True)
 
     reporter: Mapped["UserORM"] = relationship("UserORM", foreign_keys=[reporter_id], back_populates="reporter_player")

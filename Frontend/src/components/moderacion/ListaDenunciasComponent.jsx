@@ -1,3 +1,4 @@
+import { urlDeMedia } from "../../utils/media";
 import { nombreDeMotivoReporte } from "../../utils/reportesJugadores";
 
 const formatearFecha = (fecha) => {
@@ -14,6 +15,44 @@ const estadoEtiqueta = (estado) => {
   if (estado === "pending") return "Pendiente";
   if (estado === "rejected") return "Rechazado";
   return estado || "-";
+};
+
+// Imagen y/o link de YouTube que el denunciante adjunto como evidencia.
+// Ambos abren en otra pestana para revisarlos sin perder los filtros.
+const EvidenciaDenuncia = ({ denuncia }) => {
+  const imagen = urlDeMedia(denuncia.evidence_image_url);
+  const video = denuncia.evidence_video_url;
+
+  if (!imagen && !video) return <span>-</span>;
+
+  return (
+    <div className="flex items-center gap-3">
+      {imagen && (
+        <a
+          href={imagen}
+          target="_blank"
+          rel="noopener noreferrer"
+          title="Ver imagen completa"
+        >
+          <img
+            src={imagen}
+            alt={`Evidencia de la denuncia ${denuncia.id}`}
+            className="h-12 w-12 rounded-md border border-white/10 object-cover transition hover:opacity-80"
+          />
+        </a>
+      )}
+      {video && (
+        <a
+          href={video}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-sm font-semibold whitespace-nowrap text-ganker-purple-light hover:underline"
+        >
+          Ver video
+        </a>
+      )}
+    </div>
+  );
 };
 
 const ListaDenunciasComponent = ({
@@ -84,6 +123,9 @@ const ListaDenunciasComponent = ({
               <th className="px-4 py-3 text-left text-xs font-semibold tracking-wide text-ganker-muted uppercase">
                 Descripción
               </th>
+              <th className="px-4 py-3 text-left text-xs font-semibold tracking-wide text-ganker-muted uppercase">
+                Evidencia
+              </th>
             </tr>
           </thead>
           <tbody className="divide-y divide-white/5">
@@ -122,6 +164,9 @@ const ListaDenunciasComponent = ({
                 </td>
                 <td className="max-w-xs px-4 py-3 text-ganker-muted">
                   <p className="line-clamp-3">{denuncia.description}</p>
+                </td>
+                <td className="px-4 py-3 text-ganker-muted">
+                  <EvidenciaDenuncia denuncia={denuncia} />
                 </td>
               </tr>
             ))}

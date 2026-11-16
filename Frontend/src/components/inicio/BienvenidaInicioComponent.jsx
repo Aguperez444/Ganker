@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import FondoJuegoComponent from "./FondoJuegoComponent";
+import AvatarUsuarioComponent from "../common/AvatarUsuarioComponent";
 import { urlDeMedia } from "../../utils/media";
 import { rolConMejorRango } from "../../utils/juegos";
 
@@ -8,7 +9,6 @@ import { rolConMejorRango } from "../../utils/juegos";
 function BienvenidaInicioComponent({ user, perfilPrincipal }) {
   const nombreJuego = perfilPrincipal?.videogame?.name;
   const mejorRol = rolConMejorRango(perfilPrincipal);
-  const avatar = urlDeMedia(user?.icon_url);
 
   return (
     <FondoJuegoComponent
@@ -17,17 +17,12 @@ function BienvenidaInicioComponent({ user, perfilPrincipal }) {
     >
       <div className="flex flex-col gap-6 p-6 sm:p-8 md:flex-row md:items-end md:justify-between">
         <div className="flex items-center gap-4 sm:gap-5">
-          {avatar ? (
-            <img
-              src={avatar}
+          <div className="flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-full border-2 border-ganker-purple-light/60 bg-ganker-surface-light font-heading text-3xl font-bold text-ganker-text shadow-[0_0_20px] shadow-ganker-purple/40 sm:h-24 sm:w-24">
+            <AvatarUsuarioComponent
+              user={user}
               alt={`Avatar de ${user?.username ?? "jugador"}`}
-              className="h-20 w-20 shrink-0 rounded-2xl border-2 border-ganker-purple-light/60 object-cover shadow-[0_0_20px] shadow-ganker-purple/40 sm:h-24 sm:w-24"
             />
-          ) : (
-            <div className="flex h-20 w-20 shrink-0 items-center justify-center rounded-2xl border-2 border-ganker-purple-light/60 bg-ganker-surface-light font-heading text-3xl font-bold text-ganker-text sm:h-24 sm:w-24">
-              {(user?.username ?? "?").charAt(0).toUpperCase()}
-            </div>
-          )}
+          </div>
 
           <div className="min-w-0">
             <p className="text-xs font-semibold tracking-[0.15em] text-ganker-purple-light uppercase">
