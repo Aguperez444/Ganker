@@ -2,6 +2,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import AuthLayout from "../components/common/AuthLayout";
 import BotonesAuthFederadoComponent from "../components/jugadores/BotonesAuthFederadoComponent";
 import FormLogin from "../components/jugadores/FormLogin";
+import AccesoApelacionComponent from "../components/moderacion/AccesoApelacionComponent";
 import { useAuthFederado } from "../hooks/useAuthFederado";
 import { useIniciarSesion } from "../hooks/useIniciarSesion";
 import { rutaInicialPara } from "../utils/rutas";
@@ -12,6 +13,7 @@ function LoginPage() {
     errores,
     cargando,
     errorServidor,
+    permisoApelacion,
     handleChange,
     handleSubmit,
   } = useIniciarSesion();
@@ -44,6 +46,7 @@ function LoginPage() {
         onChange={handleChange}
         onSubmit={onSubmit}
       >
+        <AccesoApelacionComponent token={permisoApelacion} />
         <BotonesAuthFederadoComponent
           proveedorCargando={proveedorCargando}
           error={errorFederado}

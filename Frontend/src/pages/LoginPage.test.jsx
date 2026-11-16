@@ -129,6 +129,24 @@ describe("acceso al area administrativa", () => {
 });
 
 describe("errores del login", () => {
+  it("ofrece iniciar una apelación al informar el baneo sin abrir una sesión normal", async () => {
+    axiosClient.post.mockRejectedValue({
+      response: {
+        status: 400,
+        data: {
+          error: "El baneo del jugador aún no ha finalizado. Motivo: Scripts",
+          appeal_token: "solo-apelar",
+        },
+      },
+    });
+    renderApp();
+    await iniciarSesion();
+    expect(
+      await screen.findByRole("button", { name: "Iniciar una apelación" })
+    ).toBeVisible();
+    expect(localStorage.getItem("access_token")).toBeNull();
+    expect(screen.queryByText("home de jugador")).toBeNull();
+  });
   it.each([404, 401])(
     "con %i no revela si el mail tiene cuenta",
     async (status) => {

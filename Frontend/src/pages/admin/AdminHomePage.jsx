@@ -37,6 +37,13 @@ const GRUPOS_ADMIN = [
         path: "/app/admin/reportes/uso",
         botonTexto: "Ver uso",
       },
+      {
+        titulo: "Reporte de denuncias",
+        descripcion:
+          "Motivos, videojuegos, jugadores y evolución de las sanciones.",
+        path: "/app/admin/moderacion/reporte",
+        botonTexto: "Ver informe de moderación",
+      },
     ],
   },
   {
@@ -135,7 +142,7 @@ const AdminHomePage = () => {
             acento="text-ganker-error"
           />
           <TarjetaDato
-            titulo="Baneos vencidos"
+            titulo="Baneos finalizados"
             valor={
               cargandoBaneos || errorBaneos ? "—" : baneos.length - vigentes
             }

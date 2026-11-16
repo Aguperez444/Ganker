@@ -16,10 +16,12 @@ export function reportarJugador({
   descripcion,
   imagen,
   linkVideo,
+  videogameId,
 }) {
   const formData = new FormData();
   formData.append("reported_id", String(Number(reportedId)));
   formData.append("reason", motivo);
+  if (videogameId) formData.append("videogame_id", String(videogameId));
   formData.append("description", (descripcion ?? "").trim());
 
   const link = (linkVideo ?? "").trim();
@@ -38,14 +40,33 @@ export function reportarJugador({
 //
 // Requiere admin u owner (require_admin). El backend rechaza banearse a uno
 // mismo y banear a un admin de igual o mayor jerarquia.
-export function banearJugador({ jugadorId, motivo, duracionDias }) {
+export function banearJugador({ jugadorId, motivo, duracionDias, denunciaId }) {
   return axiosClient
     .post("/api/v1/moderation/ban", {
       player_id: Number(jugadorId),
       reason: (motivo ?? "").trim(),
       duration_days: Number(duracionDias),
+      ...(denunciaId != null ? { report_id: Number(denunciaId) } : {}),
     })
     .then((res) => res.data);
+}
+
+export async function desestimarDenuncia(denunciaId) {
+  return (
+    await axiosClient.post(`/api/v1/moderation/reports/${denunciaId}/dismiss`)
+  ).data;
+}
+
+export async function obtenerDenunciasCruzadas(
+  denunciaId,
+  { skip = 0, limit = 11 } = {}
+) {
+  return (
+    await axiosClient.get(
+      `/api/v1/moderation/reports/${denunciaId}/cross-reports`,
+      { params: { skip, limit } }
+    )
+  ).data;
 }
 
 // Buscar jugadores baneados (admin).
@@ -98,6 +119,24 @@ export function desbanearJugador(jugadorId) {
     .then((res) => res.data);
 }
 
+export async function obtenerDetalleBaneo(baneoId) {
+  return (await axiosClient.get(`/api/v1/moderation/banned-players/${baneoId}`))
+    .data;
+}
+
+export async function obtenerHistorialBaneos(
+  jugadorId,
+  { antesDeBaneoId, skip = 0, limit = 11 } = {}
+) {
+  const { data } = await axiosClient.get(
+    `/api/v1/moderation/players/${jugadorId}/bans`,
+    {
+      params: { before_ban_id: antesDeBaneoId, skip, limit },
+    }
+  );
+  return data.bans ?? [];
+}
+
 // US 51 - Buscar denuncias a jugadores (admin).
 //   GET /api/v1/moderation/reported_players
 // Filtros: reported_by, reported_user, status, reason, resolved_by,
@@ -105,6 +144,7 @@ export function desbanearJugador(jugadorId) {
 // skip, limit
 export function buscarDenuncias({
   denunciado,
+  denunciadoId,
   denunciante,
   resueltoPor,
   estado,
@@ -120,6 +160,7 @@ export function buscarDenuncias({
     .get("/api/v1/moderation/reported_players", {
       params: {
         reported_user: denunciado || undefined,
+        reported_user_id: denunciadoId || undefined,
         reported_by: denunciante || undefined,
         resolved_by: resueltoPor || undefined,
         status: estado || undefined,

@@ -64,6 +64,22 @@ beforeEach(() => {
 });
 
 describe("CallbackFederadoPage", () => {
+  it("ofrece apelar también a una cuenta federada baneada", async () => {
+    procesarCallbackFederado.mockRejectedValue({
+      response: {
+        status: 400,
+        data: {
+          error: "El baneo del jugador aún no ha finalizado",
+          appeal_token: "solo-apelar",
+        },
+      },
+    });
+    renderCallback("/auth/callback/google?code=codigo123&state=estado123");
+    expect(
+      await screen.findByRole("button", { name: "Iniciar una apelación" })
+    ).toBeVisible();
+    expect(localStorage.getItem("access_token")).toBeNull();
+  });
   it("entra directo a /app cuando la identidad ya estaba vinculada", async () => {
     procesarCallbackFederado.mockResolvedValue({
       status: "authenticated",

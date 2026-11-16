@@ -81,6 +81,14 @@ export function useCallbackFederado(provider, searchParams) {
 
         fallar("No se pudo completar el inicio de sesión externo.");
       } catch (error) {
+        if (error.response?.data?.appeal_token) {
+          setResultado({
+            estado: "error",
+            errorMensaje: error.response.data.error,
+            permisoApelacion: error.response.data.appeal_token,
+          });
+          return;
+        }
         fallar(
           error.response?.data?.error ??
             "No pudimos verificar tu cuenta con el proveedor. Volvé a intentarlo."

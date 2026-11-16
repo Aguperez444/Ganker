@@ -1,4 +1,5 @@
-import { useEffect } from "react";
+import { useRef } from "react";
+import useDialogoModal from "../../hooks/useDialogoModal";
 import Campo from "../common/CampoFormularioComponent";
 import useBanearJugador, {
   PASO_CONFIRMACION,
@@ -54,7 +55,12 @@ function ResumenDato({ etiqueta, children }) {
 //   1. formulario: motivo (obligatorio) y duración en días.
 //   2. confirmación explícita: resumen de lo que se va a aplicar.
 //   3. éxito: mensaje de confirmación para el administrador.
-const ModalBanearJugadorComponent = ({ jugador, onClose, onBaneado }) => {
+const ModalBanearJugadorComponent = ({
+  jugador,
+  onClose,
+  onBaneado,
+  denunciaId,
+}) => {
   const {
     motivo,
     duracionDias,
@@ -70,18 +76,11 @@ const ModalBanearJugadorComponent = ({ jugador, onClose, onBaneado }) => {
     volverAlFormulario,
     confirmarBaneo,
     cerrar,
-  } = useBanearJugador({ jugador, onClose, onBaneado });
+  } = useBanearJugador({ jugador, onClose, onBaneado, denunciaId });
 
   const nombreJugador = jugador?.username || jugador?.name || "este jugador";
-
-  useEffect(() => {
-    function handleKeyDown(evento) {
-      if (evento.key === "Escape" && !baneando) onClose();
-    }
-
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [baneando, onClose]);
+  const contenidoRef = useRef(null);
+  useDialogoModal({ contenidoRef, onClose, bloqueado: baneando, paso });
 
   const handleSubmit = (evento) => {
     evento.preventDefault();
@@ -326,6 +325,7 @@ const ModalBanearJugadorComponent = ({ jugador, onClose, onBaneado }) => {
       role="dialog"
       aria-modal="true"
       aria-labelledby="titulo-modal-banear"
+      ref={contenidoRef}
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4 backdrop-blur-sm"
     >
       <div className="max-h-[90vh] w-full max-w-lg space-y-5 overflow-y-auto rounded-2xl border border-white/10 bg-ganker-surface p-6 shadow-2xl">

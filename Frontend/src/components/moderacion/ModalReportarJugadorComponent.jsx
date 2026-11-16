@@ -48,6 +48,11 @@ function ResumenDato({ etiqueta, children }) {
 const ModalReportarJugadorComponent = ({ jugador, currentUserId, onClose }) => {
   const {
     motivo,
+    videogameId,
+    seleccionarJuego,
+    juegos,
+    errorJuegos,
+    reintentarJuegos,
     descripcion,
     errores,
     errorEnvio,
@@ -170,6 +175,10 @@ const ModalReportarJugadorComponent = ({ jugador, currentUserId, onClose }) => {
           <ResumenDato etiqueta="Motivo">
             {nombreDeMotivoReporte(motivo)}
           </ResumenDato>
+          <ResumenDato etiqueta="Juego">
+            {juegos.find((juego) => String(juego.id) === videogameId)?.name ||
+              "Sin juego especificado"}
+          </ResumenDato>
           <ResumenDato etiqueta="Descripción">
             {descripcion.trim() || "Sin descripción adicional"}
           </ResumenDato>
@@ -256,6 +265,39 @@ const ModalReportarJugadorComponent = ({ jugador, currentUserId, onClose }) => {
               </option>
             ))}
           </select>
+        </Campo>
+
+        <Campo
+          id="reporte-juego"
+          label="Juego"
+          ayuda="Opcional. Indicá en qué juego ocurrió el incidente."
+        >
+          <select
+            id="reporte-juego"
+            value={videogameId}
+            onChange={(evento) => seleccionarJuego(evento.target.value)}
+            disabled={enviando}
+            className={clasesControl(false)}
+          >
+            <option value="">Sin juego especificado</option>
+            {juegos.map((juego) => (
+              <option key={juego.id} value={juego.id}>
+                {juego.name}
+              </option>
+            ))}
+          </select>
+          {errorJuegos && (
+            <p className="mt-2 text-xs text-ganker-muted">
+              No se pudo cargar el catálogo. Podés enviar la denuncia sin juego.{" "}
+              <button
+                type="button"
+                onClick={reintentarJuegos}
+                className="text-ganker-purple-light hover:underline"
+              >
+                Reintentar
+              </button>
+            </p>
+          )}
         </Campo>
 
         <Campo

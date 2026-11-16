@@ -22,7 +22,12 @@ export const PASO_EXITO = "exito";
 //
 // `onBaneado(mensaje)` (opcional) se llama cuando el backend confirma el
 // baneo, para que quien abrio el modal sepa que la cuenta cambio de estado.
-export default function useBanearJugador({ jugador, onClose, onBaneado }) {
+export default function useBanearJugador({
+  jugador,
+  onClose,
+  onBaneado,
+  denunciaId,
+}) {
   const { tokens } = useAuth();
   const miId = obtenerIdUsuarioDesdeToken(tokens?.access_token);
 
@@ -89,6 +94,7 @@ export default function useBanearJugador({ jugador, onClose, onBaneado }) {
         jugadorId: jugador.user_id,
         motivo,
         duracionDias,
+        ...(denunciaId != null ? { denunciaId } : {}),
       });
 
       const mensaje = `@${jugador.username} fue baneado correctamente.`;

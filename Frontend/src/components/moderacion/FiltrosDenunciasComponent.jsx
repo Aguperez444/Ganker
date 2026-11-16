@@ -4,7 +4,7 @@ const ESTADOS_DENUNCIA = [
   { value: "", label: "Todos" },
   { value: "pending", label: "Pendiente" },
   { value: "resolved", label: "Resuelto" },
-  { value: "rejected", label: "Rechazado" },
+  { value: "rejected", label: "Desestimado" },
 ];
 
 const CLASES_INPUT =

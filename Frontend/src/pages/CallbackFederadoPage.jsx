@@ -1,6 +1,7 @@
 import { Link, Navigate, useParams, useSearchParams } from "react-router-dom";
 import { useCallbackFederado } from "../hooks/useCallbackFederado";
 import { rutaInicialPara } from "../utils/rutas";
+import AccesoApelacionComponent from "../components/moderacion/AccesoApelacionComponent";
 
 // Pantalla a la que vuelve el proveedor externo (/auth/callback/:provider).
 // Mientras el hook verifica, muestra un spinner; después redirige o muestra
@@ -8,10 +9,8 @@ import { rutaInicialPara } from "../utils/rutas";
 function CallbackFederadoPage() {
   const { provider } = useParams();
   const [searchParams] = useSearchParams();
-  const { estado, usuario, datosFederados, errorMensaje } = useCallbackFederado(
-    provider,
-    searchParams
-  );
+  const { estado, usuario, datosFederados, errorMensaje, permisoApelacion } =
+    useCallbackFederado(provider, searchParams);
 
   if (estado === "autenticado") {
     return <Navigate to={rutaInicialPara(usuario)} replace />;
@@ -47,6 +46,7 @@ function CallbackFederadoPage() {
             >
               {errorMensaje}
             </p>
+            <AccesoApelacionComponent token={permisoApelacion} />
             <div className="flex justify-center gap-3">
               <Link
                 to="/login"

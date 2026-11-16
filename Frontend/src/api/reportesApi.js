@@ -5,6 +5,13 @@ import axiosClient from "./axiosClient";
 const RUTA_PERFILES = "/api/v1/reports/game-profiles";
 const RUTA_USO = "/api/v1/reports/game-usage";
 
+export async function obtenerReporteDenuncias(params = {}) {
+  const response = await axiosClient.get("/api/v1/reports/moderation-summary", {
+    params,
+  });
+  return response.data;
+}
+
 // Exporta un reporte ya generado (no lo recalcula). `formato`: "csv", "pdf" o
 // "excel". Devuelve { blob, nombreArchivo }. Como la respuesta se pide como
 // blob, un error tambien llega como blob: se parsea para que quien llama vea
