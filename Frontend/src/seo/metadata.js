@@ -82,10 +82,12 @@ export const PAGE_METADATA = [
     ["/app/admin/regions", "Administrar regiones"],
     ["/app/admin/reportes", "Reportes por videojuego"],
     ["/app/admin/reportes/uso", "Reportes de uso"],
+    ["/app/admin/reportes/denuncias", "Reporte de denuncias"],
     ["/app/admin/usuarios", "Administrar usuarios"],
     ["/app/admin/characters", "Administrar personajes"],
     ["/app/admin/personajes", "Administrar personajes"],
     ["/app/admin/moderacion", "Moderación"],
+    ["/app/admin/moderacion/reporte", "Reporte de denuncias"],
   ].map(([path, title]) => ({
     path,
     title: `${title} | Ganker`,
