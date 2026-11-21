@@ -1,15 +1,12 @@
 import GraficoTortaComponent from "./GraficoTortaComponent";
 import { Link } from "react-router-dom";
+import { COLORES_CATEGORIAS, COLOR_OTROS } from "../../utils/graficosReporte";
 import { nombreDeMotivoReporte } from "../../utils/reportesJugadores";
 
-const COLORES = [
-  "#FF9900",
-  "#9D7BE8",
-  "#34D399",
-  "#60A5FA",
-  "#FB7185",
-  "#94A3B8",
-];
+// Misma paleta de marca que los demas reportes (graficosReporte.js). Aca no
+// se agrupa en "Otros" (hay hasta 6 categorias fijas), asi que se suman la
+// crema y el gris de ganker-muted como quinto y sexto color.
+const COLORES = [...COLORES_CATEGORIAS, COLOR_OTROS, "#9D97B5"];
 const RESULTADOS = {
   active: "Vigentes",
   expired: "Finalizados por tiempo",
@@ -284,7 +281,7 @@ export default function ResumenModeracionComponent({
                     aria-hidden="true"
                   >
                     <div
-                      className={`h-full rounded-full ${juego.videogame_id == null ? "bg-slate-500" : "bg-ganker-purple-light"}`}
+                      className={`h-full rounded-full ${juego.videogame_id == null ? "bg-ganker-muted" : "bg-ganker-purple-light"}`}
                       style={{
                         width: `${(juego.count / maximoJuegos) * 100}%`,
                       }}
