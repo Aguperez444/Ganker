@@ -1,3 +1,4 @@
+import { useEffect, useMemo } from "react";
 import { Link } from "react-router-dom";
 import Campo from "../common/CampoFormularioComponent";
 import IconSelectComponent from "../common/IconSelectComponent";
@@ -7,6 +8,8 @@ import {
   CUPOS_VACANTES_MINIMO,
   LARGO_MAXIMO_DESCRIPCION_EQUIPO,
   LARGO_MAXIMO_NOMBRE_EQUIPO,
+  TAMANO_MAXIMO_ICONO_EQUIPO_MB,
+  TIPOS_IMAGEN_ICONO_EQUIPO,
 } from "../../utils/validacionesEquipos";
 
 const CLASES_CONTROL =
@@ -36,12 +39,32 @@ const CrearEquipoFormComponent = ({
   errorEnvio,
   onCampoChange,
   onVideojuegoChange,
+  onIconoChange,
+  onQuitarIcono,
   onCantidadVacantesChange,
   onRolVacanteChange,
   onSubmit,
 }) => {
   const sinJuego = !formulario.videojuegoId;
   const catalogoDeshabilitado = sinJuego || cargandoCatalogos || enviando;
+
+  // Vista previa del icono elegido; la URL temporal se libera al cambiarlo.
+  const previewIcono = useMemo(
+    () => (formulario.icono ? URL.createObjectURL(formulario.icono) : null),
+    [formulario.icono]
+  );
+  useEffect(
+    () => () => {
+      if (previewIcono) URL.revokeObjectURL(previewIcono);
+    },
+    [previewIcono]
+  );
+
+  const handleSeleccionarIcono = (event) => {
+    onIconoChange(event.target.files?.[0] ?? null);
+    // Permite volver a elegir el mismo archivo despues de quitarlo.
+    event.target.value = "";
+  };
 
   const handleSubmit = (event) => {
     event.preventDefault();
@@ -92,6 +115,73 @@ const CrearEquipoFormComponent = ({
             disabled={enviando}
             className={`${clasesControl(errores.descripcion)} resize-y`}
           />
+        </Campo>
+
+        <Campo
+          id="equipo-icono"
+          label="Imagen del equipo"
+          error={errores.icono}
+          ayuda={`Opcional. PNG, JPG o WEBP de hasta ${TAMANO_MAXIMO_ICONO_EQUIPO_MB} MB. Si no subís una, se usa la imagen por defecto.`}
+        >
+          <div className="flex items-center gap-4">
+            <div className="flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-white/10 bg-ganker-surface-light">
+              {previewIcono ? (
+                <img
+                  src={previewIcono}
+                  alt="Vista previa de la imagen del equipo"
+                  className="h-full w-full object-cover"
+                />
+              ) : (
+                <svg
+                  className="h-7 w-7 text-ganker-muted"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  viewBox="0 0 24 24"
+                  aria-hidden="true"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
+                  />
+                </svg>
+              )}
+            </div>
+
+            <div className="flex flex-wrap items-center gap-2">
+              <label
+                htmlFor="equipo-icono"
+                className={`inline-flex items-center gap-2 rounded-lg border border-white/10 bg-ganker-surface-light px-3.5 py-2 font-heading text-xs font-bold text-ganker-text transition ${
+                  enviando
+                    ? "cursor-not-allowed opacity-50"
+                    : "cursor-pointer hover:border-ganker-orange/50 hover:bg-white/5"
+                }`}
+              >
+                {previewIcono ? "Cambiar imagen" : "Subir imagen"}
+              </label>
+
+              {previewIcono && (
+                <button
+                  type="button"
+                  onClick={onQuitarIcono}
+                  disabled={enviando}
+                  className="cursor-pointer rounded-lg border border-ganker-error/30 bg-ganker-error/10 px-3 py-2 font-heading text-xs font-semibold text-ganker-error transition hover:bg-ganker-error/20 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  Quitar imagen
+                </button>
+              )}
+
+              <input
+                id="equipo-icono"
+                type="file"
+                accept={TIPOS_IMAGEN_ICONO_EQUIPO.join(",")}
+                onChange={handleSeleccionarIcono}
+                disabled={enviando}
+                className="sr-only"
+              />
+            </div>
+          </div>
         </Campo>
       </Seccion>
 

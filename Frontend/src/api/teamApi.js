@@ -22,6 +22,7 @@ export function crearEquipo({
   rangoMaximoId,
   rolCreadorId,
   rolesVacantesIds,
+  icono,
 }) {
   const formData = new FormData();
   formData.append("name", nombre.trim());
@@ -42,6 +43,11 @@ export function crearEquipo({
   rolesVacantesIds.forEach((rolId) => {
     formData.append("vacant_game_role_ids", rolId);
   });
+
+  // Sin icono el backend le asigna al equipo el icono por defecto.
+  if (icono) {
+    formData.append("team_icon", icono);
+  }
 
   return axiosClient
     .post("/api/v1/teams", formData, {

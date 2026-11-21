@@ -267,9 +267,9 @@ const CharactersPage = () => {
             {juegoSinPersonajes && (
               <div className="mb-4 rounded-lg border border-ganker-orange/20 bg-ganker-orange/10 px-4 py-3">
                 <p className="text-sm text-ganker-orange-light">
-                  {juegoSeleccionado.name} no tiene personajes (la opción
-                  "Tiene personajes" del videojuego está desactivada), así que
-                  no se le pueden registrar personajes nuevos.
+                  {juegoSeleccionado.name} no tiene personajes (la opción "Tiene
+                  personajes" del videojuego está desactivada), así que no se le
+                  pueden registrar personajes nuevos.
                 </p>
               </div>
             )}
@@ -332,7 +332,7 @@ const CharactersPage = () => {
           )}
         </div>
       </div>
-            <ModalConfirmacionComponent
+      <ModalConfirmacionComponent
         isOpen={Boolean(characterToDelete)}
         title="Eliminar personaje"
         message={
@@ -346,8 +346,8 @@ const CharactersPage = () => {
             </p>
             <p className="mt-2">
               Si algún jugador lo tiene entre sus personajes preferidos, se
-              quitará de su perfil y se reordenarán las prioridades. Esta
-              acción no se puede deshacer.
+              quitará de su perfil y se reordenarán las prioridades. Esta acción
+              no se puede deshacer.
             </p>
           </>
         }
@@ -358,7 +358,6 @@ const CharactersPage = () => {
         onCancel={handleCancelDelete}
       />
     </section>
-    
   );
 };
 
