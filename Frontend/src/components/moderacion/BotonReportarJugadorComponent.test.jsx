@@ -4,6 +4,9 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import BotonReportarJugadorComponent from "./BotonReportarJugadorComponent";
 import { reportarJugador } from "../../api/moderacionApi";
+import { getGames } from "../../api/gameApi";
+
+vi.mock("../../api/gameApi", () => ({ getGames: vi.fn() }));
 
 vi.mock("../../api/moderacionApi", () => ({
   reportarJugador: vi.fn(),
@@ -29,6 +32,7 @@ async function abrirModal(usuario) {
 describe("BotonReportarJugadorComponent - US 35", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    getGames.mockResolvedValue([{ id: 2, name: "League of Legends" }]);
     reportarJugador.mockResolvedValue({ id: 55 });
   });
 
@@ -132,6 +136,51 @@ describe("BotonReportarJugadorComponent - US 35", () => {
       imagen: null,
       linkVideo: "",
     });
+  });
+
+  it("guarda el juego opcional y lo muestra antes de confirmar", async () => {
+    const usuario = userEvent.setup();
+    renderBoton();
+    await abrirModal(usuario);
+    await screen.findByRole("option", { name: "League of Legends" });
+    await usuario.selectOptions(screen.getByLabelText("Juego"), "2");
+    await usuario.selectOptions(
+      screen.getByLabelText(/motivo del reporte/i),
+      "cheating"
+    );
+    await usuario.click(
+      screen.getByRole("button", { name: /enviar reporte/i })
+    );
+    expect(screen.getByText("League of Legends")).toBeInTheDocument();
+    await usuario.click(
+      screen.getByRole("button", { name: /confirmar y enviar/i })
+    );
+    expect(reportarJugador).toHaveBeenCalledWith(
+      expect.objectContaining({ videogameId: 2 })
+    );
+  });
+
+  it("permite denunciar sin juego si falla el catálogo", async () => {
+    getGames.mockRejectedValueOnce(new Error("Sin conexión"));
+    const usuario = userEvent.setup();
+    renderBoton();
+    await abrirModal(usuario);
+    expect(
+      await screen.findByText(/No se pudo cargar el catálogo/)
+    ).toBeInTheDocument();
+    await usuario.selectOptions(
+      screen.getByLabelText(/motivo del reporte/i),
+      "other"
+    );
+    await usuario.click(
+      screen.getByRole("button", { name: /enviar reporte/i })
+    );
+    await usuario.click(
+      screen.getByRole("button", { name: /confirmar y enviar/i })
+    );
+    expect(reportarJugador).toHaveBeenCalledWith(
+      expect.not.objectContaining({ videogameId: expect.anything() })
+    );
   });
 
   it("adjunta imagen y link de YouTube como evidencia", async () => {

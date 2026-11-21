@@ -4,7 +4,10 @@ import { getRegionsByGame } from "../api/regionApi";
 import { getRolesByGame } from "../api/roleApi";
 import { crearEquipo, obtenerMiEquipo } from "../api/teamApi";
 import { useAuth } from "../context/AuthContext";
-import { validarFormularioEquipo } from "../utils/validacionesEquipos";
+import {
+  validarFormularioEquipo,
+  validarIconoEquipo,
+} from "../utils/validacionesEquipos";
 import { logError } from "../utils/logs";
 
 // Funcion de modulo (no useCallback del hook) por el mismo motivo que
@@ -63,6 +66,7 @@ const FORMULARIO_INICIAL = {
   rangoMaximoId: "",
   rolCreadorId: "",
   rolesVacantesIds: [""],
+  icono: null,
 };
 
 // US 14 - Crear equipo.
@@ -160,6 +164,7 @@ const useCrearEquipo = () => {
         ...FORMULARIO_INICIAL,
         nombre: actual.nombre,
         descripcion: actual.descripcion,
+        icono: actual.icono,
         videojuegoId,
         regionId: perfil?.region?.region_id
           ? String(perfil.region.region_id)
@@ -205,6 +210,19 @@ const useCrearEquipo = () => {
     },
     [perfiles]
   );
+
+  // El icono se valida al elegirlo (no solo al enviar) para avisar enseguida
+  // si el archivo no sirve; uno invalido no se guarda en el formulario.
+  const seleccionarIcono = (archivo) => {
+    const error = validarIconoEquipo(archivo);
+    if (error) {
+      setErrores((actuales) => ({ ...actuales, icono: error }));
+      return;
+    }
+    actualizarCampo("icono", archivo ?? null);
+  };
+
+  const quitarIcono = () => actualizarCampo("icono", null);
 
   const cambiarCantidadVacantes = (cantidad) => {
     setFormulario((actual) => {
@@ -276,6 +294,8 @@ const useCrearEquipo = () => {
 
     actualizarCampo,
     seleccionarVideojuego,
+    seleccionarIcono,
+    quitarIcono,
     cambiarCantidadVacantes,
     cambiarRolVacante,
     enviar,

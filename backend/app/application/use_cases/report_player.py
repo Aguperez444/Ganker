@@ -37,6 +37,10 @@ class ReportPlayer:
             reporter = CatalogValidationService.get_and_validate_exist_user(reporter_id, uow)
             reported = CatalogValidationService.get_and_validate_exist_user(report_request.reported_id, uow)
             reason = CatalogValidationService.validate_reason_is_valid_for_report(report_request.reason)
+            videogame = (
+                CatalogValidationService.get_and_validate_exist_videogame(report_request.videogame_id, uow)
+                if report_request.videogame_id is not None else None
+            )
 
             if reporter_id == report_request.reported_id:
                 raise CannotReportSelfException()
@@ -62,6 +66,7 @@ class ReportPlayer:
                 resolver_user=None,
                 evidence_image_url=evidence_image_url,
                 evidence_video_url=evidence_video_url,
+                videogame=videogame,
             )
 
             try:
@@ -82,6 +87,8 @@ class ReportPlayer:
                 created_at=new_report.created_at,
                 evidence_image_url=new_report.evidence_image_url,
                 evidence_video_url=new_report.evidence_video_url,
+                videogame_id=new_report.videogame.videogame_id if new_report.videogame else None,
+                videogame_name=new_report.videogame.name if new_report.videogame else None,
             )
             return new_report
 

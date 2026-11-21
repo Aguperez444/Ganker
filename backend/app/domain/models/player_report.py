@@ -8,12 +8,14 @@ if TYPE_CHECKING:
     from app.domain.models.user import User
     from app.domain.models.report_status import ReportStatus
     from app.domain.models.report_reason import ReportReason
+    from app.domain.models.videogame import Videogame
 
 
 class PlayerReport:
     def __init__(self, report_id: int|None, reporter: 'User', reported: 'User', status: 'ReportStatus', reason: 'ReportReason',
                  description: str | None, created_at: datetime, resolved_at: datetime | None, resolver_user: User | None,
-                 evidence_image_url: str | None = None, evidence_video_url: str | None = None):
+                 evidence_image_url: str | None = None, evidence_video_url: str | None = None,
+                 videogame: 'Videogame | None' = None):
         self._report_id: int|None = report_id
         self._reporter: 'User' = reporter
         self._reported: 'User' = reported
@@ -25,6 +27,7 @@ class PlayerReport:
         self._resolver_user: User | None = resolver_user
         self._evidence_image_url: str | None = evidence_image_url
         self._evidence_video_url: str | None = evidence_video_url
+        self._videogame = videogame
 
     @property
     def report_id(self) -> int:
@@ -107,3 +110,7 @@ class PlayerReport:
 
     def is_persisted(self) -> bool:
         return self._report_id is not None
+
+    @property
+    def videogame(self) -> 'Videogame | None':
+        return self._videogame

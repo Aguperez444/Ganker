@@ -13,6 +13,8 @@ class ReportPlayerResponse(BaseModel):
     created_at: datetime = Field(..., description="Fecha de creación del reporte")
     evidence_image_url: str | None = Field(None, description="URL de la imagen adjunta como evidencia")
     evidence_video_url: str | None = Field(None, description="Link de YouTube adjunto como evidencia")
+    videogame_id: int | None = Field(None, description="ID del videojuego en el que ocurrió el incidente")
+    videogame_name: str | None = Field(None, description="Nombre del videojuego en el que ocurrió el incidente")
 
 
     @field_validator("description", mode="before")

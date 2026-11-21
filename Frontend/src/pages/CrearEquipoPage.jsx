@@ -27,6 +27,8 @@ const CrearEquipoPage = () => {
     errorEnvio,
     actualizarCampo,
     seleccionarVideojuego,
+    seleccionarIcono,
+    quitarIcono,
     cambiarCantidadVacantes,
     cambiarRolVacante,
     enviar,
@@ -110,6 +112,8 @@ const CrearEquipoPage = () => {
         errorEnvio={errorEnvio}
         onCampoChange={actualizarCampo}
         onVideojuegoChange={seleccionarVideojuego}
+        onIconoChange={seleccionarIcono}
+        onQuitarIcono={quitarIcono}
         onCantidadVacantesChange={cambiarCantidadVacantes}
         onRolVacanteChange={cambiarRolVacante}
         onSubmit={handleSubmit}

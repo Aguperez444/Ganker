@@ -1,11 +1,13 @@
-import { useState } from "react";
-import AvatarUsuarioComponent from "../../components/common/AvatarUsuarioComponent";
+import { useEffect, useState } from "react";
+import { useSearchParams } from "react-router-dom";
+import TarjetaReporteModeracionComponent from "../../components/moderacion/TarjetaReporteModeracionComponent";
 import ModalConfirmacionComponent from "../../components/common/ModalConfirmacionComponent";
 import FiltrosBaneosComponent from "../../components/moderacion/FiltrosBaneosComponent";
 import FiltrosDenunciasComponent from "../../components/moderacion/FiltrosDenunciasComponent";
 import ListaBaneosComponent from "../../components/moderacion/ListaBaneosComponent";
 import ListaDenunciasComponent from "../../components/moderacion/ListaDenunciasComponent";
-import ModalBanearJugadorComponent from "../../components/moderacion/ModalBanearJugadorComponent";
+import ListaApelacionesComponent from "../../components/moderacion/ListaApelacionesComponent";
+import ModalHistorialSancionesComponent from "../../components/moderacion/ModalHistorialSancionesComponent";
 import { useAuth } from "../../context/AuthContext";
 import { useBuscarBaneos } from "../../hooks/useBuscarBaneos";
 import {
@@ -14,7 +16,6 @@ import {
   validarFiltrosDenuncias,
   useBuscarDenuncias,
 } from "../../hooks/useBuscarDenuncias";
-import { useBuscarUsuario } from "../../hooks/useBuscarUsuario";
 import { useDesbanearJugador } from "../../hooks/useDesbanearJugador";
 import { obtenerIdUsuarioDesdeToken } from "../../utils/jwt";
 import {
@@ -23,29 +24,32 @@ import {
   validarFiltrosBaneos,
 } from "../../utils/baneos";
 
-// US 36 - Banear jugador (admin): se busca al jugador por su nombre de usuario
-// (ver useBuscarUsuario), se ve quién es y recién ahí se puede aplicar la
-// sanción.
-//
-// La protección por rol vive en la ruta (ProtectedRoute con ROLES_ADMIN) y en
-// el backend (require_admin). Acá además se oculta la acción sobre la propia
-// cuenta del administrador.
-//
-// US 53 - Levantar suspensión: "Desbanear" desde el listado de baneados.
-//
-// Buscar jugadores baneados: el listado es el historial de baneos del
-// backend, con filtros combinables y paginado (ver useBuscarBaneos). Los
-// filtros del formulario recién se aplican al tocar "Buscar".
-//
-// US 51 - Buscar denuncias a un jugador: filtros combinables, paginación y
-// orden por fecha de creación desde el backend.
+// Moderación: denuncias y detalle de evidencia, seguidos del historial de baneos.
 const ModeracionPage = () => {
   const { tokens } = useAuth();
   const miId = obtenerIdUsuarioDesdeToken(tokens?.access_token);
 
   const [successMessage, setSuccessMessage] = useState("");
-  const [jugadorABanear, setJugadorABanear] = useState(null);
-  const [mensajeBaneo, setMensajeBaneo] = useState("");
+  const [parametros, setParametros] = useSearchParams();
+  const verApelaciones = parametros.get("vista") === "apelaciones";
+  const setVerApelaciones = (mostrar) =>
+    setParametros(
+      (actuales) => {
+        const siguientes = new URLSearchParams(actuales);
+        if (mostrar) siguientes.set("vista", "apelaciones");
+        else siguientes.delete("vista");
+        return siguientes;
+      },
+      { replace: true, preventScrollReset: true }
+    );
+  const [versionResumen, setVersionResumen] = useState(0);
+  useEffect(() => {
+    if (verApelaciones)
+      document
+        .getElementById("sanciones")
+        ?.scrollIntoView?.({ block: "start" });
+  }, [verApelaciones]);
+  const [baneoSeleccionado, setBaneoSeleccionado] = useState(null);
   const [filtrosBaneos, setFiltrosBaneos] = useState(FILTROS_BANEOS_VACIOS);
   const [erroresFiltros, setErroresFiltros] = useState({});
   const [filtrosDenuncias, setFiltrosDenuncias] = useState(
@@ -53,24 +57,9 @@ const ModeracionPage = () => {
   );
   const [erroresFiltrosDenuncias, setErroresFiltrosDenuncias] = useState({});
 
-  const {
-    usernameBuscado,
-    encontrado,
-    buscando,
-    error: errorBusqueda,
-    setUsernameBuscado,
-    buscar,
-    limpiar,
-  } = useBuscarUsuario();
   const baneos = useBuscarBaneos();
   const denuncias = useBuscarDenuncias();
   const desbaneo = useDesbanearJugador();
-
-  const handleBuscar = (e) => {
-    e.preventDefault();
-    setSuccessMessage("");
-    buscar();
-  };
 
   const handleCambiarFiltro = (campo, valor) => {
     setFiltrosBaneos((actuales) => ({ ...actuales, [campo]: valor }));
@@ -118,24 +107,6 @@ const ModeracionPage = () => {
     denuncias.buscar(FILTROS_DENUNCIAS_VACIOS);
   };
 
-  const handleAbrirBaneo = (jugador) => {
-    setSuccessMessage("");
-    setMensajeBaneo("");
-    setJugadorABanear(jugador);
-  };
-
-  // Si el baneo se aplicó, el jugador deja de aparecer en las búsquedas: se
-  // limpia la tarjeta y se refresca el listado de baneados desde la primera
-  // página, que es donde aparece el baneo nuevo.
-  const handleCerrarBaneo = () => {
-    setJugadorABanear(null);
-    if (!mensajeBaneo) return;
-
-    setSuccessMessage(mensajeBaneo);
-    limpiar();
-    baneos.buscar(baneos.filtrosAplicados);
-  };
-
   // US 53 - Desbanear a mano desde el listado de baneados.
   const handleConfirmarDesbaneo = async () => {
     const mensaje = await desbaneo.confirmar();
@@ -143,9 +114,15 @@ const ModeracionPage = () => {
 
     setSuccessMessage(mensaje);
     baneos.recargar();
+    setVersionResumen((version) => version + 1);
   };
 
-  const esUnoMismo = (usuario) => miId !== null && usuario?.user_id === miId;
+  const handleBaneado = (mensaje) => {
+    setVersionResumen((version) => version + 1);
+    setSuccessMessage(mensaje);
+    denuncias.recargar();
+    baneos.recargar();
+  };
 
   return (
     <section className="min-h-full bg-ganker-bg p-6">
@@ -158,124 +135,18 @@ const ModeracionPage = () => {
             Moderación
           </h1>
           <p className="mt-2 max-w-2xl text-sm text-ganker-muted">
-            Aplicá sanciones a las cuentas que incumplan las normas de Ganker.
+            Revisá los reportes de jugadores y administrá las sanciones de
+            Ganker.
           </p>
         </header>
+
+        <TarjetaReporteModeracionComponent actualizacion={versionResumen} />
 
         {successMessage && (
           <div className="rounded-lg border border-ganker-success/20 bg-ganker-success/10 px-4 py-3">
             <p className="text-sm text-ganker-success">✓ {successMessage}</p>
           </div>
         )}
-
-        <section className="rounded-2xl border border-white/10 bg-ganker-surface p-6 shadow-xl">
-          <h2 className="font-heading text-lg font-semibold text-ganker-text">
-            Banear jugador
-          </h2>
-          <p className="mt-1 text-sm text-ganker-muted">
-            Buscá al jugador por su nombre de usuario y aplicá la sanción con su
-            motivo y duración.
-          </p>
-
-          <form
-            onSubmit={handleBuscar}
-            className="mt-5 flex flex-col gap-3 sm:flex-row sm:items-end"
-          >
-            <div className="flex-1">
-              <label
-                htmlFor="moderacion-username"
-                className="mb-1 block text-xs font-semibold text-ganker-text"
-              >
-                Nombre de usuario
-              </label>
-              <input
-                id="moderacion-username"
-                type="text"
-                autoComplete="off"
-                spellCheck={false}
-                value={usernameBuscado}
-                onChange={(e) => setUsernameBuscado(e.target.value)}
-                placeholder="Ej. pedro"
-                className="w-full rounded-lg border border-white/10 bg-ganker-surface-light px-3 py-2.5 text-sm text-ganker-text focus:border-ganker-purple focus:ring-2 focus:ring-ganker-purple focus:outline-none"
-              />
-            </div>
-            <button
-              type="submit"
-              disabled={buscando}
-              className="cursor-pointer self-start rounded-lg bg-gradient-to-r from-ganker-orange via-ganker-orange-light to-ganker-purple px-4 py-2.5 text-sm font-semibold text-white shadow-lg transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50 sm:self-auto"
-            >
-              {buscando ? "Buscando..." : "Buscar"}
-            </button>
-          </form>
-
-          {errorBusqueda && (
-            <div className="mt-4 rounded-lg border border-ganker-error/20 bg-ganker-error/10 px-4 py-3">
-              <p className="text-sm text-ganker-error">{errorBusqueda}</p>
-            </div>
-          )}
-
-          {encontrado && (
-            <div className="mt-6 flex flex-col gap-4 rounded-xl border border-white/10 bg-ganker-surface-light p-5 sm:flex-row sm:items-center">
-              <div className="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-full bg-gradient-to-br from-ganker-orange to-ganker-purple font-heading text-xl font-bold text-white">
-                <AvatarUsuarioComponent user={encontrado} />
-              </div>
-              <div className="min-w-0 flex-1">
-                <p className="truncate font-heading text-lg font-semibold text-ganker-text">
-                  {encontrado.name}
-                </p>
-                <p className="truncate text-sm text-ganker-muted">
-                  @{encontrado.username} · ID {encontrado.user_id}
-                </p>
-              </div>
-
-              {esUnoMismo(encontrado) ? (
-                <p className="text-xs text-ganker-muted sm:max-w-48">
-                  Es tu cuenta: no podés banear a tu propio usuario.
-                </p>
-              ) : (
-                <button
-                  type="button"
-                  onClick={() => handleAbrirBaneo(encontrado)}
-                  className="shrink-0 cursor-pointer rounded-lg border border-ganker-error/40 px-3 py-1.5 text-sm font-semibold text-ganker-error transition hover:bg-ganker-error/10 disabled:cursor-not-allowed disabled:opacity-50"
-                >
-                  Banear jugador
-                </button>
-              )}
-            </div>
-          )}
-        </section>
-
-        <section className="rounded-2xl border border-white/10 bg-ganker-surface p-6 shadow-xl">
-          <h2 className="font-heading text-lg font-semibold text-ganker-text">
-            Jugadores baneados
-          </h2>
-          <p className="mt-1 text-sm text-ganker-muted">
-            Historial de baneos, del más reciente al más antiguo. Los vigentes
-            se levantan solos al vencer, o podés desbanearlos a mano.
-          </p>
-
-          <FiltrosBaneosComponent
-            filtros={filtrosBaneos}
-            errores={erroresFiltros}
-            cargando={baneos.cargando}
-            onChange={handleCambiarFiltro}
-            onBuscar={handleBuscarBaneos}
-            onLimpiar={handleLimpiarFiltros}
-          />
-
-          <ListaBaneosComponent
-            baneos={baneos.baneos}
-            cargando={baneos.cargando}
-            error={baneos.error}
-            hayFiltros={hayFiltrosDeBaneos(baneos.filtrosAplicados)}
-            pagina={baneos.pagina}
-            hayMas={baneos.hayMas}
-            miId={miId}
-            onDesbanear={desbaneo.abrir}
-            onPaginaAnterior={baneos.paginaAnterior}
-            onPaginaSiguiente={baneos.paginaSiguiente}
-          />
-        </section>
 
         <section className="rounded-2xl border border-white/10 bg-ganker-surface p-6 shadow-xl">
           <h2 className="font-heading text-lg font-semibold text-ganker-text">
@@ -297,6 +168,13 @@ const ModeracionPage = () => {
           />
 
           <ListaDenunciasComponent
+            miId={miId}
+            onBaneado={handleBaneado}
+            onDesestimada={(mensaje) => {
+              setVersionResumen((version) => version + 1);
+              setSuccessMessage(mensaje);
+              denuncias.recargar();
+            }}
             denuncias={denuncias.denuncias}
             cargando={denuncias.cargando}
             error={denuncias.error}
@@ -307,17 +185,101 @@ const ModeracionPage = () => {
             onPaginaSiguiente={denuncias.paginaSiguiente}
           />
         </section>
+
+        <section
+          id="sanciones"
+          className="scroll-mt-6 rounded-2xl border border-white/10 bg-ganker-surface p-6 shadow-xl"
+        >
+          <h2 className="font-heading text-lg font-semibold text-ganker-text">
+            Jugadores baneados
+          </h2>
+          <p className="mt-1 text-sm text-ganker-muted">
+            Historial de baneos, del más reciente al más antiguo. Los vigentes
+            se levantan solos al vencer, o podés desbanearlos a mano.
+          </p>
+
+          <div
+            className="mt-5 flex gap-2"
+            role="group"
+            aria-label="Vista de sanciones"
+          >
+            <button
+              type="button"
+              aria-pressed={!verApelaciones}
+              onClick={() => setVerApelaciones(false)}
+              className={`cursor-pointer rounded-lg border px-4 py-2 text-sm font-semibold ${!verApelaciones ? "border-ganker-purple bg-ganker-purple/20 text-ganker-purple-light" : "border-white/10 text-ganker-muted"}`}
+            >
+              Todos los baneos
+            </button>
+            <button
+              type="button"
+              aria-pressed={verApelaciones}
+              onClick={() => setVerApelaciones(true)}
+              className={`cursor-pointer rounded-lg border px-4 py-2 text-sm font-semibold ${verApelaciones ? "border-ganker-purple bg-ganker-purple/20 text-ganker-purple-light" : "border-white/10 text-ganker-muted"}`}
+            >
+              Ver apelaciones
+            </button>
+          </div>
+          {verApelaciones ? (
+            <ListaApelacionesComponent
+              miId={miId}
+              onResuelta={(decision) => {
+                setVersionResumen((version) => version + 1);
+                setSuccessMessage(
+                  decision === "accepted"
+                    ? "Apelación aceptada. Se levantó el baneo del jugador."
+                    : "Apelación rechazada. Se mantiene el baneo."
+                );
+                baneos.recargar();
+              }}
+            />
+          ) : (
+            <>
+              <FiltrosBaneosComponent
+                filtros={filtrosBaneos}
+                errores={erroresFiltros}
+                cargando={baneos.cargando}
+                onChange={handleCambiarFiltro}
+                onBuscar={handleBuscarBaneos}
+                onLimpiar={handleLimpiarFiltros}
+              />
+
+              <ListaBaneosComponent
+                onVerDetalle={(baneo) => setBaneoSeleccionado(baneo.id)}
+                baneos={baneos.baneos}
+                cargando={baneos.cargando}
+                error={baneos.error}
+                hayFiltros={hayFiltrosDeBaneos(baneos.filtrosAplicados)}
+                pagina={baneos.pagina}
+                hayMas={baneos.hayMas}
+                miId={miId}
+                onDesbanear={desbaneo.abrir}
+                onPaginaAnterior={baneos.paginaAnterior}
+                onPaginaSiguiente={baneos.paginaSiguiente}
+              />
+            </>
+          )}
+        </section>
       </div>
 
-      {jugadorABanear && (
-        <ModalBanearJugadorComponent
-          jugador={jugadorABanear}
-          onClose={handleCerrarBaneo}
-          onBaneado={setMensajeBaneo}
+      {/* US 53 - Confirmación explícita antes de levantar un baneo. */}
+      {baneoSeleccionado && (
+        <ModalHistorialSancionesComponent
+          baneoId={baneoSeleccionado}
+          miId={miId}
+          onClose={() => setBaneoSeleccionado(null)}
+          onResuelta={(decision) => {
+            setVersionResumen((version) => version + 1);
+            setBaneoSeleccionado(null);
+            setSuccessMessage(
+              decision === "accepted"
+                ? "Apelación aceptada. Se levantó el baneo del jugador."
+                : "Apelación rechazada. Se mantiene el baneo."
+            );
+            baneos.recargar();
+          }}
         />
       )}
-
-      {/* US 53 - Confirmación explícita antes de levantar un baneo. */}
       <ModalConfirmacionComponent
         isOpen={Boolean(desbaneo.baneo)}
         title="Desbanear jugador"

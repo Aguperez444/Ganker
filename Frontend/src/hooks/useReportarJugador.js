@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { reportarJugador } from "../api/moderacionApi";
+import { getGames } from "../api/gameApi";
 import { logError } from "../utils/logs";
 import {
   mensajeDeErrorReporte,
@@ -13,6 +14,10 @@ export const PASO_EXITO = "exito";
 
 export default function useReportarJugador({ jugador, currentUserId }) {
   const [motivo, setMotivo] = useState("");
+  const [videogameId, setVideogameId] = useState("");
+  const [juegos, setJuegos] = useState([]);
+  const [errorJuegos, setErrorJuegos] = useState(false);
+  const [intentoJuegos, setIntentoJuegos] = useState(0);
   const [descripcion, setDescripcion] = useState("");
   const [errores, setErrores] = useState({});
   const [errorEnvio, setErrorEnvio] = useState("");
@@ -25,6 +30,23 @@ export default function useReportarJugador({ jugador, currentUserId }) {
   const [linkVideo, setLinkVideo] = useState("");
 
   const vistaPreviaRef = useRef(null);
+
+  useEffect(() => {
+    let activo = true;
+    getGames()
+      .then((datos) => {
+        if (activo) {
+          setJuegos(datos);
+          setErrorJuegos(false);
+        }
+      })
+      .catch(() => {
+        if (activo) setErrorJuegos(true);
+      });
+    return () => {
+      activo = false;
+    };
+  }, [intentoJuegos]);
 
   // Libera la URL de vista previa al cerrar el modal.
   useEffect(
@@ -114,6 +136,7 @@ export default function useReportarJugador({ jugador, currentUserId }) {
 
       const creado = await reportarJugador({
         reportedId: jugador.user_id,
+        ...(videogameId ? { videogameId: Number(videogameId) } : {}),
         motivo,
         descripcion,
         imagen,
@@ -134,6 +157,11 @@ export default function useReportarJugador({ jugador, currentUserId }) {
   }
 
   return {
+    videogameId,
+    seleccionarJuego: setVideogameId,
+    juegos,
+    errorJuegos,
+    reintentarJuegos: () => setIntentoJuegos((valor) => valor + 1),
     motivo,
     descripcion,
     errores,

@@ -6,8 +6,8 @@ from pydantic import BaseModel
 
 class SearchBannedPlayersResponse(BaseModel):
     id: int
-    banned_by_user_id: int
-    banned_by_user_username: str
+    banned_by_user_id: int | None
+    banned_by_user_username: str | None
     banned_user_id: int
     banned_user_username: str
     date_created: datetime

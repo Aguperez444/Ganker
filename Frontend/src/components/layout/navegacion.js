@@ -55,11 +55,11 @@ export const adminNavigationItems = [
     path: "/app/admin/reportes",
   },
   {
-    label: "Usuarios",
-    path: "/app/admin/usuarios",
-  },
-  {
     label: "Moderación",
     path: "/app/admin/moderacion",
+  },
+  {
+    label: "Usuarios",
+    path: "/app/admin/usuarios",
   },
 ];

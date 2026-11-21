@@ -70,7 +70,8 @@ describe("ListaBaneosComponent - Buscar jugadores baneados", () => {
       baneos: [vigente, baneo(2, 20, "2026-01-01T00:00:00+00:00")],
     });
 
-    expect(screen.getByText("Vencido")).toBeInTheDocument();
+    expect(screen.getByText("Finalizado")).toBeInTheDocument();
+    expect(screen.queryByText("Vencido")).toBeNull();
     const botones = screen.getAllByRole("button", { name: "Desbanear" });
     expect(botones).toHaveLength(1);
 

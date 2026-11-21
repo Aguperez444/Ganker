@@ -25,6 +25,8 @@ function aFilaDeDenuncia(registro) {
     reporter_user_name: registro.reporter_user_name,
     status: registro.status,
     reason: registro.reason,
+    videogame_id: registro.videogame_id ?? null,
+    videogame_name: registro.videogame_name ?? null,
     description: registro.description ?? "No se especificó una descripción",
     created_at: registro.created_at,
     resolved_at: registro.resolved_at,

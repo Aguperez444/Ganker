@@ -10,6 +10,7 @@ from app.application.ports.i_region_repository import IRegionRepository
 from app.application.ports.i_message_repository import IMessageRepository
 from app.application.ports.i_videogame_repository import IVideogameRepository
 from app.application.ports.i_character_repository import ICharacterRepository
+from app.application.ports.i_ban_appeal_repository import IBanAppealRepository
 from app.application.ports.i_moderation_repository import IModerationRepository
 from app.application.ports.i_game_profile_repository import IGameProfileRepository
 from app.application.ports.i_role_profile_repository import IRoleProfileRepository
@@ -25,6 +26,7 @@ from app.application.ports.i_password_reset_token_repository import IPasswordRes
 from app.application.ports.i_pending_email_change_repository import IPendingEmailChangeRepository
 from app.application.ports.i_find_by_specifications_service import IFindBySpecificationsRepository
 from app.application.ports.i_pending_registration_repository import IPendingRegistrationRepository
+from app.application.ports.i_moderation_statistics_repository import IModerationStatisticsRepository
 
 from app.infrastructure.database.repositories.message_repo_impl import MessageRepoImpl
 from app.infrastructure.database.repositories.user_repository_impl import UserRepositoryImpl
@@ -35,6 +37,7 @@ from app.infrastructure.database.repositories.region_repository_impl import Regi
 from app.infrastructure.database.repositories.character_repository_impl import CharacterRepositoryImpl
 from app.infrastructure.database.repositories.videogame_repository_impl import VideogameRepositoryImpl
 from app.infrastructure.database.repositories.conversation_repo_impl import ConversationRepositoryImpl
+from app.infrastructure.database.repositories.ban_appeal_repository_impl import BanAppealRepositoryImpl
 from app.infrastructure.database.repositories.moderation_repository_impl import ModerationRepositoryImpl
 from app.infrastructure.database.repositories.game_profile_repository_impl import GameProfileRepositoryImpl
 from app.infrastructure.database.repositories.role_profile_repository_impl import RoleProfileRepositoryImpl
@@ -48,6 +51,7 @@ from app.infrastructure.database.repositories.password_reset_token_repository_im
 from app.infrastructure.database.repositories.discord_account_link_repository_impl import DiscordAccountLinkRepositoryImpl
 from app.infrastructure.database.repositories.pending_email_change_repository_impl import PendingEmailChangeRepositoryImpl
 from app.infrastructure.database.repositories.pending_registration_repository_impl import PendingRegistrationRepositoryImpl
+from app.infrastructure.database.repositories.moderation_statistics_repository_impl import ModerationStatisticsRepositoryImpl
 from app.infrastructure.database.repositories.find_by_specification_repository_impl import FindBySpecificationsRepositoryImpl
 
 SessionFactory = Callable[[], Session]
@@ -71,6 +75,7 @@ class SqlAlchemyUnitOfWork(IUnitOfWork):
         self.videogame_repo: IVideogameRepository
         self.character_repo: ICharacterRepository
         self.moderation_repo: IModerationRepository
+        self.ban_appeal_repo: IBanAppealRepository
         self.game_profile_repo: IGameProfileRepository
         self.role_profile_repo: IRoleProfileRepository
         self.conversation_repo: IConversationRepository
@@ -84,10 +89,12 @@ class SqlAlchemyUnitOfWork(IUnitOfWork):
         self.discord_account_link_repo: IDiscordAccountLinkRepository
         self.pending_email_change_repo: IPendingEmailChangeRepository
         self.pending_registration_repo: IPendingRegistrationRepository
+        self.moderation_statistics_repo: IModerationStatisticsRepository
         self.find_by_specification_repo: IFindBySpecificationsRepository
     # Context manager
     def __enter__(self) -> 'SqlAlchemyUnitOfWork':
         self.session: Session = self._sf()  # nueva Session por acción
+        self.ban_appeal_repo = BanAppealRepositoryImpl(self.session)
         self.user_repo: IUserRepository = UserRepositoryImpl(self.session)
         self.role_repo: IRoleRepository = RoleRepositoryImpl(self.session)
         self.rank_repo: IRankRepository = RankRepositoryImpl(self.session)
@@ -98,6 +105,7 @@ class SqlAlchemyUnitOfWork(IUnitOfWork):
         self.pending_registration_repo = PendingRegistrationRepositoryImpl(self.session)
         self.character_repo: ICharacterRepository = CharacterRepositoryImpl(self.session)
         self.videogame_repo: IVideogameRepository = VideogameRepositoryImpl(self.session)
+        self.moderation_statistics_repo = ModerationStatisticsRepositoryImpl(self.session)
         self.moderation_repo: IModerationRepository = ModerationRepositoryImpl(self.session)
         self.role_profile_repo: IRoleProfileRepository = RoleProfileRepositoryImpl(self.session)
         self.game_profile_repo: IGameProfileRepository = GameProfileRepositoryImpl(self.session)

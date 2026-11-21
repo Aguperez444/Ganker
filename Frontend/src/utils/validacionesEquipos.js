@@ -11,6 +11,26 @@ export const LARGO_MAXIMO_DESCRIPCION_EQUIPO = 500;
 export const CUPOS_VACANTES_MINIMO = 1;
 export const CUPOS_VACANTES_MAXIMO = 9;
 
+// Icono opcional del equipo. El backend vuelve a validar el contenido real
+// del archivo (FileValidationService).
+export const TIPOS_IMAGEN_ICONO_EQUIPO = [
+  "image/png",
+  "image/jpeg",
+  "image/webp",
+];
+export const TAMANO_MAXIMO_ICONO_EQUIPO_MB = 5;
+
+export function validarIconoEquipo(icono) {
+  if (!icono) return undefined;
+  if (!TIPOS_IMAGEN_ICONO_EQUIPO.includes(icono.type)) {
+    return "La imagen debe ser PNG, JPG o WEBP.";
+  }
+  if (icono.size > TAMANO_MAXIMO_ICONO_EQUIPO_MB * 1024 * 1024) {
+    return `La imagen no puede superar los ${TAMANO_MAXIMO_ICONO_EQUIPO_MB} MB.`;
+  }
+  return undefined;
+}
+
 // Los rangos se comparan por `value` (la jerarquia del juego), nunca por id:
 // el id solo indica el orden en que el admin los cargo.
 export function rangoDentroDelRango(rango, rangoMinimo, rangoMaximo) {
@@ -34,6 +54,7 @@ export function validarFormularioEquipo({
   rangoJugador,
   rolCreadorId,
   rolesVacantesIds,
+  icono,
 }) {
   const errores = {};
 
@@ -96,6 +117,9 @@ export function validarFormularioEquipo({
   } else if (rolesVacantesIds.some((rolId) => !rolId)) {
     errores.rolesVacantes = "Elegí un rol para cada cupo vacante.";
   }
+
+  const errorIcono = validarIconoEquipo(icono);
+  if (errorIcono) errores.icono = errorIcono;
 
   return errores;
 }

@@ -22,7 +22,9 @@ from app.domain.specifications.name_player_specification import ByNamePlayerSpec
 from app.domain.specifications.ranks_specification import ByRanksSpecification
 from app.domain.specifications.reports_players.reason_specification import ByReasonsSpecification
 from app.domain.specifications.reports_players.reported_by_specification import ByReportedBySpecification
-from app.domain.specifications.reports_players.reported_user_specification import ByReportedUserSpecification
+from app.domain.specifications.reports_players.reported_user_specification import (
+    ByReportedUserSpecification, ByReportedUserIdSpecification,
+)
 from app.domain.specifications.reports_players.resolved_at_specification import ByResolvedAtSpecification
 from app.domain.specifications.reports_players.resolved_by_specification import ByResolvedBySpecification
 from app.domain.specifications.reports_players.status_specification import ByStatusSpecification
@@ -337,10 +339,11 @@ class FindBySpecificationsRepositoryImpl(IFindBySpecificationsRepository):
 
         if isinstance(spec, ByExpiresAtSpecification):
             min_date, max_date = spec.to_expression()
+            effective_end = func.coalesce(UserBanRecordORM.ended_at, UserBanRecordORM.expires_at)
             if min_date is not None:
-                query = query.filter(UserBanRecordORM.expires_at >= min_date)
+                query = query.filter(effective_end >= min_date)
             if max_date is not None:
-                query = query.filter(UserBanRecordORM.expires_at <= max_date)
+                query = query.filter(effective_end <= max_date)
             return query
 
         if isinstance(spec, ByReasonSpecification):
@@ -352,7 +355,8 @@ class FindBySpecificationsRepositoryImpl(IFindBySpecificationsRepository):
         query = (self.session.query(UserBanRecordORM)
         .options(
             joinedload(UserBanRecordORM.banned_user),
-            joinedload(UserBanRecordORM.banned_by_user)
+            joinedload(UserBanRecordORM.banned_by_user),
+            joinedload(UserBanRecordORM.ended_by_user),
         )
         .filter(
             UserBanRecordORM.banned_user.has(UserORM.deleted == False)
@@ -375,6 +379,9 @@ class FindBySpecificationsRepositoryImpl(IFindBySpecificationsRepository):
             query = self._apply_spec_reports_players(query, spec.left)
             query = self._apply_spec_reports_players(query, spec.right)
             return query
+
+        if isinstance(spec, ByReportedUserIdSpecification):
+            return query.filter(PlayerReportORM.reported_id == spec.to_expression())
 
         if isinstance(spec, ByReportedUserSpecification):
             reported_user_alias = aliased(UserORM)
@@ -421,7 +428,8 @@ class FindBySpecificationsRepositoryImpl(IFindBySpecificationsRepository):
         query = self.session.query(PlayerReportORM).options(
             joinedload(PlayerReportORM.reporter),
             joinedload(PlayerReportORM.reported),
-            joinedload(PlayerReportORM.resolver_user)
+            joinedload(PlayerReportORM.resolver_user),
+            joinedload(PlayerReportORM.videogame),
         ).filter(PlayerReportORM.reported.has(UserORM.deleted == False))
 
         if spec and spec is not None:

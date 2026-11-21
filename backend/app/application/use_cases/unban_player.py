@@ -16,4 +16,4 @@ class UnbanPlayer:
             if player_id == admin_id:
                 raise CannotUnbanSelfException()
 
-            uow.moderation_repo.manual_unban_user(player_id)
+            uow.moderation_repo.manual_unban_user(player_id, admin_id=admin_id)

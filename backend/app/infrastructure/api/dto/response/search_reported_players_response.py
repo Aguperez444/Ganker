@@ -17,6 +17,8 @@ class SearchReportedPlayersResponse(BaseModel):
     resolved_by: str | None
     evidence_image_url: str | None = None
     evidence_video_url: str | None = None
+    videogame_id: int | None = None
+    videogame_name: str | None = None
 
     @field_validator("description", mode="before")
     @classmethod

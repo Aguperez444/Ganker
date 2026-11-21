@@ -8,3 +8,4 @@ class ReportPlayerRequest(BaseModel):
     reason: ReportReason
     description: str = Field("", max_length=500, description="Descripción del reporte, máximo 500 caracteres")
     evidence_video_url: str | None = Field(None, max_length=500, description="Link de YouTube opcional como evidencia")
+    videogame_id: int | None = Field(None, gt=0, description="Videojuego en el que ocurrió el incidente, opcional")

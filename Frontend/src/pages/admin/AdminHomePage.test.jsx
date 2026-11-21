@@ -81,20 +81,20 @@ describe("AdminHomePage - inicio del panel admin", () => {
     );
   });
 
-  it("lista los baneos recientes marcando vigentes y vencidos", () => {
+  it("lista los baneos recientes marcando vigentes y finalizados", () => {
     renderPagina();
 
     expect(screen.getByText("baneo_temporal")).toBeInTheDocument();
     expect(screen.getByText("baneo_viejo")).toBeInTheDocument();
     expect(screen.getByText("Vigente")).toBeInTheDocument();
-    expect(screen.getByText("Vencido")).toBeInTheDocument();
+    expect(screen.getByText("Finalizado")).toBeInTheDocument();
     expect(screen.getByRole("link", { name: /ver todos/i })).toHaveAttribute(
       "href",
       "/app/admin/moderacion"
     );
   });
 
-  it("resume videojuegos y baneos vigentes/vencidos", () => {
+  it("resume videojuegos y baneos vigentes/finalizados", () => {
     renderPagina();
 
     expect(screen.getByText("Juegos soportados").nextSibling).toHaveTextContent(
@@ -103,9 +103,9 @@ describe("AdminHomePage - inicio del panel admin", () => {
     expect(screen.getByText("Baneos vigentes").nextSibling).toHaveTextContent(
       "1"
     );
-    expect(screen.getByText("Baneos vencidos").nextSibling).toHaveTextContent(
-      "1"
-    );
+    expect(
+      screen.getByText("Baneos finalizados").nextSibling
+    ).toHaveTextContent("1");
   });
 
   it("si no hay baneos lo indica", () => {

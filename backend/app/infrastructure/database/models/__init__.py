@@ -1,5 +1,6 @@
 # app/infrastructure/database/models/__init__.py
 from app.infrastructure.database.models.character_orm import CharacterORM
+from app.infrastructure.database.models.ban_appeal_orm import BanAppealORM, BanAppealImageORM
 from app.infrastructure.database.models.character_priority_orm import CharacterPriorityORM
 from app.infrastructure.database.models.conversation_orm import ConversationORM
 from app.infrastructure.database.models.conversation_member_orm import ConversationMemberORM
@@ -27,6 +28,8 @@ from app.infrastructure.database.models.user_ban_record_orm import UserBanRecord
 from app.infrastructure.database.models.videogame_orm import VideogameORM
 
 __all__ = [
+    "BanAppealORM",
+    "BanAppealImageORM",
     "CharacterORM",
     "CharacterPriorityORM",
     "ConversationORM",

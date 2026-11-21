@@ -10,6 +10,40 @@ from app.infrastructure.database.repositories.moderation_repository_impl import 
 from app.infrastructure.database.unit_of_work.unit_of_work_impl import SqlAlchemyUnitOfWork
 
 
+def test_executive_statistics_aggregate_games_repeat_offenders_and_utc_months(postgres_sessions):
+    from sqlalchemy import text
+    from app.domain.models.report_reason import ReportReason
+    from app.domain.models.report_status import ReportStatus
+    from app.infrastructure.database.models import VideogameORM
+    from app.infrastructure.database.repositories.moderation_statistics_repository_impl import ModerationStatisticsRepositoryImpl
+
+    created = datetime(2026, 11, 1, 0, 30, tzinfo=timezone.utc)
+    with postgres_sessions.begin() as session:
+        target = UserORM(name="Target", username="target", role="player", banned=True)
+        reporter = UserORM(name="Reporter", username="reporter", role="player")
+        game = VideogameORM(name="Juego", icon_url="/icon.png", rank_per_role=False)
+        session.add_all([target, reporter, game])
+        session.flush()
+        session.add_all([
+            PlayerReportORM(reporter_id=reporter.user_id, reported_id=target.user_id,
+                            reason=ReportReason.CHEATING, status=ReportStatus.PENDING,
+                            created_at=created, videogame_id=game.videogame_id),
+            UserBanRecordORM(banned_user_id=target.user_id, reason="Anterior", created_at=created - timedelta(days=10),
+                             end_reason="expired", ended_at=created - timedelta(days=5)),
+        ])
+        session.flush()
+        session.add(UserBanRecordORM(banned_user_id=target.user_id, reason="Actual", created_at=created, expires_at=created + timedelta(days=20)))
+    with postgres_sessions() as session:
+        # Configurar la zona de la conexión antes de iniciar la consulta coherente.
+        session.execute(text("SET TIME ZONE 'America/Argentina/Cordoba'"))
+        session.commit()
+        stats = ModerationStatisticsRepositoryImpl(session).query(created, None, created + timedelta(days=1), 10)
+        assert stats["reports"]["total"] == stats["bans"]["active"] == stats["bans"]["repeat_offenders"] == 1
+        assert stats["reports"]["games"][0]["name"] == "Juego"
+        assert stats["bans"]["top_players"][0]["repeat_offender"] is True
+        assert stats["activity"] == [{"month": "2026-11", "reports": 1, "bans": 1}]
+
+
 def test_concurrent_reports_only_create_one_record(postgres_sessions):
     with postgres_sessions.begin() as session:
         reporter = UserORM(name="Reporter", username="reporter", role="player")
@@ -57,3 +91,42 @@ def test_active_bans_filter_latest_record_with_postgres_timestamps(postgres_sess
     with postgres_sessions() as session:
         rows = ModerationRepositoryImpl(session).get_active_bans("ACT", 0, 10)
         assert rows == [(active_id, "active", "Vigente", now + timedelta(days=1))]
+
+
+def test_dismiss_and_ban_from_same_report_cannot_both_succeed(postgres_sessions):
+    from app.application.use_cases.ban_player import BanPlayer
+    from app.application.use_cases.dismiss_player_report import DismissPlayerReport
+    from app.domain.exceptions.domain_exception import DomainException
+    from app.domain.models.report_status import ReportStatus
+    from app.infrastructure.api.dto.request.ban_player_request import BanPlayerRequest
+
+    with postgres_sessions.begin() as session:
+        admin = UserORM(name="Admin", username="moderator", role="admin")
+        player = UserORM(name="Player", username="reported", role="player")
+        session.add_all([admin, player])
+        session.flush()
+        report = PlayerReportORM(reporter_id=admin.user_id, reported_id=player.user_id, reason="cheating", status=ReportStatus.PENDING)
+        session.add(report)
+        session.flush()
+        admin_id, player_id, report_id = admin.user_id, player.user_id, report.id
+
+    barrier = Barrier(2, timeout=10)
+    def resolve(action):
+        barrier.wait()
+        try:
+            uow = SqlAlchemyUnitOfWork(postgres_sessions)
+            if action == "ban":
+                BanPlayer(uow).execute(BanPlayerRequest(player_id=player_id, reason="Scripts", duration_days=7, report_id=report_id), admin_id)
+            else:
+                DismissPlayerReport(uow).execute(report_id, admin_id)
+            return 200
+        except DomainException as error:
+            return error.status_code
+
+    with ThreadPoolExecutor(max_workers=2) as pool:
+        assert sorted(pool.map(resolve, ["ban", "dismiss"])) == [200, 409]
+    with postgres_sessions() as session:
+        status = session.get(PlayerReportORM, report_id).status
+        assert status in (ReportStatus.RESOLVED, ReportStatus.REJECTED)
+        assert session.get(UserORM, player_id).banned is (status == ReportStatus.RESOLVED)
+        assert session.query(UserBanRecordORM).count() == (1 if status == ReportStatus.RESOLVED else 0)

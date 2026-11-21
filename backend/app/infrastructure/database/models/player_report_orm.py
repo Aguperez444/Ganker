@@ -28,8 +28,10 @@ class PlayerReportORM(Base):
     evidence_image_url: Mapped[Optional[str]] = mapped_column(String(500), nullable=True)
     evidence_video_url: Mapped[Optional[str]] = mapped_column(String(500), nullable=True)
     resolver_id: Mapped[Optional[int]] = mapped_column(Integer, ForeignKey("user.user_id", ondelete="SET NULL"), nullable=True)
+    videogame_id: Mapped[Optional[int]] = mapped_column(Integer, ForeignKey("videogame.videogame_id", ondelete="SET NULL"), nullable=True, index=True)
 
     reporter: Mapped["UserORM"] = relationship("UserORM", foreign_keys=[reporter_id], back_populates="reporter_player")
     reported: Mapped["UserORM"] = relationship("UserORM", foreign_keys=[reported_id], back_populates="reported_player")
     resolver_user: Mapped[Optional["UserORM"]] = relationship("UserORM", foreign_keys=[resolver_id], back_populates="resolver_player")
+    videogame = relationship("VideogameORM", foreign_keys=[videogame_id])
 

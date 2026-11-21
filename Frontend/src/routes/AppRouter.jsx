@@ -33,6 +33,7 @@ import RecuperarContrasenaPage from "../pages/RecuperarContrasenaPage.jsx";
 import RestablecerContrasenaPage from "../pages/RestablecerContrasenaPage.jsx";
 import ReportesPage from "../pages/admin/ReportesPage.jsx";
 import ReporteUsoPage from "../pages/admin/ReporteUsoPage.jsx";
+import ReporteDenunciasPage from "../pages/admin/ReporteDenunciasPage.jsx";
 import UsuariosPage from "../pages/admin/UsuariosPage.jsx";
 import { ROLES_ADMIN } from "../utils/rutas.js";
 
@@ -130,6 +131,10 @@ function AppRouter() {
             <Route path="reportes" element={<ReportesPage />} />
             {/* US 38 - Reporte de uso (rangos, personajes, equipos). */}
             <Route path="reportes/uso" element={<ReporteUsoPage />} />
+            <Route
+              path="reportes/denuncias"
+              element={<Navigate to="/app/admin/moderacion/reporte" replace />}
+            />
             {/* US 50 - Eliminar cuenta de usuario. */}
             <Route path="usuarios" element={<UsuariosPage />} />
             {/* Módulos administrativos placeholder */}
@@ -139,6 +144,10 @@ function AppRouter() {
               element={<Navigate to="/app/admin/characters" replace />}
             />
             <Route path="moderacion" element={<ModeracionPage />} />
+            <Route
+              path="moderacion/reporte"
+              element={<ReporteDenunciasPage />}
+            />
           </Route>
         </Route>
 

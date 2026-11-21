@@ -22,14 +22,17 @@ export function useIniciarSesion() {
   const [errores, setErrores] = useState({});
   const [cargando, setCargando] = useState(false);
   const [errorServidor, setErrorServidor] = useState(null);
+  const [permisoApelacion, setPermisoApelacion] = useState(null);
 
   function handleChange(campo, valor) {
+    setPermisoApelacion(null);
     setValores((prev) => ({ ...prev, [campo]: valor }));
   }
 
   async function handleSubmit(e) {
     e.preventDefault();
     setErrorServidor(null);
+    setPermisoApelacion(null);
 
     const erroresValidacion = validarFormularioLogin(valores);
     setErrores(erroresValidacion);
@@ -55,6 +58,7 @@ export function useIniciarSesion() {
         // US 36 - Cuenta suspendida: se muestra la restriccion con el motivo
         // y el vencimiento que manda el backend.
         setErrorServidor(mensajeDeCuentaBaneada(result.error.error));
+        setPermisoApelacion(result.error.appeal_token ?? null);
       } else {
         setErrorServidor("No pudimos iniciar sesión. Probá de nuevo.");
       }
@@ -71,6 +75,7 @@ export function useIniciarSesion() {
     errores,
     cargando,
     errorServidor,
+    permisoApelacion,
     handleChange,
     handleSubmit,
   };

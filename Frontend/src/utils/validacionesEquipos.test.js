@@ -7,6 +7,7 @@ import {
   perfilDelJuego,
   validarEdicionEquipo,
   validarFormularioEquipo,
+  validarIconoEquipo,
 } from "./validacionesEquipos";
 
 const HIERRO = { rank_id: 1, name: "Hierro", value: 1 };
@@ -139,6 +140,38 @@ describe("US 14 - validarFormularioEquipo", () => {
         rolesVacantesIds: Array(CUPOS_VACANTES_MAXIMO + 1).fill("11"),
       }).rolesVacantes
     ).toMatch(/entre 1 y/);
+  });
+});
+
+describe("US 14 - validarIconoEquipo", () => {
+  it("acepta no subir icono", () => {
+    expect(validarIconoEquipo(null)).toBeUndefined();
+  });
+
+  it.each(["image/png", "image/jpeg", "image/webp"])("acepta %s", (type) => {
+    expect(
+      validarIconoEquipo(new File(["x"], "icono", { type }))
+    ).toBeUndefined();
+  });
+
+  it("rechaza otros formatos", () => {
+    expect(
+      validarIconoEquipo(new File(["x"], "icono.gif", { type: "image/gif" }))
+    ).toMatch(/PNG, JPG o WEBP/);
+  });
+
+  it("rechaza imagenes de mas de 5 MB", () => {
+    const pesada = new File(["x"], "icono.png", { type: "image/png" });
+    Object.defineProperty(pesada, "size", { value: 5 * 1024 * 1024 + 1 });
+    expect(validarIconoEquipo(pesada)).toMatch(/no puede superar/);
+  });
+
+  it("validarFormularioEquipo informa el error del icono", () => {
+    const errores = validarFormularioEquipo({
+      ...formularioValido,
+      icono: new File(["x"], "icono.gif", { type: "image/gif" }),
+    });
+    expect(errores.icono).toMatch(/PNG, JPG o WEBP/);
   });
 });
 

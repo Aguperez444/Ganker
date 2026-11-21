@@ -41,6 +41,8 @@ describe("Metadatos en el HTML antes de ejecutar JavaScript", () => {
     ["/app/equipos/mi-equipo", "Mi equipo | Ganker"],
     ["/app/equipos/12", "Detalle de equipo | Ganker"],
     ["/app/admin/reportes/uso", "Reportes de uso | Ganker"],
+    ["/app/admin/reportes/denuncias", "Reporte de denuncias | Ganker"],
+    ["/app/admin/moderacion/reporte", "Reporte de denuncias | Ganker"],
     ["/app/ruta-inventada", "Página no encontrada | Ganker"],
     ["/url-inventada", "Página no encontrada | Ganker"],
   ])("%s se sirve con título propio y noindex", (path, title) => {

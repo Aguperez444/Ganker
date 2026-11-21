@@ -11,13 +11,18 @@ if TYPE_CHECKING:
 class UserBanRecord:
 
     def __init__(self, user_ban_record_id: int|None, banned_user: 'User', banned_by_user: User,
-                 reason: str, created_at: datetime, expires_at: datetime|None):
+                 reason: str, created_at: datetime, expires_at: datetime|None,
+                 ended_at: datetime | None = None, ended_by_user: 'User | None' = None,
+                 end_reason: str | None = None):
         self._user_Ban_record_id: int|None = user_ban_record_id
         self._banned_user: 'User' = banned_user
         self._banned_by_user: 'User' = banned_by_user
         self._reason: str = reason
         self._created_at: datetime = created_at
         self._expires_at: datetime|None = expires_at
+        self._ended_at = ended_at
+        self._ended_by_user = ended_by_user
+        self._end_reason = end_reason
 
 
     @property
@@ -67,3 +72,15 @@ class UserBanRecord:
 
     def is_persisted(self) -> bool:
         return self._user_Ban_record_id is not None
+
+    @property
+    def ended_at(self) -> datetime | None:
+        return self._ended_at
+
+    @property
+    def ended_by_user(self) -> 'User | None':
+        return self._ended_by_user
+
+    @property
+    def end_reason(self) -> str | None:
+        return self._end_reason

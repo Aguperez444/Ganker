@@ -4,7 +4,10 @@ from app.domain.exceptions.domain_exception import DomainException
 
 
 class BanNotFinishedException(DomainException):
-    def __init__(self, reason: str | None = None, expires_at: datetime | None = None):
+    def __init__(self, reason: str | None = None, expires_at: datetime | None = None,
+                 user_id: int | None = None, ban_id: int | None = None):
+        self.user_id = user_id
+        self.ban_id = ban_id
         self.reason = reason
         self.expires_at = expires_at
         message = "El baneo del jugador aún no ha finalizado"

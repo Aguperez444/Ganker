@@ -1,11 +1,72 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import axiosClient from "./axiosClient";
-import { buscarBaneos, reportarJugador } from "./moderacionApi";
+import {
+  buscarBaneos,
+  buscarDenuncias,
+  reportarJugador,
+  obtenerDetalleBaneo,
+  obtenerHistorialBaneos,
+  banearJugador,
+  desestimarDenuncia,
+  obtenerDenunciasCruzadas,
+} from "./moderacionApi";
 
 vi.mock("./axiosClient", () => ({
   default: { post: vi.fn(), get: vi.fn() },
 }));
+
+it("consulta las denuncias cruzadas por ID con paginación", async () => {
+  const datos = { report_id: 3, window_hours: 48, reports: [] };
+  axiosClient.get.mockResolvedValue({ data: datos });
+  await expect(
+    obtenerDenunciasCruzadas(3, { skip: 10, limit: 11 })
+  ).resolves.toEqual(datos);
+  expect(axiosClient.get).toHaveBeenLastCalledWith(
+    "/api/v1/moderation/reports/3/cross-reports",
+    { params: { skip: 10, limit: 11 } }
+  );
+});
+
+it("identifica la denuncia de origen al banear y permite desestimarla por ID", async () => {
+  axiosClient.post.mockResolvedValue({ data: { id: 3, status: "rejected" } });
+  await banearJugador({
+    jugadorId: 7,
+    motivo: "Scripts",
+    duracionDias: 7,
+    denunciaId: 3,
+  });
+  expect(axiosClient.post).toHaveBeenLastCalledWith("/api/v1/moderation/ban", {
+    player_id: 7,
+    reason: "Scripts",
+    duration_days: 7,
+    report_id: 3,
+  });
+  await expect(desestimarDenuncia(3)).resolves.toEqual({
+    id: 3,
+    status: "rejected",
+  });
+  expect(axiosClient.post).toHaveBeenLastCalledWith(
+    "/api/v1/moderation/reports/3/dismiss"
+  );
+});
+
+it("consulta un baneo concreto y el historial anterior del jugador por sus IDs", async () => {
+  axiosClient.get
+    .mockResolvedValueOnce({ data: { id: 3 } })
+    .mockResolvedValueOnce({ data: { bans: [{ id: 1 }] } });
+  await expect(obtenerDetalleBaneo(3)).resolves.toEqual({ id: 3 });
+  expect(axiosClient.get).toHaveBeenCalledWith(
+    "/api/v1/moderation/banned-players/3"
+  );
+  await expect(
+    obtenerHistorialBaneos(7, { antesDeBaneoId: 3, skip: 10, limit: 11 })
+  ).resolves.toEqual([{ id: 1 }]);
+  expect(axiosClient.get).toHaveBeenLastCalledWith(
+    "/api/v1/moderation/players/7/bans",
+    { params: { before_ban_id: 3, skip: 10, limit: 11 } }
+  );
+});
 
 describe("reportarJugador", () => {
   beforeEach(() => {
@@ -132,4 +193,23 @@ describe("buscarBaneos - Buscar jugadores baneados", () => {
       }
     );
   });
+});
+
+it("busca el historial de reportes por ID exacto y conserva la paginación", async () => {
+  const reportes = [{ id: 1, reported_user_id: 7 }];
+  axiosClient.get.mockResolvedValue({ data: { reports: reportes } });
+  await expect(
+    buscarDenuncias({ denunciadoId: 7, skip: 10, limit: 11 })
+  ).resolves.toEqual(reportes);
+  expect(axiosClient.get).toHaveBeenLastCalledWith(
+    "/api/v1/moderation/reported_players",
+    expect.objectContaining({
+      params: expect.objectContaining({
+        reported_user_id: 7,
+        reported_user: undefined,
+        skip: 10,
+        limit: 11,
+      }),
+    })
+  );
 });

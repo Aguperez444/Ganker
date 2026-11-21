@@ -12,7 +12,10 @@ class UserBanRecordMapper:
             banned_by_user=UserMapper.orm_to_domain(user_ban_record_orm.banned_by_user),
             reason=user_ban_record_orm.reason,
             created_at=user_ban_record_orm.created_at,
-            expires_at=user_ban_record_orm.expires_at
+            expires_at=user_ban_record_orm.expires_at,
+            ended_at=user_ban_record_orm.ended_at,
+            ended_by_user=UserMapper.orm_to_domain(user_ban_record_orm.ended_by_user) if user_ban_record_orm.ended_by_user else None,
+            end_reason=user_ban_record_orm.end_reason,
         )
 
     @staticmethod
@@ -24,6 +27,9 @@ class UserBanRecordMapper:
                 reason=user_ban_record.reason,
                 created_at=user_ban_record.created_at,
                 expires_at=user_ban_record.expires_at,
+                ended_at=user_ban_record.ended_at,
+                ended_by_user_id=user_ban_record.ended_by_user.user_id if user_ban_record.ended_by_user else None,
+                end_reason=user_ban_record.end_reason,
             )
         return UserBanRecordORM(
             id=user_ban_record.user_ban_record_id,
@@ -32,4 +38,7 @@ class UserBanRecordMapper:
             reason=user_ban_record.reason,
             created_at=user_ban_record.created_at,
             expires_at=user_ban_record.expires_at,
+            ended_at=user_ban_record.ended_at,
+            ended_by_user_id=user_ban_record.ended_by_user.user_id if user_ban_record.ended_by_user else None,
+            end_reason=user_ban_record.end_reason,
         )

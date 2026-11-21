@@ -6,8 +6,13 @@ import {
 } from "../../utils/baneos";
 
 function describirVencimiento(baneo) {
+  if (baneo.status === "unbanned")
+    return `Desbaneado el ${formatearFechaBaneo(baneo.expires_at)}`;
+  if (baneo.status === "superseded")
+    return `Sustituido el ${formatearFechaBaneo(baneo.expires_at)}`;
+  if (baneo.status === "unknown") return "Finalización sin registrar";
   if (!esBaneoVigente(baneo.expires_at)) {
-    return `Venció ${formatearFechaBaneo(baneo.expires_at)}`;
+    return `Finalizó el ${formatearFechaBaneo(baneo.expires_at)}`;
   }
   if (!baneo.expires_at || esVencimientoPermanente(baneo.expires_at)) {
     return "Permanente";
@@ -29,6 +34,8 @@ const ListaBaneosComponent = ({
   onDesbanear,
   onPaginaAnterior,
   onPaginaSiguiente,
+  onVerDetalle,
+  mensajeVacio = "No hay jugadores baneados.",
 }) => {
   if (error) {
     return (
@@ -48,7 +55,7 @@ const ListaBaneosComponent = ({
             ? "Cargando baneos..."
             : hayFiltros
               ? "No se encontraron baneos que coincidan con los filtros aplicados."
-              : "No hay jugadores baneados."}
+              : mensajeVacio}
         </p>
       ) : (
         <ul
@@ -56,7 +63,17 @@ const ListaBaneosComponent = ({
           className={`divide-y divide-white/10 overflow-hidden rounded-xl border border-white/10 transition ${cargando ? "opacity-60" : ""}`}
         >
           {baneos.map((baneo) => {
-            const vigente = esBaneoVigente(baneo.expires_at);
+            const vigente = baneo.status
+              ? baneo.status === "active"
+              : esBaneoVigente(baneo.expires_at);
+            const etiqueta =
+              {
+                active: "Vigente",
+                expired: "Finalizado",
+                unbanned: "Finalizado",
+                superseded: "Finalizado",
+                unknown: "Finalizado",
+              }[baneo.status] || (vigente ? "Vigente" : "Finalizado");
 
             return (
               <li
@@ -75,28 +92,43 @@ const ListaBaneosComponent = ({
                           : "bg-white/5 text-ganker-muted"
                       }`}
                     >
-                      {vigente ? "Vigente" : "Vencido"}
+                      {etiqueta}
                     </span>
                   </div>
                   <p className="mt-0.5 truncate text-xs text-ganker-muted">
                     {baneo.reason}
                   </p>
                   <p className="mt-0.5 text-xs text-ganker-muted">
-                    Baneado por @{baneo.admin_username} el{" "}
-                    {formatearFechaBaneo(baneo.created_at)} ·{" "}
+                    Baneado por{" "}
+                    {baneo.admin_username
+                      ? `@${baneo.admin_username}`
+                      : "un administrador no disponible"}{" "}
+                    el {formatearFechaBaneo(baneo.created_at)} ·{" "}
                     {describirVencimiento(baneo)}
                   </p>
                 </div>
 
-                {vigente && baneo.user_id !== miId && (
-                  <button
-                    type="button"
-                    onClick={() => onDesbanear(baneo)}
-                    className="shrink-0 cursor-pointer self-start rounded-lg border border-ganker-purple/60 px-3 py-1.5 text-sm font-semibold text-ganker-purple-light transition hover:bg-ganker-purple/20 sm:self-auto"
-                  >
-                    Desbanear
-                  </button>
-                )}
+                <div className="flex shrink-0 flex-wrap gap-2">
+                  {onVerDetalle && (
+                    <button
+                      type="button"
+                      onClick={() => onVerDetalle(baneo)}
+                      aria-label={`Ver detalle del baneo ${baneo.id} de @${baneo.username}`}
+                      className="cursor-pointer rounded-lg border border-white/10 px-3 py-1.5 text-sm font-semibold text-ganker-text transition hover:bg-white/5"
+                    >
+                      Ver detalle
+                    </button>
+                  )}
+                  {onDesbanear && vigente && baneo.user_id !== miId && (
+                    <button
+                      type="button"
+                      onClick={() => onDesbanear(baneo)}
+                      className="shrink-0 cursor-pointer self-start rounded-lg border border-ganker-purple/60 px-3 py-1.5 text-sm font-semibold text-ganker-purple-light transition hover:bg-ganker-purple/20 sm:self-auto"
+                    >
+                      Desbanear
+                    </button>
+                  )}
+                </div>
               </li>
             );
           })}

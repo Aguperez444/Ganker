@@ -12,6 +12,7 @@ if TYPE_CHECKING:
     from app.application.ports.i_message_repository import IMessageRepository
     from app.application.ports.i_character_repository import ICharacterRepository
     from app.application.ports.i_videogame_repository import IVideogameRepository
+    from app.application.ports.i_ban_appeal_repository import IBanAppealRepository
     from app.application.ports.i_moderation_repository import IModerationRepository
     from app.application.ports.i_game_profile_repository import IGameProfileRepository
     from app.application.ports.i_role_profile_repository import IRoleProfileRepository
@@ -27,7 +28,8 @@ if TYPE_CHECKING:
     from app.application.ports.i_pending_email_change_repository import IPendingEmailChangeRepository
     from app.application.ports.i_pending_registration_repository import IPendingRegistrationRepository
     from app.application.ports.i_find_by_specifications_service import IFindBySpecificationsRepository
-    
+    from app.application.ports.i_moderation_statistics_repository import IModerationStatisticsRepository
+
 
 
 #abstract class
@@ -40,6 +42,7 @@ class IUnitOfWork(ABC):
     message_repo: 'IMessageRepository'
     videogame_repo: 'IVideogameRepository'
     character_repo: 'ICharacterRepository'
+    ban_appeal_repo: 'IBanAppealRepository'
     moderation_repo: 'IModerationRepository'
     game_profile_repo: 'IGameProfileRepository'
     role_profile_repo: 'IRoleProfileRepository'
@@ -54,6 +57,7 @@ class IUnitOfWork(ABC):
     discord_account_link_repo: 'IDiscordAccountLinkRepository'
     pending_email_change_repo: 'IPendingEmailChangeRepository'
     pending_registration_repo: 'IPendingRegistrationRepository'
+    moderation_statistics_repo: 'IModerationStatisticsRepository'
     find_by_specification_repo: 'IFindBySpecificationsRepository'
 
 

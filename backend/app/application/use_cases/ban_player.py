@@ -5,6 +5,7 @@ from app.domain.exceptions.domain_exception import DomainException
 from app.domain.exceptions.moderation.cannot_ban_self_exception import CannotBanSelfException
 from app.domain.models.user_ban_record import UserBanRecord
 from app.domain.models.user_role import UserRole
+from app.domain.models.report_status import ReportStatus
 from app.domain.services.catalog_validation_service import CatalogValidationService
 
 from app.infrastructure.api.dto.request.ban_player_request import BanPlayerRequest
@@ -20,6 +21,14 @@ class BanPlayer:
             raise CannotBanSelfException()
 
         with self.uow as uow:
+            if ban_request.report_id is not None:
+                report = uow.moderation_repo.get_report_for_resolution(ban_request.report_id)
+                if report is None:
+                    raise DomainException("La denuncia no existe.", status_code=404)
+                if report.reported.user_id != ban_request.player_id:
+                    raise DomainException("La denuncia no corresponde a este jugador.", status_code=422)
+                if report.status != ReportStatus.PENDING:
+                    raise DomainException("La denuncia ya está cerrada. No se puede banear desde ella.", status_code=409)
             admin_user = CatalogValidationService.get_and_validate_exist_user(admin_id, uow)
             reported_user = CatalogValidationService.get_and_validate_exist_user(ban_request.player_id, uow)
 

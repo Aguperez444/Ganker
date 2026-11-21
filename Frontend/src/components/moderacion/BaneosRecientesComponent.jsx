@@ -57,7 +57,7 @@ function BaneosRecientesComponent({ baneos, cargando, error, limite = 5 }) {
                           : "border border-white/10 bg-ganker-surface-light text-ganker-muted"
                       }`}
                     >
-                      {vigente ? "Vigente" : "Vencido"}
+                      {vigente ? "Vigente" : "Finalizado"}
                     </span>
                   </p>
                   <p className="mt-0.5 truncate text-xs text-ganker-muted">

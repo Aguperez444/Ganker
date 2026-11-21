@@ -9,8 +9,7 @@ const PESTANAS = [
   { ruta: "/app/admin/reportes/uso", etiqueta: "Rangos, personajes y equipos" },
 ];
 
-// Pestañas de Admin > Reportes: US 37 (perfiles por videojuego) y US 38 (uso
-// por videojuego). Cada una es su propia page.
+// Cada tipo de reporte tiene su propia página en el panel de administración.
 const ReportesTabsComponent = () => (
   <nav
     aria-label="Tipos de reporte"
