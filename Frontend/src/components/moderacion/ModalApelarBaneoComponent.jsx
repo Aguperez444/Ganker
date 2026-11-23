@@ -216,7 +216,7 @@ export default function ModalApelarBaneoComponent({ token, onClose }) {
                   accept="image/png,image/jpeg,image/webp"
                   onChange={seleccionarImagenes}
                   disabled={enviando}
-                  className="w-full text-sm text-ganker-muted"
+                  className="w-full cursor-pointer rounded-lg border border-white/10 bg-ganker-surface-light px-4 py-3 text-sm text-ganker-muted outline-none transition-all duration-200 focus:border-ganker-purple-light focus:ring-2 focus:ring-ganker-purple/30 disabled:cursor-not-allowed disabled:opacity-50 file:mr-3 file:cursor-pointer file:rounded-md file:border-0 file:bg-ganker-purple/30 file:px-3 file:py-1.5 file:text-sm file:font-semibold file:text-ganker-text hover:file:bg-ganker-purple/50"
                 />
                 <ul className="space-y-2">
                   {imagenes.map((item) => (
