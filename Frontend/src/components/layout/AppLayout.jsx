@@ -25,7 +25,7 @@ const AppLayoutContenido = () => {
   const onOpenChat = esDesktop ? alternarPanelDesktop : alternarChat;
 
   return (
-    <div className="flex h-screen overflow-hidden bg-ganker-bg font-body text-ganker-text">
+    <div className="flex h-dvh overflow-hidden bg-ganker-bg font-body text-ganker-text">
       {/* Navegación desktop/tablet */}
       <Sidebar />
 
@@ -37,8 +37,10 @@ const AppLayoutContenido = () => {
         />
 
         <div className="flex min-h-0 flex-1 overflow-hidden">
-          {/* Contenido dinámico */}
-          <main className="min-w-0 flex-1 overflow-y-auto">
+          {/* Contenido dinámico. `relative` contiene cualquier hijo con
+              `position: absolute` (p. ej. `sr-only`) dentro del área que
+              scrollea para que no estire el documento por debajo de `h-dvh`. */}
+          <main className="relative min-w-0 flex-1 overflow-y-auto">
             <Outlet />
           </main>
 

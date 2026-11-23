@@ -168,7 +168,7 @@ const GameProfileForm = ({
                   </p>
                 </div>
 
-                <div className="max-w-xl">
+                <div className="relative max-w-xl">
                   <label htmlFor="region-perfil" className="sr-only">
                     Región
                   </label>
@@ -203,7 +203,7 @@ const GameProfileForm = ({
                   </p>
                 </div>
 
-                <div className="max-w-xl">
+                <div className="relative max-w-xl">
                   <label htmlFor="in-game-name" className="sr-only">
                     Nick en el juego
                   </label>

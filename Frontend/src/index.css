@@ -70,6 +70,7 @@
 }
 body {
   font-family: var(--font-body);
+  background-color: var(--color-ganker-bg);
 }
 
 /* Scrollbar a tono con la paleta de Ganker en vez del blanco por defecto
