@@ -68,6 +68,14 @@
 
   /* Tipografías */
 }
+/* Fondo oscuro tambien en html/body: si algo llega a estirar el documento
+   o el navegador hace "rebote" al scrollear, se ve el fondo de Ganker en
+   vez del blanco por defecto. */
+html,
+body {
+  background-color: var(--color-ganker-bg);
+}
+
 body {
   font-family: var(--font-body);
 }

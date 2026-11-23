@@ -37,8 +37,12 @@ const AppLayoutContenido = () => {
         />
 
         <div className="flex min-h-0 flex-1 overflow-hidden">
-          {/* Contenido dinámico */}
-          <main className="min-w-0 flex-1 overflow-y-auto">
+          {/* Contenido dinámico. `relative` hace que los elementos con
+              position: absolute de las paginas (ej. labels sr-only del
+              formulario de perfil de juego) se ubiquen respecto de este
+              <main> que scrollea y no del documento: sin eso estiraban la
+              pagina por debajo del h-screen y aparecia una franja blanca. */}
+          <main className="relative min-w-0 flex-1 overflow-y-auto">
             <Outlet />
           </main>
 
