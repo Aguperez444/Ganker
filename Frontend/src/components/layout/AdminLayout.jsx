@@ -8,10 +8,12 @@ const AdminLayout = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   return (
-    <div className="flex min-h-screen bg-ganker-bg font-body text-ganker-text">
+    // Alto fijo de pantalla (igual que AppLayout): solo scrollea el <main>,
+    // asi el sidebar y el navbar quedan quietos al bajar en la pagina.
+    <div className="flex h-screen overflow-hidden bg-ganker-bg font-body text-ganker-text">
       <AdminSidebar />
 
-      <div className="flex min-w-0 flex-1 flex-col">
+      <div className="flex h-full min-w-0 flex-1 flex-col overflow-hidden">
         <TopNavbar
           onOpenMenu={() => setIsMobileMenuOpen(true)}
           showChatButton={false}
